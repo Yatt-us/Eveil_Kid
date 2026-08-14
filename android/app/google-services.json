@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "784815988556",
+    "project_id": "ibecouleveilkidv2",
+    "storage_bucket": "ibecouleveilkidv2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:784815988556:android:057f9dbd029dc58badb9e9",
+        "android_client_info": {
+          "package_name": "com.example.eveilenfant"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCvgrt83-W0dVMMnbQZOth_IOSwy5Nrsug"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
