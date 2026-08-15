@@ -1,4 +1,4 @@
-package com.example.eveilenfant
+package com.example.eveilkid
 
 import io.flutter.embedding.android.FlutterActivity
 
