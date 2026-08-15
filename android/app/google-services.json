@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "847684786362",
+    "project_id": "ibecoul",
+    "storage_bucket": "ibecoul.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:847684786362:android:1406a81c0f9de54f870a83",
+        "android_client_info": {
+          "package_name": "com.example.eveilenfant"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDY-gx0xd4XOVZzYD7szX_KaQUI5h2yw-k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:847684786362:android:b2f7d558f57b9b6c870a83",
+        "android_client_info": {
+          "package_name": "com.example.eveilkid"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDY-gx0xd4XOVZzYD7szX_KaQUI5h2yw-k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
