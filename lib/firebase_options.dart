@@ -41,46 +41,44 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDcMbzEMSkvQ2hV1TsH3ny8fHCC_hRSgu4',
-    appId: '1:784815988556:web:6fd5344d2e3acbe0adb9e9',
-    messagingSenderId: '784815988556',
-    projectId: 'ibecouleveilkidv2',
-    authDomain: 'ibecouleveilkidv2.firebaseapp.com',
-    storageBucket: 'ibecouleveilkidv2.firebasestorage.app',
+    apiKey: 'AIzaSyBNdNNSy_XHOvrbdHrwn8O5popmoAx6RUA',
+    appId: '1:847684786362:web:ebeaf268e4c196f6870a83',
+    messagingSenderId: '847684786362',
+    projectId: 'ibecoul',
+    authDomain: 'ibecoul.firebaseapp.com',
+    storageBucket: 'ibecoul.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCvgrt83-W0dVMMnbQZOth_IOSwy5Nrsug',
-    appId: '1:784815988556:android:057f9dbd029dc58badb9e9',
-    messagingSenderId: '784815988556',
-    projectId: 'ibecouleveilkidv2',
-    storageBucket: 'ibecouleveilkidv2.firebasestorage.app',
+    apiKey: 'AIzaSyDY-gx0xd4XOVZzYD7szX_KaQUI5h2yw-k',
+    appId: '1:847684786362:android:1406a81c0f9de54f870a83',
+    messagingSenderId: '847684786362',
+    projectId: 'ibecoul',
+    storageBucket: 'ibecoul.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyD49P-NwXg_icWFd0f8mIq3ffTcjDa0rhU',
-    appId: '1:784815988556:ios:ec06f11543a9236aadb9e9',
-    messagingSenderId: '784815988556',
-    projectId: 'ibecouleveilkidv2',
-    storageBucket: 'ibecouleveilkidv2.firebasestorage.app',
+    apiKey: 'AIzaSyBdpyUO27ORr1pxaqtispz9i2F8W8j6gwM',
+    appId: '1:847684786362:ios:576360f4590ec3df870a83',
+    messagingSenderId: '847684786362',
+    projectId: 'ibecoul',
+    storageBucket: 'ibecoul.firebasestorage.app',
     iosBundleId: 'com.example.eveilenfant',
   );
-
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyD49P-NwXg_icWFd0f8mIq3ffTcjDa0rhU',
-    appId: '1:784815988556:ios:ec06f11543a9236aadb9e9',
-    messagingSenderId: '784815988556',
-    projectId: 'ibecouleveilkidv2',
-    storageBucket: 'ibecouleveilkidv2.firebasestorage.app',
+    apiKey: 'AIzaSyBdpyUO27ORr1pxaqtispz9i2F8W8j6gwM',
+    appId: '1:847684786362:ios:576360f4590ec3df870a83',
+    messagingSenderId: '847684786362',
+    projectId: 'ibecoul',
+    storageBucket: 'ibecoul.firebasestorage.app',
     iosBundleId: 'com.example.eveilenfant',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyDcMbzEMSkvQ2hV1TsH3ny8fHCC_hRSgu4',
-    appId: '1:784815988556:web:201e24d0f6eef3edadb9e9',
-    messagingSenderId: '784815988556',
-    projectId: 'ibecouleveilkidv2',
-    authDomain: 'ibecouleveilkidv2.firebaseapp.com',
-    storageBucket: 'ibecouleveilkidv2.firebasestorage.app',
+    apiKey: 'AIzaSyBNdNNSy_XHOvrbdHrwn8O5popmoAx6RUA',
+    appId: '1:847684786362:web:ac0f8345f9168b16870a83',
+    messagingSenderId: '847684786362',
+    projectId: 'ibecoul',
+    authDomain: 'ibecoul.firebaseapp.com',
+    storageBucket: 'ibecoul.firebasestorage.app',
   );
 }
