@@ -1,5 +1,5 @@
-import 'package:eveilkid/features/auth/models/Avis.model.dart';
-import 'package:eveilkid/features/auth/repository/Avis.repository.dart';
+import 'package:eveilkid/features/avis/models/Avis.model.dart';
+import 'package:eveilkid/features/avis/repository/Avis.repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 

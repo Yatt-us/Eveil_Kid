@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:eveilkid/features/auth/models/Avis.model.dart';
+import 'package:eveilkid/features/avis/models/Avis.model.dart';
 
 
 class AvisRepository {

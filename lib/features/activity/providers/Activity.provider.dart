@@ -1,7 +1,7 @@
-import 'package:eveilkid/features/auth/models/Activite.model.dart';
-import 'package:eveilkid/features/auth/models/enums/ActivityCategory.enum.dart';
-import 'package:eveilkid/features/auth/models/enums/DifficultyLevel.enum.dart';
-import 'package:eveilkid/features/auth/repository/activite.repository.dart';
+import 'package:eveilkid/features/activity/models/Activite.model.dart';
+import 'package:eveilkid/features/activity/enums/ActivityCategory.enum.dart';
+import 'package:eveilkid/features/activity/enums/DifficultyLevel.enum.dart';
+import 'package:eveilkid/features/activity/repository/activite.repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 

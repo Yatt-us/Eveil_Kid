@@ -1,5 +1,5 @@
-import 'package:eveilkid/features/auth/models/Question.model.dart';
-import 'package:eveilkid/features/auth/repository/Question.repository.dart';
+import 'package:eveilkid/features/activity/questions/models/Question.model.dart';
+import 'package:eveilkid/features/activity/questions/repository/Question.repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 

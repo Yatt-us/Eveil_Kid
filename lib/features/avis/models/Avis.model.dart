@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:eveilkid/features/auth/models/enums/StatutAvis.enum.dart';
+import 'package:eveilkid/features/avis/enums/StatutAvis.enum.dart';
 
 
 

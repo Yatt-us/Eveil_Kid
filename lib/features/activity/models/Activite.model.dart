@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:eveilkid/features/auth/models/enums/ActivityCategory.enum.dart';
-import 'package:eveilkid/features/auth/models/enums/DifficultyLevel.enum.dart';
-import 'package:eveilkid/features/auth/models/enums/PublicationStatus.enum.dart';
+import 'package:eveilkid/features/activity/enums/ActivityCategory.enum.dart';
+import 'package:eveilkid/features/activity/enums/DifficultyLevel.enum.dart';
+import 'package:eveilkid/features/activity/enums/PublicationStatus.enum.dart';
 
 
 
