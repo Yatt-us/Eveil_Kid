@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:eveilkid/features/auth/repository/categorie_repository.dart';
+import 'package:eveilkid/features/categories/repository/categorie_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/categorie.dart';

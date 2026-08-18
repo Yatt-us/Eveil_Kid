@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:eveilkid/features/auth/repository/jouet_repository.dart';
+import 'package:eveilkid/features/jouets/repository/jouet_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/jouet.dart';
