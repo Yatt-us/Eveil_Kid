@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class Tutoriel {
   final String tutorielId;
   final String categorieId;
-  final String? jouetLieId;
+  final String jouetLieId;
   final String createurId;
   final String titre;
   final String description;
@@ -21,7 +21,7 @@ class Tutoriel {
   Tutoriel({
     required this.tutorielId,
     required this.categorieId,
-    this.jouetLieId,
+    required this.jouetLieId,
     required this.createurId,
     required this.titre,
     required this.description,
@@ -45,7 +45,7 @@ class Tutoriel {
     return Tutoriel(
       tutorielId: doc.id,
       categorieId: data['categorieId'] as String,
-      jouetLieId: data['jouetLieId'] as String?,
+      jouetLieId: data['jouetLieId'] as String,
       createurId: data['createurId'] as String,
       titre: data['titre'] as String,
       description: data['description'] as String,

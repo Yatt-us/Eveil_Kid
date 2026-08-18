@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 
-import 'package:eveilkid/features/auth/models/tutoriels/tutoriel.dart';
+import 'package:eveilkid/features/tutoriels/models/tutoriel.dart';
 class TutorielRepository {
   final FirebaseFirestore _firestore;
 
@@ -35,21 +35,23 @@ class TutorielRepository {
   }
 
   // Ajouter un tutoriel
-  Future<String> createTutoriel(Tutoriel tutoriel) async {
-    final docRef = _tutorielsCollection.doc();
+ Future<String> createTutoriel(Tutoriel tutoriel) async {
+  final docRef = _tutorielsCollection.doc();
 
-    await docRef.set(tutoriel.toFirestore());
+  await docRef.set({
+    'id': docRef.id,
+    ...tutoriel.toFirestore(),
+  });
 
-    return docRef.id;
-  }
+  return docRef.id;
+}
 
-  // Modifier un tutoriel
-  Future<void> updateTutoriel(Tutoriel tutoriel) async {
-    await _tutorielsCollection
-        .doc(tutoriel.tutorielId)
-        .update(tutoriel.toFirestore());
-  }
-
+// Modifier un tutoriel
+Future<void> updateTutoriel(Tutoriel tutoriel) async {
+  await _tutorielsCollection
+      .doc(tutoriel.tutorielId)
+      .update(tutoriel.toFirestore());
+}
   // Supprimer un tutoriel
   Future<void> deleteTutoriel(String tutorielId) async {
     await _tutorielsCollection.doc(tutorielId).delete();
