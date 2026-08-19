@@ -1,58 +1,92 @@
+// lib/features/parent/providers/parent_provider.dart
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/parent_model.dart';
-// Note : Assurez-vous d'importer EnfantModel si défini dans un autre fichier
 import '../repository/parent_repository.dart';
 
-final parentRepositoryProvider = Provider<ParentRepository>((ref) {
-  return ParentRepositoryImpl();
+final currentUserIdProvider = Provider<String>((ref) {
+  try {
+    final authUser = FirebaseAuth.instance.currentUser;
+    return authUser?.uid ?? 'parent_default_id';
+  } catch (_) {
+    return 'parent_default_id';
+  }
 });
 
-class ParentNotifier extends AsyncNotifier<ParentModel> {
+final parentRepositoryProvider = Provider<ParentRepository>((ref) {
+  return ParentFirestoreRepository();
+});
 
+final parentProfileStreamProvider = StreamProvider<UtilisateurModel>((ref) {
+  final repository = ref.watch(parentRepositoryProvider);
+  final userId = ref.watch(currentUserIdProvider);
+  return repository.watchParentProfile(userId);
+});
+
+final enfantsStreamProvider = StreamProvider<List<EnfantModel>>((ref) {
+  final repository = ref.watch(parentRepositoryProvider);
+  final userId = ref.watch(currentUserIdProvider);
+  return repository.watchEnfants(userId);
+});
+
+class ParentNotifier extends AsyncNotifier<UtilisateurModel> {
   @override
-  Future<ParentModel> build() async {
-    // Initialisation : on charge un profil par défaut pour le développement
+  Future<UtilisateurModel> build() async {
     final repository = ref.read(parentRepositoryProvider);
-    return await repository.fetchParentProfile('default_parent_id');
+    final userId = ref.read(currentUserIdProvider);
+    return await repository.fetchParentProfile(userId);
   }
 
-  // Charger le profil du parent connecté
-  Future<void> chargerProfil(String parentId) async {
-    // Met automatiquement l'état en AsyncLoading
+  Future<void> chargerProfil([String? id]) async {
+    final String targetId = id ?? ref.read(currentUserIdProvider);
     state = const AsyncLoading();
-
-    // state = await AsyncValue.guard(...) gère automatiquement le try/catch,
-    // la capture des erreurs et du stackTrace.
     state = await AsyncValue.guard(() async {
       final repository = ref.read(parentRepositoryProvider);
-      return await repository.fetchParentProfile(parentId);
+      return await repository.fetchParentProfile(targetId);
     });
   }
 
-  // Ajouter un enfant et mettre à jour l'état de manière réactive
-  Future<void> ajouterEnfant(String parentId, EnfantModel enfant) async {
-    final currentState = state;
+  Future<void> updateParentProfile(UtilisateurModel updatedParent) async {
+    state = await AsyncValue.guard(() async {
+      final repository = ref.read(parentRepositoryProvider);
+      final saved = await repository.updateParentProfile(updatedParent);
+      return saved;
+    });
+  }
 
-    // Vérifie si on a déjà des données valides à modifier
-    if (currentState is AsyncData<ParentModel>) {
-      final parentActuel = currentState.value;
+  Future<void> ajouterEnfant(EnfantModel enfant) async {
+    final userId = ref.read(currentUserIdProvider);
+    final toAdd = enfant.copyWith(utilisateurId: userId);
 
-      // Basculer en mode chargement tout en conservant les données actuelles
-      state = AsyncLoading<ParentModel>().copyWithPrevious(currentState);
+    state = await AsyncValue.guard(() async {
+      final repository = ref.read(parentRepositoryProvider);
+      await repository.ajouterEnfant(toAdd);
+      return await repository.fetchParentProfile(userId);
+    });
+  }
 
-      state = await AsyncValue.guard(() async {
-        final repository = ref.read(parentRepositoryProvider);
-        await repository.ajouterEnfant(parentId, enfant);
+  Future<void> modifierEnfant(EnfantModel enfant) async {
+    final userId = ref.read(currentUserIdProvider);
 
-        // Crée la nouvelle liste et retourne le parent mis à jour
-        final enfantsAjour = [...parentActuel.enfants, enfant];
-        return parentActuel.copyWith(enfants: enfantsAjour);
-      });
-    }
+    state = await AsyncValue.guard(() async {
+      final repository = ref.read(parentRepositoryProvider);
+      await repository.modifierEnfant(enfant);
+      return await repository.fetchParentProfile(userId);
+    });
+  }
+
+  Future<void> supprimerEnfant(String enfantId) async {
+    final userId = ref.read(currentUserIdProvider);
+
+    state = await AsyncValue.guard(() async {
+      final repository = ref.read(parentRepositoryProvider);
+      await repository.supprimerEnfant(enfantId, userId);
+      return await repository.fetchParentProfile(userId);
+    });
   }
 }
 
-// 3. Provider de l'état du Parent lié au AsyncNotifier
-final parentNotifierProvider = AsyncNotifierProvider<ParentNotifier, ParentModel>(() {
+final parentNotifierProvider = AsyncNotifierProvider<ParentNotifier, UtilisateurModel>(() {
   return ParentNotifier();
 });

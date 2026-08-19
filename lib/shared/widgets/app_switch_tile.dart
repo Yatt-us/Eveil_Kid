@@ -28,7 +28,7 @@ class AppSwitchTile extends StatelessWidget {
       child: SwitchListTile(
         value: value,
         onChanged: onChanged,
-        activeColor: AppColors.primary,
+        activeThumbColor: AppColors.primary,
         title: Text(
           title,
           style: const TextStyle(

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:eveilkid/firebase_options.dart';
 import 'package:eveilkid/core/themes/AppTheme.dart';
-import 'package:eveilkid/features/parent/presentation/pages/accueil_parent.dart';
+import 'package:eveilkid/features/parent/presentation/pages/parent_main_scaffold.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      home: const AccueilParentPage(),
+      home: const ParentMainScaffold(),
     );
   }
 }

@@ -7,8 +7,10 @@ import '../../../../core/constants/AppPadding.dart';
 import '../../../../core/constants/AppRadius.dart';
 import '../../../../core/constants/AppSpacing.dart';
 import '../../../../core/constants/AppTextStyles.dart';
-import '../../providers/parent_provider.dart';
 import '../../models/parent_model.dart';
+import '../../providers/parent_provider.dart';
+import 'ajouter_enfant.dart';
+import 'liste_enfants.dart';
 
 class AccueilParentPage extends ConsumerWidget {
   const AccueilParentPage({super.key});
@@ -23,23 +25,32 @@ class AccueilParentPage extends ConsumerWidget {
         backgroundColor: AppColors.background,
         body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
       ),
-      error: (err, stack) => Scaffold(
+      error: (err, _) => Scaffold(
         backgroundColor: AppColors.background,
         body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, color: AppColors.danger, size: 48),
-              AppSpacing.verticalMd,
-              Text('Erreur lors du chargement', style: AppTextStyles.headingSmall),
-              AppSpacing.verticalSm,
-              Text('$err', style: AppTextStyles.bodySmall),
-              AppSpacing.verticalLg,
-              ElevatedButton(
-                onPressed: () => ref.invalidate(parentNotifierProvider),
-                child: const Text('Réessayer'),
-              ),
-            ],
+          child: SingleChildScrollView(
+            padding: AppPadding.screen,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, color: AppColors.danger, size: 48),
+                AppSpacing.verticalMd,
+                Text('Erreur lors du chargement', style: AppTextStyles.headingSmall),
+                AppSpacing.verticalSm,
+                Text(
+                  '$err',
+                  style: AppTextStyles.bodySmall,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                AppSpacing.verticalLg,
+                ElevatedButton(
+                  onPressed: () => ref.invalidate(parentNotifierProvider),
+                  child: const Text('Réessayer'),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -53,10 +64,7 @@ class AccueilParentPage extends ConsumerWidget {
       backgroundColor: AppColors.background,
       appBar: _buildAppBar(unreadNotifs: 3),
       body: RefreshIndicator(
-        onRefresh: () async {
-          // Utilise chargerProfil ou invalidate pour rafraîchir
-          // Pour l'instant on simule
-        },
+        onRefresh: () async {},
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: AppPadding.screen,
@@ -68,36 +76,44 @@ class AccueilParentPage extends ConsumerWidget {
               // --- EN-TÊTE DYNAMIQUE ---
               Text(
                 aDesEnfants ? 'Bonjour, ${parent.name}' : 'Bienvenue !',
-                style: AppTextStyles.headingLarge,
+                style: AppTextStyles.headingLarge.copyWith(fontWeight: FontWeight.w800),
               ),
               AppSpacing.verticalXs,
               Text(
                 aDesEnfants
                     ? 'Ravie de vous revoir !'
-                    : 'Ajouter un enfant pour personnaliser son expérience.',
+                    : 'Ajouter un enfant pour personnalise\nson experiance.',
                 style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
               ),
               AppSpacing.verticalLg,
 
               // --- SECTION ENFANTS (CONDITIONNELLE) ---
               if (!aDesEnfants) ...[
-                _buildAddChildDottedCard(context),
+                _buildAddChildBigDottedCard(context),
               ] else ...[
-                _buildSectionHeader(title: 'Mes enfants', onSeeAll: () {}),
+                _buildSectionHeader(
+                  title: 'Mes enfants',
+                  onSeeAll: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ListeEnfantsPage()),
+                    );
+                  },
+                ),
                 AppSpacing.verticalMd,
-                _buildChildrenHorizontalList(parent.enfants),
+                _buildChildrenHorizontalList(context, parent.enfants),
               ],
               AppSpacing.verticalXxl,
 
               // --- CATÉGORIES DE JOUETS ---
-              _buildSectionHeader(title: 'Catégories de jouets', onSeeAll: () {}),
+              _buildSectionHeader(title: 'Categories de jouets', onSeeAll: () {}),
               AppSpacing.verticalMd,
               _buildCategoriesGrid(),
               AppSpacing.verticalXxl,
 
-              // --- BANNIÈRE PROMOTIONNELLE ---
+              // --- BANNIÈRE PROMOTIONNELLE (SI PAS D'ENFANTS) ---
               if (!aDesEnfants) ...[
-                _buildPromoBanner(),
+                _buildPromoBanner(context),
                 AppSpacing.verticalXxl,
               ],
 
@@ -117,20 +133,24 @@ class AccueilParentPage extends ConsumerWidget {
     return AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
+      titleSpacing: 16,
       title: Row(
         children: [
           Container(
-            padding: AppPadding.allXs,
+            padding: const EdgeInsets.all(6),
             decoration: const BoxDecoration(
               color: AppColors.surfaceVariant,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.child_care, color: AppColors.primary, size: 24),
+            child: const Icon(Icons.child_care_rounded, color: AppColors.primary, size: 24),
           ),
           AppSpacing.horizontalSm,
           Text(
             'Eveil Enfant',
-            style: AppTextStyles.headingSmall.copyWith(color: AppColors.primary),
+            style: AppTextStyles.headingSmall.copyWith(
+              color: AppColors.primary,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
@@ -139,7 +159,7 @@ class AccueilParentPage extends ConsumerWidget {
           alignment: Alignment.center,
           children: [
             IconButton(
-              icon: const Icon(Icons.notifications_none, color: AppColors.icon, size: 28),
+              icon: const Icon(Icons.notifications_none, color: AppColors.textPrimary, size: 28),
               onPressed: () {},
             ),
             if (unreadNotifs > 0)
@@ -147,14 +167,14 @@ class AccueilParentPage extends ConsumerWidget {
                 right: 8,
                 top: 8,
                 child: Container(
-                  padding: AppPadding.allXs,
+                  padding: const EdgeInsets.all(4),
                   decoration: const BoxDecoration(
                     color: AppColors.danger,
                     shape: BoxShape.circle,
                   ),
                   child: Text(
                     '$unreadNotifs',
-                    style: AppTextStyles.bodySmall.copyWith(
+                    style: const TextStyle(
                       color: AppColors.white,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
@@ -169,23 +189,31 @@ class AccueilParentPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildAddChildDottedCard(BuildContext context) {
+  Widget _buildAddChildBigDottedCard(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: AppPadding.card,
+      padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: AppRadius.card,
-        border: Border.all(color: AppColors.primaryLight, width: 1.5),
+        border: Border.all(
+          color: AppColors.primaryLight.withValues(alpha: 0.5),
+          width: 1.5,
+        ),
       ),
       child: InkWell(
-        onTap: () {},
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AjouterEnfantPage()),
+          );
+        },
         borderRadius: AppRadius.card,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: AppPadding.allSm,
+              padding: const EdgeInsets.all(8),
               decoration: const BoxDecoration(
                 color: AppColors.primary,
                 shape: BoxShape.circle,
@@ -195,7 +223,10 @@ class AccueilParentPage extends ConsumerWidget {
             AppSpacing.verticalSm,
             Text(
               'Ajouter un enfant',
-              style: AppTextStyles.buttonMedium.copyWith(color: AppColors.primary),
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),
@@ -203,33 +234,56 @@ class AccueilParentPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildChildrenHorizontalList(List<EnfantModel> children) {
+  Widget _buildChildrenHorizontalList(BuildContext context, List<EnfantModel> children) {
+    final displayChildren = children.take(3).toList();
+
     return SizedBox(
-      height: 160,
+      height: 175,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: children.length + 1,
+        itemCount: displayChildren.length + 1,
         itemBuilder: (context, index) {
-          if (index == children.length) {
-            return _buildAddChildMiniCard();
+          if (index == displayChildren.length) {
+            return _buildAddChildMiniCard(context);
           }
 
-          final child = children[index];
+          final child = displayChildren[index];
+
+          // Badges colorés selon le niveau comme sur l'image
+          Color badgeBg;
+          Color badgeText;
+
+          if (child.level.contains('3')) {
+            badgeBg = const Color(0xFFEDE7F6);
+            badgeText = const Color(0xFF7E57C2);
+          } else if (child.level.contains('4')) {
+            badgeBg = const Color(0xFFE0F2F1);
+            badgeText = const Color(0xFF00897B);
+          } else {
+            badgeBg = const Color(0xFFFFF3E0);
+            badgeText = const Color(0xFFFB8C00);
+          }
+
           return Container(
-            width: 110,
+            width: 115,
             margin: const EdgeInsets.only(right: AppSpacing.md),
-            padding: AppPadding.cardSmall,
-            decoration: const BoxDecoration(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+            decoration: BoxDecoration(
               color: AppColors.surface,
-              borderRadius: AppRadius.childCard,
+              borderRadius: AppRadius.card,
+              border: Border.all(color: AppColors.border),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 28,
                   backgroundColor: AppColors.surfaceVariant,
-                  child: Icon(Icons.person, color: AppColors.primary, size: 30),
+                  child: Icon(
+                    Icons.face_rounded,
+                    color: badgeText,
+                    size: 36,
+                  ),
                 ),
                 AppSpacing.verticalSm,
                 Text(
@@ -238,18 +292,21 @@ class AccueilParentPage extends ConsumerWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                Text('${child.age} ans', style: AppTextStyles.bodySmall),
+                Text(
+                  '${child.age} ans',
+                  style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                ),
                 AppSpacing.verticalXs,
                 Container(
-                  padding: AppPadding.horizontalSm,
-                  decoration: const BoxDecoration(
-                    color: AppColors.childSurfaceVariant,
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: badgeBg,
                     borderRadius: AppRadius.badge,
                   ),
                   child: Text(
                     child.level,
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.childTextPrimary,
+                    style: TextStyle(
+                      color: badgeText,
                       fontWeight: FontWeight.bold,
                       fontSize: 10,
                     ),
@@ -263,29 +320,37 @@ class AccueilParentPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildAddChildMiniCard() {
+  Widget _buildAddChildMiniCard(BuildContext context) {
     return Container(
       width: 110,
       margin: const EdgeInsets.only(right: AppSpacing.md),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: AppRadius.childCard,
-        border: Border.all(color: AppColors.border),
+        borderRadius: AppRadius.card,
+        border: Border.all(
+          color: AppColors.border,
+          style: BorderStyle.solid,
+        ),
       ),
       child: InkWell(
-        onTap: () {},
-        borderRadius: AppRadius.childCard,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AjouterEnfantPage()),
+          );
+        },
+        borderRadius: AppRadius.card,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.add, size: 32, color: AppColors.primary),
+            const Icon(Icons.add, size: 36, color: AppColors.textPrimary),
             AppSpacing.verticalSm,
             Text(
               'Ajouter\nun enfant',
               textAlign: TextAlign.center,
               style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.primary,
-                fontWeight: FontWeight.bold,
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
@@ -298,7 +363,10 @@ class AccueilParentPage extends ConsumerWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title, style: AppTextStyles.headingSmall),
+        Text(
+          title,
+          style: AppTextStyles.headingSmall.copyWith(fontWeight: FontWeight.bold),
+        ),
         GestureDetector(
           onTap: onSeeAll,
           child: Text(
@@ -312,14 +380,54 @@ class AccueilParentPage extends ConsumerWidget {
 
   Widget _buildCategoriesGrid() {
     final categories = [
-      'Éveil &\nApprentissage',
-      'Construction\n& Assemblage',
-      'Jeux d\'imitation\n& Rôle',
-      'Créatif &\nArtistique',
-      'Plein air &\nSport',
-      'Poupées &\nPeluches',
-      'Jeux de société\n& Puzzles',
-      'Technologie\n& Électronique',
+      {
+        'title': 'Éveil &\nApprentissage',
+        'icon': Icons.menu_book_rounded,
+        'bg': const Color(0xFFFFF9E6),
+        'color': const Color(0xFF358CED),
+      },
+      {
+        'title': 'Construction\n& Assemblage',
+        'icon': Icons.view_in_ar_rounded,
+        'bg': const Color(0xFFFFF7E6),
+        'color': const Color(0xFFFFA000),
+      },
+      {
+        'title': 'Jeux d\'imitation\n& Rôle',
+        'icon': Icons.soup_kitchen_rounded,
+        'bg': const Color(0xFFFBF4FF),
+        'color': const Color(0xFF9C27B0),
+      },
+      {
+        'title': 'Créatif &\nArtistique',
+        'icon': Icons.palette_rounded,
+        'bg': const Color(0xFFFFF9E6),
+        'color': const Color(0xFFFFB300),
+      },
+      {
+        'title': 'Plein air &\nSport',
+        'icon': Icons.sports_soccer_rounded,
+        'bg': const Color(0xFFF2FBF6),
+        'color': const Color(0xFFE53935),
+      },
+      {
+        'title': 'Poupées &\nPeluches',
+        'icon': Icons.pets_rounded,
+        'bg': const Color(0xFFFFF4F7),
+        'color': const Color(0xFFEC407A),
+      },
+      {
+        'title': 'Jeux de société\n& Puzzles',
+        'icon': Icons.extension_rounded,
+        'bg': const Color(0xFFF3F7FF),
+        'color': const Color(0xFF1E88E5),
+      },
+      {
+        'title': 'Technologie\n& Électronique',
+        'icon': Icons.smart_toy_rounded,
+        'bg': const Color(0xFFF0F9FF),
+        'color': const Color(0xFF00ACC1),
+      },
     ];
 
     return GridView.builder(
@@ -329,28 +437,34 @@ class AccueilParentPage extends ConsumerWidget {
         crossAxisCount: 4,
         crossAxisSpacing: AppSpacing.sm,
         mainAxisSpacing: AppSpacing.sm,
-        childAspectRatio: 0.75,
+        childAspectRatio: 0.78,
       ),
       itemCount: categories.length,
       itemBuilder: (context, index) {
+        final cat = categories[index];
         return Container(
-          padding: AppPadding.allXs,
-          decoration: const BoxDecoration(
-            color: AppColors.surfaceVariant,
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          decoration: BoxDecoration(
+            color: cat['bg'] as Color,
             borderRadius: AppRadius.card,
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.toys_outlined, size: 28, color: AppColors.primary),
+              Icon(
+                cat['icon'] as IconData,
+                size: 30,
+                color: cat['color'] as Color,
+              ),
               AppSpacing.verticalXs,
               Text(
-                categories[index],
+                cat['title'] as String,
                 textAlign: TextAlign.center,
                 style: AppTextStyles.bodySmall.copyWith(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
+                  height: 1.15,
                 ),
               ),
             ],
@@ -360,12 +474,12 @@ class AccueilParentPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildPromoBanner() {
+  Widget _buildPromoBanner(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: AppPadding.cardLarge,
-      decoration: const BoxDecoration(
-        color: AppColors.surfaceVariant,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1EEFA),
         borderRadius: AppRadius.card,
       ),
       child: Row(
@@ -376,23 +490,38 @@ class AccueilParentPage extends ConsumerWidget {
               children: [
                 const Text(
                   'Des jouets pour chaque étape de leur croissance',
-                  style: AppTextStyles.headingSmall,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
                 AppSpacing.verticalMd,
                 ElevatedButton(
                   onPressed: () {},
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    padding: AppPadding.buttonSmall,
-                    shape: const RoundedRectangleBorder(borderRadius: AppRadius.buttonSmall),
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                    minimumSize: Size.zero,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   ),
-                  child: const Text('Découvrir', style: AppTextStyles.buttonLarge),
+                  child: const Text(
+                    'Découvrir',
+                    style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ],
             ),
           ),
           AppSpacing.horizontalMd,
-          const Icon(Icons.smart_toy, size: 60, color: AppColors.warning),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.white.withValues(alpha: 0.7),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.smart_toy, size: 48, color: AppColors.warning),
+          ),
         ],
       ),
     );
@@ -400,17 +529,18 @@ class AccueilParentPage extends ConsumerWidget {
 
   Widget _buildPopularToysList() {
     return SizedBox(
-      height: 190,
+      height: 195,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: 3,
         itemBuilder: (context, index) {
           return Container(
-            width: 150,
+            width: 180,
             margin: const EdgeInsets.only(right: AppSpacing.md),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: AppRadius.card,
+              border: Border.all(color: AppColors.border),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -421,19 +551,23 @@ class AccueilParentPage extends ConsumerWidget {
                       color: AppColors.surfaceVariant,
                       borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
                     ),
-                    child: const Center(
-                      child: Icon(Icons.image, color: AppColors.disabled, size: 40),
+                    child: Center(
+                      child: Icon(
+                        Icons.smart_toy_outlined,
+                        color: AppColors.primary.withValues(alpha: 0.6),
+                        size: 44,
+                      ),
                     ),
                   ),
                 ),
                 Padding(
-                  padding: AppPadding.cardSmall,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Nom du jouet',
-                        style: AppTextStyles.bodyMedium,
+                        'Nom du jouet - contenu cccc',
+                        style: TextStyle(fontSize: 12, color: AppColors.textPrimary),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -441,15 +575,20 @@ class AccueilParentPage extends ConsumerWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            '5000 CFA',
-                            style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.bold),
+                          Expanded(
+                            child: Text(
+                              '5000 CFA',
+                              style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.bold),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                           Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: const [
-                              Icon(Icons.star, size: 12, color: AppColors.warning),
-                              AppSpacing.horizontalXs,
-                              Text('0.0', style: AppTextStyles.bodySmall),
+                              Icon(Icons.star, size: 13, color: AppColors.warning),
+                              SizedBox(width: 2),
+                              Text('0.0', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                             ],
                           ),
                         ],
