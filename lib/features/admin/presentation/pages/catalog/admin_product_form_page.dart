@@ -1,8 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/core/constants/AppSpacing.dart';
+import 'package:eveilkid/core/router/app_routes.dart';
 import 'package:eveilkid/features/jouets/models/jouet.dart';
 import 'package:eveilkid/features/jouets/providers/jouet_provider.dart';
 import 'package:eveilkid/features/categories/models/categorie.dart';
@@ -154,7 +156,11 @@ class _AdminProductFormPageState extends ConsumerState<AdminProductFormPage> {
       }
 
       if (mounted) {
-        Navigator.of(context).pop();
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go(AppRoutes.adminProducts);
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: AppColors.success,
@@ -196,7 +202,13 @@ class _AdminProductFormPageState extends ConsumerState<AdminProductFormPage> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go(AppRoutes.adminProducts);
+            }
+          },
         ),
       ),
       body: SingleChildScrollView(

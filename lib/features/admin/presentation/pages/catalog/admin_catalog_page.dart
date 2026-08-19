@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:eveilkid/core/constants/app_colors.dart';
+import 'package:eveilkid/core/router/app_routes.dart';
 import 'package:eveilkid/features/admin/providers/admin_catalog_controller.dart';
 import 'admin_category_list_page.dart';
-import 'admin_product_form_page.dart';
 import 'admin_product_list_page.dart';
 import '../../widgets/admin_category_form_dialog.dart';
 
@@ -141,11 +142,7 @@ class _AdminCatalogPageState extends ConsumerState<AdminCatalogPage>
         ),
         onPressed: () {
           if (_tabController.index == 0) {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (ctx) => const AdminProductFormPage(),
-              ),
-            );
+            context.push(AppRoutes.adminProductForm);
           } else {
             showDialog(
               context: context,

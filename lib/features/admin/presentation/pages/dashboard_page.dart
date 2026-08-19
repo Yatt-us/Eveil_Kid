@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/core/constants/AppSpacing.dart';
+import 'package:eveilkid/core/router/app_routes.dart';
 import 'package:eveilkid/features/admin/core/models/admin_role.dart';
 import 'package:eveilkid/features/admin/core/providers/admin_role_provider.dart';
-import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_category_list_page.dart';
-import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_product_form_page.dart';
-import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_product_list_page.dart';
 import 'package:eveilkid/features/admin/presentation/widgets/admin_drawer.dart';
 import 'package:eveilkid/features/admin/providers/admin_catalog_controller.dart';
-import 'package:eveilkid/features/admin/users/presentation/pages/admin_user_list_page.dart';
 import 'package:eveilkid/features/admin/users/providers/admin_user_provider.dart';
 import 'package:eveilkid/shared/widgets/app_card.dart';
 
@@ -121,13 +119,7 @@ class DashboardPage extends ConsumerWidget {
                   subtitle: "${stats.activeProducts} actifs",
                   icon: Icons.toys_outlined,
                   color: AppColors.primary,
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (ctx) => const AdminProductListPage(),
-                      ),
-                    );
-                  },
+                  onTap: () => context.push(AppRoutes.adminProducts),
                 ),
                 _buildStatCard(
                   title: "Catégories",
@@ -135,13 +127,7 @@ class DashboardPage extends ConsumerWidget {
                   subtitle: "Organisées",
                   icon: Icons.category_outlined,
                   color: AppColors.teal,
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (ctx) => const AdminCategoryListPage(),
-                      ),
-                    );
-                  },
+                  onTap: () => context.push(AppRoutes.adminCategories),
                 ),
                 _buildStatCard(
                   title: "Ruptures",
@@ -155,11 +141,7 @@ class DashboardPage extends ConsumerWidget {
                     final notifier =
                         ref.read(adminProductFilterProvider.notifier);
                     notifier.setStockFilter(AdminStockFilter.outOfStock);
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (ctx) => const AdminProductListPage(),
-                      ),
-                    );
+                    context.push(AppRoutes.adminProducts);
                   },
                 ),
                 if (currentRole.canManageUsers)
@@ -169,13 +151,7 @@ class DashboardPage extends ConsumerWidget {
                     subtitle: "${userStats.activeUsers} actifs",
                     icon: Icons.people_outline,
                     color: AppColors.danger,
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (ctx) => const AdminUserListPage(),
-                        ),
-                      );
-                    },
+                    onTap: () => context.push(AppRoutes.adminUsers),
                   )
                 else
                   _buildStatCard(
@@ -188,11 +164,7 @@ class DashboardPage extends ConsumerWidget {
                       final notifier =
                           ref.read(adminProductFilterProvider.notifier);
                       notifier.setPopularOnly(true);
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (ctx) => const AdminProductListPage(),
-                        ),
-                      );
+                      context.push(AppRoutes.adminProducts);
                     },
                   ),
               ],
@@ -214,13 +186,7 @@ class DashboardPage extends ConsumerWidget {
             AppCard(
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(16),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (ctx) => const AdminProductListPage(),
-                  ),
-                );
-              },
+              onTap: () => context.push(AppRoutes.adminProducts),
               child: Row(
                 children: [
                   Container(
@@ -265,13 +231,7 @@ class DashboardPage extends ConsumerWidget {
             AppCard(
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(16),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (ctx) => const AdminCategoryListPage(),
-                  ),
-                );
-              },
+              onTap: () => context.push(AppRoutes.adminCategories),
               child: Row(
                 children: [
                   Container(
@@ -317,13 +277,7 @@ class DashboardPage extends ConsumerWidget {
               AppCard(
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(16),
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (ctx) => const AdminUserListPage(),
-                    ),
-                  );
-                },
+                onTap: () => context.push(AppRoutes.adminUsers),
                 child: Row(
                   children: [
                     Container(
@@ -367,13 +321,7 @@ class DashboardPage extends ConsumerWidget {
             // Carte Nouvel Ajout de Produit
             AppCard(
               padding: const EdgeInsets.all(16),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (ctx) => const AdminProductFormPage(),
-                  ),
-                );
-              },
+              onTap: () => context.push(AppRoutes.adminProductForm),
               child: Row(
                 children: [
                   Container(

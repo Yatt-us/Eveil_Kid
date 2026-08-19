@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/core/constants/AppSpacing.dart';
+import 'package:eveilkid/core/router/app_routes.dart';
 import 'package:eveilkid/features/admin/presentation/widgets/admin_drawer.dart';
 import 'package:eveilkid/features/admin/presentation/widgets/admin_product_card.dart';
 import 'package:eveilkid/features/admin/providers/admin_catalog_controller.dart';
@@ -11,7 +13,6 @@ import 'package:eveilkid/features/jouets/providers/jouet_provider.dart';
 import 'package:eveilkid/shared/widgets/app_chip.dart';
 import 'package:eveilkid/shared/widgets/app_search_bar.dart';
 import 'package:eveilkid/shared/widgets/app_states.dart';
-import 'admin_product_form_page.dart';
 
 class AdminProductListPage extends ConsumerWidget {
   const AdminProductListPage({super.key});
@@ -230,13 +231,7 @@ class AdminProductListPage extends ConsumerWidget {
                         : "Ajouter un produit",
                     onActionPressed: filterState.hasActiveFilters
                         ? () => filterNotifier.resetFilters()
-                        : () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (ctx) => const AdminProductFormPage(),
-                              ),
-                            );
-                          },
+                        : () => context.push(AppRoutes.adminProductForm),
                   );
                 }
 
@@ -251,14 +246,10 @@ class AdminProductListPage extends ConsumerWidget {
                       final jouet = products[index];
                       return AdminProductCard(
                         jouet: jouet,
-                        onEdit: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (ctx) =>
-                                  AdminProductFormPage(jouetToEdit: jouet),
-                            ),
-                          );
-                        },
+                        onEdit: () => context.push(
+                          AppRoutes.adminProductForm,
+                          extra: jouet,
+                        ),
                       );
                     },
                   ),
@@ -273,13 +264,7 @@ class AdminProductListPage extends ConsumerWidget {
         foregroundColor: AppColors.white,
         icon: const Icon(Icons.add),
         label: const Text("Nouveau Produit"),
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (ctx) => const AdminProductFormPage(),
-            ),
-          );
-        },
+        onPressed: () => context.push(AppRoutes.adminProductForm),
       ),
     );
   }

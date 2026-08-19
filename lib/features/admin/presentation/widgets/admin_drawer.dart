@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:eveilkid/core/constants/app_colors.dart';
+import 'package:eveilkid/core/router/app_routes.dart';
 import 'package:eveilkid/features/admin/core/models/admin_role.dart';
 import 'package:eveilkid/features/admin/core/providers/admin_role_provider.dart';
-import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_category_list_page.dart';
-import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_product_list_page.dart';
-import 'package:eveilkid/features/admin/presentation/pages/dashboard_page.dart';
 import 'package:eveilkid/features/admin/providers/admin_catalog_controller.dart';
-import 'package:eveilkid/features/admin/users/presentation/pages/admin_user_list_page.dart';
 import 'package:eveilkid/features/admin/users/providers/admin_user_provider.dart';
+import 'package:eveilkid/features/auth/providers/auth_provider.dart';
+import 'package:eveilkid/shared/widgets/app_dialogs.dart';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Routes du menu d'administration
@@ -282,45 +282,31 @@ class _AdminNavigationContent extends ConsumerWidget {
 
   void _navigate(BuildContext context, AdminNavRoute route) {
     if (currentRoute == route) {
-      if (isDrawer) Navigator.maybePop(context);
+      if (isDrawer && context.canPop()) context.pop();
       return;
     }
-    if (isDrawer) Navigator.pop(context);
+    if (isDrawer && context.canPop()) context.pop();
 
-    Widget page;
     switch (route) {
       case AdminNavRoute.dashboard:
-        page = const DashboardPage();
+        context.go(AppRoutes.admin);
         break;
       case AdminNavRoute.products:
-        page = const AdminProductListPage();
+        context.go(AppRoutes.adminProducts);
         break;
       case AdminNavRoute.categories:
-        page = const AdminCategoryListPage();
+        context.go(AppRoutes.adminCategories);
         break;
       case AdminNavRoute.utilisateurs:
-        page = const AdminUserListPage();
+        context.go(AppRoutes.adminUsers);
         break;
       default:
         return;
     }
-
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        pageBuilder: (ctx, anim1, anim2) => page,
-        transitionsBuilder: (ctx, animation, anim2, child) {
-          return FadeTransition(
-            opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
-            child: child,
-          );
-        },
-        transitionDuration: const Duration(milliseconds: 160),
-      ),
-    );
   }
 
   void _showComingSoon(BuildContext context, String module) {
-    if (isDrawer) Navigator.maybePop(context);
+    if (isDrawer && context.canPop()) context.pop();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
@@ -336,7 +322,7 @@ class _AdminNavigationContent extends ConsumerWidget {
   }
 
   void _showAccessDenied(BuildContext context) {
-    if (isDrawer) Navigator.maybePop(context);
+    if (isDrawer && context.canPop()) context.pop();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
@@ -477,7 +463,9 @@ class _AdminNavHeader extends StatelessWidget {
               ),
               if (isDrawer)
                 IconButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () {
+                    if (context.canPop()) context.pop();
+                  },
                   icon: const Icon(Icons.close_rounded, size: 20, color: AppColors.icon),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
@@ -833,7 +821,7 @@ class _AdminBadge extends StatelessWidget {
 // Footer Épuré
 // ──────────────────────────────────────────────────────────────────────────────
 
-class _AdminNavFooter extends StatelessWidget {
+class _AdminNavFooter extends ConsumerWidget {
   final AdminRole role;
   final bool isCollapsed;
 
@@ -842,12 +830,32 @@ class _AdminNavFooter extends StatelessWidget {
     required this.isCollapsed,
   });
 
+  Future<void> _logout(BuildContext context, WidgetRef ref) async {
+    final confirmed = await AppDialogs.showConfirmDialog(
+      context: context,
+      title: 'Déconnexion Admin',
+      message: 'Êtes-vous sûr de vouloir vous déconnecter de la session administration ?',
+      confirmText: 'Se déconnecter',
+      cancelText: 'Annuler',
+      isDanger: true,
+    );
+
+    if (confirmed == true && context.mounted) {
+      await ref.read(authProvider.notifier).logout();
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authUser = ref.watch(authProvider).utilisateur;
     final isAdmin = role == AdminRole.admin;
     final roleColor = isAdmin ? AppColors.danger : AppColors.primary;
-    final name = isAdmin ? 'Super Administrateur' : 'Manager Opérationnel';
-    final sub = isAdmin ? 'Accès complet' : 'Catalogue & Commandes';
+    final name = authUser?.nom.isNotEmpty == true
+        ? authUser!.nom
+        : (isAdmin ? 'Super Administrateur' : 'Manager Opérationnel');
+    final sub = authUser?.email.isNotEmpty == true
+        ? authUser!.email
+        : (isAdmin ? 'Accès complet' : 'Catalogue & Commandes');
 
     if (isCollapsed) {
       // Tablette (Contracté)
@@ -857,21 +865,25 @@ class _AdminNavFooter extends StatelessWidget {
           border: Border(top: BorderSide(color: AppColors.border)),
         ),
         child: Tooltip(
-          message: "$name\n$sub",
-          child: Center(
-            child: Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: roleColor.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: roleColor.withValues(alpha: 0.25),
-                  width: 1,
+          message: "$name\n$sub\n(Cliquer pour déconnecter)",
+          child: InkWell(
+            onTap: () => _logout(context, ref),
+            borderRadius: BorderRadius.circular(20),
+            child: Center(
+              child: Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: roleColor.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: roleColor.withValues(alpha: 0.25),
+                    width: 1,
+                  ),
                 ),
-              ),
-              child: Center(
-                child: Icon(Icons.person_rounded, size: 18, color: roleColor),
+                child: Center(
+                  child: Icon(Icons.person_rounded, size: 18, color: roleColor),
+                ),
               ),
             ),
           ),
@@ -928,6 +940,15 @@ class _AdminNavFooter extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+          IconButton(
+            tooltip: 'Déconnexion',
+            icon: const Icon(
+              Icons.logout_rounded,
+              size: 18,
+              color: AppColors.danger,
+            ),
+            onPressed: () => _logout(context, ref),
           ),
         ],
       ),

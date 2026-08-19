@@ -25,15 +25,9 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -59,11 +53,33 @@ class DefaultFirebaseOptions {
     messagingSenderId: '847684786362',
     projectId: 'ibecoul',
     storageBucket: 'ibecoul.firebasestorage.app',
+    androidClientId: '847684786362-aj2apvon9tf4n66359rmkk1hs328fcth.apps.googleusercontent.com',
+    iosClientId: '847684786362-9vc6hrsk5spurmv74d8hpukcgn24h7ad.apps.googleusercontent.com',
     iosBundleId: 'com.example.eveilkid',
   );
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyBNdNNSy_XHOvrbdHrwn8O5popmoAx6RUA',
     appId: '1:847684786362:web:6b50c6f1070dbe12870a83',
+    messagingSenderId: '847684786362',
+    projectId: 'ibecoul',
+    authDomain: 'ibecoul.firebaseapp.com',
+    storageBucket: 'ibecoul.firebasestorage.app',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyBdpyUO27ORr1pxaqtispz9i2F8W8j6gwM',
+    appId: '1:847684786362:ios:7b0860daf4078604870a83',
+    messagingSenderId: '847684786362',
+    projectId: 'ibecoul',
+    storageBucket: 'ibecoul.firebasestorage.app',
+    androidClientId: '847684786362-aj2apvon9tf4n66359rmkk1hs328fcth.apps.googleusercontent.com',
+    iosClientId: '847684786362-9vc6hrsk5spurmv74d8hpukcgn24h7ad.apps.googleusercontent.com',
+    iosBundleId: 'com.example.eveilkid',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyBNdNNSy_XHOvrbdHrwn8O5popmoAx6RUA',
+    appId: '1:847684786362:web:f284f906a52485a2870a83',
     messagingSenderId: '847684786362',
     projectId: 'ibecoul',
     authDomain: 'ibecoul.firebaseapp.com',
