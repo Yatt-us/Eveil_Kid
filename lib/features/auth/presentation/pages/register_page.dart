@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/AppTextStyles.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/router/app_routes.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
+import '../../../../shared/widgets/app_google_button.dart';
 import '../../../../shared/widgets/app_icon_button.dart';
+import '../../../../shared/widgets/app_logo.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../providers/auth_provider.dart';
 
@@ -20,7 +25,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
 
   final _nomController = TextEditingController();
   final _emailController = TextEditingController();
-  final _telephoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
@@ -28,10 +32,17 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   void dispose() {
     _nomController.dispose();
     _emailController.dispose();
-    _telephoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  void _popOrGoLogin() {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go(AppRoutes.login);
+    }
   }
 
   Future<void> _register() async {
@@ -45,9 +56,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
           email: _emailController.text.trim(),
           password: _passwordController.text,
           nom: _nomController.text.trim(),
-          telephone: _telephoneController.text.trim().isEmpty
-              ? null
-              : _telephoneController.text.trim(),
         );
 
     if (!mounted) return;
@@ -57,12 +65,31 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         context: context,
         message: 'Votre compte a été créé avec succès.',
       );
-      Navigator.pop(context);
+      _popOrGoLogin();
     } else {
       final error = ref.read(authProvider).errorMessage;
       AppDialogs.showSnackBar(
         context: context,
         message: error ?? 'Une erreur est survenue lors de l’inscription.',
+        isError: true,
+      );
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    final success = await ref.read(authProvider.notifier).signInWithGoogle();
+    if (!mounted) return;
+
+    if (success) {
+      AppDialogs.showSnackBar(
+        context: context,
+        message: 'Connexion Google réussie !',
+      );
+    } else {
+      final error = ref.read(authProvider).errorMessage;
+      AppDialogs.showSnackBar(
+        context: context,
+        message: error ?? 'Échec de la connexion avec Google.',
         isError: true,
       );
     }
@@ -86,65 +113,37 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // BARRE SUPÉRIEURE AVEC RETOUR MINIMALISTE
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        AppIconButton(
-                          icon: Icons.arrow_back_rounded,
-                          size: 36,
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.verified_user_outlined,
-                                size: 13,
-                                color: AppColors.primary,
-                              ),
-                              SizedBox(width: 5),
-                              Text(
-                                'Espace Parent',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.primary,
-                                  letterSpacing: 0.2,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // EN-TÊTE COMPACT & ÉPURÉ
-                    const Text(
-                      'Créer un compte',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                        letterSpacing: -0.3,
+                    // BOUTON RETOUR MINIMALISTE
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: AppIconButton(
+                        icon: Icons.arrow_back_rounded,
+                        size: 36,
+                        onPressed: _popOrGoLogin,
                       ),
                     ),
 
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 8),
+
+                    // LOGO OFFICIEL
+                    const Center(
+                      child: AppLogo(size: 76),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // EN-TÊTE CENTRÉ & ÉPURÉ
+                    const Text(
+                      'Créer un compte',
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.headingLarge,
+                    ),
+
+                    const SizedBox(height: 6),
 
                     const Text(
                       'Remplissez les informations ci-dessous pour créer votre compte.',
+                      textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 13,
                         color: AppColors.textSecondary,
@@ -188,18 +187,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         }
                         return null;
                       },
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // TÉLÉPHONE
-                    AppTextField(
-                      controller: _telephoneController,
-                      labelText: 'Téléphone (optionnel)',
-                      hintText: '+221 77 000 00 00',
-                      prefixIcon: Icons.phone_outlined,
-                      keyboardType: TextInputType.phone,
-                      textInputAction: TextInputAction.next,
                     ),
 
                     const SizedBox(height: 16),
@@ -259,14 +246,47 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       onPressed: _register,
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 18),
+
+                    // SÉPARATEUR
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Divider(color: AppColors.border, thickness: 1),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          child: Text(
+                            'OU',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        const Expanded(
+                          child: Divider(color: AppColors.border, thickness: 1),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    // BOUTON GOOGLE SIGN-IN
+                    AppGoogleButton(
+                      text: "S'inscrire avec Google",
+                      isLoading: authState.isLoading,
+                      onPressed: _signInWithGoogle,
+                    ),
+
+                    const SizedBox(height: 20),
 
                     // LIEN RETOUR CONNEXION SOBRE & ÉLÉGANT
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Text(
-                          'Déjà inscrit ?',
+                          'Déjà un compte ?',
                           style: TextStyle(
                             fontSize: 13,
                             color: AppColors.textSecondary,
@@ -274,7 +294,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         ),
                         const SizedBox(width: 4),
                         GestureDetector(
-                          onTap: () => Navigator.pop(context),
+                          onTap: _popOrGoLogin,
                           child: const Text(
                             'Se connecter',
                             style: TextStyle(

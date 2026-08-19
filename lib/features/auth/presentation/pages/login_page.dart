@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/AppPadding.dart';
 import '../../../../core/constants/AppSpacing.dart';
 import '../../../../core/constants/AppTextStyles.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/router/app_routes.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
+import '../../../../shared/widgets/app_google_button.dart';
+import '../../../../shared/widgets/app_logo.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../providers/auth_provider.dart';
-import 'register_page.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -95,6 +98,25 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     }
   }
 
+  Future<void> _signInWithGoogle() async {
+    final success = await ref.read(authProvider.notifier).signInWithGoogle();
+    if (!mounted) return;
+
+    if (success) {
+      AppDialogs.showSnackBar(
+        context: context,
+        message: 'Connexion Google réussie !',
+      );
+    } else {
+      final errorMessage = ref.read(authProvider).errorMessage;
+      AppDialogs.showSnackBar(
+        context: context,
+        message: errorMessage ?? 'Échec de la connexion avec Google.',
+        isError: true,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
@@ -115,28 +137,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   children: [
                     AppSpacing.verticalLg,
 
-                    // LOGO / ICÔNE BRANDING
-                    Center(
-                      child: Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: AppColors.primary.withValues(alpha: 0.2),
-                            width: 2,
-                          ),
-                        ),
-                        child: const Icon(
-                          Icons.child_care_rounded,
-                          size: 42,
-                          color: AppColors.primary,
-                        ),
-                      ),
+                    // LOGO BRANDING
+                    const Center(
+                      child: AppLogo(size: 90),
                     ),
 
-                    AppSpacing.verticalXl,
+                    AppSpacing.verticalLg,
 
                     // TITRE & SOUS-TITRE
                     const Text(
@@ -254,6 +260,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       ],
                     ),
 
+                    AppSpacing.verticalXl,
+
+                    // BOUTON GOOGLE
+                    AppGoogleButton(
+                      text: 'Continuer avec Google',
+                      isLoading: authState.isLoading,
+                      onPressed: _signInWithGoogle,
+                    ),
+
                     AppSpacing.verticalXxl,
 
                     // LIEN VERS INSCRIPTION
@@ -270,14 +285,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         TextButton(
                           onPressed: authState.isLoading
                               ? null
-                              : () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => const RegisterPage(),
-                                    ),
-                                  );
-                                },
+                              : () => context.push(AppRoutes.register),
                           style: TextButton.styleFrom(
                             foregroundColor: AppColors.primary,
                             padding: const EdgeInsets.symmetric(horizontal: 8),
