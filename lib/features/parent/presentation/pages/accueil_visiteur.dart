@@ -125,7 +125,7 @@ class AccueilVisiteurPage extends StatelessWidget {
       width: double.infinity,
       padding: AppPadding.cardLarge,
       decoration: BoxDecoration(
-        color: AppColors.primaryLight.withOpacity(0.2),
+        color: AppColors.primaryLight.withValues(alpha: 0.2),
         borderRadius: AppRadius.card,
         border: Border.all(color: AppColors.primaryLight),
       ),

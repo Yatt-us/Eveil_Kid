@@ -1,82 +1,113 @@
 // lib/features/parent/presentation/pages/accueil_parent.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/AppPadding.dart';
 import '../../../../core/constants/AppRadius.dart';
 import '../../../../core/constants/AppSpacing.dart';
 import '../../../../core/constants/AppTextStyles.dart';
+import '../../providers/parent_provider.dart';
+import '../../models/parent_model.dart';
 
-class AccueilParentPage extends StatelessWidget {
-  final String parentName;
-  final List<Map<String, String>> enfants; // Transmis par le Provider Riverpod plus tard
-
-  const AccueilParentPage({
-    super.key,
-    this.parentName = 'Aissata',
-    this.enfants = const [
-      {'name': 'Nour', 'age': '5 ans', 'level': 'Niveau 3'},
-      {'name': 'Ilyas', 'age': '7 ans', 'level': 'Niveau 4'},
-      {'name': 'Mariam', 'age': '4 ans', 'level': 'Niveau 2'},
-    ], // Modifier par [] pour tester l'état "sans enfant"
-  });
+class AccueilParentPage extends ConsumerWidget {
+  const AccueilParentPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final bool aDesEnfants = enfants.isNotEmpty;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final parentAsync = ref.watch(parentNotifierProvider);
+
+    return parentAsync.when(
+      data: (parent) => _buildScaffold(context, parent),
+      loading: () => const Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      ),
+      error: (err, stack) => Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, color: AppColors.danger, size: 48),
+              AppSpacing.verticalMd,
+              Text('Erreur lors du chargement', style: AppTextStyles.headingSmall),
+              AppSpacing.verticalSm,
+              Text('$err', style: AppTextStyles.bodySmall),
+              AppSpacing.verticalLg,
+              ElevatedButton(
+                onPressed: () => ref.invalidate(parentNotifierProvider),
+                child: const Text('Réessayer'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context, ParentModel parent) {
+    final bool aDesEnfants = parent.enfants.isNotEmpty;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: _buildAppBar(unreadNotifs: 3),
-      body: SingleChildScrollView(
-        padding: AppPadding.screen,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AppSpacing.verticalSm,
+      body: RefreshIndicator(
+        onRefresh: () async {
+          // Utilise chargerProfil ou invalidate pour rafraîchir
+          // Pour l'instant on simule
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: AppPadding.screen,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppSpacing.verticalSm,
 
-            // --- EN-TÊTE DYNAMIQUE ---
-            Text(
-              aDesEnfants ? 'Bonjour, $parentName' : 'Bienvenue !',
-              style: AppTextStyles.headingLarge,
-            ),
-            AppSpacing.verticalXs,
-            Text(
-              aDesEnfants
-                  ? 'Ravie de vous revoir !'
-                  : 'Ajouter un enfant pour personnaliser son expérience.',
-              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
-            ),
-            AppSpacing.verticalLg,
+              // --- EN-TÊTE DYNAMIQUE ---
+              Text(
+                aDesEnfants ? 'Bonjour, ${parent.name}' : 'Bienvenue !',
+                style: AppTextStyles.headingLarge,
+              ),
+              AppSpacing.verticalXs,
+              Text(
+                aDesEnfants
+                    ? 'Ravie de vous revoir !'
+                    : 'Ajouter un enfant pour personnaliser son expérience.',
+                style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+              ),
+              AppSpacing.verticalLg,
 
-            // --- SECTION ENFANTS (CONDITIONNELLE) ---
-            if (!aDesEnfants) ...[
-              _buildAddChildDottedCard(context),
-            ] else ...[
-              _buildSectionHeader(title: 'Mes enfants', onSeeAll: () {}),
+              // --- SECTION ENFANTS (CONDITIONNELLE) ---
+              if (!aDesEnfants) ...[
+                _buildAddChildDottedCard(context),
+              ] else ...[
+                _buildSectionHeader(title: 'Mes enfants', onSeeAll: () {}),
+                AppSpacing.verticalMd,
+                _buildChildrenHorizontalList(parent.enfants),
+              ],
+              AppSpacing.verticalXxl,
+
+              // --- CATÉGORIES DE JOUETS ---
+              _buildSectionHeader(title: 'Catégories de jouets', onSeeAll: () {}),
               AppSpacing.verticalMd,
-              _buildChildrenHorizontalList(enfants),
-            ],
-            AppSpacing.verticalXxl,
+              _buildCategoriesGrid(),
+              AppSpacing.verticalXxl,
 
-            // --- CATÉGORIES DE JOUETS ---
-            _buildSectionHeader(title: 'Catégories de jouets', onSeeAll: () {}),
-            AppSpacing.verticalMd,
-            _buildCategoriesGrid(),
-            AppSpacing.verticalXxl,
+              // --- BANNIÈRE PROMOTIONNELLE ---
+              if (!aDesEnfants) ...[
+                _buildPromoBanner(),
+                AppSpacing.verticalXxl,
+              ],
 
-            // --- BANNIÈRE PROMOTIONNELLE ---
-            if (!aDesEnfants) ...[
-              _buildPromoBanner(),
+              // --- JOUETS POPULAIRES ---
+              _buildSectionHeader(title: 'Jouets populaires', onSeeAll: () {}),
+              AppSpacing.verticalMd,
+              _buildPopularToysList(),
               AppSpacing.verticalXxl,
             ],
-
-            // --- JOUETS POPULAIRES ---
-            _buildSectionHeader(title: 'Jouets populaires', onSeeAll: () {}),
-            AppSpacing.verticalMd,
-            _buildPopularToysList(),
-            AppSpacing.verticalXxl,
-          ],
+          ),
         ),
       ),
     );
@@ -84,7 +115,7 @@ class AccueilParentPage extends StatelessWidget {
 
   PreferredSizeWidget _buildAppBar({required int unreadNotifs}) {
     return AppBar(
-      backgroundColor: AppColors.transparent,
+      backgroundColor: Colors.transparent,
       elevation: 0,
       title: Row(
         children: [
@@ -172,7 +203,7 @@ class AccueilParentPage extends StatelessWidget {
     );
   }
 
-  Widget _buildChildrenHorizontalList(List<Map<String, String>> children) {
+  Widget _buildChildrenHorizontalList(List<EnfantModel> children) {
     return SizedBox(
       height: 160,
       child: ListView.builder(
@@ -202,10 +233,12 @@ class AccueilParentPage extends StatelessWidget {
                 ),
                 AppSpacing.verticalSm,
                 Text(
-                  child['name']!,
+                  child.name,
                   style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.bold),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                Text(child['age']!, style: AppTextStyles.bodySmall),
+                Text('${child.age} ans', style: AppTextStyles.bodySmall),
                 AppSpacing.verticalXs,
                 Container(
                   padding: AppPadding.horizontalSm,
@@ -214,7 +247,7 @@ class AccueilParentPage extends StatelessWidget {
                     borderRadius: AppRadius.badge,
                   ),
                   child: Text(
-                    child['level']!,
+                    child.level,
                     style: AppTextStyles.bodySmall.copyWith(
                       color: AppColors.childTextPrimary,
                       fontWeight: FontWeight.bold,
