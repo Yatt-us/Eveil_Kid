@@ -9,11 +9,7 @@ class JouetCard extends StatelessWidget {
   final Jouet jouet;
   final VoidCallback? onTap;
 
-  const JouetCard({
-    super.key,
-    required this.jouet,
-    this.onTap,
-  });
+  const JouetCard({super.key, required this.jouet, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -23,10 +19,7 @@ class JouetCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: AppRadius.card,
-          border: Border.all(
-            color: AppColors.border,
-            width: 0.8,
-          ),
+          border: Border.all(color: AppColors.border, width: 0.8),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -56,9 +49,7 @@ class JouetCard extends StatelessWidget {
                           loadingBuilder: (context, child, loadingProgress) {
                             if (loadingProgress == null) return child;
                             return const Center(
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             );
                           },
                         )
@@ -75,7 +66,10 @@ class JouetCard extends StatelessWidget {
             Expanded(
               flex: 4,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
