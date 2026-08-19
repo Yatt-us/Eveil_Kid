@@ -12,6 +12,10 @@ class AppRoutes {
 
   // Fonctionnalités Générales
   static const String tutoriels = '/tutoriels';
+  static const String activites = '/activites';
+  static const String activitesPlay = '/activites/play';
+  static const String activitesResultat = '/activites/resultat';
+  static const String activitesCorrige = '/activites/corrige';
 
   // Espace Administration
   static const String admin = '/admin';
