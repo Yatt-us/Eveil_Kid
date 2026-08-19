@@ -13,9 +13,7 @@ class AuthRepository {
   })  : _auth = auth ?? FirebaseAuth.instance,
         _firestore = firestore ?? FirebaseFirestore.instance;
 
-  // ===========================================================================
   // INSCRIPTION
-  // ===========================================================================
 
   Future<void> register({
     required String email,
@@ -26,9 +24,7 @@ class AuthRepository {
     User? user;
 
     try {
-      // -----------------------------------------------------------------------
-      // 1. Création du compte Firebase Authentication
-      // -----------------------------------------------------------------------
+      // Création du compte Firebase Authentication
 
       final credential = await _auth.createUserWithEmailAndPassword(
         email: email,
@@ -43,9 +39,7 @@ class AuthRepository {
         );
       }
 
-      // -----------------------------------------------------------------------
-      // 2. Création du profil dans Firestore
-      // -----------------------------------------------------------------------
+      //  Création du profil dans Firestore
 
       await _firestore
           .collection('utilisateurs')
@@ -53,7 +47,7 @@ class AuthRepository {
           .set({
         'utilisateurId': user.uid,
 
-        // Une inscription publique crée toujours un PARENT.
+        // Une inscription publique crée un PARENT.
         'role': 'PARENT',
 
         // Ces champs concernent uniquement le rôle PARENT.
@@ -90,17 +84,13 @@ class AuthRepository {
     }
   }
 
-  // ===========================================================================
   // CONNEXION
-  // ===========================================================================
 
   Future<Utilisateur> login({
     required String email,
     required String password,
   }) async {
-    // -------------------------------------------------------------------------
-    // 1. Connexion à Firebase Authentication
-    // -------------------------------------------------------------------------
+    //  Connexion à Firebase Authentication
 
     final credential = await _auth.signInWithEmailAndPassword(
       email: email,
@@ -115,15 +105,11 @@ class AuthRepository {
       );
     }
 
-    // -------------------------------------------------------------------------
-    // 2. Récupération du profil Firestore
-    // -------------------------------------------------------------------------
+    //  Récupération du profil Firestore
 
     final utilisateur = await getUserProfile(user.uid);
 
-    // -------------------------------------------------------------------------
-    // 3. Vérification du compte
-    // -------------------------------------------------------------------------
+    //  Vérification du compte
 
     if (!utilisateur.estActif) {
       // On déconnecte immédiatement le compte Firebase.
@@ -137,9 +123,7 @@ class AuthRepository {
     return utilisateur;
   }
 
-  // ===========================================================================
   // RÉCUPÉRER LE PROFIL FIRESTORE
-  // ===========================================================================
 
   Future<Utilisateur> getUserProfile(String uid) async {
     final document = await _firestore
@@ -147,9 +131,7 @@ class AuthRepository {
         .doc(uid)
         .get();
 
-    // -------------------------------------------------------------------------
     // Le document n'existe pas
-    // -------------------------------------------------------------------------
 
     if (!document.exists) {
       throw Exception(
@@ -165,24 +147,18 @@ class AuthRepository {
       );
     }
 
-    // -------------------------------------------------------------------------
     // Transformation Map → Utilisateur
-    // -------------------------------------------------------------------------
 
     return Utilisateur.fromMap(data);
   }
 
-  // ===========================================================================
   // UTILISATEUR FIREBASE ACTUEL
-  // ===========================================================================
 
   User? get currentFirebaseUser {
     return _auth.currentUser;
   }
 
-  // ===========================================================================
   // PROFIL DE L'UTILISATEUR ACTUEL
-  // ===========================================================================
 
   Future<Utilisateur?> getCurrentUserProfile() async {
     final user = _auth.currentUser;
@@ -194,9 +170,7 @@ class AuthRepository {
 
     final utilisateur = await getUserProfile(user.uid);
 
-    // -------------------------------------------------------------------------
     // Vérification du compte
-    // -------------------------------------------------------------------------
 
     if (!utilisateur.estActif) {
       await _auth.signOut();
@@ -206,17 +180,13 @@ class AuthRepository {
     return utilisateur;
   }
 
-  // ===========================================================================
   // SESSION / ÉTAT D'AUTHENTIFICATION
-  // ===========================================================================
 
   Stream<User?> get authStateChanges {
     return _auth.authStateChanges();
   }
 
-  // ===========================================================================
   // MOT DE PASSE OUBLIÉ
-  // ===========================================================================
 
   Future<void> resetPassword({
     required String email,
@@ -226,9 +196,7 @@ class AuthRepository {
     );
   }
 
-  // ===========================================================================
   // DÉCONNEXION
-  // ===========================================================================
 
   Future<void> logout() async {
     await _auth.signOut();
