@@ -42,7 +42,7 @@ class Activite {
     this.ordreAffichage = 0,
   });
 
-  // Créer une activité depuis Firestore
+ 
   factory Activite.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
     
@@ -66,7 +66,6 @@ class Activite {
     );
   }
 
-  // Convertir en Map pour Firestore
   Map<String, dynamic> toFirestore() {
     return {
       'titre': titre,
@@ -116,7 +115,7 @@ class Activite {
     }
   }
 
-  // Copier avec modifications
+ 
   Activite copyWith({
     String? id,
     String? titre,

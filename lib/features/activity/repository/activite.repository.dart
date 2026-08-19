@@ -24,7 +24,7 @@ class ActiviteRepository {
     }
   }
 
-  // RÉCUPÉRER TOUTES LES ACTIVITÉS (pour admin)
+  
   Future<List<Activite>> getAllActivitesForAdmin() async {
     try {
       QuerySnapshot snapshot = await _activitesRef
@@ -123,7 +123,7 @@ class ActiviteRepository {
     }
   }
 
-  // RECHERCHER DES ACTIVITÉS
+  
   Future<List<Activite>> searchActivites(String searchTerm) async {
     try {
       List<Activite> allActivites = await getAllActivites();

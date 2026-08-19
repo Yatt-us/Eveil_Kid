@@ -4,7 +4,7 @@ import '../models/Question.model.dart';
 
 
 class QuestionRepository {
-  // RÉFÉRENCE À LA SOUS-COLLECTION QUESTIONS
+  
   CollectionReference _getQuestionsCollection(String activiteId) {
     return FirebaseFirestore.instance
         .collection('activites')

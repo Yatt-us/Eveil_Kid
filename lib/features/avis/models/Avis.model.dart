@@ -5,11 +5,11 @@ import 'package:eveilkid/features/avis/enums/StatutAvis.enum.dart';
 
 class Avis {
   final String? id;
-  final String cibleId;    // ID de l'activité, tutoriel ou jouet
-  final String typeCible;  // 'activite', 'tutoriel', 'jouet'
+  final String cibleId;    
+  final String typeCible;  
   final String utilisateurId;
   final String nomUtilisateur;
-  final double note;       // Note sur 5
+  final double note;       
   final String commentaire;
   final StatutAvis statut;
   final DateTime dateCreation;
@@ -28,7 +28,6 @@ class Avis {
     required this.dateModification,
   });
 
-  // Créer un avis depuis Firestore
   factory Avis.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
     
@@ -46,7 +45,6 @@ class Avis {
     );
   }
 
-  // Convertir en Map pour Firestore
   Map<String, dynamic> toFirestore() {
     return {
       'cibleId': cibleId,

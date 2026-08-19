@@ -11,8 +11,8 @@ class Question {
   final String activiteId;  
   final String texte;       
   final TypeQuestion type;  
-  final List<String> options; // Les options proposées
-  final int indexBonneReponse; // L'index de la bonne réponse
+  final List<String> options; 
+  final int indexBonneReponse; 
   final int points;         
   final int ordre;          
   final String? explication;
@@ -33,7 +33,6 @@ class Question {
     required this.dateModification,
   });
 
-  // Créer une question depuis Firestore
   factory Question.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
     
@@ -52,7 +51,7 @@ class Question {
     );
   }
 
-  // Convertir en Map pour Firestore
+
   Map<String, dynamic> toFirestore() {
     return {
       'activiteId': activiteId,

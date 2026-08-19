@@ -128,7 +128,6 @@ class AvisRepository {
     }
   }
 
-  // 9. RENDRE VISIBLE UN AVIS
   Future<void> rendreVisibleAvis(String id) async {
     try {
       await _avisRef.doc(id).update({
@@ -140,7 +139,6 @@ class AvisRepository {
     }
   }
 
-  // 10. RECHERCHER DES AVIS
   Future<List<Avis>> searchAvis(String searchTerm) async {
     try {
       List<Avis> allAvis = await getAllAvis();
