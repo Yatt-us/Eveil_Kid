@@ -17,15 +17,13 @@ final jouetsProvider = FutureProvider<List<Jouet>>((ref) async {
   return repository.getJouets();
 });
 
-final jouetByIdProvider =
-    FutureProvider.family<Jouet?, String>((ref, jouetId) async {
+final jouetByIdProvider = FutureProvider.family<Jouet?, String>((ref, jouetId) async {
   final repository = ref.read(jouetRepositoryProvider);
 
   return repository.getJouetById(jouetId);
 });
 
-final jouetsByCategorieProvider =
-    FutureProvider.family<List<Jouet>, String>(
+final jouetsByCategorieProvider = FutureProvider.family<List<Jouet>, String>(
   (ref, categorieId) async {
     final repository = ref.read(jouetRepositoryProvider);
 
