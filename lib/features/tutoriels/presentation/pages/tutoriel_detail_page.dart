@@ -1,6 +1,4 @@
-
-
-import 'package:eveilkid/features/auth/providers/tutorielProvider.dart';
+import 'package:eveilkid/features/tutoriels/providers/tutorielProvider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
