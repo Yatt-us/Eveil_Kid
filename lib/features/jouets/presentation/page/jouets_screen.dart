@@ -189,7 +189,7 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
     return Row(
       children: [
         Text(
-          'Accueil',
+          'Catalogue',
           style: AppTextStyles.headingSmall.copyWith(
             fontSize: 22, // Augmenté de 16 à 22
             fontWeight: FontWeight.w700,
