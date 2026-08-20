@@ -1,7 +1,9 @@
 // lib/features/parent/presentation/pages/accueil_parent.dart
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/AppPadding.dart';
@@ -9,7 +11,6 @@ import '../../../../core/constants/AppRadius.dart';
 import '../../../../core/constants/AppSpacing.dart';
 import '../../../../core/constants/AppTextStyles.dart';
 import '../../../../core/router/app_routes.dart';
-import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../../jouets/models/jouet.dart';
@@ -166,24 +167,18 @@ class AccueilParentPage extends ConsumerWidget {
       titleSpacing: 16,
       title: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(7),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF8E54E9), AppColors.primary],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+          SvgPicture.asset(
+            'assets/images/logo.svg',
+            width: 32,
+            height: 32,
+            placeholderBuilder: (_) => Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(8),
               ),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.3),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              child: const Icon(Icons.child_care_rounded, color: AppColors.white, size: 20),
             ),
-            child: const Icon(Icons.child_care_rounded, color: AppColors.white, size: 22),
           ),
           AppSpacing.horizontalSm,
           Text(
@@ -691,14 +686,14 @@ class AccueilParentPage extends ConsumerWidget {
         'borderColor': const Color(0xFFBFDBFE),
       },
       {
-        'title': 'Construction\n& Assemblage',
+        'title': 'Construction\n& Blocs',
         'icon': Icons.view_in_ar_rounded,
         'bgGradient': [const Color(0xFFFFFBEB), const Color(0xFFFEF3C7)],
         'iconColor': const Color(0xFFD97706),
         'borderColor': const Color(0xFFFDE68A),
       },
       {
-        'title': 'Jeux d\'imitation\n& Rôle',
+        'title': 'Jeux de Rôle\n& Imitation',
         'icon': Icons.theater_comedy_rounded,
         'bgGradient': [const Color(0xFFFAF5FF), const Color(0xFFF3E8FF)],
         'iconColor': const Color(0xFF9333EA),
@@ -733,11 +728,18 @@ class AccueilParentPage extends ConsumerWidget {
         'borderColor': const Color(0xFFBAE6FD),
       },
       {
-        'title': 'Technologie\n& Électronique',
+        'title': 'Technologie\n& Robotique',
         'icon': Icons.smart_toy_rounded,
         'bgGradient': [const Color(0xFFF0FDFA), const Color(0xFFCCFBF1)],
         'iconColor': const Color(0xFF0D9488),
         'borderColor': const Color(0xFF99F6E4),
+      },
+      {
+        'title': 'Musique &\nÉveil Sonore',
+        'icon': Icons.music_note_rounded,
+        'bgGradient': [const Color(0xFFFFFBEB), const Color(0xFFFEF08A)],
+        'iconColor': const Color(0xFFCA8A04),
+        'borderColor': const Color(0xFFFDE047),
       },
     ];
 
@@ -745,10 +747,10 @@ class AccueilParentPage extends ConsumerWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-        childAspectRatio: 0.76,
+        crossAxisCount: 3,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.90,
       ),
       itemCount: categories.length,
       itemBuilder: (context, index) {
@@ -768,21 +770,21 @@ class AccueilParentPage extends ConsumerWidget {
               );
             }
           },
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(18),
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: gradientColors,
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: borderColor, width: 1),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: borderColor, width: 1.2),
               boxShadow: [
                 BoxShadow(
-                  color: iconColor.withValues(alpha: 0.06),
-                  blurRadius: 4,
+                  color: iconColor.withValues(alpha: 0.08),
+                  blurRadius: 6,
                   offset: const Offset(0, 2),
                 ),
               ],
@@ -791,21 +793,21 @@ class AccueilParentPage extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(7),
+                  padding: const EdgeInsets.all(9),
                   decoration: BoxDecoration(
-                    color: AppColors.white.withValues(alpha: 0.9),
+                    color: AppColors.white.withValues(alpha: 0.95),
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: iconColor.withValues(alpha: 0.15),
-                        blurRadius: 4,
+                        color: iconColor.withValues(alpha: 0.18),
+                        blurRadius: 5,
                         offset: const Offset(0, 2),
                       ),
                     ],
                   ),
                   child: Icon(
                     cat['icon'] as IconData,
-                    size: 24,
+                    size: 28,
                     color: iconColor,
                   ),
                 ),
@@ -814,10 +816,10 @@ class AccueilParentPage extends ConsumerWidget {
                   cat['title'] as String,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontSize: 10,
+                    fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
-                    height: 1.15,
+                    height: 1.2,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -842,42 +844,69 @@ class AccueilParentPage extends ConsumerWidget {
               : [
                   Jouet(
                     jouetId: '1',
+                    categorieId: 'const',
+                    createurId: 'admin',
                     nom: 'Blocs de construction bois',
                     description: 'Jeu d\'éveil créatif',
+                    nomCategorieDenormalise: 'Construction',
+                    images: const [],
+                    imagePrincipaleUrl: '',
+                    ageMinimum: 3,
+                    ageMaximum: 6,
                     prix: 6500,
-                    categorieId: 'const',
+                    devise: 'FCFA',
                     stock: 5,
-                    ageMin: 3,
-                    ageMax: 6,
+                    stockDisponible: 5,
+                    noteMoyenneDenormalise: 4.8,
+                    nombreAvisDenormalise: 12,
+                    nbTutorielsAssocies: 1,
                     estActif: true,
-                    dateCreation: DateTime.now(),
-                    dateModification: DateTime.now(),
+                    dateCreation: Timestamp.now(),
+                    dateModification: Timestamp.now(),
                   ),
                   Jouet(
                     jouetId: '2',
+                    categorieId: 'puzz',
+                    createurId: 'admin',
                     nom: 'Puzzle chiffres et animaux',
                     description: 'Apprentissage ludique',
+                    nomCategorieDenormalise: 'Puzzles',
+                    images: const [],
+                    imagePrincipaleUrl: '',
+                    ageMinimum: 2,
+                    ageMaximum: 5,
                     prix: 4500,
-                    categorieId: 'puzz',
+                    devise: 'FCFA',
                     stock: 8,
-                    ageMin: 2,
-                    ageMax: 5,
+                    stockDisponible: 8,
+                    noteMoyenneDenormalise: 4.9,
+                    nombreAvisDenormalise: 24,
+                    nbTutorielsAssocies: 2,
                     estActif: true,
-                    dateCreation: DateTime.now(),
-                    dateModification: DateTime.now(),
+                    dateCreation: Timestamp.now(),
+                    dateModification: Timestamp.now(),
                   ),
                   Jouet(
                     jouetId: '3',
+                    categorieId: 'tech',
+                    createurId: 'admin',
                     nom: 'Robot éducatif interactif',
                     description: 'Technologie pour enfants',
+                    nomCategorieDenormalise: 'Technologie',
+                    images: const [],
+                    imagePrincipaleUrl: '',
+                    ageMinimum: 4,
+                    ageMaximum: 8,
                     prix: 12000,
-                    categorieId: 'tech',
+                    devise: 'FCFA',
                     stock: 3,
-                    ageMin: 4,
-                    ageMax: 8,
+                    stockDisponible: 3,
+                    noteMoyenneDenormalise: 4.7,
+                    nombreAvisDenormalise: 8,
+                    nbTutorielsAssocies: 3,
                     estActif: true,
-                    dateCreation: DateTime.now(),
-                    dateModification: DateTime.now(),
+                    dateCreation: Timestamp.now(),
+                    dateModification: Timestamp.now(),
                   ),
                 ];
 
@@ -949,7 +978,7 @@ class AccueilParentPage extends ConsumerWidget {
                       ? Image.network(
                           jouet.images.first,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Icon(
+                          errorBuilder: (_, _, _) => const Icon(
                             Icons.smart_toy_outlined,
                             color: AppColors.primary,
                             size: 44,

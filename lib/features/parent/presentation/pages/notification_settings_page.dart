@@ -71,7 +71,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                   ),
                   Switch(
                     value: _enableAllNotifications,
-                    activeColor: AppColors.primary,
+                    activeThumbColor: AppColors.primary,
                     activeTrackColor: AppColors.primaryLight.withValues(alpha: 0.5),
                     onChanged: (val) {
                       setState(() {
@@ -214,7 +214,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
           ),
           Switch(
             value: value,
-            activeColor: AppColors.primary,
+            activeThumbColor: AppColors.primary,
             activeTrackColor: AppColors.primaryLight.withValues(alpha: 0.5),
             onChanged: onChanged,
           ),
