@@ -49,7 +49,7 @@ class JouetCard extends StatelessWidget {
                           errorBuilder: (context, error, stackTrace) {
                             return const Icon(
                               Icons.image_not_supported_outlined,
-                              color: AppColors.disabled,
+                              color: Color.fromARGB(255, 206, 198, 232),
                               size: 32,
                             );
                           },
@@ -64,7 +64,7 @@ class JouetCard extends StatelessWidget {
                         )
                       : const Icon(
                           Icons.toys_outlined,
-                          size: 40,
+                          size: 100,
                           color: AppColors.disabled,
                         ),
                 ),

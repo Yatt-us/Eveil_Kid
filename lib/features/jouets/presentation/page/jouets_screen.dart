@@ -181,8 +181,6 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
         break;
       case 3:
         break;
-      case 4:
-        break;
     }
   }
 
@@ -222,8 +220,7 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
                   shape: BoxShape.circle,
                 ),
                 child: const Center(
-                  child: Text(
-                    '0',
+                  child: Text( '0',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 10, // Augmenté de 8 à 10
@@ -340,6 +337,7 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
                   const SizedBox(height: 10),
                   SizedBox(
                     height: 32, // Augmenté de 21 à 32
+                    width: 140, // Augmenté de 70 à 100
                     child: ElevatedButton(
                       onPressed: () {},
                       style: ElevatedButton.styleFrom(
