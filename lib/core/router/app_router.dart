@@ -19,10 +19,10 @@ import 'package:eveilkid/features/auth/providers/auth_provider.dart';
 import 'package:eveilkid/features/home/presentation/pages/home_page.dart';
 import 'package:eveilkid/features/jouets/models/jouet.dart';
 import 'package:eveilkid/features/tutoriels/presentations/pages/tutorielPage.dart';
-import 'package:eveilkid/features/activites/presentation/pages/activites_list_page.dart';
-import 'package:eveilkid/features/activites/presentation/pages/activites_play_page.dart';
-import 'package:eveilkid/features/activites/presentation/pages/activites_resultat_page.dart';
-import 'package:eveilkid/features/activites/presentation/pages/activites_corrige_page.dart';
+import 'package:eveilkid/features/activites/presentation/pages/client/activites_list_page.dart';
+import 'package:eveilkid/features/activites/presentation/pages/client/activites_play_page.dart';
+import 'package:eveilkid/features/activites/presentation/pages/client/activites_resultat_page.dart';
+import 'package:eveilkid/features/activites/presentation/pages/client/activites_corrige_page.dart';
 
 /// Notifier pour déclencher les rafraîchissements de GoRouter lors des changements d'état d'authentification Riverpod
 class _RouterRefreshNotifier extends ChangeNotifier {

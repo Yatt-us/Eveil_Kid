@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/AppRadius.dart';
-import '../../../../core/constants/AppSpacing.dart';
-import '../../../../core/constants/AppTextStyles.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/router/app_routes.dart';
-import '../../models/question.dart';
-import '../../providers/activite_game_provider.dart';
+import '../../../../../core/constants/AppRadius.dart';
+import '../../../../../core/constants/AppSpacing.dart';
+import '../../../../../core/constants/AppTextStyles.dart';
+import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/router/app_routes.dart';
+import '../../../models/question.dart';
+import '../../../providers/activite_game_provider.dart';
 
 /// Page affichant le corrigé détaillé des questions avec comparaison des réponses.
 class ActivitesCorrigePage extends ConsumerWidget {

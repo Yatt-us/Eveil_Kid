@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/AppPadding.dart';
-import '../../../../core/constants/AppSpacing.dart';
-import '../../../../core/constants/AppTextStyles.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/router/app_routes.dart';
-import '../../models/activite.dart';
-import '../../providers/activite_game_provider.dart';
-import '../../providers/activites_provider.dart';
-import '../widgets/activite_card.dart';
-import '../widgets/activite_filter_bar.dart';
+import '../../../../../core/constants/AppPadding.dart';
+import '../../../../../core/constants/AppSpacing.dart';
+import '../../../../../core/constants/AppTextStyles.dart';
+import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/router/app_routes.dart';
+import '../../../models/activite.dart';
+import '../../../providers/activite_game_provider.dart';
+import '../../../providers/activites_provider.dart';
+import '../../widgets/activite_card.dart';
+import '../../widgets/activite_filter_bar.dart';
 
 /// Page affichant la liste des activités éducatives disponibles avec filtres et progression.
 class ActivitesListPage extends ConsumerWidget {

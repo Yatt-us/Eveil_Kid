@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/AppRadius.dart';
-import '../../../../core/constants/AppSpacing.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/router/app_routes.dart';
-import '../../providers/activite_game_provider.dart';
+import '../../../../../core/constants/AppRadius.dart';
+import '../../../../../core/constants/AppSpacing.dart';
+import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/router/app_routes.dart';
+import '../../../providers/activite_game_provider.dart';
 
 /// Page de célébration et d'affichage des scores de fin de quiz.
 class ActivitesResultatPage extends ConsumerWidget {

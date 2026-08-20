@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/constants/AppRadius.dart';
-import '../../../../core/constants/AppSpacing.dart';
-import '../../../../core/constants/AppTextStyles.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/router/app_routes.dart';
-import '../../enums/activite_enums.dart';
-import '../../models/question.dart';
-import '../../providers/activite_game_provider.dart';
-import '../widgets/quiz_option_tile.dart';
+import '../../../../../core/constants/AppRadius.dart';
+import '../../../../../core/constants/AppSpacing.dart';
+import '../../../../../core/constants/AppTextStyles.dart';
+import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/router/app_routes.dart';
+import '../../../enums/activite_enums.dart';
+import '../../../models/question.dart';
+import '../../../providers/activite_game_provider.dart';
+import '../../widgets/quiz_option_tile.dart';
 
 /// Page de gameplay interactif pour dérouler les questions d'une activité.
 class ActivitesPlayPage extends ConsumerWidget {
