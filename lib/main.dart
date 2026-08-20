@@ -19,6 +19,7 @@
 
 import 'package:eveilkid/core/themes/AppTheme.dart';
 import 'package:eveilkid/features/auth/presentation/pages/login_page.dart';
+import 'package:eveilkid/features/tutoriels/presentations/pages/tutorielPage.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -47,7 +48,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Éveil Kid',
       theme: AppTheme.light,
-      home: const LoginPage(),
+      home: const TutorielPage(),
     );
   }
 }

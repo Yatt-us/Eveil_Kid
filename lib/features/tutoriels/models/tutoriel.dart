@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class Tutoriel {
   final String tutorielId;
   final String categorieId;
-  final String? jouetLieId;
+  final String jouetLieId;
   final String createurId;
   final String titre;
   final String description;
@@ -15,13 +15,11 @@ class Tutoriel {
   final num ageMaximum;
   final bool estPublie;
   final DateTime dateCreation;
-  final DateTime dateModification;
-  
 
   Tutoriel({
     required this.tutorielId,
     required this.categorieId,
-    this.jouetLieId,
+    required this.jouetLieId,
     required this.createurId,
     required this.titre,
     required this.description,
@@ -33,7 +31,6 @@ class Tutoriel {
     required this.ageMaximum,
     required this.estPublie,
     required this.dateCreation,
-    required this.dateModification,
   });
 
   /// Firestore -> Model
@@ -44,22 +41,37 @@ class Tutoriel {
 
     return Tutoriel(
       tutorielId: doc.id,
-      categorieId: data['categorieId'] as String,
-      jouetLieId: data['jouetLieId'] as String?,
-      createurId: data['createurId'] as String,
-      titre: data['titre'] as String,
-      description: data['description'] as String,
+
+      categorieId: data['categorieId'] as String? ?? '',
+
+      // Peut être null
+      jouetLieId: data['jouetLieId'] as String,
+
+      createurId: data['createurId'] as String? ?? '',
+
+      titre: data['titre'] as String? ?? '',
+
+      description: data['description'] as String? ?? '',
+
       jouetsSuggeres: List<String>.from(
         data['jouetsSuggeres'] ?? [],
       ),
-      videoUrl: data['videoUrl'] as String,
-      miniatureUrl: data['miniatureUrl'] as String,
-      duree: data['duree'] as num,
-      ageMinimum: data['ageMinimum'] as num,
-      ageMaximum: data['ageMaximum'] as num,
-      estPublie: data['estPublie'] as bool,
-      dateCreation: (data['dateCreation'] as Timestamp).toDate(),
-      dateModification: (data['dateModification'] as Timestamp).toDate(),
+
+      videoUrl: data['videoUrl'] as String? ?? '',
+
+      miniatureUrl: data['miniatureUrl'] as String? ?? '',
+
+      duree: data['duree'] as num? ?? 0,
+
+      ageMinimum: data['ageMinimum'] as num? ?? 0,
+
+      ageMaximum: data['ageMaximum'] as num? ?? 0,
+
+      estPublie: data['estPublie'] as bool? ?? false,
+
+      dateCreation: data['dateCreation'] is Timestamp
+          ? (data['dateCreation'] as Timestamp).toDate()
+          : DateTime.now(),
     );
   }
 
@@ -79,7 +91,6 @@ class Tutoriel {
       'ageMaximum': ageMaximum,
       'estPublie': estPublie,
       'dateCreation': Timestamp.fromDate(dateCreation),
-      'dateModification': Timestamp.fromDate(dateModification),
     };
   }
 
@@ -115,8 +126,6 @@ class Tutoriel {
       ageMaximum: ageMaximum ?? this.ageMaximum,
       estPublie: estPublie ?? this.estPublie,
       dateCreation: dateCreation ?? this.dateCreation,
-      dateModification: dateModification ?? this.dateModification,
     );
   }
-
 }
