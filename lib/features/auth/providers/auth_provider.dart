@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:eveilkid/core/errors/auth_error_handler.dart';
 import 'package:eveilkid/features/auth/repository/auth_repository.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,11 +18,13 @@ final authProvider = NotifierProvider<AuthNotifier, AuthState>(
 class AuthState {
   final Utilisateur? utilisateur;
   final bool isLoading;
+  final bool isInitialized;
   final String? errorMessage;
 
   const AuthState({
     this.utilisateur,
     this.isLoading = false,
+    this.isInitialized = false,
     this.errorMessage,
   });
 
@@ -30,6 +33,7 @@ class AuthState {
   AuthState copyWith({
     Utilisateur? utilisateur,
     bool? isLoading,
+    bool? isInitialized,
     String? errorMessage,
     bool clearUtilisateur = false,
     bool clearError = false,
@@ -37,6 +41,7 @@ class AuthState {
     return AuthState(
       utilisateur: clearUtilisateur ? null : utilisateur ?? this.utilisateur,
       isLoading: isLoading ?? this.isLoading,
+      isInitialized: isInitialized ?? this.isInitialized,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
     );
   }
@@ -66,8 +71,12 @@ class AuthNotifier extends Notifier<AuthState> {
     _authSubscription = _repository.authStateChanges.listen(
       (user) async {
         if (user == null) {
-          state = state.copyWith(clearUtilisateur: true, isLoading: false);
-
+          state = state.copyWith(
+            clearUtilisateur: true,
+            isLoading: false,
+            isInitialized: true,
+            clearError: true,
+          );
           return;
         }
 
@@ -79,13 +88,15 @@ class AuthNotifier extends Notifier<AuthState> {
           state = state.copyWith(
             utilisateur: utilisateur,
             isLoading: false,
+            isInitialized: true,
             clearError: true,
           );
         } catch (e) {
           state = state.copyWith(
             clearUtilisateur: true,
             isLoading: false,
-            errorMessage: e.toString(),
+            isInitialized: true,
+            errorMessage: AuthErrorHandler.getMessage(e),
           );
         }
       },
@@ -93,7 +104,8 @@ class AuthNotifier extends Notifier<AuthState> {
         state = state.copyWith(
           clearUtilisateur: true,
           isLoading: false,
-          errorMessage: error.toString(),
+          isInitialized: true,
+          errorMessage: AuthErrorHandler.getMessage(error),
         );
       },
     );
@@ -121,7 +133,10 @@ class AuthNotifier extends Notifier<AuthState> {
 
       return true;
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: AuthErrorHandler.getMessage(e),
+      );
 
       return false;
     }
@@ -146,7 +161,10 @@ class AuthNotifier extends Notifier<AuthState> {
 
       return true;
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: AuthErrorHandler.getMessage(e),
+      );
 
       return false;
     }
@@ -168,7 +186,10 @@ class AuthNotifier extends Notifier<AuthState> {
 
       return true;
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: AuthErrorHandler.getMessage(e),
+      );
 
       return false;
     }
@@ -186,7 +207,35 @@ class AuthNotifier extends Notifier<AuthState> {
 
       return true;
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: AuthErrorHandler.getMessage(e),
+      );
+
+      return false;
+    }
+  }
+
+  // GOOGLE SIGN IN
+
+  Future<bool> signInWithGoogle() async {
+    state = state.copyWith(isLoading: true, clearError: true);
+
+    try {
+      final utilisateur = await _repository.signInWithGoogle();
+
+      state = state.copyWith(
+        utilisateur: utilisateur,
+        isLoading: false,
+        clearError: true,
+      );
+
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: AuthErrorHandler.getMessage(e),
+      );
 
       return false;
     }
@@ -198,3 +247,4 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(clearError: true);
   }
 }
+

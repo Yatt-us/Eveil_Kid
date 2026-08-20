@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../../../../core/services/google_sign_in_service.dart';
 import '../models/utilisateur.dart';
 
 class AuthRepository {
@@ -196,9 +197,57 @@ class AuthRepository {
     );
   }
 
-  // DÉCONNEXION
+  // CONNEXION GOOGLE
+
+  Future<Utilisateur> signInWithGoogle() async {
+    // 1. Obtenir le credential Firebase via Google Sign-In v7+
+    final OAuthCredential credential =
+        await GoogleSignInService.getFirebaseCredential();
+
+    // 2. Signer dans Firebase Auth
+    final userCredential = await _auth.signInWithCredential(credential);
+    final user = userCredential.user;
+
+    if (user == null) {
+      throw Exception('Impossible de recuperer l\'utilisateur Google.');
+    }
+
+    // 3. Creer le profil Firestore si c est un nouvel utilisateur
+    final docRef = _firestore.collection('utilisateurs').doc(user.uid);
+    final docSnap = await docRef.get();
+
+    if (!docSnap.exists) {
+      await docRef.set({
+        'utilisateurId': user.uid,
+        'role': 'PARENT',
+        'nombreFavoris': 0,
+        'nombreEnfants': 0,
+        'email': user.email,
+        'nom': user.displayName ?? 'Utilisateur',
+        'photoUrl': user.photoURL,
+        'telephone': null,
+        'estActif': true,
+        'dateCreation': FieldValue.serverTimestamp(),
+        'dateModification': FieldValue.serverTimestamp(),
+      });
+    }
+
+    // 4. Recuperer et verifier le profil
+    final utilisateur = await getUserProfile(user.uid);
+    if (!utilisateur.estActif) {
+      await _auth.signOut();
+      await GoogleSignInService.signOut();
+      throw Exception('Ce compte utilisateur a ete desactive.');
+    }
+
+    return utilisateur;
+  }
+
+  // DECONNEXION
 
   Future<void> logout() async {
     await _auth.signOut();
+    // Deconnexion Google pour forcer la selection de compte a la prochaine connexion.
+    await GoogleSignInService.signOut();
   }
 }

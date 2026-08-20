@@ -60,3 +60,15 @@ final rechercheCategoriesProvider =
     return repository.searchCategories(recherche);
   },
 );
+
+/// Stream en temps réel de toutes les catégories (actives et inactives)
+final categoriesAdminStreamProvider = StreamProvider<List<Categorie>>((ref) {
+  final repository = ref.read(categorieRepositoryProvider);
+  return repository.streamCategoriesAdmin();
+});
+
+/// FutureProvider de toutes les catégories pour l'admin
+final categoriesAdminProvider = FutureProvider<List<Categorie>>((ref) async {
+  final repository = ref.read(categorieRepositoryProvider);
+  return repository.getAllCategoriesAdmin();
+});
