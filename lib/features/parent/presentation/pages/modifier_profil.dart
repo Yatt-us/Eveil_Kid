@@ -4,9 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/AppPadding.dart';
-import '../../../../core/constants/AppRadius.dart';
 import '../../../../core/constants/AppSpacing.dart';
-import '../../../../core/constants/AppTextStyles.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
 import '../../models/parent_model.dart';
@@ -170,7 +168,7 @@ class _ModifierProfilPageState extends ConsumerState<ModifierProfilPage> {
                             ? Image.network(
                                 widget.parent.photoUrl!,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => const Icon(
+                                errorBuilder: (context, error, stackTrace) => const Icon(
                                   Icons.person,
                                   size: 60,
                                   color: AppColors.primary,
@@ -346,7 +344,7 @@ class _ModifierProfilPageState extends ConsumerState<ModifierProfilPage> {
               ],
             ),
           ),
-          if (trailing != null) trailing,
+          ?trailing,
         ],
       ),
     );

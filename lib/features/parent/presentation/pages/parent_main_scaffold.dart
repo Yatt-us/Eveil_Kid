@@ -40,14 +40,28 @@ class _ParentMainScaffoldState extends State<ParentMainScaffold> {
       const ProfilParentPage(),
     ];
 
-    return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: pages,
-      ),
-      bottomNavigationBar: AppBottomNavBar(
-        currentIndex: _currentIndex,
-        onTap: _navigateToTab,
+    return PopScope(
+      // Autorise la fermeture uniquement si l'utilisateur est déjà sur l'onglet Accueil (index 0)
+      canPop: _currentIndex == 0,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        // Si l'utilisateur est sur un autre onglet (Jouets, Tutoriels, Profil),
+        // le bouton retour le ramène d'abord à l'Accueil (comme dans WhatsApp)
+        if (_currentIndex != 0) {
+          setState(() {
+            _currentIndex = 0;
+          });
+        }
+      },
+      child: Scaffold(
+        body: IndexedStack(
+          index: _currentIndex,
+          children: pages,
+        ),
+        bottomNavigationBar: AppBottomNavBar(
+          currentIndex: _currentIndex,
+          onTap: _navigateToTab,
+        ),
       ),
     );
   }

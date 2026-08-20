@@ -1,24 +1,25 @@
 // lib/features/parent/presentation/pages/parametres_page.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/AppPadding.dart';
 import '../../../../core/constants/AppSpacing.dart';
+import '../../../../core/themes/theme_provider.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
 import 'controle_parental_page.dart';
 import 'notification_settings_page.dart';
 import 'securite_page.dart';
 
-class ParametresPage extends StatefulWidget {
+class ParametresPage extends ConsumerStatefulWidget {
   const ParametresPage({super.key});
 
   @override
-  State<ParametresPage> createState() => _ParametresPageState();
+  ConsumerState<ParametresPage> createState() => _ParametresPageState();
 }
 
-class _ParametresPageState extends State<ParametresPage> {
+class _ParametresPageState extends ConsumerState<ParametresPage> {
   String _selectedLanguage = 'Français';
-  String _selectedTheme = 'Clair';
 
   void _showLanguageSelector() {
     showModalBottomSheet(
@@ -75,7 +76,7 @@ class _ParametresPageState extends State<ParametresPage> {
     );
   }
 
-  void _showThemeSelector() {
+  void _showThemeSelector(ThemeMode currentMode) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -94,22 +95,35 @@ class _ParametresPageState extends State<ParametresPage> {
                 ),
               ),
               ListTile(
+                leading: const Icon(Icons.light_mode_outlined, color: AppColors.primary),
                 title: const Text('Clair'),
-                trailing: _selectedTheme == 'Clair'
+                trailing: currentMode == ThemeMode.light
                     ? const Icon(Icons.check, color: AppColors.primary)
                     : null,
                 onTap: () {
-                  setState(() => _selectedTheme = 'Clair');
+                  ref.read(themeModeProvider.notifier).setThemeMode(ThemeMode.light);
                   Navigator.pop(context);
                 },
               ),
               ListTile(
+                leading: const Icon(Icons.dark_mode_outlined, color: AppColors.primary),
                 title: const Text('Sombre'),
-                trailing: _selectedTheme == 'Sombre'
+                trailing: currentMode == ThemeMode.dark
                     ? const Icon(Icons.check, color: AppColors.primary)
                     : null,
                 onTap: () {
-                  setState(() => _selectedTheme = 'Sombre');
+                  ref.read(themeModeProvider.notifier).setThemeMode(ThemeMode.dark);
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.settings_suggest_outlined, color: AppColors.primary),
+                title: const Text('Système (Automatique)'),
+                trailing: currentMode == ThemeMode.system
+                    ? const Icon(Icons.check, color: AppColors.primary)
+                    : null,
+                onTap: () {
+                  ref.read(themeModeProvider.notifier).setThemeMode(ThemeMode.system);
                   Navigator.pop(context);
                 },
               ),
@@ -120,8 +134,21 @@ class _ParametresPageState extends State<ParametresPage> {
     );
   }
 
+  String _getThemeLabel(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.light:
+        return 'Clair';
+      case ThemeMode.dark:
+        return 'Sombre';
+      case ThemeMode.system:
+        return 'Système';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final currentThemeMode = ref.watch(themeModeProvider);
+
     return Scaffold(
       backgroundColor: AppColors.surface,
       appBar: AppBar(
@@ -161,9 +188,9 @@ class _ParametresPageState extends State<ParametresPage> {
               const Divider(height: 1, color: AppColors.border),
               _buildRow(
                 icon: Icons.nightlight_round_outlined,
-                title: 'Theme',
-                trailingText: _selectedTheme,
-                onTap: _showThemeSelector,
+                title: 'Thème',
+                trailingText: _getThemeLabel(currentThemeMode),
+                onTap: () => _showThemeSelector(currentThemeMode),
               ),
               const Divider(height: 1, color: AppColors.border),
               _buildRow(

@@ -30,6 +30,7 @@ class ProfilParentPage extends ConsumerWidget {
 
     if (confirmed == true && context.mounted) {
       await ref.read(authProvider.notifier).logout();
+      print("deconnexion lancé");
     }
   }
 
@@ -56,11 +57,17 @@ class ProfilParentPage extends ConsumerWidget {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_none_rounded, color: AppColors.textPrimary, size: 26),
+            icon: const Icon(
+              Icons.notifications_none_rounded,
+              color: AppColors.textPrimary,
+              size: 26,
+            ),
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const NotificationSettingsPage()),
+                MaterialPageRoute(
+                  builder: (_) => const NotificationSettingsPage(),
+                ),
               );
             },
           ),
@@ -87,10 +94,15 @@ class ProfilParentPage extends ConsumerWidget {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: AppColors.surfaceVariant,
-                            border: Border.all(color: AppColors.border, width: 2),
+                            border: Border.all(
+                              color: AppColors.border,
+                              width: 2,
+                            ),
                           ),
                           child: ClipOval(
-                            child: parent.photoUrl != null && parent.photoUrl!.isNotEmpty
+                            child:
+                                parent.photoUrl != null &&
+                                    parent.photoUrl!.isNotEmpty
                                 ? Image.network(
                                     parent.photoUrl!,
                                     fit: BoxFit.cover,
@@ -114,7 +126,10 @@ class ProfilParentPage extends ConsumerWidget {
                             onTap: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (_) => ModifierProfilPage(parent: parent)),
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      ModifierProfilPage(parent: parent),
+                                ),
                               );
                             },
                             child: Container(
@@ -138,13 +153,18 @@ class ProfilParentPage extends ConsumerWidget {
                       parent.name.isNotEmpty
                           ? parent.name
                           : (authState.utilisateur?.nom.isNotEmpty == true
-                              ? authState.utilisateur!.nom
-                              : 'Aminata DIARRA'),
-                      style: AppTextStyles.headingMedium.copyWith(fontWeight: FontWeight.bold),
+                                ? authState.utilisateur!.nom
+                                : 'Aminata DIARRA'),
+                      style: AppTextStyles.headingMedium.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     AppSpacing.verticalXs,
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
@@ -184,7 +204,9 @@ class ProfilParentPage extends ConsumerWidget {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => ModifierProfilPage(parent: parent)),
+                          MaterialPageRoute(
+                            builder: (_) => ModifierProfilPage(parent: parent),
+                          ),
                         );
                       },
                     ),
@@ -195,7 +217,9 @@ class ProfilParentPage extends ConsumerWidget {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => const ListeEnfantsPage()),
+                          MaterialPageRoute(
+                            builder: (_) => const ListeEnfantsPage(),
+                          ),
                         );
                       },
                     ),
@@ -206,7 +230,8 @@ class ProfilParentPage extends ConsumerWidget {
                       onTap: () {
                         AppDialogs.showSnackBar(
                           context: context,
-                          message: '${parent.nombreFavoris} favori(s) enregistré(s).',
+                          message:
+                              '${parent.nombreFavoris} favori(s) enregistré(s).',
                         );
                       },
                     ),
@@ -217,7 +242,8 @@ class ProfilParentPage extends ConsumerWidget {
                       onTap: () {
                         AppDialogs.showSnackBar(
                           context: context,
-                          message: 'Vos commandes et réservations d\'emprunt seront affichées ici.',
+                          message:
+                              'Vos commandes et réservations d\'emprunt seront affichées ici.',
                         );
                       },
                     ),
@@ -228,7 +254,9 @@ class ProfilParentPage extends ConsumerWidget {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => const NotificationSettingsPage()),
+                          MaterialPageRoute(
+                            builder: (_) => const NotificationSettingsPage(),
+                          ),
                         );
                       },
                     ),
@@ -239,7 +267,9 @@ class ProfilParentPage extends ConsumerWidget {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => const ParametresPage()),
+                          MaterialPageRoute(
+                            builder: (_) => const ParametresPage(),
+                          ),
                         );
                       },
                     ),
@@ -263,7 +293,8 @@ class ProfilParentPage extends ConsumerWidget {
                           context: context,
                           applicationName: 'Éveil Kid',
                           applicationVersion: '1.0.0',
-                          applicationLegalese: '© 2026 Éveil Kid. Tous droits réservés.',
+                          applicationLegalese:
+                              '© 2026 Éveil Kid. Tous droits réservés.',
                         );
                       },
                     ),
@@ -278,10 +309,17 @@ class ProfilParentPage extends ConsumerWidget {
                   onTap: () => _logout(context, ref),
                   borderRadius: BorderRadius.circular(12),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 16,
+                    ),
                     child: Row(
                       children: [
-                        const Icon(Icons.logout_rounded, color: AppColors.danger, size: 24),
+                        const Icon(
+                          Icons.logout_rounded,
+                          color: AppColors.danger,
+                          size: 24,
+                        ),
                         AppSpacing.horizontalMd,
                         Text(
                           'Se déconnecter',
@@ -301,10 +339,17 @@ class ProfilParentPage extends ConsumerWidget {
                   },
                   borderRadius: BorderRadius.circular(12),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 16,
+                    ),
                     child: Row(
                       children: [
-                        const Icon(Icons.login_rounded, color: AppColors.primary, size: 24),
+                        const Icon(
+                          Icons.login_rounded,
+                          color: AppColors.primary,
+                          size: 24,
+                        ),
                         AppSpacing.horizontalMd,
                         Text(
                           'Se connecter / S\'inscrire',
@@ -322,7 +367,9 @@ class ProfilParentPage extends ConsumerWidget {
             ],
           ),
         ),
-        loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        loading: () => const Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
         error: (err, _) => Center(child: Text('Erreur: $err')),
       ),
     );
