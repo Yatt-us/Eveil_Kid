@@ -8,11 +8,9 @@ class AuthRepository {
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
 
-  AuthRepository({
-    FirebaseAuth? auth,
-    FirebaseFirestore? firestore,
-  })  : _auth = auth ?? FirebaseAuth.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance;
+  AuthRepository({FirebaseAuth? auth, FirebaseFirestore? firestore})
+    : _auth = auth ?? FirebaseAuth.instance,
+      _firestore = firestore ?? FirebaseFirestore.instance;
 
   // INSCRIPTION
 
@@ -21,6 +19,7 @@ class AuthRepository {
     required String password,
     required String nom,
     String? telephone,
+    UserRole role = UserRole.parent,
   }) async {
     User? user;
 
@@ -35,25 +34,23 @@ class AuthRepository {
       user = credential.user;
 
       if (user == null) {
-        throw Exception(
-          'Impossible de récupérer l’utilisateur créé.',
-        );
+        throw Exception('Impossible de récupérer l’utilisateur créé.');
       }
+
+      // Envoi d’un email de vérification
+      await user.sendEmailVerification();
 
       //  Création du profil dans Firestore
 
-      await _firestore
-          .collection('utilisateurs')
-          .doc(user.uid)
-          .set({
+      await _firestore.collection('utilisateurs').doc(user.uid).set({
         'utilisateurId': user.uid,
 
         // Une inscription publique crée un PARENT.
-        'role': 'PARENT',
+        'role': role.value,
 
         // Ces champs concernent uniquement le rôle PARENT.
-        'nombreFavoris': 0,
-        'nombreEnfants': 0,
+        'nombreFavoris': role == UserRole.parent ? 0 : null,
+        'nombreEnfants': role == UserRole.parent ? 0 : null,
 
         'email': user.email,
         'nom': nom,
@@ -101,9 +98,7 @@ class AuthRepository {
     final user = credential.user;
 
     if (user == null) {
-      throw Exception(
-        'Impossible de récupérer l’utilisateur connecté.',
-      );
+      throw Exception('Impossible de récupérer l’utilisateur connecté.');
     }
 
     //  Récupération du profil Firestore
@@ -116,9 +111,7 @@ class AuthRepository {
       // On déconnecte immédiatement le compte Firebase.
       await _auth.signOut();
 
-      throw Exception(
-        'Ce compte est désactivé.',
-      );
+      throw Exception('Ce compte est désactivé.');
     }
 
     return utilisateur;
@@ -127,25 +120,18 @@ class AuthRepository {
   // RÉCUPÉRER LE PROFIL FIRESTORE
 
   Future<Utilisateur> getUserProfile(String uid) async {
-    final document = await _firestore
-        .collection('utilisateurs')
-        .doc(uid)
-        .get();
+    final document = await _firestore.collection('utilisateurs').doc(uid).get();
 
     // Le document n'existe pas
 
     if (!document.exists) {
-      throw Exception(
-        'Le profil utilisateur est introuvable.',
-      );
+      throw Exception('Le profil utilisateur est introuvable.');
     }
 
     final data = document.data();
 
     if (data == null) {
-      throw Exception(
-        'Les données utilisateur sont introuvables.',
-      );
+      throw Exception('Les données utilisateur sont introuvables.');
     }
 
     // Transformation Map → Utilisateur
@@ -189,12 +175,8 @@ class AuthRepository {
 
   // MOT DE PASSE OUBLIÉ
 
-  Future<void> resetPassword({
-    required String email,
-  }) async {
-    await _auth.sendPasswordResetEmail(
-      email: email,
-    );
+  Future<void> resetPassword({required String email}) async {
+    await _auth.sendPasswordResetEmail(email: email);
   }
 
   // CONNEXION GOOGLE
