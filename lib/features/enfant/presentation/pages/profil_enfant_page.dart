@@ -2,163 +2,212 @@ import 'package:eveilkid/features/enfant/providers/enfant_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-
 class ProfilEnfantPage extends StatelessWidget {
   const ProfilEnfantPage({super.key});
+
+  static const Color green = Color(0xFF22A653);
 
   @override
   Widget build(BuildContext context) {
     final enfantProvider = context.watch<EnfantProvider>();
     final enfant = enfantProvider.enfantSelectionne;
 
-    // Vérifier qu'un enfant est sélectionné.
     if (enfant == null) {
       return const Scaffold(
         body: Center(
-          child: Text(
-            'Aucun enfant sélectionné',
-            style: TextStyle(fontSize: 18),
-          ),
+          child: Text('Aucun enfant sélectionné'),
         ),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mon profil'),
-      ),
-
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-
+      backgroundColor: Colors.white,
+      body: SafeArea(
         child: Column(
           children: [
             // ==========================================
-            // PHOTO DE PROFIL
+            // HEADER VERT
             // ==========================================
 
-            CircleAvatar(
-              radius: 60,
-              backgroundImage: enfant.avatarUrl != null
-                  ? NetworkImage(enfant.avatarUrl!)
-                  : null,
-              child: enfant.avatarUrl == null
-                  ? const Icon(
-                      Icons.person,
-                      size: 60,
-                    )
-                  : null,
-            ),
+            Container(
+              width: double.infinity,
+              height: 265,
+              decoration: const BoxDecoration(
+                color: green,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(25),
+                  bottomRight: Radius.circular(25),
+                ),
+              ),
+              child: Stack(
+                children: [
+                  // Bouton retour
+                  Positioned(
+                    left: 8,
+                    top: 8,
+                    child: IconButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      icon: const Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
 
-            const SizedBox(height: 20),
+                  // Profil
+                  Center(
+                    child: Column(
+                      mainAxisAlignment:
+                          MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(height: 10),
 
-            // ==========================================
-            // NOM DE L'ENFANT
-            // ==========================================
+                        // Avatar
+                        Container(
+                          width: 105,
+                          height: 105,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: const Color(0xFFEBDFFF),
+                            border: Border.all(
+                              color: Colors.white,
+                              width: 4,
+                            ),
+                          ),
+                          child: ClipOval(
+                            child: enfant.avatarUrl != null &&
+                                    enfant.avatarUrl!.isNotEmpty
+                                ? Image.network(
+                                    enfant.avatarUrl!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (_, __, ___) {
+                                      return _avatarParDefaut();
+                                    },
+                                  )
+                                : _avatarParDefaut(),
+                          ),
+                        ),
 
-            Text(
-              enfant.nom,
-              style: const TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
+                        const SizedBox(height: 10),
+
+                        Text(
+                          enfant.nom,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+
+                        const SizedBox(height: 3),
+
+                        Text(
+                          '${enfant.age} ans',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-
-            const SizedBox(height: 8),
-
-            // ÂGE
-            Text(
-              '${enfant.age} ans',
-              style: const TextStyle(
-                fontSize: 18,
-              ),
-            ),
-
-            const SizedBox(height: 30),
 
             // ==========================================
             // INFORMATIONS
             // ==========================================
 
-            _InformationCard(
-              titre: 'Nom',
-              valeur: enfant.nom,
-              icone: Icons.person,
-            ),
-
-            _InformationCard(
-              titre: 'Âge',
-              valeur: '${enfant.age} ans',
-              icone: Icons.cake,
-            ),
-
-            _InformationCard(
-              titre: 'Genre',
-              valeur: enfant.genre,
-              icone: Icons.person_outline,
-            ),
-
-            _InformationCard(
-              titre: 'Date de naissance',
-              valeur: _formaterDate(
-                enfant.dateNaissance,
-              ),
-              icone: Icons.calendar_month,
-            ),
-
-            const SizedBox(height: 20),
-
-            // ==========================================
-            // PROGRESSION
-            // ==========================================
-
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Ma progression',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleLarge
-                    ?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            Card(
+            Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(20),
-
                 child: Column(
                   children: [
-                    const Icon(
-                      Icons.emoji_events,
-                      size: 45,
+                    const SizedBox(height: 15),
+
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius:
+                            BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                Colors.black.withOpacity(0.06),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          _LigneProfil(
+                            icon: Icons.person_outline,
+                            titre: 'Informations',
+                            onTap: () {
+                              // Ouvrir les informations
+                              // détaillées de l'enfant.
+                            },
+                          ),
+
+                          const Divider(
+                            height: 1,
+                            indent: 18,
+                            endIndent: 18,
+                          ),
+
+                          _LigneProfil(
+                            icon: Icons.bar_chart_rounded,
+                            titre: 'Ma progression',
+                            onTap: () {
+                              // Naviguer vers la progression.
+                            },
+                          ),
+                        ],
+                      ),
                     ),
 
-                    const SizedBox(height: 10),
+                    const Spacer(),
 
-                    const Text(
-                      'Progression générale',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                    // ======================================
+                    // BOUTON MODIFIER
+                    // ======================================
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          // TODO :
+                          // ouvrir la page de modification
+                          // de l'enfant.
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: green,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text(
+                          'Modifier',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ),
 
                     const SizedBox(height: 15),
-
-                    const LinearProgressIndicator(
-                      value: 0.0,
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    const Text(
-                      'Les résultats seront affichés ici.',
-                    ),
                   ],
                 ),
               ),
@@ -169,43 +218,68 @@ class ProfilEnfantPage extends StatelessWidget {
     );
   }
 
-  /// Convertit la date de naissance en texte.
-  static String _formaterDate(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')}/'
-        '${date.month.toString().padLeft(2, '0')}/'
-        '${date.year}';
+  Widget _avatarParDefaut() {
+    return Container(
+      color: const Color(0xFFEBDFFF),
+      child: const Icon(
+        Icons.child_care,
+        size: 55,
+        color: Color(0xFF8B5CF6),
+      ),
+    );
   }
 }
 
-/// Widget privé permettant d'afficher
-/// une information de l'enfant.
-class _InformationCard extends StatelessWidget {
-  final String titre;
-  final String valeur;
-  final IconData icone;
+// =====================================================
+// LIGNE DU PROFIL
+// =====================================================
 
-  const _InformationCard({
+class _LigneProfil extends StatelessWidget {
+  final IconData icon;
+  final String titre;
+  final VoidCallback onTap;
+
+  const _LigneProfil({
+    required this.icon,
     required this.titre,
-    required this.valeur,
-    required this.icone,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-
-      child: ListTile(
-        leading: Icon(icone),
-
-        title: Text(
-          titre,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: 17,
         ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 21,
+              color: Colors.grey.shade700,
+            ),
 
-        subtitle: Text(valeur),
+            const SizedBox(width: 14),
+
+            Expanded(
+              child: Text(
+                titre,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+
+            Icon(
+              Icons.chevron_right_rounded,
+              color: Colors.grey.shade500,
+            ),
+          ],
+        ),
       ),
     );
   }
