@@ -53,4 +53,7 @@ class MyApp extends ConsumerWidget {
       routerConfig: router,
     );
   }
+  final GoRouter _router = GoRouter(routes: [
+    GoRoute(path: '/', builder: (context, state) => const JouetsScreen()),
+]);
 }
