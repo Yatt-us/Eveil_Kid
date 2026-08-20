@@ -40,3 +40,15 @@ final rechercheJouetsProvider =
     return repository.searchJouets(recherche);
   },
 );
+
+/// Stream en temps réel de tous les jouets pour le catalogue admin
+final jouetsAdminStreamProvider = StreamProvider<List<Jouet>>((ref) {
+  final repository = ref.read(jouetRepositoryProvider);
+  return repository.streamJouetsAdmin();
+});
+
+/// FutureProvider de tous les jouets pour l'admin
+final jouetsAdminProvider = FutureProvider<List<Jouet>>((ref) async {
+  final repository = ref.read(jouetRepositoryProvider);
+  return repository.getAllJouetsAdmin();
+});

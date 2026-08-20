@@ -71,6 +71,33 @@ class Categorie {
     );
   }
 
+  Categorie copyWith({
+    String? categorieId,
+    String? parentId,
+    String? nom,
+    int? nombreJouetsDenormalise,
+    int? nbTutoriels,
+    bool? estActive,
+    Timestamp? dateCreation,
+    Timestamp? dateModification,
+    String? iconeUrl,
+    String? imageUrl,
+  }) {
+    return Categorie(
+      categorieId: categorieId ?? this.categorieId,
+      parentId: parentId ?? this.parentId,
+      nom: nom ?? this.nom,
+      nombreJouetsDenormalise:
+          nombreJouetsDenormalise ?? this.nombreJouetsDenormalise,
+      nbTutoriels: nbTutoriels ?? this.nbTutoriels,
+      estActive: estActive ?? this.estActive,
+      dateCreation: dateCreation ?? this.dateCreation,
+      dateModification: dateModification ?? this.dateModification,
+      iconeUrl: iconeUrl ?? this.iconeUrl,
+      imageUrl: imageUrl ?? this.imageUrl,
+    );
+  }
+
   Map<String, dynamic> toFirestore() {
     return {
       'categorieId': categorieId,

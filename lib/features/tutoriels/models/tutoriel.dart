@@ -82,4 +82,41 @@ class Tutoriel {
       'dateModification': Timestamp.fromDate(dateModification),
     };
   }
+
+  Tutoriel copyWith({
+    String? tutorielId,
+    String? categorieId,
+    String? jouetLieId,
+    String? createurId,
+    String? titre,
+    String? description,
+    List<String>? jouetsSuggeres,
+    String? videoUrl,
+    String? miniatureUrl,
+    num? duree,
+    num? ageMinimum,
+    num? ageMaximum,
+    bool? estPublie,
+    DateTime? dateCreation,
+    DateTime? dateModification,
+  }) {
+    return Tutoriel(
+      tutorielId: tutorielId ?? this.tutorielId,
+      categorieId: categorieId ?? this.categorieId,
+      jouetLieId: jouetLieId ?? this.jouetLieId,
+      createurId: createurId ?? this.createurId,
+      titre: titre ?? this.titre,
+      description: description ?? this.description,
+      jouetsSuggeres: jouetsSuggeres ?? this.jouetsSuggeres,
+      videoUrl: videoUrl ?? this.videoUrl,
+      miniatureUrl: miniatureUrl ?? this.miniatureUrl,
+      duree: duree ?? this.duree,
+      ageMinimum: ageMinimum ?? this.ageMinimum,
+      ageMaximum: ageMaximum ?? this.ageMaximum,
+      estPublie: estPublie ?? this.estPublie,
+      dateCreation: dateCreation ?? this.dateCreation,
+      dateModification: dateModification ?? this.dateModification,
+    );
+  }
+
 }

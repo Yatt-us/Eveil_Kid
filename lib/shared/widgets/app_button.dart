@@ -60,6 +60,8 @@ class AppButton extends StatelessWidget {
 
     Widget button;
 
+    final minSize = isFullWidth ? const Size(double.infinity, 48) : Size.zero;
+
     switch (variant) {
       case AppButtonVariant.primary:
         button = ElevatedButton(
@@ -70,6 +72,7 @@ class AppButton extends StatelessWidget {
             disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.6),
             disabledForegroundColor: AppColors.white,
             padding: padding,
+            minimumSize: minSize,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
@@ -85,6 +88,7 @@ class AppButton extends StatelessWidget {
             foregroundColor: AppColors.primary,
             side: const BorderSide(color: AppColors.primary, width: 1.5),
             padding: padding,
+            minimumSize: minSize,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
@@ -98,6 +102,7 @@ class AppButton extends StatelessWidget {
           style: TextButton.styleFrom(
             foregroundColor: AppColors.primary,
             padding: padding,
+            minimumSize: minSize,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
@@ -114,6 +119,7 @@ class AppButton extends StatelessWidget {
             disabledBackgroundColor: AppColors.danger.withValues(alpha: 0.6),
             disabledForegroundColor: AppColors.white,
             padding: padding,
+            minimumSize: minSize,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
