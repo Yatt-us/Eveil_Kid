@@ -18,6 +18,7 @@ import 'package:eveilkid/features/auth/presentation/pages/splash_page.dart';
 import 'package:eveilkid/features/auth/providers/auth_provider.dart';
 import 'package:eveilkid/features/home/presentation/pages/home_page.dart';
 import 'package:eveilkid/features/jouets/models/jouet.dart';
+import 'package:eveilkid/features/parent/presentation/pages/parent_main_scaffold.dart';
 import 'package:eveilkid/features/tutoriels/presentations/pages/tutorielPage.dart';
 import 'package:eveilkid/features/activites/presentation/pages/client/activites_list_page.dart';
 import 'package:eveilkid/features/activites/presentation/pages/client/activites_play_page.dart';
@@ -57,10 +58,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           state.matchedLocation == AppRoutes.register;
       final isSplash = state.matchedLocation == AppRoutes.splash;
 
-      // 2. Utilisateur non authentifié
+      // 2. Utilisateur non authentifié (mode visiteur)
       if (!isAuthenticated) {
-        // Autoriser l'accès aux pages d'authentification ou pages publiques autorisées
-        if (isGoingToAuth || state.matchedLocation == AppRoutes.tutoriels) {
+        // Autoriser l'accès aux pages d'authentification, accueil public ou tutoriels
+        if (isGoingToAuth || state.matchedLocation == AppRoutes.home || state.matchedLocation == AppRoutes.tutoriels) {
           return null;
         }
         // Rediriger vers la page de connexion pour toute autre page
@@ -72,8 +73,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       // 3. Utilisateur Administrateur / Manager -> strictement dirigé et confiné à l'espace Admin
       if (isAdminOrManager) {
-        // Si l'admin est sur splash, auth ou tente d'aller sur l'accueil parent (/)
-        if (isSplash || isGoingToAuth || state.matchedLocation == AppRoutes.home) {
+        // Si l'admin est sur splash ou auth
+        if (isSplash || isGoingToAuth) {
           return AppRoutes.admin;
         }
         // Accès autorisé aux pages d'administration
@@ -118,7 +119,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ── Accueil & Fonctionnalités Utilisateur ──
       GoRoute(
         path: AppRoutes.home,
-        builder: (context, state) => const HomePage(),
+        builder: (context, state) => const ParentMainScaffold(),
       ),
       GoRoute(
         path: AppRoutes.tutoriels,
