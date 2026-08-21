@@ -33,6 +33,7 @@ migrate_working_dir/
 /build/
 /coverage/
 
+pubspec.lock
 # Symbolication related
 app.*.symbols
 
@@ -43,3 +44,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+ios/Podfile.lock
+ios/Podfile
+macos/Podfile

@@ -3,6 +3,7 @@ import '../../core/constants/app_colors.dart';
 
 class AppTextField extends StatefulWidget {
   final String? label;
+  final String? labelText;
   final String? hintText;
   final String? helperText;
   final String? errorText;
@@ -13,6 +14,7 @@ class AppTextField extends StatefulWidget {
   final bool enabled;
   final int maxLines;
   final TextInputType? keyboardType;
+  final TextInputAction? textInputAction;
   final String? Function(String?)? validator;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
@@ -20,6 +22,7 @@ class AppTextField extends StatefulWidget {
   const AppTextField({
     super.key,
     this.label,
+    this.labelText,
     this.hintText,
     this.helperText,
     this.errorText,
@@ -30,6 +33,7 @@ class AppTextField extends StatefulWidget {
     this.enabled = true,
     this.maxLines = 1,
     this.keyboardType,
+    this.textInputAction,
     this.validator,
     this.onChanged,
     this.onSubmitted,
@@ -90,11 +94,22 @@ class _AppTextFieldState extends State<AppTextField> {
           enabled: widget.enabled,
           maxLines: widget.isPassword ? 1 : widget.maxLines,
           keyboardType: widget.keyboardType,
+          textInputAction: widget.textInputAction,
           validator: widget.validator,
           onChanged: widget.onChanged,
           onFieldSubmitted: widget.onSubmitted,
           style: const TextStyle(fontSize: 15, color: AppColors.textPrimary),
           decoration: InputDecoration(
+            labelText: widget.labelText,
+            labelStyle: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 14,
+            ),
+            floatingLabelStyle: const TextStyle(
+              color: AppColors.primary,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
             hintText: widget.hintText,
             helperText: widget.helperText,
             errorText: widget.errorText,

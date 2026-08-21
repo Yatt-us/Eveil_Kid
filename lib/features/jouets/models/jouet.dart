@@ -26,6 +26,7 @@ class Jouet {
   final int nbTutorielsAssocies;
 
   final bool estActif;
+  final bool estPopulaire;
 
   final Timestamp dateCreation;
   final Timestamp dateModification;
@@ -49,9 +50,62 @@ class Jouet {
     required this.nombreAvisDenormalise,
     required this.nbTutorielsAssocies,
     required this.estActif,
+    this.estPopulaire = false,
     required this.dateCreation,
     required this.dateModification,
   });
+
+  Jouet copyWith({
+    String? jouetId,
+    String? categorieId,
+    String? createurId,
+    String? nom,
+    String? description,
+    String? nomCategorieDenormalise,
+    List<String>? images,
+    String? imagePrincipaleUrl,
+    int? ageMinimum,
+    int? ageMaximum,
+    double? prix,
+    String? devise,
+    int? stock,
+    int? stockDisponible,
+    double? noteMoyenneDenormalise,
+    int? nombreAvisDenormalise,
+    int? nbTutorielsAssocies,
+    bool? estActif,
+    bool? estPopulaire,
+    Timestamp? dateCreation,
+    Timestamp? dateModification,
+  }) {
+    return Jouet(
+      jouetId: jouetId ?? this.jouetId,
+      categorieId: categorieId ?? this.categorieId,
+      createurId: createurId ?? this.createurId,
+      nom: nom ?? this.nom,
+      description: description ?? this.description,
+      nomCategorieDenormalise:
+          nomCategorieDenormalise ?? this.nomCategorieDenormalise,
+      images: images ?? this.images,
+      imagePrincipaleUrl: imagePrincipaleUrl ?? this.imagePrincipaleUrl,
+      ageMinimum: ageMinimum ?? this.ageMinimum,
+      ageMaximum: ageMaximum ?? this.ageMaximum,
+      prix: prix ?? this.prix,
+      devise: devise ?? this.devise,
+      stock: stock ?? this.stock,
+      stockDisponible: stockDisponible ?? this.stockDisponible,
+      noteMoyenneDenormalise:
+          noteMoyenneDenormalise ?? this.noteMoyenneDenormalise,
+      nombreAvisDenormalise:
+          nombreAvisDenormalise ?? this.nombreAvisDenormalise,
+      nbTutorielsAssocies:
+          nbTutorielsAssocies ?? this.nbTutorielsAssocies,
+      estActif: estActif ?? this.estActif,
+      estPopulaire: estPopulaire ?? this.estPopulaire,
+      dateCreation: dateCreation ?? this.dateCreation,
+      dateModification: dateModification ?? this.dateModification,
+    );
+  }
 
   factory Jouet.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> snapshot,
@@ -91,6 +145,7 @@ class Jouet {
           data['nbTutorielsAssocies'] ?? 0,
 
       estActif: data['estActif'] ?? true,
+      estPopulaire: data['estPopulaire'] ?? false,
 
       dateCreation:
           data['dateCreation'] ?? Timestamp.now(),
@@ -132,6 +187,7 @@ class Jouet {
           nbTutorielsAssocies,
 
       'estActif': estActif,
+      'estPopulaire': estPopulaire,
 
       'dateCreation': dateCreation,
       'dateModification': dateModification,
