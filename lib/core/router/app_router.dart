@@ -1,3 +1,4 @@
+import 'package:eveilkid/features/activites/presentation/pages/admin/activites_liste.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -169,6 +170,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return AdminProductFormPage(jouetToEdit: jouet);
         },
       ),
+      GoRoute(
+        path: AppRoutes.adminActivites,
+        builder: (context, state) => const ActivitesListe(),
+      ),
+      
     ],
 
     // ── Gestion Erreur 404 ──

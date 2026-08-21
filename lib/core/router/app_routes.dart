@@ -24,4 +24,6 @@ class AppRoutes {
   static const String adminUsers = '/admin/users';
   static const String adminCatalog = '/admin/catalog';
   static const String adminProductForm = '/admin/product-form';
+  static const String adminActivites= '/admin/activites';
+  
 }
