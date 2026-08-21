@@ -1,5 +1,5 @@
-import 'package:eveilkid/features/auth/models/tutoriels/tutoriel.dart';
-import 'package:eveilkid/features/auth/repository/tutoriels/tutorielRpository.dart';
+import 'package:eveilkid/features/tutoriels/models/tutoriel.dart';
+import 'package:eveilkid/features/tutoriels/repository/tutorielRpository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Repository Provider

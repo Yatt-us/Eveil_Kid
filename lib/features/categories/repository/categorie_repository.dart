@@ -99,4 +99,37 @@ class CategorieRepository {
         .doc(categorieId)
         .delete();
   }
+
+  /// Récupère toutes les catégories pour l'administration (actives et inactives)
+  Future<List<Categorie>> getAllCategoriesAdmin() async {
+    final snapshot = await _categoriesCollection.get();
+    return snapshot.docs
+        .map((doc) => Categorie.fromFirestore(doc))
+        .toList();
+  }
+
+  /// Écoute en temps réel toutes les catégories
+  Stream<List<Categorie>> streamCategoriesAdmin() {
+    return _categoriesCollection.snapshots().map(
+          (snapshot) => snapshot.docs
+              .map((doc) => Categorie.fromFirestore(doc))
+              .toList(),
+        );
+  }
+
+  /// Active ou désactive une catégorie
+  Future<void> toggleActif(String categorieId, bool estActive) async {
+    await _categoriesCollection.doc(categorieId).update({
+      'estActive': estActive,
+      'dateModification': Timestamp.now(),
+    });
+  }
+
+  /// Ajuste le compteur de jouets d'une catégorie
+  Future<void> incrementerNombreJouets(String categorieId, int delta) async {
+    await _categoriesCollection.doc(categorieId).update({
+      'nombreJouetsDenormalise': FieldValue.increment(delta),
+      'dateModification': Timestamp.now(),
+    });
+  }
 }
