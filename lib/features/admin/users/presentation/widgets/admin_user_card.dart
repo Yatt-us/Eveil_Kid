@@ -8,6 +8,10 @@ import 'package:eveilkid/shared/widgets/app_dialogs.dart';
 import '../../models/admin_user_model.dart';
 import '../../providers/admin_user_provider.dart';
 
+/// Carte d'administration d'utilisateur responsive et optimisée.
+///
+/// Ne gaspille aucun espace si certaines données sont absentes et s'adapte
+/// aux différentes largeurs d'écran.
 class AdminUserCard extends ConsumerWidget {
   final AdminUserModel user;
 
@@ -20,58 +24,71 @@ class AdminUserCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final repo = ref.read(adminUserRepositoryProvider);
 
-    return AppCard(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              // Avatar
-              CircleAvatar(
-                radius: 22,
-                backgroundColor: _getRoleColor(user.role).withValues(alpha: 0.15),
-                backgroundImage: user.photoUrl != null && user.photoUrl!.isNotEmpty
-                    ? NetworkImage(user.photoUrl!)
-                    : null,
-                child: user.photoUrl == null || user.photoUrl!.isEmpty
-                    ? Text(
-                        user.nom.isNotEmpty ? user.nom[0].toUpperCase() : 'U',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: _getRoleColor(user.role),
-                        ),
-                      )
-                    : null,
-              ),
-              AppSpacing.horizontalMd,
-              // Nom & Email
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            user.nom,
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: user.estActif
-                                  ? AppColors.textPrimary
-                                  : AppColors.textSecondary,
-                              decoration:
-                                  user.estActif ? null : TextDecoration.lineThrough,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final isNarrow = width < 340;
+        final isWide = width >= 580;
+
+        return AppCard(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: EdgeInsets.all(isNarrow ? 10 : 12),
+          child: isWide
+              ? _buildWideLayout(context, ref, repo)
+              : _buildStandardLayout(context, ref, repo, isNarrow),
+        );
+      },
+    );
+  }
+
+  /// Disposition standard (mobile)
+  Widget _buildStandardLayout(
+    BuildContext context,
+    WidgetRef ref,
+    dynamic repo,
+    bool isNarrow,
+  ) {
+    final hasEmail = user.email.trim().isNotEmpty;
+    final roleColor = _getRoleColor(user.role);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            // Avatar
+            _buildAvatar(22, roleColor),
+            SizedBox(width: isNarrow ? 8 : 12),
+            // Nom & Email
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          user.nom.isNotEmpty ? user.nom : "Utilisateur sans nom",
+                          style: TextStyle(
+                            fontSize: isNarrow ? 14 : 15,
+                            fontWeight: FontWeight.bold,
+                            color: user.estActif
+                                ? AppColors.textPrimary
+                                : AppColors.textSecondary,
+                            decoration:
+                                user.estActif ? null : TextDecoration.lineThrough,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        _buildRoleBadge(user.role),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 6),
+                      _buildRoleBadge(user.role),
+                    ],
+                  ),
+                  if (hasEmail) ...[
                     const SizedBox(height: 2),
                     Text(
                       user.email,
@@ -83,55 +100,171 @@ class AdminUserCard extends ConsumerWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
-                ),
+                ],
               ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        const Divider(height: 1, color: AppColors.border),
+        const SizedBox(height: 4),
+        // Actions
+        Row(
+          children: [
+            // Switch Statut
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Transform.scale(
+                  scale: 0.72,
+                  child: Switch(
+                    value: user.estActif,
+                    activeThumbColor: AppColors.success,
+                    onChanged: (val) async {
+                      await repo.toggleUserStatus(user.utilisateurId, val);
+                    },
+                  ),
+                ),
+                Text(
+                  user.estActif ? "Actif" : "Bloqué",
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: user.estActif
+                        ? AppColors.success
+                        : AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+            const Spacer(),
+            // Bouton Changer de Rôle
+            TextButton.icon(
+              icon: const Icon(Icons.swap_horiz, size: 16, color: AppColors.primary),
+              label: const Text(
+                "Changer rôle",
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: Size.zero,
+              ),
+              onPressed: () => _showRoleSelectionDialog(context, ref),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// Disposition large (tablette / desktop)
+  Widget _buildWideLayout(BuildContext context, WidgetRef ref, dynamic repo) {
+    final roleColor = _getRoleColor(user.role);
+    final hasEmail = user.email.trim().isNotEmpty;
+
+    return Row(
+      children: [
+        _buildAvatar(22, roleColor),
+        AppSpacing.horizontalMd,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      user.nom.isNotEmpty ? user.nom : "Utilisateur sans nom",
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: user.estActif
+                            ? AppColors.textPrimary
+                            : AppColors.textSecondary,
+                        decoration:
+                            user.estActif ? null : TextDecoration.lineThrough,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _buildRoleBadge(user.role),
+                ],
+              ),
+              if (hasEmail) ...[
+                const SizedBox(height: 2),
+                Text(
+                  user.email,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ],
           ),
-          const Divider(height: 16, color: AppColors.border),
-          // Actions: Changer de rôle & Switch statut
-          Row(
-            children: [
-              // Switch Actif
-              Transform.scale(
-                scale: 0.75,
-                child: Switch(
-                  value: user.estActif,
-                  activeThumbColor: AppColors.success,
-                  onChanged: (val) async {
-                    await repo.toggleUserStatus(user.utilisateurId, val);
-                  },
-                ),
-              ),
-              Text(
-                user.estActif ? "Compte actif" : "Compte bloqué",
-                style: TextStyle(
-                  fontSize: 12,
-                  color: user.estActif
-                      ? AppColors.success
-                      : AppColors.textSecondary,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const Spacer(),
-              // Bouton Changer de Rôle
-              TextButton.icon(
-                icon: const Icon(Icons.swap_horiz, size: 16, color: AppColors.primary),
-                label: const Text(
-                  "Changer rôle",
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                ),
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  minimumSize: Size.zero,
-                ),
-                onPressed: () {
-                  _showRoleSelectionDialog(context, ref);
+        ),
+        AppSpacing.horizontalMd,
+        // Switch & Actions
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Transform.scale(
+              scale: 0.75,
+              child: Switch(
+                value: user.estActif,
+                activeThumbColor: AppColors.success,
+                onChanged: (val) async {
+                  await repo.toggleUserStatus(user.utilisateurId, val);
                 },
               ),
-            ],
-          ),
-        ],
-      ),
+            ),
+            Text(
+              user.estActif ? "Actif" : "Bloqué",
+              style: TextStyle(
+                fontSize: 12,
+                color: user.estActif
+                    ? AppColors.success
+                    : AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(width: 12),
+            TextButton.icon(
+              icon: const Icon(Icons.swap_horiz, size: 16, color: AppColors.primary),
+              label: const Text(
+                "Changer rôle",
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+              onPressed: () => _showRoleSelectionDialog(context, ref),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAvatar(double radius, Color roleColor) {
+    final hasPhoto = user.photoUrl != null && user.photoUrl!.trim().isNotEmpty;
+
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: roleColor.withValues(alpha: 0.15),
+      backgroundImage: hasPhoto ? NetworkImage(user.photoUrl!) : null,
+      child: !hasPhoto
+          ? Text(
+              user.nom.isNotEmpty ? user.nom[0].toUpperCase() : 'U',
+              style: TextStyle(
+                fontSize: radius * 0.75,
+                fontWeight: FontWeight.bold,
+                color: roleColor,
+              ),
+            )
+          : null,
     );
   }
 
@@ -195,7 +328,7 @@ class AdminUserCard extends ConsumerWidget {
   Widget _buildRoleBadge(String role) {
     final color = _getRoleColor(role);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(6),

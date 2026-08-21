@@ -31,4 +31,3 @@ class AppRoutes {
   static const String jouetdetail = '/jouet-detail';
   static const String jouetscreen = '/jouets-screen';
 }
- 

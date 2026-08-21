@@ -11,9 +11,20 @@ class AppTheme {
   // Parent / Visiteur / Manager
   // ============================================================
 
+  static const PageTransitionsTheme _pageTransitionsTheme = PageTransitionsTheme(
+    builders: {
+      TargetPlatform.android: ZoomPageTransitionsBuilder(),
+      TargetPlatform.iOS: ZoomPageTransitionsBuilder(),
+      TargetPlatform.linux: FadeForwardsPageTransitionsBuilder(),
+      TargetPlatform.macOS: FadeForwardsPageTransitionsBuilder(),
+      TargetPlatform.windows: FadeForwardsPageTransitionsBuilder(),
+    },
+  );
+
   static ThemeData get light {
     return ThemeData(
       useMaterial3: true,
+      pageTransitionsTheme: _pageTransitionsTheme,
 
       brightness: Brightness.light,
 
@@ -47,6 +58,30 @@ class AppTheme {
       ),
 
       // ========================================================
+      // TAB BAR (Clean, Flat & Moderne)
+      // ========================================================
+      tabBarTheme: TabBarThemeData(
+        labelColor: AppColors.primary,
+        unselectedLabelColor: AppColors.textSecondary,
+        indicatorColor: AppColors.primary,
+        indicatorSize: TabBarIndicatorSize.tab,
+        dividerColor: Colors.transparent,
+        labelStyle: const TextStyle(
+          fontFamily: AppTextStyles.fontFamily,
+          fontSize: 13.5,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.2,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontFamily: AppTextStyles.fontFamily,
+          fontSize: 13.5,
+          fontWeight: FontWeight.w500,
+          letterSpacing: -0.2,
+        ),
+        overlayColor: WidgetStateProperty.all(Colors.transparent),
+      ),
+
+      // ========================================================
       // CARD
       // ========================================================
       cardTheme: const CardThemeData(
@@ -57,48 +92,70 @@ class AppTheme {
       ),
 
       // ========================================================
-      // INPUT
+      // INPUT (Flat, Simple, Professionnel, Bordure active minime)
       // ========================================================
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surfaceVariant,
-
+        fillColor: AppColors.surface,
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 14,
+          horizontal: 14,
+          vertical: 12,
         ),
-
         hintStyle: AppTextStyles.bodyMedium.copyWith(
-          color: AppColors.textSecondary,
+          color: AppColors.textSecondary.withValues(alpha: 0.7),
+          fontSize: 14,
+          fontWeight: FontWeight.normal,
         ),
-
         labelStyle: AppTextStyles.bodyMedium.copyWith(
           color: AppColors.textSecondary,
+          fontSize: 14,
         ),
-
-        border: OutlineInputBorder(
-          borderRadius: AppRadius.input,
-          borderSide: const BorderSide(color: AppColors.border),
+        floatingLabelStyle: const TextStyle(
+          color: AppColors.primary,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
         ),
-
-        enabledBorder: OutlineInputBorder(
+        border: const OutlineInputBorder(
           borderRadius: AppRadius.input,
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(
+            color: AppColors.border,
+            width: 1.0,
+          ),
         ),
-
-        focusedBorder: OutlineInputBorder(
+        enabledBorder: const OutlineInputBorder(
           borderRadius: AppRadius.input,
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          borderSide: BorderSide(
+            color: AppColors.border,
+            width: 1.0,
+          ),
         ),
-
-        errorBorder: OutlineInputBorder(
+        focusedBorder: const OutlineInputBorder(
           borderRadius: AppRadius.input,
-          borderSide: const BorderSide(color: AppColors.danger),
+          borderSide: BorderSide(
+            color: AppColors.primary,
+            width: 1.2,
+          ),
         ),
-
-        focusedErrorBorder: OutlineInputBorder(
+        errorBorder: const OutlineInputBorder(
           borderRadius: AppRadius.input,
-          borderSide: const BorderSide(color: AppColors.danger, width: 2),
+          borderSide: BorderSide(
+            color: AppColors.danger,
+            width: 1.0,
+          ),
+        ),
+        focusedErrorBorder: const OutlineInputBorder(
+          borderRadius: AppRadius.input,
+          borderSide: BorderSide(
+            color: AppColors.danger,
+            width: 1.2,
+          ),
+        ),
+        disabledBorder: OutlineInputBorder(
+          borderRadius: AppRadius.input,
+          borderSide: BorderSide(
+            color: AppColors.border.withValues(alpha: 0.4),
+            width: 1.0,
+          ),
         ),
       ),
 
@@ -217,6 +274,7 @@ class AppTheme {
   static ThemeData get dark {
     return ThemeData(
       useMaterial3: true,
+      pageTransitionsTheme: _pageTransitionsTheme,
 
       brightness: Brightness.dark,
 
@@ -250,6 +308,30 @@ class AppTheme {
       ),
 
       // ========================================================
+      // TAB BAR (Clean, Flat & Moderne)
+      // ========================================================
+      tabBarTheme: TabBarThemeData(
+        labelColor: AppColors.primaryLight,
+        unselectedLabelColor: AppColors.darkTextSecondary,
+        indicatorColor: AppColors.primaryLight,
+        indicatorSize: TabBarIndicatorSize.tab,
+        dividerColor: Colors.transparent,
+        labelStyle: const TextStyle(
+          fontFamily: AppTextStyles.fontFamily,
+          fontSize: 13.5,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.2,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontFamily: AppTextStyles.fontFamily,
+          fontSize: 13.5,
+          fontWeight: FontWeight.w500,
+          letterSpacing: -0.2,
+        ),
+        overlayColor: WidgetStateProperty.all(Colors.transparent),
+      ),
+
+      // ========================================================
       // CARD
       // ========================================================
       cardTheme: const CardThemeData(
@@ -260,43 +342,70 @@ class AppTheme {
       ),
 
       // ========================================================
-      // INPUT
+      // INPUT (Flat, Simple, Professionnel, Bordure active minime)
       // ========================================================
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.darkSurfaceVariant,
-
+        fillColor: AppColors.darkSurface,
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 14,
+          horizontal: 14,
+          vertical: 12,
         ),
-
         hintStyle: AppTextStyles.bodyMedium.copyWith(
-          color: AppColors.darkTextSecondary,
+          color: AppColors.darkTextSecondary.withValues(alpha: 0.7),
+          fontSize: 14,
+          fontWeight: FontWeight.normal,
         ),
-
         labelStyle: AppTextStyles.bodyMedium.copyWith(
           color: AppColors.darkTextSecondary,
+          fontSize: 14,
         ),
-
-        border: OutlineInputBorder(
-          borderRadius: AppRadius.input,
-          borderSide: const BorderSide(color: AppColors.darkBorder),
+        floatingLabelStyle: const TextStyle(
+          color: AppColors.primaryLight,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
         ),
-
-        enabledBorder: OutlineInputBorder(
+        border: const OutlineInputBorder(
           borderRadius: AppRadius.input,
-          borderSide: const BorderSide(color: AppColors.darkBorder),
+          borderSide: BorderSide(
+            color: AppColors.darkBorder,
+            width: 1.0,
+          ),
         ),
-
-        focusedBorder: OutlineInputBorder(
+        enabledBorder: const OutlineInputBorder(
           borderRadius: AppRadius.input,
-          borderSide: const BorderSide(color: AppColors.primaryLight, width: 2),
+          borderSide: BorderSide(
+            color: AppColors.darkBorder,
+            width: 1.0,
+          ),
         ),
-
-        errorBorder: OutlineInputBorder(
+        focusedBorder: const OutlineInputBorder(
           borderRadius: AppRadius.input,
-          borderSide: const BorderSide(color: AppColors.danger),
+          borderSide: BorderSide(
+            color: AppColors.primaryLight,
+            width: 1.2,
+          ),
+        ),
+        errorBorder: const OutlineInputBorder(
+          borderRadius: AppRadius.input,
+          borderSide: BorderSide(
+            color: AppColors.danger,
+            width: 1.0,
+          ),
+        ),
+        focusedErrorBorder: const OutlineInputBorder(
+          borderRadius: AppRadius.input,
+          borderSide: BorderSide(
+            color: AppColors.danger,
+            width: 1.2,
+          ),
+        ),
+        disabledBorder: OutlineInputBorder(
+          borderRadius: AppRadius.input,
+          borderSide: BorderSide(
+            color: AppColors.darkBorder.withValues(alpha: 0.4),
+            width: 1.0,
+          ),
         ),
       ),
 
@@ -395,6 +504,7 @@ class AppTheme {
   static ThemeData get child {
     return ThemeData(
       useMaterial3: true,
+      pageTransitionsTheme: _pageTransitionsTheme,
 
       brightness: Brightness.light,
 

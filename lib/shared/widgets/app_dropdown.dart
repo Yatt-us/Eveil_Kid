@@ -228,35 +228,39 @@ class AppDropdown<T> extends StatelessWidget {
           Text(
             label!,
             style: const TextStyle(
-              fontSize: 14,
+              fontSize: 13,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
+              letterSpacing: -0.1,
             ),
           ),
           const SizedBox(height: 6),
         ],
         InkWell(
           onTap: () => _openSelectionSheet(context),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
               color: enabled
                   ? AppColors.surface
-                  : AppColors.disabled.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.border),
+                  : AppColors.disabled.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.border,
+                width: 1.0,
+              ),
             ),
             child: Row(
               children: [
                 if (prefixIcon != null) ...[
-                  Icon(prefixIcon, color: AppColors.icon, size: 20),
-                  const SizedBox(width: 12),
+                  Icon(prefixIcon, color: AppColors.icon, size: 19),
+                  const SizedBox(width: 10),
                 ],
                 if (selected?.icon != null) ...[
                   Icon(
                     selected!.icon,
-                    size: 20,
+                    size: 19,
                     color: selected.iconColor ?? AppColors.primary,
                   ),
                   const SizedBox(width: 10),
@@ -267,28 +271,22 @@ class AppDropdown<T> extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: 14,
                       fontWeight: selected != null
                           ? FontWeight.w500
                           : FontWeight.normal,
                       color: selected != null
                           ? AppColors.textPrimary
-                          : AppColors.textSecondary,
+                          : AppColors.textSecondary.withValues(alpha: 0.65),
+                      letterSpacing: 0.1,
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
+                const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: AppColors.icon,
+                  size: 20,
                 ),
               ],
             ),
