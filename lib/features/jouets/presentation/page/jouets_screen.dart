@@ -15,14 +15,10 @@ import 'package:eveilkid/features/jouets/providers/jouet_provider.dart';
 import 'package:eveilkid/features/jouets/presentation/page/jouet_card.dart';
 import 'package:eveilkid/features/panier/providers/panier_provider.dart';
 
-
 class JouetsScreen extends ConsumerStatefulWidget {
   final String utilisateurId;
 
-  const JouetsScreen({
-    super.key,
-    required this.utilisateurId,
-  });
+  const JouetsScreen({super.key, required this.utilisateurId});
 
   @override
   ConsumerState<JouetsScreen> createState() => _JouetsScreenState();
@@ -45,11 +41,13 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
     return jouets.where((jouet) {
       final rechercheLower = _recherche.trim().toLowerCase();
 
-      final correspondRecherche = rechercheLower.isEmpty ||
+      final correspondRecherche =
+          rechercheLower.isEmpty ||
           jouet.nom.toLowerCase().contains(rechercheLower) ||
           jouet.description.toLowerCase().contains(rechercheLower);
 
-      final correspondCategorie = _categorieIdSelectionnee == null ||
+      final correspondCategorie =
+          _categorieIdSelectionnee == null ||
           jouet.categorieId == _categorieIdSelectionnee;
 
       return correspondRecherche && correspondCategorie;
@@ -71,33 +69,25 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
                   // HEADER
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                    sliver: SliverToBoxAdapter(
-                      child: _buildHeader(),
-                    ),
+                    sliver: SliverToBoxAdapter(child: _buildHeader()),
                   ),
 
                   // RECHERCHE
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                    sliver: SliverToBoxAdapter(
-                      child: _buildSearchBar(),
-                    ),
+                    sliver: SliverToBoxAdapter(child: _buildSearchBar()),
                   ),
 
                   // HERO
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                    sliver: SliverToBoxAdapter(
-                      child: _buildHero(),
-                    ),
+                    sliver: SliverToBoxAdapter(child: _buildHero()),
                   ),
 
                   // CATEGORIES
                   SliverPadding(
                     padding: const EdgeInsets.only(top: 16, bottom: 8),
-                    sliver: SliverToBoxAdapter(
-                      child: _buildCategoriesBar(),
-                    ),
+                    sliver: SliverToBoxAdapter(child: _buildCategoriesBar()),
                   ),
 
                   // JOUETS
@@ -123,30 +113,30 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
                       return SliverPadding(
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
                         sliver: SliverGrid(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              final jouet = jouetsFiltres[index];
-                              return JouetCard(
-                                jouet: jouet,
-                                onTap: () {
-                                  // Utilisation de context.push pour ajouter l'écran au-dessus
-                                  // et conserver la flèche Retour (back) native dans JouetDetailScreen.
-                                  context.push(
-                                    AppRoutes.jouetdetail,
-                                    extra: jouet,
-                                  );
-                                },
-                              );
-                            },
-                            childCount: jouetsFiltres.length,
-                          ),
+                          delegate: SliverChildBuilderDelegate((
+                            context,
+                            index,
+                          ) {
+                            final jouet = jouetsFiltres[index];
+                            return JouetCard(
+                              jouet: jouet,
+                              onTap: () {
+                                // Utilisation de context.push pour ajouter l'écran au-dessus
+                                // et conserver la flèche Retour (back) native dans JouetDetailScreen.
+                                context.push(
+                                  AppRoutes.jouetdetail,
+                                  extra: jouet,
+                                );
+                              },
+                            );
+                          }, childCount: jouetsFiltres.length),
                           gridDelegate:
                               const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            childAspectRatio: 0.75,
-                          ),
+                                crossAxisCount: 2,
+                                crossAxisSpacing: 12,
+                                mainAxisSpacing: 12,
+                                childAspectRatio: 0.75,
+                              ),
                         ),
                       );
                     },
@@ -156,10 +146,10 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
             ),
 
             // NAVIGATION BAS DE PAGE
-            AppBottomNavBar()
           ],
         ),
       ),
+      bottomNavigationBar: AppBottomNavBar(),
     );
   }
 
@@ -192,10 +182,8 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
     final panierAsync = ref.watch(panierProvider(widget.utilisateurId));
 
     final totalArticles = panierAsync.when(
-      data: (articles) => articles.fold<int>(
-        0,
-        (sum, item) => sum + item.quantite,
-      ),
+      data: (articles) =>
+          articles.fold<int>(0, (sum, item) => sum + item.quantite),
       loading: () => 0,
       error: (_, __) => 0,
     );
@@ -217,10 +205,7 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
               onPressed: () {
                 // Naviguer vers la page Panier si elle existe
               },
-              icon: const Icon(
-                Icons.shopping_cart_outlined,
-                size: 26,
-              ),
+              icon: const Icon(Icons.shopping_cart_outlined, size: 26),
               color: AppColors.textPrimary,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
@@ -276,11 +261,7 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
                   fontSize: 14,
                   color: AppColors.textSecondary,
                 ),
-                prefixIcon: Icon(
-                  Icons.search,
-                  size: 22,
-                  color: AppColors.icon,
-                ),
+                prefixIcon: Icon(Icons.search, size: 22, color: AppColors.icon),
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(vertical: 12),
               ),
@@ -379,11 +360,8 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
               child: Image.asset(
                 'assets/images/teddy_bear.png',
                 fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) => const Icon(
-                  Icons.toys,
-                  size: 60,
-                  color: AppColors.accent,
-                ),
+                errorBuilder: (context, error, stackTrace) =>
+                    const Icon(Icons.toys, size: 60, color: AppColors.accent),
               ),
             ),
           ),
@@ -414,15 +392,17 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
               final isTous = index == 0;
               final selected = isTous
                   ? _categorieIdSelectionnee == null
-                  : _categorieIdSelectionnee == categories[index - 1].categorieId;
+                  : _categorieIdSelectionnee ==
+                        categories[index - 1].categorieId;
 
               final nomCategorie = isTous ? 'Tous' : categories[index - 1].nom;
 
               return GestureDetector(
                 onTap: () {
                   setState(() {
-                    _categorieIdSelectionnee =
-                        isTous ? null : categories[index - 1].categorieId;
+                    _categorieIdSelectionnee = isTous
+                        ? null
+                        : categories[index - 1].categorieId;
                   });
                 },
                 child: Container(
@@ -431,7 +411,9 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
                   decoration: BoxDecoration(
                     color: selected ? AppColors.primary : AppColors.surface,
                     borderRadius: AppRadius.circularRadius,
-                    border: selected ? null : Border.all(color: AppColors.border),
+                    border: selected
+                        ? null
+                        : Border.all(color: AppColors.border),
                   ),
                   child: Text(
                     nomCategorie,

@@ -6,7 +6,6 @@ import 'package:eveilkid/core/constants/AppTextStyles.dart';
 import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/core/router/app_routes.dart';
 
-
 import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_catalog_page.dart';
 import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_category_list_page.dart';
 import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_product_form_page.dart';
@@ -73,7 +72,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // 3. Utilisateur Administrateur / Manager -> strictement dirigé et confiné à l'espace Admin
       if (isAdminOrManager) {
         // Si l'admin est sur splash, auth ou tente d'aller sur l'accueil parent
-        if (isSplash || isGoingToAuth || state.matchedLocation == AppRoutes.home) {
+        if (isSplash ||
+            isGoingToAuth ||
+            state.matchedLocation == AppRoutes.home) {
           return AppRoutes.admin;
         }
         // Accès autorisé aux pages d'administration
@@ -120,13 +121,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ── Accueil & Fonctionnalités Utilisateur ──
       GoRoute(
         path: AppRoutes.home,
-        builder: (context, state) => const HomePage(),
+        pageBuilder: (context, state) {
+          return const NoTransitionPage(child: HomePage());
+        },
       ),
       GoRoute(
         path: AppRoutes.tutoriels,
-        builder: (context, state) => const TutorielPage(),
+        pageBuilder: (context, state) {
+          return const NoTransitionPage(child: TutorielPage());
+        },
       ),
-    
 
       // ── Espace Administration ──
       GoRoute(
@@ -160,10 +164,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ── Espace Jouets ──
       GoRoute(
         path: AppRoutes.jouetscreen,
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final authState = ref.watch(authProvider);
-          //final userId = authState.utilisateur?.uid ?? '0FCX2CD3IlcC2tPxiOujc0b0N9v1';
-          return JouetsScreen(utilisateurId: '0FCX2CD3IlcC2tPxiOujc0b0N9v1');
+
+          final utilisateurId =
+              authState.utilisateur?.uid ?? '0FCX2CD3IlcC2tPxiOujc0b0N9v1';
+
+          return NoTransitionPage(
+            child: JouetsScreen(utilisateurId: utilisateurId.toString()),
+          );
         },
       ),
       GoRoute(
@@ -171,7 +180,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final jouet = state.extra as Jouet;
           final authState = ref.watch(authProvider);
-         // final userId = authState.utilisateur?.uid ?? '0FCX2CD3IlcC2tPxiOujc0b0N9v1';
+          // final userId = authState.utilisateur?.uid ?? '0FCX2CD3IlcC2tPxiOujc0b0N9v1';
 
           return JouetDetailScreen(
             jouet: jouet,
@@ -228,4 +237,3 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ),
   );
 });
-
