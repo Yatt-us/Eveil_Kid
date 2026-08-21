@@ -240,10 +240,7 @@ import 'package:eveilkid/core/constants/AppTextStyles.dart';
 import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/core/router/app_routes.dart';
 
-import 'package:eveilkid/features/activites/presentation/pages/activites_corrige_page.dart';
-import 'package:eveilkid/features/activites/presentation/pages/activites_list_page.dart';
-import 'package:eveilkid/features/activites/presentation/pages/activites_play_page.dart';
-import 'package:eveilkid/features/activites/presentation/pages/activites_resultat_page.dart';
+
 import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_catalog_page.dart';
 import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_category_list_page.dart';
 import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_product_form_page.dart';
@@ -360,22 +357,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.tutoriels,
         builder: (context, state) => const TutorielPage(),
       ),
-      GoRoute(
-        path: AppRoutes.activites,
-        builder: (context, state) => const ActivitesListPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.activitesPlay,
-        builder: (context, state) => const ActivitesPlayPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.activitesResultat,
-        builder: (context, state) => const ActivitesResultatPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.activitesCorrige,
-        builder: (context, state) => const ActivitesCorrigePage(),
-      ),
+    
 
       // ── Espace Administration ──
       GoRoute(
@@ -411,6 +393,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.jouetscreen,
         builder: (context, state) {
           final authState = ref.watch(authProvider);
+          //final userId = authState.utilisateur?.uid ?? '0FCX2CD3IlcC2tPxiOujc0b0N9v1';
           return JouetsScreen(utilisateurId: '0FCX2CD3IlcC2tPxiOujc0b0N9v1');
         },
       ),
@@ -419,6 +402,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final jouet = state.extra as Jouet;
           final authState = ref.watch(authProvider);
+         // final userId = authState.utilisateur?.uid ?? '0FCX2CD3IlcC2tPxiOujc0b0N9v1';
+
           return JouetDetailScreen(
             jouet: jouet,
             utilisateurId: '0FCX2CD3IlcC2tPxiOujc0b0N9v1',
