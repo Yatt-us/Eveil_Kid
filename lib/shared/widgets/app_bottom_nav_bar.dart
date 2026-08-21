@@ -34,15 +34,12 @@ class AppBottomNavBar extends ConsumerWidget {
           case 0:
             context.go(AppRoutes.home);
             break;
-
           case 1:
-            context.go(AppRoutes.jouets);
+            context.go(AppRoutes.jouetscreen);
             break;
-
           case 2:
             context.go(AppRoutes.tutoriels);
             break;
-
           case 3:
             context.go(AppRoutes.profile);
             break;
@@ -57,8 +54,8 @@ class AppBottomNavBar extends ConsumerWidget {
         ),
 
         BottomNavigationBarItem(
-          icon: Icon(Icons.toys_outlined),
-          activeIcon: Icon(Icons.toys),
+          icon: Icon(Icons.shopping_bag_outlined),
+          activeIcon: Icon(Icons.shopping_bag),
           label: 'Boutique',
         ),
 
