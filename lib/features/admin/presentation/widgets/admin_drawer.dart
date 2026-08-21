@@ -21,6 +21,7 @@ enum AdminNavRoute {
   commandes,
   tutoriels,
   utilisateurs,
+  activites
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -190,6 +191,14 @@ class _AdminNavigationContent extends ConsumerWidget {
         badge: 'Bientôt',
         onTap: () => _showComingSoon(context, 'Tutoriels'),
       ),
+      _AdminNavItemData(
+        route: AdminNavRoute.activites,
+        icon: Icons.local_activity,
+        activeIcon: Icons.local_activity_outlined,
+        label: 'activites',
+        badge: 'Bientôt',
+        onTap: () => _navigate(context, AdminNavRoute.activites),
+      ),
     ];
 
     final adminItems = <_AdminNavItemData>[
@@ -299,6 +308,9 @@ class _AdminNavigationContent extends ConsumerWidget {
         break;
       case AdminNavRoute.utilisateurs:
         context.go(AppRoutes.adminUsers);
+        break;
+      case AdminNavRoute.activites:
+        context.go(AppRoutes.adminActivites);
         break;
       default:
         return;
