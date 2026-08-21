@@ -1,3 +1,5 @@
+import 'package:eveilkid/features/parents/presentation/pages/accueil_parent.dart';
+import 'package:eveilkid/features/parents/presentation/pages/profil_parent.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -122,7 +124,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.home,
         pageBuilder: (context, state) {
-          return const NoTransitionPage(child: HomePage());
+          return const NoTransitionPage(child: AccueilParentPage());
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.profile,
+        pageBuilder: (context, state) {
+          return const NoTransitionPage(child: ProfilParentPage());
         },
       ),
       GoRoute(

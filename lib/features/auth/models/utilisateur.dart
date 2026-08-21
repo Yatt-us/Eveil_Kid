@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:eveilkid/features/enfant/model/enfant_model.dart';
 
 enum UserRole {
   parent,
@@ -28,9 +29,7 @@ enum UserRole {
         return UserRole.admin;
 
       default:
-        throw ArgumentError(
-          'Rôle utilisateur inconnu : $value',
-        );
+        throw ArgumentError('Rôle utilisateur inconnu : $value');
     }
   }
 }
@@ -47,20 +46,24 @@ class Utilisateur {
   final bool estActif;
   final DateTime? dateCreation;
   final DateTime? dateModification;
+  final List<EnfantModel> enfants;
 
   const Utilisateur({
     required this.utilisateurId,
-    required this.role,
+    this.role = UserRole.parent,
     this.nombreFavoris,
     this.nombreEnfants,
-    required this.email,
-    required this.nom,
+    this.email = '',
+    this.nom = '',
     this.photoUrl,
     this.telephone,
-    required this.estActif,
+    this.estActif = true,
     this.dateCreation,
     this.dateModification,
+    this.enfants = const [],
   });
+
+  String get name => nom;
 
   factory Utilisateur.fromMap(Map<String, dynamic> map) {
     return Utilisateur(
@@ -73,13 +76,20 @@ class Utilisateur {
       photoUrl: map['photoUrl'] as String?,
       telephone: map['telephone'] as String?,
       estActif: map['estActif'] as bool? ?? true,
-      dateCreation: _timestampToDateTime(
-        map['dateCreation'],
-      ),
-      dateModification: _timestampToDateTime(
-        map['dateModification'],
-      ),
+      dateCreation: _timestampToDateTime(map['dateCreation']),
+      dateModification: _timestampToDateTime(map['dateModification']),
     );
+  }
+
+  factory Utilisateur.fromFirestore(
+    Map<String, dynamic> data,
+    String id, {
+    List<EnfantModel> enfants = const [],
+  }) {
+    return Utilisateur.fromMap({
+      ...data,
+      'utilisateurId': data['utilisateurId'] ?? id,
+    }).copyWith(enfants: enfants);
   }
 
   Object? get uid => null;
@@ -98,6 +108,38 @@ class Utilisateur {
       'dateCreation': dateCreation,
       'dateModification': dateModification,
     };
+  }
+
+  Map<String, dynamic> toFirestore() => toMap();
+
+  Utilisateur copyWith({
+    String? utilisateurId,
+    UserRole? role,
+    int? nombreFavoris,
+    int? nombreEnfants,
+    String? email,
+    String? nom,
+    String? photoUrl,
+    String? telephone,
+    bool? estActif,
+    DateTime? dateCreation,
+    DateTime? dateModification,
+    List<EnfantModel>? enfants,
+  }) {
+    return Utilisateur(
+      utilisateurId: utilisateurId ?? this.utilisateurId,
+      role: role ?? this.role,
+      nombreFavoris: nombreFavoris ?? this.nombreFavoris,
+      nombreEnfants: nombreEnfants ?? this.nombreEnfants,
+      email: email ?? this.email,
+      nom: nom ?? this.nom,
+      photoUrl: photoUrl ?? this.photoUrl,
+      telephone: telephone ?? this.telephone,
+      estActif: estActif ?? this.estActif,
+      dateCreation: dateCreation ?? this.dateCreation,
+      dateModification: dateModification ?? this.dateModification,
+      enfants: enfants ?? this.enfants,
+    );
   }
 
   static DateTime? _timestampToDateTime(dynamic value) {
