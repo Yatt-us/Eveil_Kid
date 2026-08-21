@@ -1,56 +1,54 @@
-// import 'package:eveilkid/firebase_options.dart';
-// import 'package:firebase_core/firebase_core.dart';
-// import 'package:flutter/material.dart';
-
-// Future<void> main() async {
-//   WidgetsFlutterBinding.ensureInitialized();
-//   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-//   runApp(const MyApp());
-// }
-
-// class MyApp extends StatelessWidget {
-//   const MyApp({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Center(child: Text("bonjour"));
-//   }
-// }
-
-import 'package:eveilkid/core/router/app_router.dart';
-import 'package:eveilkid/core/services/google_sign_in_service.dart';
-import 'package:eveilkid/core/themes/AppTheme.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
 
-import 'firebase_options.dart';
+import 'features/commandes/models/commande_model.dart';
+import 'features/commandes/providers/commande_provider.dart';
+import 'features/commandes/presentation/pages/adresse_page.dart'; // 👈 Import de AdressePage au lieu de ConfirmationPage
 
-Future<void> main() async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
 
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  // Initialise Google Sign-In v7+ une seule fois avant runApp.
-  // Tente egalement une re-connexion legere (sans UI) si l utilisateur
-  // etait deja connecte precedemment.
-  await GoogleSignInService.initialize();
-
-  runApp(const ProviderScope(child: MyApp()));
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => CommandeProvider()),
+      ],
+      child: const MonApp(),
+    ),
+  );
 }
 
-class MyApp extends ConsumerWidget {
-  const MyApp({super.key});
+class MonApp extends StatelessWidget {
+  const MonApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final router = ref.watch(appRouterProvider);
+  Widget build(BuildContext context) {
+    final commandeTest = CommandeModel(
+      id: 'CMD-TEST-123',
+      parentId: 'sam@gmail.com',
+      articles: [
+        ArticleCommandeModel(
+          produitId: 'j1',
+          titre: 'Jeu de construction en bois',
+          quantite: 2,
+          prix: 5000,
+        ),
+      ],
+      montantTotal: 12000,
+      fraisLivraison: 2000,
+      adresseLivraison: 'Bamako, Quartier Hippodrome',
+      numeroTelephone: '+223 70 00 00 00',
+      dateCreation: DateTime.now(),
+    );
 
-    return MaterialApp.router(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Éveil Kid',
-      theme: AppTheme.light,
-      routerConfig: router,
+      title: 'Eveil Kid',
+      home: AdressePage(
+        brouillonCommande: commandeTest, // 👈 Redirection sur AdressePage avec la commande de test
+      ),
     );
   }
 }
