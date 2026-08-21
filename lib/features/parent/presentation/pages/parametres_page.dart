@@ -2,11 +2,16 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/AppPadding.dart';
+import '../../../../core/constants/AppRadius.dart';
 import '../../../../core/constants/AppSpacing.dart';
+import '../../../../core/constants/AppTextStyles.dart';
+import '../../../../core/router/app_routes.dart';
 import '../../../../core/themes/theme_provider.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
+import '../../../auth/providers/auth_provider.dart';
 import 'controle_parental_page.dart';
 import 'notification_settings_page.dart';
 import 'securite_page.dart';
@@ -147,6 +152,90 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authProvider);
+    if (!authState.isAuthenticated) {
+      return Scaffold(
+        backgroundColor: AppColors.surface,
+        appBar: AppBar(
+          backgroundColor: AppColors.surface,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: AppColors.textPrimary,
+              size: 22,
+            ),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: const Text(
+            'Paramètres',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          centerTitle: true,
+        ),
+        body: Center(
+          child: Padding(
+            padding: AppPadding.screenLarge,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.lock_outline_rounded,
+                    size: 48,
+                    color: AppColors.primary,
+                  ),
+                ),
+                AppSpacing.verticalLg,
+                const Text(
+                  'Accès Restreint',
+                  style: AppTextStyles.headingMedium,
+                  textAlign: TextAlign.center,
+                ),
+                AppSpacing.verticalSm,
+                Text(
+                  'Veuillez vous connecter à votre compte parent pour modifier vos paramètres et préférences.',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                AppSpacing.verticalXl,
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => context.push(AppRoutes.login),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: AppRadius.button,
+                      ),
+                    ),
+                    icon: const Icon(Icons.login_rounded),
+                    label: const Text(
+                      'Se connecter',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     final currentThemeMode = ref.watch(themeModeProvider);
 
     return Scaffold(

@@ -29,10 +29,7 @@ class _RouterRefreshNotifier extends ChangeNotifier {
   final Ref _ref;
 
   _RouterRefreshNotifier(this._ref) {
-    _ref.listen<AuthState>(
-      authProvider,
-      (_, next) => notifyListeners(),
-    );
+    _ref.listen<AuthState>(authProvider, (_, next) => notifyListeners());
   }
 }
 
@@ -49,18 +46,27 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       // 1. Initialisation Firebase en cours -> afficher l'écran splash
       if (!authState.isInitialized) {
-        return state.matchedLocation == AppRoutes.splash ? null : AppRoutes.splash;
+        return state.matchedLocation == AppRoutes.splash
+            ? null
+            : AppRoutes.splash;
       }
 
       final isAuthenticated = authState.isAuthenticated;
-      final isGoingToAuth = state.matchedLocation == AppRoutes.login ||
+      final isGoingToAuth =
+          state.matchedLocation == AppRoutes.login ||
           state.matchedLocation == AppRoutes.register;
       final isSplash = state.matchedLocation == AppRoutes.splash;
 
       // 2. Utilisateur non authentifié (mode visiteur)
       if (!isAuthenticated) {
+        // Au démarrage (splash) ou lors d'une déconnexion depuis l'espace admin, aller sur l'accueil visiteur
+        if (isSplash || state.matchedLocation.startsWith('/admin')) {
+          return AppRoutes.login;
+        }
         // Autoriser l'accès aux pages d'authentification, accueil public ou tutoriels
-        if (isGoingToAuth || state.matchedLocation == AppRoutes.home || state.matchedLocation == AppRoutes.tutoriels) {
+        if (isGoingToAuth ||
+            state.matchedLocation == AppRoutes.home ||
+            state.matchedLocation == AppRoutes.tutoriels) {
           return null;
         }
         // Rediriger vers la page de connexion pour toute autre page
@@ -68,7 +74,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       }
 
       final role = authState.utilisateur?.role;
-      final isAdminOrManager = role == UserRole.admin || role == UserRole.manager;
+      final isAdminOrManager =
+          role == UserRole.admin || role == UserRole.manager;
 
       // 3. Utilisateur Administrateur / Manager -> strictement dirigé et confiné à l'espace Admin
       if (isAdminOrManager) {
@@ -77,7 +84,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return AppRoutes.admin;
         }
         // Accès autorisé aux pages d'administration
-        if (state.matchedLocation.startsWith('/admin') || state.matchedLocation == AppRoutes.tutoriels) {
+        if (state.matchedLocation.startsWith('/admin') ||
+            state.matchedLocation == AppRoutes.tutoriels) {
           return null;
         }
         // Toute autre tentative d'accès -> rediriger vers /admin
@@ -173,9 +181,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
     // ── Gestion Erreur 404 ──
     errorBuilder: (context, state) => Scaffold(
-      appBar: AppBar(
-        title: const Text('Page introuvable'),
-      ),
+      appBar: AppBar(title: const Text('Page introuvable')),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),

@@ -2,11 +2,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/AppPadding.dart';
 import '../../../../core/constants/AppRadius.dart';
 import '../../../../core/constants/AppSpacing.dart';
 import '../../../../core/constants/AppTextStyles.dart';
+import '../../../../core/router/app_routes.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../providers/parent_provider.dart';
@@ -29,16 +31,95 @@ class ProfilParentPage extends ConsumerWidget {
     );
 
     if (confirmed == true && context.mounted) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
       await ref.read(authProvider.notifier).logout();
-      print("deconnexion lancé");
+      ref.invalidate(parentNotifierProvider);
     }
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final parentAsync = ref.watch(parentNotifierProvider);
     final authState = ref.watch(authProvider);
     final isAuthenticated = authState.isAuthenticated;
+
+    // Si non connecté (mode visiteur)
+    if (!isAuthenticated) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          title: const Text(
+            'Mon Profil',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          centerTitle: true,
+        ),
+        body: Center(
+          child: Padding(
+            padding: AppPadding.screenLarge,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.lock_outline_rounded,
+                    size: 54,
+                    color: AppColors.primary,
+                  ),
+                ),
+                AppSpacing.verticalLg,
+                const Text(
+                  'Connexion requise',
+                  style: AppTextStyles.headingMedium,
+                  textAlign: TextAlign.center,
+                ),
+                AppSpacing.verticalSm,
+                Text(
+                  'Connectez-vous pour accéder à votre espace parent, gérer vos enfants et vos favoris.',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                AppSpacing.verticalXl,
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => context.push(AppRoutes.login),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: AppRadius.button,
+                      ),
+                    ),
+                    icon: const Icon(Icons.login_rounded),
+                    label: const Text(
+                      'Se connecter',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    final parentAsync = ref.watch(parentNotifierProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,

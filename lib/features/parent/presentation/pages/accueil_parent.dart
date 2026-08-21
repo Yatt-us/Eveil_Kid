@@ -192,15 +192,34 @@ class AccueilParentPage extends ConsumerWidget {
         ],
       ),
       actions: [
-        IconButton(
-          icon: const Icon(Icons.notifications_none_rounded, color: AppColors.textPrimary, size: 26),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const NotificationSettingsPage()),
-            );
-          },
-        ),
+        if (isAuthenticated)
+          IconButton(
+            icon: const Icon(Icons.notifications_none_rounded, color: AppColors.textPrimary, size: 26),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NotificationSettingsPage()),
+              );
+            },
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: TextButton.icon(
+              onPressed: () => context.push(AppRoutes.login),
+              style: TextButton.styleFrom(
+                backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                foregroundColor: AppColors.primary,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              ),
+              icon: const Icon(Icons.login_rounded, size: 18),
+              label: const Text(
+                'Connexion',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
         AppSpacing.horizontalSm,
       ],
     );
