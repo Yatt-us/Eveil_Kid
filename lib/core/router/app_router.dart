@@ -15,10 +15,14 @@ import 'package:eveilkid/features/auth/models/utilisateur.dart';
 import 'package:eveilkid/features/auth/presentation/pages/login_page.dart';
 import 'package:eveilkid/features/auth/presentation/pages/register_page.dart';
 import 'package:eveilkid/features/auth/presentation/pages/splash_page.dart';
-import 'package:eveilkid/features/auth/presentation/pages/tutorielPage.dart';
 import 'package:eveilkid/features/auth/providers/auth_provider.dart';
 import 'package:eveilkid/features/home/presentation/pages/home_page.dart';
 import 'package:eveilkid/features/jouets/models/jouet.dart';
+import 'package:eveilkid/features/tutoriels/presentations/pages/tutorielPage.dart';
+import 'package:eveilkid/features/activites/presentation/pages/client/activites_list_page.dart';
+import 'package:eveilkid/features/activites/presentation/pages/client/activites_play_page.dart';
+import 'package:eveilkid/features/activites/presentation/pages/client/activites_resultat_page.dart';
+import 'package:eveilkid/features/activites/presentation/pages/client/activites_corrige_page.dart';
 
 /// Notifier pour déclencher les rafraîchissements de GoRouter lors des changements d'état d'authentification Riverpod
 class _RouterRefreshNotifier extends ChangeNotifier {
@@ -119,6 +123,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.tutoriels,
         builder: (context, state) => const TutorielPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.activites,
+        builder: (context, state) => const ActivitesListPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.activitesPlay,
+        builder: (context, state) => const ActivitesPlayPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.activitesResultat,
+        builder: (context, state) => const ActivitesResultatPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.activitesCorrige,
+        builder: (context, state) => const ActivitesCorrigePage(),
       ),
 
       // ── Espace Administration ──

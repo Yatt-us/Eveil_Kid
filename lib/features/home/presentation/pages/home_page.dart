@@ -396,6 +396,13 @@ class HomePage extends ConsumerWidget {
   Widget _buildFeatureGrid(BuildContext context) {
     final modules = [
       _FeatureModule(
+        title: 'Activités d\'Éveil & Quiz',
+        description: 'Jeux interactifs, calcul, logique et découverte par âge.',
+        icon: Icons.psychology_rounded,
+        iconColor: AppColors.teal,
+        onTap: () => context.push(AppRoutes.activites),
+      ),
+      _FeatureModule(
         title: 'Tutoriels & Guides',
         description: 'Vidéos pédagogiques et activités par tranche d’âge.',
         icon: Icons.play_circle_fill_rounded,
