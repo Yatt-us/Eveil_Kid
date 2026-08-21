@@ -1,89 +1,107 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:eveilkid/features/enfant/model/enfant_model.dart';
 
+/// Repository chargé des interactions avec Firestore pour la sous-collection 'enfants' d'un utilisateur.
 class EnfantRepository {
-  final FirebaseFirestore _firestore =
-      FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore;
 
-  final String _collection = 'enfants';
+  EnfantRepository({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
 
-  // Récupérer un enfant.
-  Future<EnfantModel?> recupererEnfant(
-    String enfantId,
-  ) async {
-    final document = await _firestore
-        .collection(_collection)
-        .doc(enfantId)
-        .get();
+  /// Aide privée pour générer proprement le chemin d'accès à la sous-collection d'un parent.
+  CollectionReference<Map<String, dynamic>> _enfantsCollection(String parentId) {
+    return _firestore
+        .collection('utilisateurs')
+        .doc(parentId)
+        .collection('enfants');
+  }
 
-    if (!document.exists || document.data() == null) {
-      return null;
+  /// Récupère un enfant spécifique à partir de son identifiant et de celui de son parent.
+  Future<EnfantModel?> recupererEnfant({
+    required String parentId,
+    required String enfantId,
+  }) async {
+    try {
+      final document = await _enfantsCollection(parentId).doc(enfantId).get();
+
+      if (!document.exists || document.data() == null) {
+        return null;
+      }
+
+      // Utilisation dynamique du constructeur fromSnapshot adapté pour Firestore
+      return EnfantModel.fromSnapshot(document);
+    } catch (e) {
+      rethrow;
     }
-
-    return EnfantModel.fromMap(document.data()!);
   }
 
-  // Récupérer tous les enfants d'un parent.
-  Future<List<EnfantModel>> recupererEnfantsDuParent(
-    String parentId,
-  ) async {
-    final resultat = await _firestore
-        .collection(_collection)
-        .where(
-          'utilisateurId',
-          isEqualTo: parentId,
-        )
-        .get();
+  /// Récupère la liste de tous les enfants appartenant à un parent (utilisateurId).
+  Future<List<EnfantModel>> recupererEnfantsDuParent(String parentId) async {
+    try {
+      // Plus besoin de filtre .where(), la sous-collection isole déjà les enfants de ce parent
+      final querySnapshot = await _enfantsCollection(parentId).get();
 
-    return resultat.docs
-        .map(
-          (document) =>
-              EnfantModel.fromMap(document.data()),
-        )
-        .toList();
+      return querySnapshot.docs
+          .map((doc) => EnfantModel.fromSnapshot(doc))
+          .toList();
+    } catch (e) {
+      rethrow;
+    }
   }
 
-  // Ajouter un enfant.
-  Future<void> ajouterEnfant(
-    EnfantModel enfant,
-  ) async {
-    await _firestore
-        .collection(_collection)
-        .doc(enfant.enfantId)
-        .set(enfant.toMap());
+  /// Ajoute un nouvel enfant dans la sous-collection du parent.
+  Future<void> ajouterEnfant({
+    required String parentId,
+    required EnfantModel enfant,
+  }) async {
+    try {
+      await _enfantsCollection(parentId)
+          .doc(enfant.enfantId)
+          .set(enfant.toMap());
+    } catch (e) {
+      rethrow;
+    }
   }
 
-  // Modifier un enfant.
-  Future<void> modifierEnfant(
-    EnfantModel enfant,
-  ) async {
-    await _firestore
-        .collection(_collection)
-        .doc(enfant.enfantId)
-        .update(enfant.toMap());
+  /// Met à jour les informations complètes d'un enfant.
+  Future<void> modifierEnfant({
+    required String parentId,
+    required EnfantModel enfant,
+  }) async {
+    try {
+      await _enfantsCollection(parentId)
+          .doc(enfant.enfantId)
+          .update(enfant.toMap());
+    } catch (e) {
+      rethrow;
+    }
   }
 
-  // Supprimer un enfant.
-  Future<void> supprimerEnfant(
-    String enfantId,
-  ) async {
-    await _firestore
-        .collection(_collection)
-        .doc(enfantId)
-        .delete();
+  /// Supprime un enfant de la base de données.
+  Future<void> supprimerEnfant({
+    required String parentId,
+    required String enfantId,
+  }) async {
+    try {
+      await _enfantsCollection(parentId).doc(enfantId).delete();
+    } catch (e) {
+      rethrow;
+    }
   }
 
-  // Modifier uniquement la photo.
-  Future<void> mettreAJourPhoto(
-    String enfantId,
-    String photoUrl,
-  ) async {
-    await _firestore
-        .collection(_collection)
-        .doc(enfantId)
-        .update({
-      'avatarUrl': photoUrl,
-      'dateModification': Timestamp.now(),
-    });
+  /// Met à jour uniquement la photo d'avatar d'un enfant.
+  Future<void> mettreAJourPhoto({
+    required String parentId,
+    required String enfantId,
+    required String photoUrl,
+  }) async {
+    try {
+      await _enfantsCollection(parentId).doc(enfantId).update({
+        'avatarUrl': photoUrl,
+        'dateModification': Timestamp.now(),
+      });
+    } catch (e) {
+      rethrow;
+    }
   }
 }

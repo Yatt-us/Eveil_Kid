@@ -138,23 +138,3 @@ class Jouet {
     };
   }
 }
-
-Map<String, dynamic> toMap() {
-  return {
-    'enfantId': enfantId,
-    'utilisateurId': utilisateurId,
-    'nom': nom,
-    'dateNaissance':
-        Timestamp.fromDate(dateNaissance),
-    'avatarUrl': avatarUrl,
-    'souhait': souhait,
-    'resultatsActivite': resultatsActivite,
-    'codeSecuriteHash': codeSecuriteHash,
-    'estActif': estActif,
-    'genre': genre,
-    'dateCreation':
-        Timestamp.fromDate(dateCreation),
-    'dateModification':
-        Timestamp.fromDate(dateModification),
-  };
-}

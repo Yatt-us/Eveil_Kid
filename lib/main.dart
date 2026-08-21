@@ -1,4 +1,5 @@
-import 'package:eveilkid/features/tutoriels/presentation/pages/tutorielPage.dart';
+import 'package:eveilkid/features/enfant/presentation/pages/acceuil_enfant_page.dart';
+import 'package:eveilkid/features/tutoriels/presentation/pages/tutoriel_page.dart';
 import 'package:eveilkid/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -18,7 +19,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home:TutorielPage(),
+      home:AccueilEnfantPage(),
     ) ;
   }
 }

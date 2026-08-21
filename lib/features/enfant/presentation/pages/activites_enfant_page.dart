@@ -1,22 +1,34 @@
-import 'package:eveilkid/features/enfant/providers/enfant_providers.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+// Importez votre provider de gestion d'enfant réécrit sous Riverpod
+import 'package:eveilkid/features/enfant/providers/enfant_providers.dart';
 
 import '../widgets/carte_activite_enfant.dart';
 
-class ActivitesEnfantPage extends StatefulWidget {
+class ActivitesEnfantPage extends ConsumerStatefulWidget {
   const ActivitesEnfantPage({super.key});
 
   @override
-  State<ActivitesEnfantPage> createState() =>
-      _ActivitesEnfantPageState();
+  ConsumerState<ActivitesEnfantPage> createState() => _ActivitesEnfantPageState();
 }
 
-class _ActivitesEnfantPageState
-    extends State<ActivitesEnfantPage> {
+class _ActivitesEnfantPageState extends ConsumerState<ActivitesEnfantPage> {
   int filtreSelectionne = 0;
 
-  final List<Map<String, dynamic>> activitesDemo = [
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final parentId = FirebaseAuth.instance.currentUser?.uid;
+      if (parentId != null && parentId.isNotEmpty) {
+        ref.read(enfantNotifierProvider.notifier).chargerEnfants(parentId);
+      }
+    });
+  }
+
+  final List<Map<String, dynamic>> activitesDemo = const [
     {
       'titre': 'Les animaux',
       'duree': '10 min',
@@ -57,8 +69,10 @@ class _ActivitesEnfantPageState
 
   @override
   Widget build(BuildContext context) {
-    final enfantProvider = context.watch<EnfantProvider>();
-    final enfant = enfantProvider.enfantSelectionne;
+    // Écoute de l'enfant sélectionné depuis le provider Riverpod
+    final enfant = ref.watch(
+      enfantNotifierProvider.select((state) => state.enfantSelectionne),
+    );
 
     if (enfant == null) {
       return const Scaffold(
@@ -76,14 +90,8 @@ class _ActivitesEnfantPageState
             // ==========================================
             // APP BAR
             // ==========================================
-
             Padding(
-              padding: const EdgeInsets.fromLTRB(
-                18,
-                14,
-                18,
-                8,
-              ),
+              padding: const EdgeInsets.fromLTRB(18, 14, 18, 8),
               child: Row(
                 children: [
                   IconButton(
@@ -95,7 +103,6 @@ class _ActivitesEnfantPageState
                       size: 19,
                     ),
                   ),
-
                   const Expanded(
                     child: Text(
                       'Activités',
@@ -106,7 +113,6 @@ class _ActivitesEnfantPageState
                       ),
                     ),
                   ),
-
                   const SizedBox(width: 48),
                 ],
               ),
@@ -115,13 +121,10 @@ class _ActivitesEnfantPageState
             // ==========================================
             // FILTRES
             // ==========================================
-
             SizedBox(
               height: 44,
               child: ListView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 18),
                 scrollDirection: Axis.horizontal,
                 children: [
                   _Filtre(
@@ -160,15 +163,9 @@ class _ActivitesEnfantPageState
             // ==========================================
             // LISTE
             // ==========================================
-
             Expanded(
               child: ListView.builder(
-                padding: const EdgeInsets.fromLTRB(
-                  18,
-                  10,
-                  18,
-                  25,
-                ),
+                padding: const EdgeInsets.fromLTRB(18, 10, 18, 25),
                 itemCount: activitesDemo.length,
                 itemBuilder: (context, index) {
                   final activite = activitesDemo[index];
@@ -177,12 +174,9 @@ class _ActivitesEnfantPageState
                     titre: activite['titre'],
                     duree: activite['duree'],
                     imageUrl: activite['image'],
-                    progression:
-                        activite['progression'],
+                    progression: activite['progression'],
                     onTap: () {
-                      // IMPORTANT :
-                      // ici tu ouvriras l'activité
-                      // avec le système d'Albanou.
+                      // Action à effectuer sur l'activité
                     },
                   );
                 },
@@ -196,9 +190,8 @@ class _ActivitesEnfantPageState
 }
 
 // =====================================================
-// FILTRE
+// FILTRE (Widget stateless classique)
 // =====================================================
-
 class _Filtre extends StatelessWidget {
   final String titre;
   final bool actif;
@@ -221,14 +214,10 @@ class _Filtre extends StatelessWidget {
           vertical: 9,
         ),
         decoration: BoxDecoration(
-          color: actif
-              ? const Color(0xFF22A653)
-              : Colors.white,
+          color: actif ? const Color(0xFF22A653) : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: actif
-                ? const Color(0xFF22A653)
-                : const Color(0xFFE5E5E5),
+            color: actif ? const Color(0xFF22A653) : const Color(0xFFE5E5E5),
           ),
         ),
         child: Text(
@@ -236,9 +225,7 @@ class _Filtre extends StatelessWidget {
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: actif
-                ? Colors.white
-                : Colors.grey.shade700,
+            color: actif ? Colors.white : Colors.grey.shade700,
           ),
         ),
       ),
