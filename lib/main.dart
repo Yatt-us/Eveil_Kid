@@ -17,6 +17,8 @@
 //   }
 // }
 
+import 'dart:ui';
+
 import 'package:eveilkid/core/router/app_router.dart';
 import 'package:eveilkid/core/services/google_sign_in_service.dart';
 import 'package:eveilkid/core/themes/AppTheme.dart';
@@ -55,6 +57,21 @@ class MyApp extends ConsumerWidget {
       darkTheme: AppTheme.dark,
       themeMode: themeMode,
       routerConfig: router,
+      builder: (context, child) {
+        return GestureDetector(
+          onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+          behavior: HitTestBehavior.translucent,
+          child: child,
+        );
+      },
+      scrollBehavior: const MaterialScrollBehavior().copyWith(
+        dragDevices: {
+          PointerDeviceKind.touch,
+          PointerDeviceKind.mouse,
+          PointerDeviceKind.trackpad,
+          PointerDeviceKind.stylus,
+        },
+      ),
     );
   }
 }

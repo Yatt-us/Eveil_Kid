@@ -6,6 +6,7 @@ import 'package:eveilkid/core/constants/AppTextStyles.dart';
 import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/core/router/app_routes.dart';
 import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_catalog_page.dart';
+import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_category_detail_page.dart';
 import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_category_list_page.dart';
 import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_product_form_page.dart';
 import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_product_list_page.dart';
@@ -16,9 +17,11 @@ import 'package:eveilkid/features/auth/presentation/pages/login_page.dart';
 import 'package:eveilkid/features/auth/presentation/pages/register_page.dart';
 import 'package:eveilkid/features/auth/presentation/pages/splash_page.dart';
 import 'package:eveilkid/features/auth/providers/auth_provider.dart';
+import 'package:eveilkid/features/categories/models/categorie.dart';
 import 'package:eveilkid/features/jouets/models/jouet.dart';
 import 'package:eveilkid/features/parent/presentation/pages/parent_main_scaffold.dart';
 import 'package:eveilkid/features/tutoriels/presentations/pages/tutorielPage.dart';
+import 'package:eveilkid/features/admin/presentation/widgets/admin_drawer.dart';
 import 'package:eveilkid/features/activites/presentation/pages/client/activites_list_page.dart';
 import 'package:eveilkid/features/activites/presentation/pages/client/activites_play_page.dart';
 import 'package:eveilkid/features/activites/presentation/pages/client/activites_resultat_page.dart';
@@ -72,6 +75,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       // 3. Utilisateur Administrateur / Manager -> strictement dirigé et confiné à l'espace Admin
       if (isAdminOrManager) {
+        // Un Manager n'a absolument pas accès à la gestion des utilisateurs -> redirection vers /admin
+        if (role == UserRole.manager && state.matchedLocation.startsWith(AppRoutes.adminUsers)) {
+          return AppRoutes.admin;
+        }
+
         // Si l'admin est sur splash ou auth
         if (isSplash || isGoingToAuth) {
           return AppRoutes.admin;
@@ -141,32 +149,71 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ActivitesCorrigePage(),
       ),
 
-      // ── Espace Administration ──
-      GoRoute(
-        path: AppRoutes.admin,
-        builder: (context, state) => const DashboardPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.adminProducts,
-        builder: (context, state) => const AdminProductListPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.adminCategories,
-        builder: (context, state) => const AdminCategoryListPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.adminUsers,
-        builder: (context, state) => const AdminUserListPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.adminCatalog,
-        builder: (context, state) => const AdminCatalogPage(),
+      // ── Espace Administration (StatefulShellRoute avec sidebar persistant) ──
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return AdminShellScaffold(navigationShell: navigationShell);
+        },
+        branches: [
+          // 0. Tableau de bord
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.admin,
+                builder: (context, state) => const DashboardPage(),
+              ),
+            ],
+          ),
+          // 1. Produits
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.adminProducts,
+                builder: (context, state) => const AdminProductListPage(),
+              ),
+            ],
+          ),
+          // 2. Catégories
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.adminCategories,
+                builder: (context, state) => const AdminCategoryListPage(),
+              ),
+            ],
+          ),
+          // 3. Utilisateurs
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.adminUsers,
+                builder: (context, state) => const AdminUserListPage(),
+              ),
+            ],
+          ),
+          // 4. Catalogue global
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.adminCatalog,
+                builder: (context, state) => const AdminCatalogPage(),
+              ),
+            ],
+          ),
+        ],
       ),
       GoRoute(
         path: AppRoutes.adminProductForm,
         builder: (context, state) {
           final jouet = state.extra as Jouet?;
           return AdminProductFormPage(jouetToEdit: jouet);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.adminCategoryForm,
+        builder: (context, state) {
+          final cat = state.extra as Categorie?;
+          return AdminCategoryDetailPage(categorieToEdit: cat);
         },
       ),
     ],

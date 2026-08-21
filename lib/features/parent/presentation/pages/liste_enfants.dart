@@ -8,6 +8,7 @@ import '../../../../core/constants/AppRadius.dart';
 import '../../../../core/constants/AppSpacing.dart';
 import '../../../../core/constants/AppTextStyles.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
+import '../../../../shared/widgets/app_search_bar.dart';
 import '../../models/parent_model.dart';
 import '../../providers/parent_provider.dart';
 import 'ajouter_enfant.dart';
@@ -59,22 +60,8 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Column(
                   children: [
-                    TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Rechercher un enfant...',
-                        prefixIcon: const Icon(Icons.search, color: AppColors.icon),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        fillColor: AppColors.surface,
-                        filled: true,
-                        border: OutlineInputBorder(
-                          borderRadius: AppRadius.input,
-                          borderSide: const BorderSide(color: AppColors.border),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: AppRadius.input,
-                          borderSide: const BorderSide(color: AppColors.border),
-                        ),
-                      ),
+                    AppSearchBar(
+                      hintText: 'Rechercher un enfant...',
                       onChanged: (val) => setState(() => _searchQuery = val),
                     ),
                     AppSpacing.verticalSm,

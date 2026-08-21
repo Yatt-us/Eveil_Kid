@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../../core/services/google_sign_in_service.dart';
 import '../models/utilisateur.dart';
@@ -200,13 +201,22 @@ class AuthRepository {
   // CONNEXION GOOGLE
 
   Future<Utilisateur> signInWithGoogle() async {
-    // 1. Obtenir le credential Firebase via Google Sign-In v7+
-    final OAuthCredential credential =
-        await GoogleSignInService.getFirebaseCredential();
+    User? user;
 
-    // 2. Signer dans Firebase Auth
-    final userCredential = await _auth.signInWithCredential(credential);
-    final user = userCredential.user;
+    if (kIsWeb) {
+      // Sur le Web, Firebase Auth gère directement la popup Google OAuth
+      final googleProvider = GoogleAuthProvider();
+      final userCredential = await _auth.signInWithPopup(googleProvider);
+      user = userCredential.user;
+    } else {
+      // 1. Obtenir le credential Firebase via Google Sign-In v7+ sur mobile
+      final OAuthCredential credential =
+          await GoogleSignInService.getFirebaseCredential();
+
+      // 2. Signer dans Firebase Auth
+      final userCredential = await _auth.signInWithCredential(credential);
+      user = userCredential.user;
+    }
 
     if (user == null) {
       throw Exception('Impossible de recuperer l\'utilisateur Google.');
@@ -236,7 +246,9 @@ class AuthRepository {
     final utilisateur = await getUserProfile(user.uid);
     if (!utilisateur.estActif) {
       await _auth.signOut();
-      await GoogleSignInService.signOut();
+      if (!kIsWeb) {
+        await GoogleSignInService.signOut();
+      }
       throw Exception('Ce compte utilisateur a ete desactive.');
     }
 
@@ -247,7 +259,9 @@ class AuthRepository {
 
   Future<void> logout() async {
     await _auth.signOut();
-    // Deconnexion Google pour forcer la selection de compte a la prochaine connexion.
-    await GoogleSignInService.signOut();
+    if (!kIsWeb) {
+      // Deconnexion Google pour forcer la selection de compte a la prochaine connexion.
+      await GoogleSignInService.signOut();
+    }
   }
 }

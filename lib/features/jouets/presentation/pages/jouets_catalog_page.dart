@@ -8,6 +8,7 @@ import '../../../../core/constants/AppPadding.dart';
 import '../../../../core/constants/AppRadius.dart';
 import '../../../../core/constants/AppSpacing.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
+import '../../../../shared/widgets/app_search_bar.dart';
 import '../../models/jouet.dart';
 import '../../providers/jouet_provider.dart';
 
@@ -58,22 +59,8 @@ class _JouetsCatalogPageState extends ConsumerState<JouetsCatalogPage> {
           // ── BARRE DE RECHERCHE ──
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Rechercher un jouet...',
-                prefixIcon: const Icon(Icons.search_rounded, color: AppColors.icon),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                fillColor: AppColors.surface,
-                filled: true,
-                border: OutlineInputBorder(
-                  borderRadius: AppRadius.input,
-                  borderSide: const BorderSide(color: AppColors.border),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: AppRadius.input,
-                  borderSide: const BorderSide(color: AppColors.border),
-                ),
-              ),
+            child: AppSearchBar(
+              hintText: 'Rechercher un jouet...',
               onChanged: (val) => setState(() => _searchQuery = val),
             ),
           ),
