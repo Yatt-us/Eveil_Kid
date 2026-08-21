@@ -82,6 +82,8 @@ class Utilisateur {
     );
   }
 
+  Object? get uid => null;
+
   Map<String, dynamic> toMap() {
     return {
       'utilisateurId': utilisateurId,
