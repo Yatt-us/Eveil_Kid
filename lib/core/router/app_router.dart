@@ -56,12 +56,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           state.matchedLocation == AppRoutes.register;
       final isSplash = state.matchedLocation == AppRoutes.splash;
 
-      // 2. Utilisateur non authentifié (mode visiteur)
+      // 2. Utilisateur non authentifié
       if (!isAuthenticated) {
-        // Autoriser l'accès aux pages d'authentification, accueil public ou tutoriels
-        if (isGoingToAuth ||
-            state.matchedLocation == AppRoutes.home ||
-            state.matchedLocation == AppRoutes.tutoriels) {
+        // Autoriser l'accès aux pages d'authentification ou pages publiques autorisées
+        if (isGoingToAuth || state.matchedLocation == AppRoutes.tutoriels) {
           return null;
         }
         // Rediriger vers la page de connexion pour toute autre page

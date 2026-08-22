@@ -26,6 +26,7 @@ class AppRoutes {
   static const String adminUsers = '/admin/users';
   static const String adminCatalog = '/admin/catalog';
   static const String adminProductForm = '/admin/product-form';
+  static const String adminCategoryForm = '/admin/category-form';
 
   // Espace Jouets
   static const String jouetdetail = '/jouet-detail';
