@@ -19,7 +19,6 @@ import 'package:eveilkid/features/auth/presentation/pages/login_page.dart';
 import 'package:eveilkid/features/auth/presentation/pages/register_page.dart';
 import 'package:eveilkid/features/auth/presentation/pages/splash_page.dart';
 import 'package:eveilkid/features/auth/providers/auth_provider.dart';
-import 'package:eveilkid/features/home/presentation/pages/home_page.dart';
 import 'package:eveilkid/features/jouets/models/jouet.dart';
 import 'package:eveilkid/features/jouets/presentation/page/jouet_detail_screen.dart';
 import 'package:eveilkid/features/jouets/presentation/page/jouets_screen.dart';
