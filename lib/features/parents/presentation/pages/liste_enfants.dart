@@ -8,7 +8,7 @@ import '../../../../core/constants/AppRadius.dart';
 import '../../../../core/constants/AppSpacing.dart';
 import '../../../../core/constants/AppTextStyles.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
-import '../../models/parent_model.dart';
+import 'package:eveilkid/features/enfant/model/enfant_model.dart';
 import '../../providers/parent_provider.dart';
 import 'ajouter_enfant.dart';
 import 'modifier_enfant.dart';
@@ -33,7 +33,10 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
         title: const Text('Mes Enfants', style: AppTextStyles.headingSmall),
         actions: [
           IconButton(
-            icon: const Icon(Icons.person_add_alt_1_outlined, color: AppColors.primary),
+            icon: const Icon(
+              Icons.person_add_alt_1_outlined,
+              color: AppColors.primary,
+            ),
             tooltip: 'Ajouter un enfant',
             onPressed: () {
               Navigator.push(
@@ -49,21 +52,29 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
         data: (parent) {
           final allEnfants = parent.enfants;
           final filteredEnfants = allEnfants.where((e) {
-            return e.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                e.level.toLowerCase().contains(_searchQuery.toLowerCase());
+            return e.nom.toLowerCase().contains(_searchQuery.toLowerCase());
           }).toList();
 
           return Column(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 child: Column(
                   children: [
                     TextField(
                       decoration: InputDecoration(
                         hintText: 'Rechercher un enfant...',
-                        prefixIcon: const Icon(Icons.search, color: AppColors.icon),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        prefixIcon: const Icon(
+                          Icons.search,
+                          color: AppColors.icon,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         fillColor: AppColors.surface,
                         filled: true,
                         border: OutlineInputBorder(
@@ -83,7 +94,10 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
                       children: [
                         Text(
                           '${allEnfants.length} enfant${allEnfants.length > 1 ? 's' : ''} enregistré${allEnfants.length > 1 ? 's' : ''}',
-                          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ],
                     ),
@@ -102,11 +116,17 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
                                 color: AppColors.surfaceVariant,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.child_care, size: 48, color: AppColors.icon),
+                              child: const Icon(
+                                Icons.child_care,
+                                size: 48,
+                                color: AppColors.icon,
+                              ),
                             ),
                             AppSpacing.verticalMd,
                             Text(
-                              _searchQuery.isNotEmpty ? 'Aucun résultat trouvé' : 'Aucun enfant enregistré',
+                              _searchQuery.isNotEmpty
+                                  ? 'Aucun résultat trouvé'
+                                  : 'Aucun enfant enregistré',
                               style: AppTextStyles.headingSmall,
                             ),
                             AppSpacing.verticalXs,
@@ -114,10 +134,23 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
                               _searchQuery.isNotEmpty
                                   ? 'Essayez une autre recherche'
                                   : 'Ajoutez votre premier enfant pour personnaliser son expérience.',
-                              style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                             AppSpacing.verticalLg,
-
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const AjouterEnfantPage(),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.add),
+                              label: const Text('Ajouter un enfant'),
+                            ),
                           ],
                         ),
                       )
@@ -134,7 +167,9 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        loading: () => const Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
         error: (err, _) => Center(child: Text('Erreur: $err')),
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -146,7 +181,10 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
         },
         backgroundColor: AppColors.primary,
         icon: const Icon(Icons.add, color: AppColors.white),
-        label: const Text('Ajouter un enfant', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
+        label: const Text(
+          'Ajouter un enfant',
+          style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold),
+        ),
       ),
     );
   }
@@ -155,16 +193,8 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
     Color badgeBg;
     Color badgeText;
 
-    if (enfant.level.contains('3')) {
-      badgeBg = const Color(0xFFEDE7F6);
-      badgeText = const Color(0xFF7E57C2);
-    } else if (enfant.level.contains('4')) {
-      badgeBg = const Color(0xFFE0F2F1);
-      badgeText = const Color(0xFF00897B);
-    } else {
-      badgeBg = const Color(0xFFFFF3E0);
-      badgeText = const Color(0xFFFB8C00);
-    }
+    badgeBg = const Color(0xFFFFF3E0);
+    badgeText = const Color(0xFFFB8C00);
 
     return Container(
       decoration: BoxDecoration(
@@ -187,23 +217,30 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    enfant.name,
-                    style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.bold),
+                    enfant.nom,
+                    style: AppTextStyles.bodyLarge.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   AppSpacing.verticalXs,
                   Text(
                     '${enfant.age} ans',
-                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                   AppSpacing.verticalXs,
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: badgeBg,
                       borderRadius: AppRadius.badge,
                     ),
                     child: Text(
-                      enfant.level,
+                      'Profil enfant',
                       style: TextStyle(
                         color: badgeText,
                         fontWeight: FontWeight.bold,
@@ -219,7 +256,9 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => ModifierEnfantPage(enfant: enfant)),
+                  MaterialPageRoute(
+                    builder: (_) => ModifierEnfantPage(enfant: enfant),
+                  ),
                 );
               },
             ),
@@ -228,14 +267,16 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
               onPressed: () async {
                 final confirmed = await AppDialogs.showConfirmDialog(
                   context: context,
-                  title: 'Supprimer ${enfant.name} ?',
+                  title: 'Supprimer ${enfant.nom} ?',
                   message: 'Êtes-vous sûr de vouloir supprimer cet enfant ?',
                   confirmText: 'Supprimer',
                   cancelText: 'Annuler',
                   isDanger: true,
                 );
                 if (confirmed == true && context.mounted) {
-                  await ref.read(parentNotifierProvider.notifier).supprimerEnfant(enfant.id);
+                  await ref
+                      .read(parentNotifierProvider.notifier)
+                      .supprimerEnfant(enfant.enfantId);
                 }
               },
             ),
