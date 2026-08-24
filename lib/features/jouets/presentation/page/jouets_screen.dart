@@ -1,19 +1,28 @@
-import 'package:eveilkid/features/jouets/presentation/page/jouet_card.dart';
+import 'package:eveilkid/shared/widgets/app_bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:eveilkid/core/constants/AppPadding.dart';
 import 'package:eveilkid/core/constants/AppRadius.dart';
 import 'package:eveilkid/core/constants/AppTextStyles.dart';
 import 'package:eveilkid/core/constants/app_colors.dart';
+import 'package:eveilkid/core/router/app_routes.dart';
 
+import 'package:eveilkid/features/categories/providers/categorie_provider.dart';
 import 'package:eveilkid/features/jouets/models/jouet.dart';
 import 'package:eveilkid/features/jouets/providers/jouet_provider.dart';
+import 'package:eveilkid/features/jouets/presentation/page/jouet_card.dart';
+import 'package:eveilkid/features/panier/providers/panier_provider.dart';
 
-import 'package:eveilkid/shared/widgets/jouet_bottom_navigation.dart';
 
 class JouetsScreen extends ConsumerStatefulWidget {
-  const JouetsScreen({super.key});
+  final String utilisateurId;
+
+  const JouetsScreen({
+    super.key,
+    required this.utilisateurId,
+  });
 
   @override
   ConsumerState<JouetsScreen> createState() => _JouetsScreenState();
@@ -24,15 +33,7 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
 
   int _currentIndex = 1;
   String _recherche = '';
-  String _categorieSelectionnee = 'Tous';
-
-  final List<String> _categories = [
-    'Tous',
-    'Construction',
-    'Éveil',
-    'Logique',
-    'Créativité',
-  ];
+  String? _categorieIdSelectionnee; // null pour "Tous"
 
   @override
   void dispose() {
@@ -48,9 +49,8 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
           jouet.nom.toLowerCase().contains(rechercheLower) ||
           jouet.description.toLowerCase().contains(rechercheLower);
 
-      final correspondCategorie = _categorieSelectionnee == 'Tous' ||
-          jouet.nomCategorieDenormalise.toLowerCase().trim() ==
-              _categorieSelectionnee.toLowerCase().trim();
+      final correspondCategorie = _categorieIdSelectionnee == null ||
+          jouet.categorieId == _categorieIdSelectionnee;
 
       return correspondRecherche && correspondCategorie;
     }).toList();
@@ -96,26 +96,20 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
                   SliverPadding(
                     padding: const EdgeInsets.only(top: 16, bottom: 8),
                     sliver: SliverToBoxAdapter(
-                      child: _buildCategories(),
+                      child: _buildCategoriesBar(),
                     ),
                   ),
 
                   // JOUETS
                   jouetsAsync.when(
-                    loading: () {
-                      return const SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: Center(
-                          child: CircularProgressIndicator(),
-                        ),
-                      );
-                    },
-                    error: (error, stack) {
-                      return SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: _buildError(error),
-                      );
-                    },
+                    loading: () => const SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                    error: (error, stack) => SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: _buildError(error),
+                    ),
                     data: (jouets) {
                       final jouetsFiltres = _filtrerJouets(jouets);
 
@@ -134,7 +128,14 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
                               final jouet = jouetsFiltres[index];
                               return JouetCard(
                                 jouet: jouet,
-                                onTap: () {},
+                                onTap: () {
+                                  // Utilisation de context.push pour ajouter l'écran au-dessus
+                                  // et conserver la flèche Retour (back) native dans JouetDetailScreen.
+                                  context.push(
+                                    AppRoutes.jouetdetail,
+                                    extra: jouet,
+                                  );
+                                },
                               );
                             },
                             childCount: jouetsFiltres.length,
@@ -144,7 +145,7 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
                             crossAxisCount: 2,
                             crossAxisSpacing: 12,
                             mainAxisSpacing: 12,
-                            childAspectRatio: 0.75, // Ajusté pour un meilleur ratio
+                            childAspectRatio: 0.75,
                           ),
                         ),
                       );
@@ -154,11 +155,8 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
               ),
             ),
 
-            // NAVIGATION
-            JouetBottomNavigation(
-              currentIndex: _currentIndex,
-              onTap: _onNavigationTap,
-            ),
+            // NAVIGATION BAS DE PAGE
+            AppBottomNavBar()
           ],
         ),
       ),
@@ -172,26 +170,42 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
       _currentIndex = index;
     });
 
+    // Exemple de routage bas de page selon l'onglet cliqué :
     switch (index) {
       case 0:
+        context.go(AppRoutes.home);
         break;
       case 1:
+        // Déjà sur le catalogue (JouetsScreen)
         break;
       case 2:
+        context.go(AppRoutes.activites);
         break;
       case 3:
+        context.go(AppRoutes.tutoriels);
         break;
     }
   }
 
-  // HEADER
+  // HEADER DYNAMIQUE (Compteur du panier via Riverpod)
   Widget _buildHeader() {
+    final panierAsync = ref.watch(panierProvider(widget.utilisateurId));
+
+    final totalArticles = panierAsync.when(
+      data: (articles) => articles.fold<int>(
+        0,
+        (sum, item) => sum + item.quantite,
+      ),
+      loading: () => 0,
+      error: (_, __) => 0,
+    );
+
     return Row(
       children: [
         Text(
           'Catalogue',
           style: AppTextStyles.headingSmall.copyWith(
-            fontSize: 22, // Augmenté de 16 à 22
+            fontSize: 22,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -200,73 +214,71 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
           clipBehavior: Clip.none,
           children: [
             IconButton(
-              onPressed: () {},
+              onPressed: () {
+                // Naviguer vers la page Panier si elle existe
+              },
               icon: const Icon(
                 Icons.shopping_cart_outlined,
-                size: 26, // Augmenté de 22 à 26
+                size: 26,
               ),
               color: AppColors.textPrimary,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
             ),
-            Positioned(
-              right: -4,
-              top: -4,
-              child: Container(
-                width: 18, // Augmenté de 14 à 18
-                height: 18,
-                decoration: const BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: Text( '0',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10, // Augmenté de 8 à 10
-                      fontWeight: FontWeight.bold,
+            if (totalArticles > 0)
+              Positioned(
+                right: -4,
+                top: -4,
+                child: Container(
+                  width: 18,
+                  height: 18,
+                  decoration: const BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      '$totalArticles',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
           ],
         ),
       ],
     );
   }
 
-  // SEARCH
+  // BARRE DE RECHERCHE
   Widget _buildSearchBar() {
     return Row(
       children: [
         Expanded(
           child: Container(
-            height: 48, // Augmenté de 38 à 48
+            height: 48,
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: AppRadius.circularRadius,
-              border: Border.all(
-                color: AppColors.border,
-              ),
+              border: Border.all(color: AppColors.border),
             ),
             child: TextField(
               controller: _searchController,
-              onChanged: (value) {
-                setState(() {
-                  _recherche = value;
-                });
-              },
-              style: const TextStyle(fontSize: 14), // Augmenté de 11 à 14
+              onChanged: (value) => setState(() => _recherche = value),
+              style: const TextStyle(fontSize: 14),
               decoration: const InputDecoration(
                 hintText: 'Rechercher un jouet...',
                 hintStyle: TextStyle(
-                  fontSize: 14, // Augmenté de 10 à 14
+                  fontSize: 14,
                   color: AppColors.textSecondary,
                 ),
                 prefixIcon: Icon(
                   Icons.search,
-                  size: 22, // Augmenté de 17 à 22
+                  size: 22,
                   color: AppColors.icon,
                 ),
                 border: InputBorder.none,
@@ -277,21 +289,16 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
         ),
         const SizedBox(width: 10),
         Container(
-          width: 48, // Augmenté de 38 à 48
+          width: 48,
           height: 48,
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: AppRadius.circularRadius,
-            border: Border.all(
-              color: AppColors.border,
-            ),
+            border: Border.all(color: AppColors.border),
           ),
           child: IconButton(
             onPressed: () {},
-            icon: const Icon(
-              Icons.tune,
-              size: 22, // Augmenté de 17 à 22
-            ),
+            icon: const Icon(Icons.tune, size: 22),
             color: AppColors.icon,
           ),
         ),
@@ -299,10 +306,10 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
     );
   }
 
-  // HERO
+  // BANNIÈRE HERO
   Widget _buildHero() {
     return Container(
-      height: 140, // Augmenté de 92 à 140
+      height: 140,
       decoration: BoxDecoration(
         color: AppColors.surfaceVariant,
         borderRadius: AppRadius.card,
@@ -320,7 +327,7 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
                   const Text(
                     'Apprendre en jouant',
                     style: TextStyle(
-                      fontSize: 16, // Augmenté de 11 à 16
+                      fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
                     ),
@@ -329,15 +336,15 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
                   const Text(
                     'Des jouets éducatifs pour\ngrandir chaque jour 🧒',
                     style: TextStyle(
-                      fontSize: 12, // Augmenté de 7 à 12
+                      fontSize: 12,
                       height: 1.3,
                       color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 10),
                   SizedBox(
-                    height: 32, // Augmenté de 21 à 32
-                    width: 140, // Augmenté de 70 à 100
+                    height: 32,
+                    width: 140,
                     child: ElevatedButton(
                       onPressed: () {},
                       style: ElevatedButton.styleFrom(
@@ -352,7 +359,7 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
                       child: const Text(
                         'Découvrir',
                         style: TextStyle(
-                          fontSize: 12, // Augmenté de 7 à 12
+                          fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -372,13 +379,11 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
               child: Image.asset(
                 'assets/images/teddy_bear.png',
                 fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  return const Icon(
-                    Icons.toys,
-                    size: 60,
-                    color: AppColors.accent,
-                  );
-                },
+                errorBuilder: (context, error, stackTrace) => const Icon(
+                  Icons.toys,
+                  size: 60,
+                  color: AppColors.accent,
+                ),
               ),
             ),
           ),
@@ -387,68 +392,75 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
     );
   }
 
-  // CATEGORIES
-  Widget _buildCategories() {
-    return SizedBox(
-      height: 40, // Augmenté de 34 à 40
-      child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        scrollDirection: Axis.horizontal,
-        itemCount: _categories.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          final categorie = _categories[index];
-          final selected = categorie == _categorieSelectionnee;
+  // CATEGORIES DYNAMIQUES
+  Widget _buildCategoriesBar() {
+    final categoriesAsync = ref.watch(categoriesPrincipalesProvider);
 
-          return GestureDetector(
-            onTap: () {
-              setState(() {
-                _categorieSelectionnee = categorie;
-              });
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: selected ? AppColors.primary : AppColors.surface,
-                borderRadius: AppRadius.circularRadius,
-                border: selected
-                    ? null
-                    : Border.all(
-                        color: AppColors.border,
-                      ),
-              ),
-              child: Text(
-                categorie,
-                style: TextStyle(
-                  fontSize: 13, // Augmenté de 9 à 13
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                  color: selected ? Colors.white : AppColors.textPrimary,
-                ),
-              ),
-            ),
-          );
-        },
+    return categoriesAsync.when(
+      loading: () => const SizedBox(
+        height: 40,
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
       ),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (categories) {
+        return SizedBox(
+          height: 40,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            scrollDirection: Axis.horizontal,
+            itemCount: categories.length + 1, // +1 pour l'option "Tous"
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final isTous = index == 0;
+              final selected = isTous
+                  ? _categorieIdSelectionnee == null
+                  : _categorieIdSelectionnee == categories[index - 1].categorieId;
+
+              final nomCategorie = isTous ? 'Tous' : categories[index - 1].nom;
+
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _categorieIdSelectionnee =
+                        isTous ? null : categories[index - 1].categorieId;
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: selected ? AppColors.primary : AppColors.surface,
+                    borderRadius: AppRadius.circularRadius,
+                    border: selected ? null : Border.all(color: AppColors.border),
+                  ),
+                  child: Text(
+                    nomCategorie,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                      color: selected ? Colors.white : AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
-  // EMPTY
   Widget _buildEmpty() {
-    return Center(
+    return const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.toys_outlined,
-            size: 64, // Augmenté de 50 à 64
-            color: AppColors.disabled,
-          ),
-          const SizedBox(height: 12),
-          const Text(
+          Icon(Icons.toys_outlined, size: 64, color: AppColors.disabled),
+          SizedBox(height: 12),
+          Text(
             'Aucun jouet trouvé',
             style: TextStyle(
-              fontSize: 16, // Augmenté de 14 à 16
+              fontSize: 16,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
             ),
@@ -458,7 +470,6 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
     );
   }
 
-  // ERROR
   Widget _buildError(Object error) {
     return Center(
       child: Padding(
@@ -466,18 +477,11 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.error_outline,
-              color: AppColors.danger,
-              size: 48,
-            ),
+            const Icon(Icons.error_outline, color: AppColors.danger, size: 48),
             const SizedBox(height: 12),
             const Text(
               'Impossible de charger les jouets',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 6),
             Text(
@@ -487,9 +491,7 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () {
-                ref.invalidate(jouetsProvider);
-              },
+              onPressed: () => ref.invalidate(jouetsProvider),
               child: const Text('Réessayer'),
             ),
           ],

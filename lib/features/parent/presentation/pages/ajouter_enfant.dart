@@ -107,7 +107,7 @@ class _AjouterEnfantPageState extends ConsumerState<AjouterEnfantPage> {
               AppTextField(
                 controller: _nameController,
                 label: 'Prénom de l\'enfant',
-                hintText: 'Ex: Nour, Ilyas, Mariam...',
+                hintText: 'Ex: Nour',
                 prefixIcon: Icons.person_outline,
                 validator: (val) {
                   if (val == null || val.trim().isEmpty) {
