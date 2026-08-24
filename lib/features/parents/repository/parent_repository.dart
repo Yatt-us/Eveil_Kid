@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:eveilkid/features/auth/models/utilisateur.dart';
 import 'package:eveilkid/features/enfant/model/enfant_model.dart';
 import 'package:eveilkid/features/enfant/repository/enfant_repository.dart';
@@ -32,18 +33,21 @@ class ParentFirestoreRepository implements ParentRepository {
     final enfants = await fetchEnfants(utilisateurId);
     final data = userDoc.data();
     if (!userDoc.exists || data == null) {
+      final currentUser = FirebaseAuth.instance.currentUser;
       final initialParent = Utilisateur(
         utilisateurId: utilisateurId,
         role: UserRole.parent,
-        nom: 'Aissata Traoré',
-        email: 'aissata@example.com',
+        nom: currentUser?.displayName ?? 'Parent',
+        email: currentUser?.email ?? '',
         nombreEnfants: enfants.length,
         enfants: enfants,
       );
-      await _firestore
-          .collection('utilisateurs')
-          .doc(utilisateurId)
-          .set(initialParent.toFirestore(), SetOptions(merge: true));
+      if (utilisateurId.isNotEmpty && utilisateurId != 'parent_default_id') {
+        await _firestore
+            .collection('utilisateurs')
+            .doc(utilisateurId)
+            .set(initialParent.toFirestore(), SetOptions(merge: true));
+      }
       return initialParent;
     }
     return Utilisateur.fromFirestore(data, userDoc.id, enfants: enfants);
