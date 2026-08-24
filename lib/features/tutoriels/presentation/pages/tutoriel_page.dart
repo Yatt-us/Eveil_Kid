@@ -1,9 +1,5 @@
 import 'package:eveilkid/core/constants/app_colors.dart';
-import 'package:eveilkid/features/categories/models/categorie.dart';
-import 'package:eveilkid/features/categories/providers/categorie_provider.dart';
 import 'package:eveilkid/features/tutoriels/models/tutoriel.dart';
-import 'package:eveilkid/features/tutoriels/presentation/widgets/category_filter.dart';
-import 'package:eveilkid/features/tutoriels/presentation/widgets/tutoriel_card.dart';
 import 'package:eveilkid/features/tutoriels/presentation/widgets/tutoriel_search.dart';
 import 'package:eveilkid/features/tutoriels/providers/tutoriel_provider.dart';
 import 'package:eveilkid/shared/widgets/app_bottom_nav_bar.dart';
@@ -19,9 +15,46 @@ class TutorielPage extends ConsumerStatefulWidget {
 
 class _TutorielPageState extends ConsumerState<TutorielPage> {
   final TextEditingController _searchController = TextEditingController();
+  String _selectedAge = 'Tous';
 
-  String _searchQuery = '';
-  String? _selectedCategoryId;
+  static const List<String> _ageFilters = [
+    'Tous',
+    'Age 4-6',
+    'Age 7-9',
+    'Age 10-12',
+  ];
+
+  List<Tutoriel> _filteredTutoriels(List<Tutoriel> tutoriels) {
+    final query = _searchController.text.trim().toLowerCase();
+
+    return tutoriels.where((tutoriel) {
+      final matchesQuery = query.isEmpty ||
+          tutoriel.titre.toLowerCase().contains(query) ||
+          tutoriel.description.toLowerCase().contains(query);
+
+      final matchesAge = _selectedAge == 'Tous' ||
+          _matchesAgeFilter(tutoriel.ageMinimum, tutoriel.ageMaximum, _selectedAge);
+
+      return matchesQuery && matchesAge;
+    }).toList();
+  }
+
+  bool _matchesAgeFilter(num minAge, num maxAge, String filter) {
+    switch (filter) {
+      case 'Age 4-6':
+        return _rangesOverlap(minAge, maxAge, 4, 6);
+      case 'Age 7-9':
+        return _rangesOverlap(minAge, maxAge, 7, 9);
+      case 'Age 10-12':
+        return _rangesOverlap(minAge, maxAge, 10, 12);
+      default:
+        return true;
+    }
+  }
+
+  bool _rangesOverlap(num aMin, num aMax, int bMin, int bMax) {
+    return aMin <= bMax && aMax >= bMin;
+  }
 
   @override
   void dispose() {
@@ -32,280 +65,227 @@ class _TutorielPageState extends ConsumerState<TutorielPage> {
   @override
   Widget build(BuildContext context) {
     final tutorielsAsync = ref.watch(tutorielsProvider);
-    final categoriesAsync = ref.watch(categoriesProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-
-        title: const Text(
-          'Tutoriels',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-
-        iconTheme: const IconThemeData(
-          color: AppColors.textPrimary,
-        ),
-      ),
-
+      backgroundColor: const Color(0xFFF6F4F4),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-
+          padding: const EdgeInsets.symmetric(horizontal: 18),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-
             children: [
-
-              // =========================
-              // RECHERCHE
-              // =========================
-              const SizedBox(height: 18),
-
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    padding: EdgeInsets.zero,
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      size: 34,
+                      color: Color(0xFF1A1A1A),
+                    ),
+                  ),
+                  const Expanded(
+                    child: Center(
+                      child: Text(
+                        'Tutoriels',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF111111),
+                          letterSpacing: -0.8,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 48),
+                ],
+              ),
+              const SizedBox(height: 20),
               TutorielSearchField(
                 controller: _searchController,
-
-                onChanged: (value) {
-                  setState(() {
-                    _searchQuery = value;
-                  });
-                },
+                onChanged: (_) => setState(() {}),
               ),
-
-              const SizedBox(height: 18),
-
-              // =========================
-              // FILTRE CATÉGORIES
-              // =========================
+              const SizedBox(height: 20),
               SizedBox(
-                height: 42,
+                height: 52,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _ageFilters.length,
+                  separatorBuilder: (context, index) => const SizedBox(width: 12),
+                  itemBuilder: (context, index) {
+                    final label = _ageFilters[index];
+                    final isSelected = _selectedAge == label;
 
-                child: categoriesAsync.when(
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(),
-                  ),
-
-                  error: (_, __) => const SizedBox(),
-
-                  data: (categories) {
-                    return ListView(
-                      scrollDirection: Axis.horizontal,
-
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(right: 8),
-
-                          child: CategoryFilterChip(
-                            label: 'Tous',
-
-                            isSelected: _selectedCategoryId == null,
-
-                            onTap: () {
-                              setState(() {
-                                _selectedCategoryId = null;
-                              });
-                            },
+                    return GestureDetector(
+                      onTap: () => setState(() => _selectedAge = label),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 18),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: isSelected ? AppColors.primary : const Color(0xFFEDEDEE),
+                          borderRadius: BorderRadius.circular(28),
+                        ),
+                        child: Text(
+                          label,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: isSelected ? Colors.white : const Color(0xFF1F1F1F),
                           ),
                         ),
-
-                        ...categories.map((categorie) {
-                          final isSelected =
-                              _selectedCategoryId ==
-                              categorie.categorieId;
-
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 8),
-
-                            child: CategoryFilterChip(
-                              label: categorie.nom,
-
-                              isSelected: isSelected,
-
-                              onTap: () {
-                                setState(() {
-                                  _selectedCategoryId =
-                                      isSelected
-                                          ? null
-                                          : categorie.categorieId;
-                                });
-                              },
-                            ),
-                          );
-                        }),
-                      ],
+                      ),
                     );
                   },
                 ),
               ),
-
-              const SizedBox(height: 20),
-
-              // =========================
-              // LISTE DES TUTORIELS
-              // =========================
+              const SizedBox(height: 18),
               Expanded(
                 child: tutorielsAsync.when(
-
-                  // -------------------------
-                  // DONNÉES
-                  // -------------------------
                   data: (tutoriels) {
-                    final filteredTutoriels =
-                        _filterTutoriels(
-                          tutoriels,
-                          _searchQuery,
-                          _selectedCategoryId,
-                        );
+                    final filtered = _filteredTutoriels(tutoriels);
 
-                    if (filteredTutoriels.isEmpty) {
+                    if (filtered.isEmpty) {
                       return const Center(
                         child: Text(
-                          'Aucun tutoriel ne correspond à votre recherche.',
-
-                          textAlign: TextAlign.center,
-
+                          'Aucun tutoriel disponible',
                           style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 15,
+                            fontSize: 18,
+                            color: Color(0xFF4A4A4A),
                           ),
                         ),
                       );
                     }
 
-                    return ListView.separated(
-                      padding: const EdgeInsets.only(
-                        bottom: 20,
-                      ),
-
-                      itemCount: filteredTutoriels.length,
-
-                      separatorBuilder: (_, __) {
-                        return const SizedBox(height: 16);
-                      },
-
+                    return ListView.builder(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      itemCount: filtered.length,
                       itemBuilder: (context, index) {
-                        final tutoriel =
-                            filteredTutoriels[index];
+                        final item = filtered[index];
+                        final imageUrl = item.miniatureUrl.isNotEmpty
+                            ? item.miniatureUrl
+                            : 'https://images.unsplash.com/photo-1516627145497-ae6968895b74?auto=format&fit=crop&w=900&q=80';
 
-                        return TutorielCard(
-                          tutoriel: tutoriel,
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 18),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Stack(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(26),
+                                    child: SizedBox(
+                                      width: 160,
+                                      height: 120,
+                                      child: Image.network(
+                                        imageUrl,
+                                        fit: BoxFit.cover,
+                                        loadingBuilder: (context, child, loadingProgress) {
+                                          if (loadingProgress == null) return child;
+                                          return Container(
+                                            width: 160,
+                                            height: 120,
+                                            color: const Color(0xFFEBE6E6),
+                                            child: const Center(
+                                              child: CircularProgressIndicator(strokeWidth: 2),
+                                            ),
+                                          );
+                                        },
+                                        errorBuilder: (context, error, stackTrace) => Container(
+                                          width: 160,
+                                          height: 120,
+                                          color: const Color(0xFFEBE6E6),
+                                          child: const Icon(
+                                            Icons.image_not_supported_rounded,
+                                            size: 40,
+                                            color: Color(0xFF8A8A8A),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    left: 12,
+                                    bottom: 10,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withValues(alpha: 0.78),
+                                        borderRadius: BorderRadius.circular(18),
+                                      ),
+                                      child: Text(
+                                        _formatDuration(item.duree),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(width: 18),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      item.titre,
+                                      style: const TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFF141414),
+                                        height: 1.15,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFEDEDEE),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        item.ageRangeLabel,
+                                        style: const TextStyle(
+                                          color: Color(0xFF4A4A4A),
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         );
                       },
                     );
                   },
-
-                  // -------------------------
-                  // CHARGEMENT
-                  // -------------------------
-                  loading: () {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  },
-
-                  // -------------------------
-                  // ERREUR
-                  // -------------------------
-                  error: (error, stackTrace) {
-                    return Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-
-                        children: [
-                          const Icon(
-                            Icons.error_outline_rounded,
-
-                            size: 44,
-
-                            color: AppColors.danger,
-                          ),
-
-                          const SizedBox(height: 12),
-
-                          const Text(
-                            'Impossible de charger les tutoriels.',
-
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-
-                          const SizedBox(height: 8),
-
-                          Text(
-                            error.toString(),
-
-                            textAlign: TextAlign.center,
-
-                            style: const TextStyle(
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-
-                          const SizedBox(height: 12),
-
-                          ElevatedButton(
-                            onPressed: () {
-                              ref.invalidate(
-                                tutorielsProvider,
-                              );
-                            },
-
-                            child: const Text(
-                              'Réessayer',
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (error, stackTrace) => Center(
+                    child: Text(
+                      error.toString(),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
         ),
       ),
-
       bottomNavigationBar: AppBottomNavBar(),
     );
   }
 
-  // =====================================================
-  // FILTRAGE DES TUTORIELS
-  // =====================================================
-
-  List<Tutoriel> _filterTutoriels(
-    List<Tutoriel> tutoriels,
-    String query,
-    String? categoryId,
-  ) {
-    final normalizedQuery =
-        query.trim().toLowerCase();
-
-    return tutoriels.where((tutoriel) {
-      // Recherche par titre ou description
-      final matchesQuery =
-          normalizedQuery.isEmpty ||
-          tutoriel.titre
-              .toLowerCase()
-              .contains(normalizedQuery) ||
-          tutoriel.description
-              .toLowerCase()
-              .contains(normalizedQuery);
-
-      // Filtre par catégorie
-      final matchesCategory =
-          categoryId == null ||
-          tutoriel.categorieId == categoryId;
-
-      return matchesQuery && matchesCategory;
-    }).toList();
+  String _formatDuration(num value) {
+    final totalSeconds = value.toInt();
+    final minutes = totalSeconds ~/ 60;
+    final seconds = totalSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 }
