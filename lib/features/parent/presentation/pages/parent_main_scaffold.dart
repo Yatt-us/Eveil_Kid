@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import '../../../../shared/widgets/app_bottom_nav_bar.dart';
 import '../../../jouets/presentation/pages/jouets_catalog_page.dart';
-import '../../../tutoriels/presentations/pages/tutorielPage.dart';
+import '../../../tutoriels/presentation/pages/tutorielPage.dart';
 import 'accueil_parent.dart';
 import 'profil_parent.dart';
 
