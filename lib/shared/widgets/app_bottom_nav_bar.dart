@@ -6,14 +6,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 class AppBottomNavBar extends ConsumerWidget {
-  const AppBottomNavBar({super.key});
+  final int? currentIndex;
+  final ValueChanged<int>? onTap;
+
+  const AppBottomNavBar({
+    super.key,
+    this.currentIndex,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentIndex = ref.watch(bottomIndexProvider);
+    final providerIndex = ref.watch(bottomIndexProvider);
+    final activeIndex = currentIndex ?? providerIndex;
 
     return BottomNavigationBar(
-      currentIndex: currentIndex,
+      currentIndex: activeIndex,
 
       // Apparence
       type: BottomNavigationBarType.fixed,
@@ -28,21 +36,25 @@ class AppBottomNavBar extends ConsumerWidget {
 
       // Navigation
       onTap: (index) {
-        ref.read(bottomIndexProvider.notifier).setIndex(index);
+        if (onTap != null) {
+          onTap!(index);
+        } else {
+          ref.read(bottomIndexProvider.notifier).setIndex(index);
 
-        switch (index) {
-          case 0:
-            context.go(AppRoutes.home);
-            break;
-          case 1:
-            context.go(AppRoutes.jouetscreen);
-            break;
-          case 2:
-            context.go(AppRoutes.tutoriels);
-            break;
-          case 3:
-            context.go(AppRoutes.profile);
-            break;
+          switch (index) {
+            case 0:
+              context.go(AppRoutes.home);
+              break;
+            case 1:
+              context.go(AppRoutes.jouetscreen);
+              break;
+            case 2:
+              context.go(AppRoutes.tutoriels);
+              break;
+            case 3:
+              context.go(AppRoutes.profile);
+              break;
+          }
         }
       },
 

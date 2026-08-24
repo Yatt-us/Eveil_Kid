@@ -117,16 +117,7 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
                               style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
                             ),
                             AppSpacing.verticalLg,
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (_) => const AjouterEnfantPage()),
-                                );
-                              },
-                              icon: const Icon(Icons.add),
-                              label: const Text('Ajouter un enfant'),
-                            ),
+
                           ],
                         ),
                       )

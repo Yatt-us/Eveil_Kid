@@ -10,6 +10,8 @@ import '../../../../core/constants/AppTextStyles.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
 import '../../../../shared/widgets/app_text_field.dart';
+import '../../../../shared/widgets/app_date_picker.dart';
+import '../../../../shared/widgets/app_avatar.dart';
 import '../../models/parent_model.dart';
 import '../../providers/parent_provider.dart';
 
@@ -25,34 +27,29 @@ class ModifierEnfantPage extends ConsumerStatefulWidget {
 class _ModifierEnfantPageState extends ConsumerState<ModifierEnfantPage> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
-  late TextEditingController _ageController;
-
-  late String _selectedLevel;
+  late DateTime _selectedDate;
+  late String _selectedGenre;
+  String? _avatarUrl;
   bool _isLoading = false;
 
-  final List<String> _availableLevels = [
-    'Niveau 1',
-    'Niveau 2',
-    'Niveau 3',
-    'Niveau 4',
-    'Niveau 5',
+  final List<Map<String, String>> _genres = [
+    {'value': 'GARCON', 'label': 'Garçon'},
+    {'value': 'FILLE', 'label': 'Fille'},
+    {'value': 'NON_SPECIFIE', 'label': 'Non spécifié'},
   ];
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.enfant.name);
-    _ageController = TextEditingController(text: widget.enfant.age.toString());
-
-    _selectedLevel = _availableLevels.contains(widget.enfant.level)
-        ? widget.enfant.level
-        : _availableLevels[1];
+    _nameController = TextEditingController(text: widget.enfant.nom);
+    _selectedDate = widget.enfant.dateNaissance;
+    _selectedGenre = widget.enfant.genre;
+    _avatarUrl = widget.enfant.avatarUrl;
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _ageController.dispose();
     super.dispose();
   }
 
@@ -62,27 +59,28 @@ class _ModifierEnfantPageState extends ConsumerState<ModifierEnfantPage> {
     setState(() => _isLoading = true);
 
     final updatedChild = widget.enfant.copyWith(
-      name: _nameController.text.trim(),
-      age: int.tryParse(_ageController.text.trim()) ?? widget.enfant.age,
-      level: _selectedLevel,
+      nom: _nameController.text.trim(),
+      dateNaissance: _selectedDate,
+      genre: _selectedGenre,
+      avatarUrl: _avatarUrl,
     );
 
     try {
       await ref.read(parentNotifierProvider.notifier).modifierEnfant(updatedChild);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Profil de ${updatedChild.name} mis à jour avec succès !'),
-            backgroundColor: AppColors.primary,
-          ),
+        AppDialogs.showSnackBar(
+          context: context,
+          message: 'Profil de ${updatedChild.nom} mis à jour avec succès !',
         );
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e'), backgroundColor: AppColors.danger),
+        AppDialogs.showSnackBar(
+          context: context,
+          message: 'Erreur: $e',
+          isError: true,
         );
       }
     } finally {
@@ -102,20 +100,20 @@ class _ModifierEnfantPageState extends ConsumerState<ModifierEnfantPage> {
 
     if (confirmed == true && mounted) {
       try {
-        await ref.read(parentNotifierProvider.notifier).supprimerEnfant(widget.enfant.id);
+        await ref.read(parentNotifierProvider.notifier).supprimerEnfant(widget.enfant.enfantId);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${widget.enfant.name} a été supprimé.'),
-              backgroundColor: AppColors.danger,
-            ),
+          AppDialogs.showSnackBar(
+            context: context,
+            message: '${widget.enfant.nom} a été supprimé.',
           );
           Navigator.pop(context);
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Erreur: $e'), backgroundColor: AppColors.danger),
+          AppDialogs.showSnackBar(
+            context: context,
+            message: 'Erreur: $e',
+            isError: true,
           );
         }
       }
@@ -145,10 +143,28 @@ class _ModifierEnfantPageState extends ConsumerState<ModifierEnfantPage> {
             children: [
               AppSpacing.verticalLg,
               Center(
-                child: CircleAvatar(
-                  radius: 40,
-                  backgroundColor: AppColors.surfaceVariant,
-                  child: const Icon(Icons.face_rounded, size: 50, color: AppColors.primary),
+                child: Stack(
+                  children: [
+                    AppAvatar(
+                      imageUrl: _avatarUrl,
+                      radius: 50,
+                      defaultIcon: Icons.face_rounded,
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: CircleAvatar(
+                        backgroundColor: AppColors.primary,
+                        radius: 18,
+                        child: IconButton(
+                          icon: const Icon(Icons.camera_alt, size: 18, color: Colors.white),
+                          onPressed: () {
+                            AppDialogs.showSnackBar(context: context, message: 'Sélecteur d\'image bientôt disponible');
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               AppSpacing.verticalXl,
@@ -164,41 +180,39 @@ class _ModifierEnfantPageState extends ConsumerState<ModifierEnfantPage> {
               ),
               AppSpacing.verticalMd,
 
-              AppTextField(
-                controller: _ageController,
-                label: 'Âge',
-                keyboardType: TextInputType.number,
-                prefixIcon: Icons.cake_outlined,
-                validator: (val) {
-                  if (val == null || val.trim().isEmpty) return 'Âge requis';
-                  final num = int.tryParse(val);
-                  if (num == null || num < 1 || num > 14) return 'Entre 1 et 14 ans';
-                  return null;
+              AppDatePicker(
+                label: 'Date de naissance',
+                selectedDate: _selectedDate,
+                onDateSelected: (date) {
+                  setState(() => _selectedDate = date);
                 },
               ),
               AppSpacing.verticalMd,
 
-              const Text('Niveau', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+              const Text(
+                'Genre',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+              ),
               AppSpacing.verticalXs,
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: AppRadius.input,
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _selectedLevel,
-                    isExpanded: true,
-                    items: _availableLevels.map((lvl) {
-                      return DropdownMenuItem(value: lvl, child: Text(lvl, style: const TextStyle(fontSize: 14)));
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null) setState(() => _selectedLevel = val);
-                    },
-                  ),
-                ),
+              Row(
+                children: _genres.map((genre) {
+                  final isSelected = _selectedGenre == genre['value'];
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: ChoiceChip(
+                      label: Text(genre['label']!),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        if (selected) setState(() => _selectedGenre = genre['value']!);
+                      },
+                      selectedColor: AppColors.primary.withOpacity(0.2),
+                      labelStyle: TextStyle(
+                        color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                  );
+                }).toList(),
               ),
               AppSpacing.verticalXxl,
 

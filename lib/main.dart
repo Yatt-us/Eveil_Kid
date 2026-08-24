@@ -18,40 +18,21 @@
 // }
 
 import 'package:eveilkid/core/router/app_router.dart';
-<<<<<<< HEAD
-import 'package:eveilkid/core/services/google_sign_in_service.dart';
+import 'package:eveilkid/core/provider/theme_provider.dart';
 import 'package:eveilkid/core/themes/AppTheme.dart';
-import 'package:eveilkid/core/themes/theme_provider.dart';
-=======
 
->>>>>>> 6be268406277bd1de148ce75bfb2d38529c524f0
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
- // Importez le fichier où se trouve appRouterProvider
+// Importez le fichier où se trouve appRouterProvider
 import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
-<<<<<<< HEAD
-  // Initialise Google Sign-In v7+ une seule fois avant runApp.
-  // Tente egalement une re-connexion legere (sans UI) si l'utilisateur
-  // etait deja connecte precedemment.
-  await GoogleSignInService.initialize();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   runApp(const ProviderScope(child: MyApp()));
-=======
-  runApp(
-    const ProviderScope(
-      child: MyApp(),
-    ),
-  );
->>>>>>> 6be268406277bd1de148ce75bfb2d38529c524f0
 }
 
 class MyApp extends ConsumerWidget {
@@ -65,19 +46,11 @@ class MyApp extends ConsumerWidget {
 
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
-<<<<<<< HEAD
-      title: 'Éveil Kid',
+      title: 'Eveil Kid',
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: themeMode,
-      routerConfig: router,
-    );
-  }
-}
-=======
-      title: 'Eveil Kid',
       routerConfig: router, // Injecte la configuration des routes
     );
   }
 }
->>>>>>> 6be268406277bd1de148ce75bfb2d38529c524f0

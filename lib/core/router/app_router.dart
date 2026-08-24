@@ -1,3 +1,6 @@
+import 'package:eveilkid/features/parent/presentation/pages/accueil_parent.dart';
+import 'package:eveilkid/features/parent/presentation/pages/profil_parent.dart';
+import 'package:eveilkid/features/parent/presentation/pages/parent_main_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -20,7 +23,6 @@ import 'package:eveilkid/features/auth/providers/auth_provider.dart';
 import 'package:eveilkid/features/jouets/models/jouet.dart';
 import 'package:eveilkid/features/jouets/presentation/page/jouet_detail_screen.dart';
 import 'package:eveilkid/features/jouets/presentation/page/jouets_screen.dart';
-import 'package:eveilkid/features/parent/presentation/pages/parent_main_scaffold.dart';
 import 'package:eveilkid/features/tutoriels/presentations/pages/tutorielPage.dart';
 
 /// Notifier pour déclencher les rafraîchissements de GoRouter lors des changements d'état d'authentification Riverpod
@@ -55,16 +57,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           state.matchedLocation == AppRoutes.register;
       final isSplash = state.matchedLocation == AppRoutes.splash;
 
-      // 2. Utilisateur non authentifié (mode visiteur)
+      // 2. Utilisateur non authentifié
       if (!isAuthenticated) {
-        // Au démarrage (splash) ou lors d'une déconnexion depuis l'espace admin, aller sur l'accueil visiteur
-        if (isSplash || state.matchedLocation.startsWith('/admin')) {
-          return AppRoutes.login;
-        }
-        // Autoriser l'accès aux pages d'authentification, accueil public ou tutoriels
-        if (isGoingToAuth ||
-            state.matchedLocation == AppRoutes.home ||
-            state.matchedLocation == AppRoutes.tutoriels) {
+        // Autoriser l'accès aux pages d'authentification ou pages publiques autorisées
+        if (isGoingToAuth || state.matchedLocation == AppRoutes.tutoriels) {
           return null;
         }
         // Rediriger vers la page de connexion pour toute autre page
@@ -127,11 +123,27 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ── Accueil & Fonctionnalités Utilisateur ──
       GoRoute(
         path: AppRoutes.home,
-        builder: (context, state) => const ParentMainScaffold(),
+        pageBuilder: (context, state) {
+          return const NoTransitionPage(
+            child: ParentMainScaffold(initialIndex: 0),
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.profile,
+        pageBuilder: (context, state) {
+          return const NoTransitionPage(
+            child: ParentMainScaffold(initialIndex: 3),
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.tutoriels,
-        builder: (context, state) => const TutorielPage(),
+        pageBuilder: (context, state) {
+          return const NoTransitionPage(
+            child: ParentMainScaffold(initialIndex: 2),
+          );
+        },
       ),
 
       // ── Espace Administration ──
@@ -166,10 +178,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ── Espace Jouets ──
       GoRoute(
         path: AppRoutes.jouetscreen,
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final authState = ref.watch(authProvider);
-          //final userId = authState.utilisateur?.uid ?? '0FCX2CD3IlcC2tPxiOujc0b0N9v1';
-          return JouetsScreen(utilisateurId: '0FCX2CD3IlcC2tPxiOujc0b0N9v1');
+
+          final utilisateurId =
+              authState.utilisateur?.uid ?? '0FCX2CD3IlcC2tPxiOujc0b0N9v1';
+
+          return NoTransitionPage(
+            child: JouetsScreen(utilisateurId: utilisateurId.toString()),
+          );
         },
       ),
       GoRoute(
