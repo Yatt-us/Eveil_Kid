@@ -3,15 +3,13 @@ import 'package:eveilkid/features/enfant/model/enfant_model.dart';
 import 'package:eveilkid/features/enfant/repository/enfant_repository.dart';
 import 'enfant_state.dart';
 
-// Provider d'injection du Repository
 final enfantRepositoryProvider = Provider<EnfantRepository>((ref) {
   return EnfantRepository();
 });
 
-// Provider global gérant la liste des enfants et la sélection
-final enfantNotifierProvider = NotifierProvider<EnfantNotifier, EnfantState>(() {
-  return EnfantNotifier();
-});
+final enfantNotifierProvider = NotifierProvider<EnfantNotifier, EnfantState>(
+  EnfantNotifier.new,
+);
 
 class EnfantNotifier extends Notifier<EnfantState> {
   late final EnfantRepository _enfantRepository;
@@ -22,7 +20,6 @@ class EnfantNotifier extends Notifier<EnfantState> {
     return const EnfantState();
   }
 
-  /// Charge tous les enfants du parent et sélectionne le premier par défaut si besoin.
   Future<void> chargerEnfants(String parentId) async {
     if (parentId.trim().isEmpty) {
       state = state.copyWith(
@@ -34,37 +31,33 @@ class EnfantNotifier extends Notifier<EnfantState> {
     }
 
     state = state.copyWith(isLoading: true, forceNullError: true);
-
     try {
-      // Propagation dynamique de l'ID Parent au Repository
-      final mefEnfants = await _enfantRepository.recupererEnfantsDuParent(parentId);
-      
-      EnfantModel? selection = state.enfantSelectionne;
-      if (selection == null && mefEnfants.isNotEmpty) {
-        selection = mefEnfants.first;
-      } else if (selection != null) {
-        final index = mefEnfants.indexWhere((e) => e.enfantId == selection!.enfantId);
-        selection = index != -1 ? mefEnfants[index] : (mefEnfants.isNotEmpty ? mefEnfants.first : null);
-      }
-
+      final enfants = await _enfantRepository.recupererEnfantsDuParent(
+        parentId,
+      );
+      final current = state.enfantSelectionne;
+      final selection = current == null
+          ? (enfants.isEmpty ? null : enfants.first)
+          : enfants.where((e) => e.enfantId == current.enfantId).firstOrNull ??
+                (enfants.isEmpty ? null : enfants.first);
       state = state.copyWith(
-        enfants: mefEnfants,
+        enfants: enfants,
         enfantSelectionne: selection,
         forceNullSelection: selection == null,
       );
-    } catch (e) {
-      state = state.copyWith(errorMessage: 'Erreur lors du chargement des enfants : $e');
+    } catch (error) {
+      state = state.copyWith(
+        errorMessage: 'Erreur lors du chargement : $error',
+      );
     } finally {
       state = state.copyWith(isLoading: false);
     }
   }
 
-  /// Sélectionne manuellement un enfant pour adapter l'application à son âge.
   void selectionnerEnfant(EnfantModel enfant) {
     state = state.copyWith(enfantSelectionne: enfant);
   }
 
-  /// Désélectionne l'enfant en cours.
   void deselectionnerEnfant() {
     state = state.copyWith(forceNullSelection: true);
   }

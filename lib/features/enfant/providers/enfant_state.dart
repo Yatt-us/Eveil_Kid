@@ -25,9 +25,11 @@ class EnfantState {
   }) {
     return EnfantState(
       enfants: enfants ?? this.enfants,
-      enfantSelectionne: forceNullSelection ? null : (enfantSelectionne ?? this.enfantSelectionne),
+      enfantSelectionne: forceNullSelection
+          ? null
+          : enfantSelectionne ?? this.enfantSelectionne,
       isLoading: isLoading ?? this.isLoading,
-      errorMessage: forceNullError ? null : (errorMessage ?? this.errorMessage),
+      errorMessage: forceNullError ? null : errorMessage ?? this.errorMessage,
     );
   }
 }
