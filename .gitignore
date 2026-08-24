@@ -48,3 +48,4 @@ app.*.map.json
 ios/Podfile.lock
 ios/Podfile
 macos/Podfile
+Runner.xcscheme
