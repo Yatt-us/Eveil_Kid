@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class Tutoriel {
   final String tutorielId;
   final String categorieId;
-  final String? jouetLieId;
+  final String jouetLieId;
   final String createurId;
   final String titre;
   final String description;
@@ -16,12 +16,11 @@ class Tutoriel {
   final bool estPublie;
   final DateTime dateCreation;
   final DateTime dateModification;
-  
 
-  Tutoriel({
+  const Tutoriel({
     required this.tutorielId,
     required this.categorieId,
-    this.jouetLieId,
+    required this.jouetLieId,
     required this.createurId,
     required this.titre,
     required this.description,
@@ -36,51 +35,59 @@ class Tutoriel {
     required this.dateModification,
   });
 
-  /// Firestore -> Model
   factory Tutoriel.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> doc,
   ) {
-    final data = doc.data()!;
+    final data = doc.data() ?? const {};
 
     return Tutoriel(
-      tutorielId: doc.id,
-      categorieId: data['categorieId'] as String,
-      jouetLieId: data['jouetLieId'] as String?,
-      createurId: data['createurId'] as String,
-      titre: data['titre'] as String,
-      description: data['description'] as String,
-      jouetsSuggeres: List<String>.from(
-        data['jouetsSuggeres'] ?? [],
-      ),
-      videoUrl: data['videoUrl'] as String,
-      miniatureUrl: data['miniatureUrl'] as String,
-      duree: data['duree'] as num,
-      ageMinimum: data['ageMinimum'] as num,
-      ageMaximum: data['ageMaximum'] as num,
-      estPublie: data['estPublie'] as bool,
-      dateCreation: (data['dateCreation'] as Timestamp).toDate(),
-      dateModification: (data['dateModification'] as Timestamp).toDate(),
+      tutorielId: data['tutorielId']?.toString() ?? doc.id,
+      categorieId: data['categorieId']?.toString() ?? '',
+      jouetLieId: data['jouetLieId']?.toString() ?? '',
+      createurId: data['createurId']?.toString() ?? '',
+      titre: data['titre']?.toString() ?? 'Tutoriel',
+      description: data['description']?.toString() ?? '',
+      jouetsSuggeres: data['jouetsSuggeres'] is List
+          ? List<String>.from((data['jouetsSuggeres'] as List).map((e) => e.toString()))
+          : const [],
+      videoUrl: data['videoUrl']?.toString() ?? '',
+      miniatureUrl: data['miniatureUrl']?.toString() ?? '',
+      duree: data['duree'] ?? 0,
+      ageMinimum: data['ageMinimum'] ?? 0,
+      ageMaximum: data['ageMaximum'] ?? 0,
+      estPublie: data['estPublie'] is bool ? data['estPublie'] : true,
+      dateCreation: _parseDate(data['dateCreation']),
+      dateModification: _parseDate(data['dateModification']),
     );
   }
 
-  /// Model -> Firestore
-  Map<String, dynamic> toFirestore() {
-    return {
-      'categorieId': categorieId,
-      'jouetLieId': jouetLieId,
-      'createurId': createurId,
-      'titre': titre,
-      'description': description,
-      'jouetsSuggeres': jouetsSuggeres,
-      'videoUrl': videoUrl,
-      'miniatureUrl': miniatureUrl,
-      'duree': duree,
-      'ageMinimum': ageMinimum,
-      'ageMaximum': ageMaximum,
-      'estPublie': estPublie,
-      'dateCreation': Timestamp.fromDate(dateCreation),
-      'dateModification': Timestamp.fromDate(dateModification),
-    };
+  factory Tutoriel.fromMap(Map<String, dynamic> map, {String? id}) {
+    return Tutoriel(
+      tutorielId: id ?? map['tutorielId']?.toString() ?? '',
+      categorieId: map['categorieId']?.toString() ?? '',
+      jouetLieId: map['jouetLieId']?.toString() ?? '',
+      createurId: map['createurId']?.toString() ?? '',
+      titre: map['titre']?.toString() ?? 'Tutoriel',
+      description: map['description']?.toString() ?? '',
+      jouetsSuggeres: map['jouetsSuggeres'] is List
+          ? List<String>.from((map['jouetsSuggeres'] as List).map((e) => e.toString()))
+          : const [],
+      videoUrl: map['videoUrl']?.toString() ?? '',
+      miniatureUrl: map['miniatureUrl']?.toString() ?? '',
+      duree: map['duree'] ?? 0,
+      ageMinimum: map['ageMinimum'] ?? 0,
+      ageMaximum: map['ageMaximum'] ?? 0,
+      estPublie: map['estPublie'] is bool ? map['estPublie'] : true,
+      dateCreation: _parseDate(map['dateCreation']),
+      dateModification: _parseDate(map['dateModification']),
+    );
+  }
+
+  static DateTime _parseDate(dynamic value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
+    if (value is DateTime) return value;
+    return DateTime.now();
   }
 
   Tutoriel copyWith({
@@ -119,4 +126,28 @@ class Tutoriel {
     );
   }
 
+  Map<String, dynamic> toFirestore() {
+    return {
+      'tutorielId': tutorielId,
+      'categorieId': categorieId,
+      'jouetLieId': jouetLieId,
+      'createurId': createurId,
+      'titre': titre,
+      'description': description,
+      'jouetsSuggeres': jouetsSuggeres,
+      'videoUrl': videoUrl,
+      'miniatureUrl': miniatureUrl,
+      'duree': duree,
+      'ageMinimum': ageMinimum,
+      'ageMaximum': ageMaximum,
+      'estPublie': estPublie,
+      'dateCreation': Timestamp.fromDate(dateCreation),
+      'dateModification': Timestamp.fromDate(dateModification),
+    };
+  }
+
+  String get ageRangeLabel =>
+      ageMinimum == ageMaximum ? '$ageMinimum ans' : '$ageMinimum-$ageMaximum ans';
+
+  String get durationLabel => '${duree.toString()} sec';
 }

@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+/// Modèle représentant un enfant lié dynamiquement à un parent (utilisateur).
 class EnfantModel {
   final String enfantId;
-  final String utilisateurId;
+  final String utilisateurId; // ID Dynamique du Parent
   final String nom;
   final DateTime dateNaissance;
   final String? avatarUrl;
@@ -29,18 +30,19 @@ class EnfantModel {
     required this.dateModification,
   });
 
+  /// Constructeur pour initialiser un nouvel enfant avec des ID dynamiques
+  /// générés à la volée avant l'insertion dans Firestore.
   factory EnfantModel.creerNouveau({
     required String utilisateurId,
     required String nom,
     required DateTime dateNaissance,
     required String genre,
     String? avatarUrl,
-    String? uniqueEnfantId,
+    String? uniqueEnfantId, // Optionnel : si vous générez l'ID via Firebase avant
   }) {
-    final idGenere =
-        uniqueEnfantId ??
-        FirebaseFirestore.instance.collection('utilisateurs').doc().id;
-
+    // Génère un ID Firestore local si aucun n'est fourni
+    final idGenere = uniqueEnfantId ?? FirebaseFirestore.instance.collection('temporaire').doc().id;
+    
     return EnfantModel(
       enfantId: idGenere,
       utilisateurId: utilisateurId,
@@ -57,11 +59,11 @@ class EnfantModel {
     );
   }
 
-  factory EnfantModel.fromSnapshot(
-    DocumentSnapshot<Map<String, dynamic>> snapshot,
-  ) {
+  /// Factory pour créer un [EnfantModel] à partir d'un Snapshot Firestore.
+  /// Récupère l'ID du document si `enfantId` est absent du Map.
+  factory EnfantModel.fromSnapshot(DocumentSnapshot<Map<String, dynamic>> snapshot) {
     final map = snapshot.data() ?? {};
-
+    
     DateTime parseDate(dynamic value) {
       if (value is Timestamp) return value.toDate();
       if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
@@ -70,42 +72,46 @@ class EnfantModel {
     }
 
     return EnfantModel(
-      enfantId: map['enfantId']?.toString() ?? snapshot.id,
+      enfantId: map['enfantId']?.toString() ?? snapshot.id, // Dynamique selon le document
       utilisateurId: map['utilisateurId']?.toString() ?? '',
       nom: map['nom']?.toString() ?? '',
       dateNaissance: parseDate(map['dateNaissance']),
       avatarUrl: map['avatarUrl']?.toString(),
       souhait: map['souhait'] != null
-          ? List<String>.from((map['souhait'] as List).map((e) => e.toString()))
+          ? List<String>.from(map['souhait'].map((e) => e.toString()))
           : [],
       resultatsActivite: map['resultatsActivite'] != null
-          ? List<dynamic>.from(map['resultatsActivite'] as List)
+          ? List<dynamic>.from(map['resultatsActivite'])
           : [],
       codeSecuriteHash: map['codeSecuriteHash']?.toString() ?? '',
       estActif: map['estActif'] is bool
-          ? map['estActif'] as bool
-          : map['estActif']?.toString().toLowerCase() == 'true',
+          ? map['estActif']
+          : (map['estActif']?.toString().toLowerCase() == 'true'),
       genre: map['genre']?.toString() ?? '',
       dateCreation: parseDate(map['dateCreation']),
       dateModification: parseDate(map['dateModification']),
     );
   }
 
-  Map<String, dynamic> toMap() => {
-    'enfantId': enfantId,
-    'utilisateurId': utilisateurId,
-    'nom': nom,
-    'dateNaissance': Timestamp.fromDate(dateNaissance),
-    'avatarUrl': avatarUrl,
-    'souhait': souhait,
-    'resultatsActivite': resultatsActivite,
-    'codeSecuriteHash': codeSecuriteHash,
-    'estActif': estActif,
-    'genre': genre,
-    'dateCreation': Timestamp.fromDate(dateCreation),
-    'dateModification': Timestamp.fromDate(dateModification),
-  };
+  /// Convertit l'instance [EnfantModel] en Map pour l'enregistrement Firestore.
+  Map<String, dynamic> toMap() {
+    return {
+      'enfantId': enfantId,
+      'utilisateurId': utilisateurId,
+      'nom': nom,
+      'dateNaissance': Timestamp.fromDate(dateNaissance),
+      'avatarUrl': avatarUrl,
+      'souhait': souhait,
+      'resultatsActivite': resultatsActivite,
+      'codeSecuriteHash': codeSecuriteHash,
+      'estActif': estActif,
+      'genre': genre,
+      'dateCreation': Timestamp.fromDate(dateCreation),
+      'dateModification': Timestamp.fromDate(dateModification),
+    };
+  }
 
+  /// Crée une copie de l'objet en injectant de nouvelles valeurs dynamiques.
   EnfantModel copyWith({
     String? enfantId,
     String? utilisateurId,
@@ -136,13 +142,17 @@ class EnfantModel {
     );
   }
 
+  /// Calcul dynamique de l'âge de l'enfant en années.
   int get age {
-    final now = DateTime.now();
-    var result = now.year - dateNaissance.year;
-    if (now.month < dateNaissance.month ||
-        (now.month == dateNaissance.month && now.day < dateNaissance.day)) {
-      result--;
+    final maintenant = DateTime.now();
+    int resultat = maintenant.year - dateNaissance.year;
+
+    if (maintenant.month < dateNaissance.month ||
+        (maintenant.month == dateNaissance.month &&
+            maintenant.day < dateNaissance.day)) {
+      resultat--;
     }
-    return result < 0 ? 0 : result;
+
+    return resultat < 0 ? 0 : resultat;
   }
 }

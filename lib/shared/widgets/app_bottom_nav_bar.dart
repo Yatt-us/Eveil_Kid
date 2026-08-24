@@ -7,7 +7,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 class AppBottomNavBar extends ConsumerWidget {
-  const AppBottomNavBar({super.key});
+  final int? currentIndex;
+  final ValueChanged<int>? onTap;
+
+  const AppBottomNavBar({
+    super.key,
+    this.currentIndex,
+    this.onTap,
+  });
 
   int _calculateSelectedIndex(BuildContext context) {
     try {
@@ -30,11 +37,11 @@ class AppBottomNavBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentIndex = _calculateSelectedIndex(context);
+    final int effectiveIndex = currentIndex ?? _calculateSelectedIndex(context);
     final theme = Theme.of(context);
 
     return BottomNavigationBar(
-      currentIndex: currentIndex,
+      currentIndex: effectiveIndex,
 
       // Apparence
       type: BottomNavigationBarType.fixed,
@@ -52,29 +59,25 @@ class AppBottomNavBar extends ConsumerWidget {
 
       // Navigation
       onTap: (index) {
-        if (index == 3) {
-          final isAuthenticated = ref.read(authProvider).isAuthenticated;
-          if (!isAuthenticated) {
-            context.push(AppRoutes.login);
-            return;
+        if (onTap != null) {
+          onTap!(index);
+        } else {
+          ref.read(bottomIndexProvider.notifier).setIndex(index);
+
+          switch (index) {
+            case 0:
+              context.go(AppRoutes.home);
+              break;
+            case 1:
+              context.go(AppRoutes.jouetscreen);
+              break;
+            case 2:
+              context.go(AppRoutes.tutoriels);
+              break;
+            case 3:
+              context.go(AppRoutes.profile);
+              break;
           }
-        }
-
-        ref.read(bottomIndexProvider.notifier).setIndex(index);
-
-        switch (index) {
-          case 0:
-            context.go(AppRoutes.home);
-            break;
-          case 1:
-            context.go(AppRoutes.jouetscreen);
-            break;
-          case 2:
-            context.go(AppRoutes.tutoriels);
-            break;
-          case 3:
-            context.go(AppRoutes.profile);
-            break;
         }
       },
 

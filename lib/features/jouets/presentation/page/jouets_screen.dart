@@ -47,8 +47,7 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
           jouet.description.toLowerCase().contains(rechercheLower);
 
       final correspondCategorie =
-          selectedCategory == null ||
-          jouet.categorieId == selectedCategory;
+          selectedCategory == null || jouet.categorieId == selectedCategory;
 
       return correspondRecherche && correspondCategorie;
     }).toList();
@@ -73,96 +72,99 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
         body: SafeArea(
           child: Column(
             children: [
-            Expanded(
-              child: CustomScrollView(
-                slivers: [
-                  // HEADER
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                    sliver: SliverToBoxAdapter(child: _buildHeader()),
-                  ),
-
-                  // RECHERCHE
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                    sliver: SliverToBoxAdapter(child: _buildSearchBar()),
-                  ),
-
-                  // HERO
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                    sliver: SliverToBoxAdapter(child: _buildHero()),
-                  ),
-
-                  // CATEGORIES
-                  SliverPadding(
-                    padding: const EdgeInsets.only(top: 16, bottom: 8),
-                    sliver: SliverToBoxAdapter(child: _buildCategoriesBar()),
-                  ),
-
-                  // JOUETS
-                  jouetsAsync.when(
-                    loading: () => const SliverFillRemaining(
-                      hasScrollBody: false,
-                      child: Center(child: CircularProgressIndicator()),
+              Expanded(
+                child: CustomScrollView(
+                  slivers: [
+                    // HEADER
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                      sliver: SliverToBoxAdapter(child: _buildHeader()),
                     ),
-                    error: (error, stack) => SliverFillRemaining(
-                      hasScrollBody: false,
-                      child: _buildError(error),
-                    ),
-                    data: (jouets) {
-                      final jouetsFiltres = _filtrerJouets(jouets, selectedCategory);
 
-                      if (jouetsFiltres.isEmpty) {
-                        return SliverFillRemaining(
-                          hasScrollBody: false,
-                          child: _buildEmpty(),
+                    // RECHERCHE
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                      sliver: SliverToBoxAdapter(child: _buildSearchBar()),
+                    ),
+
+                    // HERO
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                      sliver: SliverToBoxAdapter(child: _buildHero()),
+                    ),
+
+                    // CATEGORIES
+                    SliverPadding(
+                      padding: const EdgeInsets.only(top: 16, bottom: 8),
+                      sliver: SliverToBoxAdapter(child: _buildCategoriesBar()),
+                    ),
+
+                    // JOUETS
+                    jouetsAsync.when(
+                      loading: () => const SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                      error: (error, stack) => SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: _buildError(error),
+                      ),
+                      data: (jouets) {
+                        final jouetsFiltres = _filtrerJouets(
+                          jouets,
+                          selectedCategory,
                         );
-                      }
 
-                      return SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-                        sliver: SliverGrid(
-                          delegate: SliverChildBuilderDelegate((
-                            context,
-                            index,
-                          ) {
-                            final jouet = jouetsFiltres[index];
-                            return JouetCard(
-                              jouet: jouet,
-                              onTap: () {
-                                // Utilisation de context.push pour ajouter l'écran au-dessus
-                                // et conserver la flèche Retour (back) native dans JouetDetailScreen.
-                                context.push(
-                                  AppRoutes.jouetdetail,
-                                  extra: jouet,
-                                );
-                              },
-                            );
-                          }, childCount: jouetsFiltres.length),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                crossAxisSpacing: 12,
-                                mainAxisSpacing: 12,
-                                childAspectRatio: 0.75,
-                              ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
+                        if (jouetsFiltres.isEmpty) {
+                          return SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: _buildEmpty(),
+                          );
+                        }
+
+                        return SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+                          sliver: SliverGrid(
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
+                              final jouet = jouetsFiltres[index];
+                              return JouetCard(
+                                jouet: jouet,
+                                onTap: () {
+                                  // Utilisation de context.push pour ajouter l'écran au-dessus
+                                  // et conserver la flèche Retour (back) native dans JouetDetailScreen.
+                                  context.push(
+                                    AppRoutes.jouetdetail,
+                                    extra: jouet,
+                                  );
+                                },
+                              );
+                            }, childCount: jouetsFiltres.length),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 12,
+                                  mainAxisSpacing: 12,
+                                  childAspectRatio: 0.75,
+                                ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
-            ),
 
-            // NAVIGATION BAS DE PAGE
-          ],
+              // NAVIGATION BAS DE PAGE
+            ],
+          ),
         ),
+        bottomNavigationBar: const AppBottomNavBar(),
       ),
-      bottomNavigationBar: const AppBottomNavBar(),
-    ),
-  );
-}
+    );
+  }
 
   // HEADER DYNAMIQUE (Compteur du panier via Riverpod)
   Widget _buildHeader() {
@@ -415,7 +417,7 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
                       color: selected
                           ? Colors.white
                           : (theme.textTheme.bodyMedium?.color ??
-                              AppColors.textPrimary),
+                                AppColors.textPrimary),
                     ),
                   ),
                 ),

@@ -308,6 +308,24 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       ],
                     ),
 
+                    AppSpacing.verticalSm,
+
+                    // LIEN RETOUR ACCUEIL
+                    Center(
+                      child: TextButton.icon(
+                        onPressed: () => context.go(AppRoutes.home),
+                        icon: const Icon(Icons.home_outlined, size: 18),
+                        label: const Text('Continuer sans se connecter'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.textSecondary,
+                          textStyle: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+
                     AppSpacing.verticalLg,
                   ],
                 ),

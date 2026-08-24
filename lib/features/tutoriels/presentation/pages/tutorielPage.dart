@@ -1,6 +1,7 @@
 import 'package:eveilkid/core/provider/bottom_nav_bar_provider.dart';
 import 'package:eveilkid/core/router/app_routes.dart';
-import 'package:eveilkid/features/tutoriels/providers/tutorielProvider.dart';
+import 'package:eveilkid/features/tutoriels/providers/tutoriel_provider.dart';
+
 import 'package:eveilkid/shared/widgets/app_bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

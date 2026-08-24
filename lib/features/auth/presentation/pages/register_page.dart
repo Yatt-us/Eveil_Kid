@@ -8,7 +8,6 @@ import '../../../../core/router/app_routes.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
 import '../../../../shared/widgets/app_google_button.dart';
-import '../../../../shared/widgets/app_icon_button.dart';
 import '../../../../shared/widgets/app_logo.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../providers/auth_provider.dart';
@@ -55,7 +54,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     if (success) {
       AppDialogs.showSnackBar(
         context: context,
-        message: 'Votre compte a été créé avec succès.',
+        message:
+            'Compte créé avec succès ! Un email de confirmation vous a été envoyé.',
       );
       context.go(AppRoutes.home);
     } else {
@@ -106,18 +106,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // BOUTON RETOUR MINIMALISTE
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: AppIconButton(
-                        icon: Icons.arrow_back_rounded,
-                        size: 36,
-                        onPressed: () => context.go(AppRoutes.home),
-                      ),
-                    ),
-
-                    const SizedBox(height: 8),
-
                     // LOGO OFFICIEL
                     const Center(child: AppLogo(size: 76)),
 
@@ -296,6 +284,24 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                           ),
                         ),
                       ],
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // LIEN RETOUR ACCUEIL
+                    Center(
+                      child: TextButton.icon(
+                        onPressed: () => context.go(AppRoutes.home),
+                        icon: const Icon(Icons.home_outlined, size: 18),
+                        label: const Text('Continuer sans se connecter'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.textSecondary,
+                          textStyle: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
                     ),
 
                     const SizedBox(height: 12),
