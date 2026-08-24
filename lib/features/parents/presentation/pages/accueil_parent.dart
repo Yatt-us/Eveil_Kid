@@ -253,7 +253,7 @@ class AccueilParentPage extends ConsumerWidget {
       children: [
         Text(
           hasChildren ? 'Bonjour, $displayName 👋' : 'Bienvenue !',
-          style: AppTextStyles.headingLarge.copyWith(
+          style: AppTextStyles.headingMedium.copyWith(
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -623,7 +623,9 @@ class AccueilParentPage extends ConsumerWidget {
                       radius: 28,
                       backgroundColor: badgeBg,
                       child: ClipOval(
-                        child: child.avatarUrl != null && child.avatarUrl!.isNotEmpty
+                        child:
+                            child.avatarUrl != null &&
+                                child.avatarUrl!.isNotEmpty
                             ? Image.network(
                                 child.avatarUrl!,
                                 fit: BoxFit.cover,
@@ -801,7 +803,9 @@ class AccueilParentPage extends ConsumerWidget {
       if (n.contains('const') || n.contains('bloc') || n.contains('lego')) {
         return Icons.view_in_ar_rounded;
       }
-      if (n.contains('rôle') || n.contains('théâtre') || n.contains('imitation')) {
+      if (n.contains('rôle') ||
+          n.contains('théâtre') ||
+          n.contains('imitation')) {
         return Icons.theater_comedy_rounded;
       }
       if (n.contains('art') || n.contains('créat') || n.contains('dessin')) {
@@ -943,9 +947,9 @@ class AccueilParentPage extends ConsumerWidget {
 
             return InkWell(
               onTap: () {
-                ref.read(selectedCategoryFilterProvider.notifier).selectCategory(
-                      cat['id'] as String?,
-                    );
+                ref
+                    .read(selectedCategoryFilterProvider.notifier)
+                    .selectCategory(cat['id'] as String?);
                 ref.read(bottomIndexProvider.notifier).setIndex(1);
                 context.go(AppRoutes.jouetscreen);
               },
@@ -1044,9 +1048,8 @@ class AccueilParentPage extends ConsumerWidget {
           ),
         ),
       ),
-      error: (_, __) => const Center(
-        child: Text('Erreur lors du chargement des catégories'),
-      ),
+      error: (_, __) =>
+          const Center(child: Text('Erreur lors du chargement des catégories')),
     );
   }
 
