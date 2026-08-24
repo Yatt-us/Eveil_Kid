@@ -35,19 +35,22 @@ class ChooseQuestionTypeScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(
-              child:  const Text(
-              'Choisissez le type de question',
-              style: TextStyle(
-                
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
+              child: const Text(
+                'Choisissez le type de question',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                ),
               ),
-            ),),
-           
+            ),
             const SizedBox(height: 20),
-            ...QuestionType.values.map((type) => _buildTypeCard(context, type)),
-            const Spacer(),
+            // ✅ Remplacer ... par Expanded + ListView
+            Expanded(
+              child: ListView(
+                children: QuestionType.values.map((type) => _buildTypeCard(context, type)).toList(),
+              ),
+            ),
             // Bouton Annuler
             SizedBox(
               width: double.infinity,
@@ -77,8 +80,6 @@ class ChooseQuestionTypeScreen extends StatelessWidget {
   }
 
   Widget _buildTypeCard(BuildContext context, QuestionType type) {
-   
-    
     return GestureDetector(
       onTap: () {
         context.push(
@@ -91,17 +92,15 @@ class ChooseQuestionTypeScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: Theme.of(context).scaffoldBackgroundColor,
           borderRadius: BorderRadius.circular(12),
-          
-          border: Border.all(color: const Color.fromARGB(255, 199, 196, 196), ),
+          border: Border.all(color: const Color.fromARGB(255, 199, 196, 196)),
         ),
         child: Row(
           children: [
-            
             Container(
               width: 70,
               height: 70,
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.12),
+                color: AppColors.primary.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(50),
               ),
               child: Icon(
@@ -134,12 +133,10 @@ class ChooseQuestionTypeScreen extends StatelessWidget {
                 ],
               ),
             ),
-            
             Icon(
               Icons.arrow_forward_ios,
               size: 16,
               color: const Color.fromARGB(255, 15, 15, 15),
-              fontWeight: FontWeight.bold,
             ),
           ],
         ),

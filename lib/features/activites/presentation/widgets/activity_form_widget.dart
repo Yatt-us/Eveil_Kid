@@ -7,6 +7,7 @@ class ActivityFormWidget extends StatelessWidget {
   final String hint;
   final int maxLines;
   final TextInputType keyboardType;
+  final String? errorText;
 
   const ActivityFormWidget({
     super.key,
@@ -15,6 +16,7 @@ class ActivityFormWidget extends StatelessWidget {
     required this.hint,
     this.maxLines = 1,
     this.keyboardType = TextInputType.text,
+    this.errorText,
   });
 
   @override
@@ -53,6 +55,16 @@ class ActivityFormWidget extends StatelessWidget {
               borderRadius: BorderRadius.all(Radius.circular(8)),
               borderSide: BorderSide(color: AppColors.primary, width: 2),
             ),
+            errorBorder: const OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(8)),
+              borderSide: BorderSide(color: Colors.red, width: 2),
+            ),
+            focusedErrorBorder: const OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(8)),
+              borderSide: BorderSide(color: Colors.red, width: 2),
+            ),
+            errorText: errorText,
+            errorMaxLines: 2,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
               vertical: 14,

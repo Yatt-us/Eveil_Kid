@@ -70,7 +70,7 @@ class _QuestionDetailScreenState extends ConsumerState<QuestionDetailScreen> {
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
-                  // Recharger la question
+                 
                   ref.refresh(
                     questionByIdProvider(
                       (activityId: widget.activityId, questionId: widget.questionId) as ({String activiteId, String questionId})
@@ -129,15 +129,15 @@ class _QuestionDetailScreenState extends ConsumerState<QuestionDetailScreen> {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-      
+        
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppColors.primary,
-                AppColors.primary.withOpacity(0.85),
+                Theme.of(context).scaffoldBackgroundColor,
+                 Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.85),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -160,7 +160,7 @@ class _QuestionDetailScreenState extends ConsumerState<QuestionDetailScreen> {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.18),
+                      color: AppColors.primary,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
@@ -176,7 +176,7 @@ class _QuestionDetailScreenState extends ConsumerState<QuestionDetailScreen> {
                     child: Text(
                       'Détail de la question',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.primary,
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                       ),
@@ -190,7 +190,7 @@ class _QuestionDetailScreenState extends ConsumerState<QuestionDetailScreen> {
               Text(
                 question.enonce,
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: Color.fromARGB(255, 65, 65, 65),
                   fontSize: 20,
                   height: 1.4,
                   fontWeight: FontWeight.w600,
@@ -202,7 +202,6 @@ class _QuestionDetailScreenState extends ConsumerState<QuestionDetailScreen> {
 
         const SizedBox(height: 18),
 
-      
         Row(
           children: [
             Expanded(
@@ -227,7 +226,7 @@ class _QuestionDetailScreenState extends ConsumerState<QuestionDetailScreen> {
           ],
         ),
 
-      
+        
         if (question.imageUrl != null &&
             question.imageUrl!.isNotEmpty) ...[
           const SizedBox(height: 18),
@@ -314,6 +313,8 @@ class _QuestionDetailScreenState extends ConsumerState<QuestionDetailScreen> {
             ),
           ),
         ],
+
+      
         const SizedBox(height: 28),
 
         Row(
@@ -386,6 +387,7 @@ class _QuestionDetailScreenState extends ConsumerState<QuestionDetailScreen> {
     ),
   );
 }
+
 Widget _buildInfoCard({
   required IconData icon,
   required String title,
@@ -490,7 +492,6 @@ Widget _buildSectionTitle({
     ],
   );
 }
-
   Widget _buildOptionItem(
   OptionQuestion option,
   String correctId,
@@ -523,7 +524,7 @@ Widget _buildSectionTitle({
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Lettre de l'option
+      
         Container(
           width: 38,
           height: 38,

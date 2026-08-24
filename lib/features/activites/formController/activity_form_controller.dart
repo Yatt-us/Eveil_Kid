@@ -13,6 +13,11 @@ import 'package:eveilkid/features/activites/providers/admin/activity_provider.da
 
 
 class ActivityFormController extends ChangeNotifier {
+    String? titreError;
+String? descriptionError;
+String? categorieError;
+String? dureeError;
+String? pointsError;
   final Ref ref;
   final Activite? initialActivite;
 
@@ -228,90 +233,64 @@ class ActivityFormController extends ChangeNotifier {
   }
 
   
-  bool validateForm() {
-    
-    if (titreController.text.trim().isEmpty) {
-      errorMessage =
-          'Veuillez saisir un titre';
 
-      notifyListeners();
 
-      return false;
-    }
 
-    if (descriptionController.text.trim().isEmpty) {
-      errorMessage =
-          'Veuillez saisir une description';
+bool validateForm() {
+ 
+  titreError = null;
+  descriptionError = null;
+  categorieError = null;
+  dureeError = null;
+  pointsError = null;
+  errorMessage = null;
 
-      notifyListeners();
+  bool isValid = true;
 
-      return false;
-    }
-
-    if (selectedCategorieId.isEmpty) {
-      errorMessage =
-          'Veuillez sélectionner une catégorie';
-
-      notifyListeners();
-
-      return false;
-    }
-
-    if (dureeController.text.trim().isEmpty) {
-      errorMessage =
-          'Veuillez saisir une durée';
-
-      notifyListeners();
-
-      return false;
-    }
-
-    final duree =
-        int.tryParse(
-      dureeController.text.trim(),
-    );
-
-    if (duree == null || duree <= 0) {
-      errorMessage =
-          'La durée doit être un nombre supérieur à 0';
-
-      notifyListeners();
-
-      return false;
-    }
-
-  
-    if (pointsController.text.trim().isEmpty) {
-      errorMessage =
-          'Veuillez saisir les points';
-
-      notifyListeners();
-
-      return false;
-    }
-
-    final points =
-        int.tryParse(
-      pointsController.text.trim(),
-    );
-
-    if (points == null || points < 0) {
-      errorMessage =
-          'Les points doivent être un nombre valide';
-
-      notifyListeners();
-
-      return false;
-    }
-
-    errorMessage = null;
-
-    notifyListeners();
-
-    return true;
+  if (titreController.text.trim().isEmpty) {
+    titreError = 'Veuillez saisir un titre';
+    isValid = false;
   }
 
+  if (descriptionController.text.trim().isEmpty) {
+    descriptionError = 'Veuillez saisir une description';
+    isValid = false;
+  }
 
+  if (selectedCategorieId.isEmpty) {
+    categorieError = 'Veuillez sélectionner une catégorie';
+    isValid = false;
+  }
+
+  if (dureeController.text.trim().isEmpty) {
+    dureeError = 'Veuillez saisir une durée';
+    isValid = false;
+  } else {
+    final duree = int.tryParse(dureeController.text.trim());
+    if (duree == null || duree <= 0) {
+      dureeError = 'La durée doit être un nombre supérieur à 0';
+      isValid = false;
+    }
+  }
+
+  if (pointsController.text.trim().isEmpty) {
+    pointsError = 'Veuillez saisir les points';
+    isValid = false;
+  } else {
+    final points = int.tryParse(pointsController.text.trim());
+    if (points == null || points < 0) {
+      pointsError = 'Les points doivent être un nombre valide';
+      isValid = false;
+    }
+  }
+
+  if (!isValid) {
+    errorMessage = 'Veuillez corriger les erreurs ci-dessous';
+  }
+
+  notifyListeners();
+  return isValid;
+}
   Activite buildActivite() {
     return Activite(
       id: initialActivite?.id,

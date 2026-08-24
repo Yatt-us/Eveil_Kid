@@ -11,24 +11,44 @@ class ErrorMessageWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (message == null) return const SizedBox.shrink();
+    if (message == null || message!.trim().isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 12,
+      ),
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: AppColors.danger,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.danger),
+        color: AppColors.danger.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: AppColors.danger.withOpacity(0.25),
+        ),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.error_outline, color: AppColors.danger, size: 20),
-          const SizedBox(width: 8),
+          Icon(
+            Icons.error_outline_rounded,
+            color: AppColors.danger,
+            size: 21,
+          ),
+
+          const SizedBox(width: 10),
+
           Expanded(
             child: Text(
               message!,
-              style: TextStyle(color: AppColors.danger),
+              style: TextStyle(
+                color: AppColors.danger,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                height: 1.3,
+              ),
             ),
           ),
         ],

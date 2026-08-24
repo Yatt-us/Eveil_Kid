@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 
 class PointsWidget extends StatelessWidget {
   final TextEditingController controller;
+  final String? errorText;
 
   const PointsWidget({
     super.key,
     required this.controller,
+    this.errorText,
   });
 
   @override
@@ -31,6 +33,8 @@ class PointsWidget extends StatelessWidget {
             border: const OutlineInputBorder(
               borderRadius: BorderRadius.all(Radius.circular(8)),
             ),
+            errorText: errorText,
+            errorMaxLines: 2,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
               vertical: 14,

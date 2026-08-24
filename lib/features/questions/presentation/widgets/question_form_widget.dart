@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 class QuestionFormWidget extends StatelessWidget {
   final TextEditingController controller;
   final String hintText;
+  final String? errorText;
 
   const QuestionFormWidget({
     super.key,
     required this.controller,
     required this.hintText,
+    this.errorText,
   });
 
   @override
@@ -32,12 +34,17 @@ class QuestionFormWidget extends StatelessWidget {
             border: const OutlineInputBorder(
               borderRadius: BorderRadius.all(Radius.circular(8)),
             ),
+            errorText: errorText,
+            errorMaxLines: 2,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
               vertical: 14,
             ),
           ),
           maxLines: 2,
+          onChanged: (_) {
+            // Le controller gère la validation
+          },
         ),
       ],
     );

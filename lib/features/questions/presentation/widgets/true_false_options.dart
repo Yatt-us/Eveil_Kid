@@ -1,15 +1,47 @@
 import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 
-class TrueFalseOptions extends StatelessWidget {
+class TrueFalseOptions extends StatefulWidget {
   final String? selectedTrueFalse;
   final Function(String) onChanged;
+  final String? errorText;
 
   const TrueFalseOptions({
     super.key,
     required this.selectedTrueFalse,
     required this.onChanged,
+    this.errorText,
   });
+
+  @override
+  State<TrueFalseOptions> createState() => _TrueFalseOptionsState();
+}
+
+class _TrueFalseOptionsState extends State<TrueFalseOptions> {
+  late String? _selectedValue;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedValue = widget.selectedTrueFalse;
+  }
+
+  @override
+  void didUpdateWidget(TrueFalseOptions oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.selectedTrueFalse != oldWidget.selectedTrueFalse) {
+      setState(() {
+        _selectedValue = widget.selectedTrueFalse;
+      });
+    }
+  }
+
+  void _handleTap(String value) {
+    setState(() {
+      _selectedValue = value;
+    });
+    widget.onChanged(value);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,94 +57,115 @@ class TrueFalseOptions extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: GestureDetector(
-                onTap: () => onChanged('vrai'),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    color: selectedTrueFalse == 'vrai'
-                        ? AppColors.primary
-                        : Colors.grey.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: selectedTrueFalse == 'vrai'
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => _handleTap('vrai'),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: _selectedValue == 'vrai'
                           ? AppColors.primary
-                          : Colors.grey.shade300,
-                      width: selectedTrueFalse == 'vrai' ? 2 : 1,
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        selectedTrueFalse == 'vrai'
-                            ? Icons.check_circle
-                            : Icons.radio_button_unchecked,
-                        color: selectedTrueFalse == 'vrai'
-                            ? AppColors.primary
-                            : Colors.grey,
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Vrai',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          _selectedValue == 'vrai'
+                              ? Icons.check_circle
+                              : Icons.radio_button_unchecked,
+                          size: 18,
+                          color: _selectedValue == 'vrai'
+                              ? Colors.white
+                              : Colors.grey.shade500,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 8),
+                        Text(
+                          'Vrai',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: _selectedValue == 'vrai'
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                            color: _selectedValue == 'vrai'
+                                ? Colors.white
+                                : Colors.grey.shade700,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: GestureDetector(
-                onTap: () => onChanged('faux'),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    color: selectedTrueFalse == 'faux'
-                        ? AppColors.primary
-                        : Colors.grey.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: selectedTrueFalse == 'faux'
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => _handleTap('faux'),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: _selectedValue == 'faux'
                           ? AppColors.primary
-                          : Colors.grey.shade300,
-                      width: selectedTrueFalse == 'faux' ? 2 : 1,
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        selectedTrueFalse == 'faux'
-                            ? Icons.check_circle
-                            : Icons.radio_button_unchecked,
-                        color: selectedTrueFalse == 'faux'
-                            ? AppColors.primary
-                            : Colors.grey,
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Faux',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          _selectedValue == 'faux'
+                              ? Icons.check_circle
+                              : Icons.radio_button_unchecked,
+                          size: 18,
+                          color: _selectedValue == 'faux'
+                              ? Colors.white
+                              : Colors.grey.shade500,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 8),
+                        Text(
+                          'Faux',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: _selectedValue == 'faux'
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                            color: _selectedValue == 'faux'
+                                ? Colors.white
+                                : Colors.grey.shade700,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-        if (selectedTrueFalse != null)
+        // ✅ Affichage de l'erreur
+        if (widget.errorText != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              widget.errorText!,
+              style: const TextStyle(
+                color: Colors.red,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        if (_selectedValue != null && widget.errorText == null)
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Row(
@@ -122,7 +175,7 @@ class TrueFalseOptions extends StatelessWidget {
                 Text(
                   'Bonne réponse sélectionnée',
                   style: TextStyle(
-                    color: Colors.green,
+                    color: Colors.green.shade700,
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                   ),

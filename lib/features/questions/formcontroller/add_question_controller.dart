@@ -6,11 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:io';
 
-
 class AddQuestionController extends ChangeNotifier {
   final WidgetRef ref;
   final String activityId;
   final QuestionType type;
+  final Question? existingQuestion;
 
   final TextEditingController questionController = TextEditingController();
   final TextEditingController pointsController = TextEditingController(text: '10');
@@ -22,13 +22,57 @@ class AddQuestionController extends ChangeNotifier {
   bool isLoading = false;
   String? errorMessage;
   String? selectedTrueFalse;
+  String? imageUrl;
+
+ 
+  String? questionError;
+  String? pointsError;
+  String? optionsError;
+  String? correctAnswerError;
 
   AddQuestionController({
     required this.ref,
     required this.activityId,
     required this.type,
+    this.existingQuestion,
   }) {
-    _initOptions();
+    if (existingQuestion != null) {
+      _loadExistingQuestion();
+    } else {
+      _initOptions();
+    }
+  }
+
+  void _loadExistingQuestion() {
+    questionController.text = existingQuestion!.enonce;
+    pointsController.text = existingQuestion!.points.toString();
+    options.clear();
+    options.addAll(existingQuestion!.options);
+    selectedCorrectOptionId = existingQuestion!.idReponseCorrecte;
+    imageUrl = existingQuestion!.imageUrl;
+
+    if (type == QuestionType.vraiFaux) {
+      if (selectedCorrectOptionId == 'opt_vrai') {
+        selectedTrueFalse = 'vrai';
+      } else if (selectedCorrectOptionId == 'opt_faux') {
+        selectedTrueFalse = 'faux';
+      }
+    }
+
+    optionControllers.clear();
+    for (int i = 0; i < options.length; i++) {
+      optionControllers.add(TextEditingController(text: options[i].texte));
+    }
+
+    if (type == QuestionType.vraiFaux && options.isEmpty) {
+      options.addAll([
+        OptionQuestion(id: 'opt_vrai', texte: 'Vrai'),
+        OptionQuestion(id: 'opt_faux', texte: 'Faux'),
+      ]);
+    }
+    
+    
+    _clearErrors();
   }
 
   void _initOptions() {
@@ -36,6 +80,7 @@ class AddQuestionController extends ChangeNotifier {
     optionControllers.clear();
     selectedCorrectOptionId = '';
     selectedTrueFalse = null;
+    _clearErrors();
 
     switch (type) {
       case QuestionType.choixMultiple:
@@ -52,6 +97,10 @@ class AddQuestionController extends ChangeNotifier {
         break;
 
       case QuestionType.vraiFaux:
+        options.addAll([
+          OptionQuestion(id: 'opt_vrai', texte: 'Vrai'),
+          OptionQuestion(id: 'opt_faux', texte: 'Faux'),
+        ]);
         break;
 
       case QuestionType.association:
@@ -82,26 +131,46 @@ class AddQuestionController extends ChangeNotifier {
     }
   }
 
+
+  void _clearErrors() {
+    errorMessage = null;
+    questionError = null;
+    pointsError = null;
+    optionsError = null;
+    correctAnswerError = null;
+  }
+
   void updateCorrectAnswer(String optionId) {
     selectedCorrectOptionId = optionId;
+    correctAnswerError = null; 
     notifyListeners();
   }
 
   void updateTrueFalse(String value) {
     selectedTrueFalse = value;
     selectedCorrectOptionId = value == 'vrai' ? 'opt_vrai' : 'opt_faux';
+    correctAnswerError = null; 
     notifyListeners();
   }
 
   void updateOptionText(int index, String value) {
-    options[index] = options[index].copyWith(texte: value);
-    notifyListeners();
+    if (index < options.length) {
+      options[index] = options[index].copyWith(texte: value);
+    
+      if (optionsError != null) {
+        optionsError = null;
+        notifyListeners();
+      }
+    }
   }
 
   void addOption() {
     final newId = 'opt_${options.length + 1}';
     options.add(OptionQuestion(id: newId, texte: ''));
     optionControllers.add(TextEditingController());
+    if (optionsError != null) {
+      optionsError = null;
+    }
     notifyListeners();
   }
 
@@ -133,42 +202,48 @@ class AddQuestionController extends ChangeNotifier {
 
   void removeImage() {
     selectedImage = null;
+    imageUrl = null;
     notifyListeners();
   }
 
+
   bool validateForm() {
+    _clearErrors();
+    bool isValid = true;
+
+  
     if (questionController.text.trim().isEmpty) {
-      errorMessage = 'Veuillez saisir une question';
-      notifyListeners();
-      return false;
+      questionError = 'Veuillez saisir une question';
+      isValid = false;
     }
 
+  
     if (pointsController.text.trim().isEmpty) {
-      errorMessage = 'Veuillez saisir les points';
-      notifyListeners();
-      return false;
+      pointsError = 'Veuillez saisir les points';
+      isValid = false;
+    } else if (int.tryParse(pointsController.text.trim()) == null) {
+      pointsError = 'Les points doivent être un nombre valide';
+      isValid = false;
     }
 
+ 
     switch (type) {
       case QuestionType.choixMultiple:
         final hasEmptyOption = options.any((opt) => opt.texte.trim().isEmpty);
         if (hasEmptyOption) {
-          errorMessage = 'Veuillez remplir toutes les options';
-          notifyListeners();
-          return false;
+          optionsError = 'Veuillez remplir toutes les options';
+          isValid = false;
         }
         if (selectedCorrectOptionId.isEmpty) {
-          errorMessage = 'Veuillez sélectionner la bonne réponse';
-          notifyListeners();
-          return false;
+          correctAnswerError = 'Veuillez sélectionner la bonne réponse';
+          isValid = false;
         }
         break;
 
       case QuestionType.vraiFaux:
         if (selectedCorrectOptionId.isEmpty) {
-          errorMessage = 'Veuillez sélectionner Vrai ou Faux';
-          notifyListeners();
-          return false;
+          correctAnswerError = 'Veuillez sélectionner Vrai ou Faux';
+          isValid = false;
         }
         break;
 
@@ -176,28 +251,41 @@ class AddQuestionController extends ChangeNotifier {
       case QuestionType.classement:
         final hasEmptyElement = options.any((opt) => opt.texte.trim().isEmpty);
         if (hasEmptyElement) {
-          errorMessage = 'Veuillez remplir tous les éléments';
-          notifyListeners();
-          return false;
+          optionsError = 'Veuillez remplir tous les éléments';
+          isValid = false;
         }
         break;
     }
 
-    errorMessage = null;
+    
+    if (!isValid) {
+      errorMessage = 'Veuillez corriger les erreurs ci-dessous';
+    } else {
+      errorMessage = null;
+    }
+
     notifyListeners();
-    return true;
+    return isValid;
   }
 
   Question buildQuestion() {
+    if (type == QuestionType.vraiFaux && options.isEmpty) {
+      options.addAll([
+        OptionQuestion(id: 'opt_vrai', texte: 'Vrai'),
+        OptionQuestion(id: 'opt_faux', texte: 'Faux'),
+      ]);
+    }
+
     return Question(
+      id: existingQuestion?.id,
       activiteId: activityId,
       enonce: questionController.text.trim(),
       type: type,
       options: options,
       idReponseCorrecte: selectedCorrectOptionId,
       points: int.tryParse(pointsController.text) ?? 10,
-      ordre: 0,
-      imageUrl: null,
+      ordre: existingQuestion?.ordre ?? 0,
+      imageUrl: imageUrl,
     );
   }
 
@@ -213,6 +301,30 @@ class AddQuestionController extends ChangeNotifier {
       await notifier.createQuestion(question);
       
       isLoading = false;
+      _clearErrors();
+      notifyListeners();
+      return true;
+    } catch (e) {
+      errorMessage = e.toString();
+      isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> update() async {
+    if (!validateForm()) return false;
+
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      final question = buildQuestion();
+      final notifier = ref.read(questionNotifierProvider.notifier);
+      await notifier.updateQuestion(question);
+      
+      isLoading = false;
+      _clearErrors();
       notifyListeners();
       return true;
     } catch (e) {
@@ -232,4 +344,5 @@ class AddQuestionController extends ChangeNotifier {
     }
     super.dispose();
   }
+  
 }

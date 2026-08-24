@@ -11,6 +11,8 @@ class MultipleChoiceOptions extends StatelessWidget {
   final Function(String) onCorrectAnswerChanged;
   final VoidCallback onAddOption;
   final Function(int) onRemoveOption;
+  final String? optionsError;
+  final String? correctAnswerError;
 
   const MultipleChoiceOptions({
     super.key,
@@ -21,6 +23,8 @@ class MultipleChoiceOptions extends StatelessWidget {
     required this.onCorrectAnswerChanged,
     required this.onAddOption,
     required this.onRemoveOption,
+    this.optionsError,
+    this.correctAnswerError,
   });
 
   @override
@@ -119,7 +123,30 @@ class MultipleChoiceOptions extends StatelessWidget {
             ],
           ),
         ),
-        if (selectedCorrectOptionId.isNotEmpty)
+        
+        if (optionsError != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              optionsError!,
+              style: const TextStyle(
+                color: Colors.red,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        if (correctAnswerError != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              correctAnswerError!,
+              style: const TextStyle(
+                color: Colors.red,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        if (selectedCorrectOptionId.isNotEmpty && correctAnswerError == null)
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Row(
@@ -129,7 +156,7 @@ class MultipleChoiceOptions extends StatelessWidget {
                 Text(
                   'Bonne réponse sélectionnée',
                   style: TextStyle(
-                    color: Colors.green,
+                    color: Colors.green.shade700,
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                   ),

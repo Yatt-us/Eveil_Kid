@@ -9,6 +9,7 @@ class AssociationOptions extends StatelessWidget {
   final Function(int, String) onOptionChanged;
   final VoidCallback onAddOption;
   final Function(int) onRemoveOption;
+  final String? optionsError;
 
   const AssociationOptions({
     super.key,
@@ -17,6 +18,7 @@ class AssociationOptions extends StatelessWidget {
     required this.onOptionChanged,
     required this.onAddOption,
     required this.onRemoveOption,
+    this.optionsError,
   });
 
   @override
@@ -114,6 +116,18 @@ class AssociationOptions extends StatelessWidget {
             ],
           ),
         ),
+        // ✅ Afficher l'erreur
+        if (optionsError != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              optionsError!,
+              style: const TextStyle(
+                color: Colors.red,
+                fontSize: 12,
+              ),
+            ),
+          ),
       ],
     );
   }

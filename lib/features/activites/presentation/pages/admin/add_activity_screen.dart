@@ -61,37 +61,9 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (_controller.errorMessage != null) {
-            return _buildErrorWidget();
-          }
-
+          // ✅ Ne plus afficher l'erreur ici, elle sera affichée dans les champs
           return _buildForm();
         },
-      ),
-    );
-  }
-
-  Widget _buildErrorWidget() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 64, color: AppColors.danger),
-            const SizedBox(height: 16),
-            Text(
-              _controller.errorMessage!,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () => _controller.errorMessage = null,
-              child: const Text('Réessayer'),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -102,7 +74,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-        
+          // Image
           const Text(
             'Ajouter une image',
             style: TextStyle(
@@ -128,24 +100,26 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
           ),
           const SizedBox(height: 24),
 
-         
+          // ✅ Titre avec affichage d'erreur
           ActivityFormWidget(
             controller: _controller.titreController,
             label: 'Titre de l\'activité',
             hint: 'Ex : les animaux de la ferme',
+            errorText: _controller.titreError,
           ),
           const SizedBox(height: 16),
 
-         
+          // ✅ Description avec affichage d'erreur
           ActivityFormWidget(
             controller: _controller.descriptionController,
             label: 'Description',
             hint: 'Décrivez cette activité',
             maxLines: 3,
+            errorText: _controller.descriptionError,
           ),
           const SizedBox(height: 16),
 
-          
+          // Âge recommandé
           const Text(
             'Âge recommandé',
             style: TextStyle(
@@ -163,6 +137,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
           ),
           const SizedBox(height: 16),
 
+          // Catégorie
           const Text(
             'Catégorie',
             style: TextStyle(
@@ -176,8 +151,21 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
             selectedCategoryId: _controller.selectedCategorieId,
             onChanged: _controller.updateCategorie,
           ),
+          // ✅ Affichage de l'erreur catégorie
+          if (_controller.categorieError != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                _controller.categorieError!,
+                style: const TextStyle(
+                  color: Colors.red,
+                  fontSize: 12,
+                ),
+              ),
+            ),
           const SizedBox(height: 16),
 
+          // Difficulté
           const Text(
             'Difficulté',
             style: TextStyle(
@@ -193,7 +181,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
           ),
           const SizedBox(height: 16),
 
-         
+          // Durée et Points
           Row(
             children: [
               Expanded(
@@ -202,6 +190,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                   label: 'Durée estimée',
                   hint: 'Minutes',
                   keyboardType: TextInputType.number,
+                  errorText: _controller.dureeError,
                 ),
               ),
               const SizedBox(width: 16),
@@ -211,13 +200,14 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                   label: 'Points',
                   hint: 'Ex : 30',
                   keyboardType: TextInputType.number,
+                  errorText: _controller.pointsError,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 24),
 
-         
+          // Bouton Ajouter des questions
           if (widget.activityId != null)
             SizedBox(
               width: double.infinity,
@@ -240,7 +230,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
             ),
           const SizedBox(height: 16),
 
-        
+          // Bouton Enregistrer
           SizedBox(
             width: double.infinity,
             height: 50,

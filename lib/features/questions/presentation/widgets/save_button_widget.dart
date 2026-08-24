@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 
 class SaveButtonWidget extends StatelessWidget {
   final VoidCallback onPressed;
+  final String label;
 
   const SaveButtonWidget({
     super.key,
     required this.onPressed,
+    this.label = 'Enregistrer',
   });
 
   @override
@@ -24,9 +26,9 @@ class SaveButtonWidget extends StatelessWidget {
           ),
           elevation: 0,
         ),
-        child: const Text(
-          'Enregistrer',
-          style: TextStyle(
+        child: Text(
+          label,
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),

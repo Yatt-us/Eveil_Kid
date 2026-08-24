@@ -15,7 +15,6 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import '../../enums/question_type.enum.dart';
 
-
 class AddQuestionScreen extends ConsumerStatefulWidget {
   final String activityId;
   final QuestionType type;
@@ -106,88 +105,110 @@ class _AddQuestionScreenState extends ConsumerState<AddQuestionScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        
       ),
-      body: _controller.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : GestureDetector(
-              onTap: () => FocusScope.of(context).unfocus(),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Question
-                    QuestionFormWidget(
-                      controller: _controller.questionController,
-                      hintText: 'Quel animal est un chat ?',
-                    ),
-                    const SizedBox(height: 20),
+      body: ListenableBuilder(
+  listenable: _controller,
+  builder: (context, _) {
+    if (_controller.isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
 
-                    // Image
-                    ImagePickerWidget(
-                      selectedImage: _controller.selectedImage,
-                      onImageRemoved: _controller.removeImage,
-                      onImageTap: _pickImage,
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Options
-                    _buildOptionsSection(),
-                    const SizedBox(height: 24),
-
-                    // Points
-                    PointsWidget(controller: _controller.pointsController),
-                    const SizedBox(height: 24),
-
-                    // Erreur
-                    ErrorMessageWidget(message: _controller.errorMessage),
-
-                    // Bouton Enregistrer
-                    SaveButtonWidget(onPressed: _saveQuestion),
-                  ],
-                ),
-              ),
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            QuestionFormWidget(
+              controller: _controller.questionController,
+              hintText: 'Quel animal est un chat ?',
+              errorText: _controller.questionError,
             ),
+
+            const SizedBox(height: 20),
+
+            ImagePickerWidget(
+              selectedImage: _controller.selectedImage,
+              imageUrl: _controller.imageUrl,
+              onImageRemoved: _controller.removeImage,
+              onImageTap: _pickImage,
+            ),
+
+            const SizedBox(height: 24),
+
+            _buildOptionsSection(),
+
+            const SizedBox(height: 24),
+
+            PointsWidget(
+              controller: _controller.pointsController,
+              errorText: _controller.pointsError,
+            ),
+
+            const SizedBox(height: 24),
+
+            ErrorMessageWidget(
+              message: _controller.errorMessage,
+            ),
+
+            const SizedBox(height: 8),
+
+            SaveButtonWidget(
+              onPressed: _saveQuestion,
+            ),
+          ],
+        ),
+      ),
+    );
+  },
+),
     );
   }
 
   Widget _buildOptionsSection() {
-    switch (widget.type) {
-      case QuestionType.choixMultiple:
-        return MultipleChoiceOptions(
-          options: _controller.options,
-          controllers: _controller.optionControllers,
-          selectedCorrectOptionId: _controller.selectedCorrectOptionId,
-          onOptionChanged: _controller.updateOptionText,
-          onCorrectAnswerChanged: _controller.updateCorrectAnswer,
-          onAddOption: _controller.addOption,
-          onRemoveOption: _controller.removeOption,
-        );
+  switch (widget.type) {
+    case QuestionType.choixMultiple:
+      return MultipleChoiceOptions(
+        options: _controller.options,
+        controllers: _controller.optionControllers,
+        selectedCorrectOptionId: _controller.selectedCorrectOptionId,
+        onOptionChanged: _controller.updateOptionText,
+        onCorrectAnswerChanged: _controller.updateCorrectAnswer,
+        onAddOption: _controller.addOption,
+        onRemoveOption: _controller.removeOption,
+        optionsError: _controller.optionsError,
+        correctAnswerError: _controller.correctAnswerError,
+      );
 
-      case QuestionType.vraiFaux:
-        return TrueFalseOptions(
-          selectedTrueFalse: _controller.selectedTrueFalse,
-          onChanged: _controller.updateTrueFalse,
-        );
+    case QuestionType.vraiFaux:
+      return TrueFalseOptions(
+        selectedTrueFalse: _controller.selectedTrueFalse,
+        onChanged: _controller.updateTrueFalse,
+        errorText: _controller.correctAnswerError,
+      );
 
-      case QuestionType.association:
-        return AssociationOptions(
-          options: _controller.options,
-          controllers: _controller.optionControllers,
-          onOptionChanged: _controller.updateOptionText,
-          onAddOption: _controller.addOption,
-          onRemoveOption: _controller.removeOption,
-        );
+    case QuestionType.association:
+      return AssociationOptions(
+        options: _controller.options,
+        controllers: _controller.optionControllers,
+        onOptionChanged: _controller.updateOptionText,
+        onAddOption: _controller.addOption,
+        onRemoveOption: _controller.removeOption,
+        optionsError: _controller.optionsError,
+      );
 
-      case QuestionType.classement:
-        return OrderingOptions(
-          options: _controller.options,
-          controllers: _controller.optionControllers,
-          onOptionChanged: _controller.updateOptionText,
-          onAddOption: _controller.addOption,
-          onRemoveOption: _controller.removeOption,
-        );
-    }
+    case QuestionType.classement:
+      return OrderingOptions(
+        options: _controller.options,
+        controllers: _controller.optionControllers,
+        onOptionChanged: _controller.updateOptionText,
+        onAddOption: _controller.addOption,
+        onRemoveOption: _controller.removeOption,
+        optionsError: _controller.optionsError,
+      );
   }
+}
 }
