@@ -21,7 +21,7 @@ class AdminProductFilterState {
     this.searchQuery = '',
     this.selectedCategoryId,
     this.stockFilter = AdminStockFilter.all,
-    this.activeFilter = AdminActiveFilter.all,
+    this.activeFilter = AdminActiveFilter.activeOnly,
     this.popularOnly = false,
     this.sortBy = AdminProductSort.recent,
   });
@@ -30,7 +30,6 @@ class AdminProductFilterState {
       searchQuery.isNotEmpty ||
       selectedCategoryId != null ||
       stockFilter != AdminStockFilter.all ||
-      activeFilter != AdminActiveFilter.all ||
       popularOnly;
 
   AdminProductFilterState copyWith({

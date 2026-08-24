@@ -73,6 +73,14 @@ class AuthErrorHandler {
       case 'expired-action-code':
         return 'Le lien de réinitialisation a expiré. Veuillez refaire une demande.';
 
+      // Popup Web & Redirections
+      case 'popup-closed-by-user':
+        return 'La fenêtre de connexion a été fermée avant la fin de l’opération.';
+      case 'cancelled-popup-request':
+        return 'Une seule tentative de connexion peut être en cours à la fois.';
+      case 'popup-blocked':
+        return 'La fenêtre de connexion a été bloquée par votre navigateur. Veuillez autoriser les popups pour ce site.';
+
       // Saisie / Validation
       case 'channel-error':
         return 'Veuillez renseigner tous les champs obligatoires.';

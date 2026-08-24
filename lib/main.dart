@@ -1,53 +1,56 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'dart:ui';
+import 'package:eveilkid/core/router/app_router.dart';
+import 'package:eveilkid/core/provider/theme_provider.dart';
+import 'package:eveilkid/core/services/google_sign_in_service.dart';
+import 'package:eveilkid/core/themes/AppTheme.dart';
+import 'package:eveilkid/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // Indispensable pour ProviderScope et ConsumerWidget
 
-import 'features/commandes/models/commande_model.dart';
-import 'features/commandes/providers/commande_provider.dart';
-import 'features/commandes/presentation/pages/adresse_page.dart'; // 👈 Import de AdressePage au lieu de ConfirmationPage
-
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => CommandeProvider()),
-      ],
-      child: const MonApp(),
-    ),
-  );
+  // Initialise Google Sign-In v7+ une seule fois avant runApp.
+  await GoogleSignInService.initialize();
+
+  // On enveloppe bien l'application avec ProviderScope
+  runApp(const ProviderScope(child: MonApp()));
 }
 
-class MonApp extends StatelessWidget {
+// Changement de StatelessWidget vers ConsumerWidget pour pouvoir utiliser WidgetRef ref
+class MonApp extends ConsumerWidget {
   const MonApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final commandeTest = CommandeModel(
-      id: 'CMD-TEST-123',
-      parentId: 'sam@gmail.com',
-      articles: [
-        ArticleCommandeModel(
-          produitId: 'j1',
-          titre: 'Jeu de construction en bois',
-          quantite: 2,
-          prix: 5000,
-        ),
-      ],
-      montantTotal: 12000,
-      fraisLivraison: 2000,
-      adresseLivraison: 'Bamako, Quartier Hippodrome',
-      numeroTelephone: '+223 70 00 00 00',
-      dateCreation: DateTime.now(),
-    );
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Écoute de la configuration GoRouter
+    final router = ref.watch(appRouterProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
-    return MaterialApp(
+    return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'Eveil Kid',
-      home: AdressePage(
-        brouillonCommande: commandeTest, // 👈 Redirection sur AdressePage avec la commande de test
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: themeMode,
+      routerConfig: router,
+      builder: (context, child) {
+        return GestureDetector(
+          onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+          behavior: HitTestBehavior.translucent,
+          child: child,
+        );
+      },
+      scrollBehavior: const MaterialScrollBehavior().copyWith(
+        dragDevices: {
+          PointerDeviceKind.touch,
+          PointerDeviceKind.mouse,
+          PointerDeviceKind.trackpad,
+          PointerDeviceKind.stylus,
+        },
       ),
     );
   }

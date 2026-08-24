@@ -1,25 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/commande_model.dart';
 import '../../providers/commande_provider.dart';
 import '../widgets/checkout_stepper.dart';
 import 'confirmation_page.dart';
 
-class PaiementPage extends StatefulWidget {
+class PaiementPage extends ConsumerStatefulWidget {
   final CommandeModel brouillonCommande;
 
   const PaiementPage({super.key, required this.brouillonCommande});
 
   @override
-  State<PaiementPage> createState() => _PaiementPageState();
+  ConsumerState<PaiementPage> createState() => _PaiementPageState();
 }
 
-class _PaiementPageState extends State<PaiementPage> {
+class _PaiementPageState extends ConsumerState<PaiementPage> {
   static const Color primaryColor = Color(0xFF7E3DBE);
   String modePaiementSelectionne = 'Mobile Money';
 
   @override
   Widget build(BuildContext context) {
+    // On écoute l'état global du provider Riverpod
+    final commandeState = ref.watch(commandeProvider);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -99,65 +102,64 @@ class _PaiementPageState extends State<PaiementPage> {
                     ],
                   ),
                   const Spacer(),
-                  Consumer<CommandeProvider>(
-                    builder: (context, provider, child) {
-                      return SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: primaryColor,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(25),
-                            ),
-                          ),
-                          onPressed: provider.estEnChargement
-                              ? null
-                              : () async {
-                                  final commandeFinale = widget.brouillonCommande.copyWith(
-                                    modePaiement: modePaiementSelectionne,
-                                    dateCreation: DateTime.now(),
-                                  );
-
-                                  bool succes = await provider.passerCommande(commandeFinale);
-
-                                  if (succes && context.mounted) {
-                                    Navigator.pushAndRemoveUntil(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => ConfirmationPage(commande: commandeFinale), // 👈 Paramètre 'commande' corrigé ici
-                                      ),
-                                      (route) => route.isFirst,
-                                    );
-                                  } else if (provider.messageErreur != null && context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(provider.messageErreur!),
-                                        backgroundColor: Colors.red,
-                                      ),
-                                    );
-                                  }
-                                },
-                          child: provider.estEnChargement
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : Text(
-                                  'Payer ${widget.brouillonCommande.montantTotal.toStringAsFixed(2)} XOF',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(25),
                         ),
-                      );
-                    },
+                      ),
+                      onPressed: commandeState.estEnChargement
+                          ? null
+                          : () async {
+                              final commandeFinale = widget.brouillonCommande.copyWith(
+                                modePaiement: modePaiementSelectionne,
+                                dateCreation: DateTime.now(),
+                              );
+
+                              // Appel de la méthode du Notifier via ref.read
+                              bool succes = await ref
+                                  .read(commandeProvider.notifier)
+                                  .passerCommande(commandeFinale);
+
+                              if (succes && context.mounted) {
+                                Navigator.pushAndRemoveUntil(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => ConfirmationPage(commande: commandeFinale),
+                                  ),
+                                  (route) => route.isFirst,
+                                );
+                              } else if (commandeState.messageErreur != null && context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(commandeState.messageErreur!),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            },
+                      child: commandeState.estEnChargement
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : Text(
+                              'Payer ${widget.brouillonCommande.montantTotal.toStringAsFixed(2)} XOF',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                    ),
                   ),
                 ],
               ),

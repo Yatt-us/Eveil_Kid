@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/commande_provider.dart';
 import '../../models/commande_model.dart';
+import 'detail_commande_page.dart'; // Assure-toi que ce chemin correspond à ton arborescence
 
-class MesCommandesPage extends StatefulWidget {
+class MesCommandesPage extends ConsumerStatefulWidget {
   final String parentId;
 
   const MesCommandesPage({super.key, required this.parentId});
 
   @override
-  State<MesCommandesPage> createState() => _MesCommandesPageState();
+  ConsumerState<MesCommandesPage> createState() => _MesCommandesPageState();
 }
 
-class _MesCommandesPageState extends State<MesCommandesPage> with SingleTickerProviderStateMixin {
+class _MesCommandesPageState extends ConsumerState<MesCommandesPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
- static const Color primaryColor = Color(0xFF7E3DBE);
+  static const Color primaryColor = Color(0xFF7E3DBE);
 
   @override
   void initState() {
@@ -22,13 +23,21 @@ class _MesCommandesPageState extends State<MesCommandesPage> with SingleTickerPr
     _tabController = TabController(length: 4, vsync: this);
     Future.microtask(() {
       if (mounted) {
-        Provider.of<CommandeProvider>(context, listen: false).chargerCommandes(widget.parentId);
+        ref.read(commandeProvider.notifier).chargerCommandes(widget.parentId);
       }
     });
   }
 
   @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final commandeState = ref.watch(commandeProvider);
+
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
@@ -54,23 +63,17 @@ class _MesCommandesPageState extends State<MesCommandesPage> with SingleTickerPr
           ],
         ),
       ),
-      body: Consumer<CommandeProvider>(
-        builder: (context, provider, child) {
-          if (provider.estEnChargement) {
-            return const Center(child: CircularProgressIndicator(color: primaryColor));
-          }
-
-          return TabBarView(
-            controller: _tabController,
-            children: [
-              _buildOrderList(provider.commandes),
-              _buildOrderList(provider.commandes.where((c) => c.statut == 'En cours').toList()),
-              _buildOrderList(provider.commandes.where((c) => c.statut == 'Livrée').toList()),
-              _buildOrderList(provider.commandes.where((c) => c.statut == 'Annulée').toList()),
-            ],
-          );
-        },
-      ),
+      body: commandeState.estEnChargement
+          ? const Center(child: CircularProgressIndicator(color: primaryColor))
+          : TabBarView(
+              controller: _tabController,
+              children: [
+                _buildOrderList(commandeState.commandes),
+                _buildOrderList(commandeState.commandes.where((c) => c.statut == 'En cours').toList()),
+                _buildOrderList(commandeState.commandes.where((c) => c.statut == 'Livrée').toList()),
+                _buildOrderList(commandeState.commandes.where((c) => c.statut == 'Annulée' || c.statut == 'annulee').toList()),
+              ],
+            ),
     );
   }
 
@@ -131,7 +134,15 @@ class _MesCommandesPageState extends State<MesCommandesPage> with SingleTickerPr
                       side: BorderSide(color: Colors.grey.shade300),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     ),
-                    onPressed: () {},
+                    onPressed: () {
+                      // 🚀 Le bouton est cliquable et transmet l'ID réel de la commande
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => DetailCommandePage(commandeId: item.id),
+                        ),
+                      );
+                    },
                     child: const Text('Voir les détails', style: TextStyle(color: primaryColor, fontSize: 12)),
                   ),
                 ),

@@ -7,7 +7,6 @@ import 'package:eveilkid/core/constants/AppSpacing.dart';
 import 'package:eveilkid/features/categories/models/categorie.dart';
 import 'package:eveilkid/features/categories/providers/categorie_provider.dart';
 import 'package:eveilkid/shared/widgets/app_button.dart';
-import 'package:eveilkid/shared/widgets/app_dropdown.dart';
 import 'package:eveilkid/shared/widgets/app_switch_tile.dart';
 import 'package:eveilkid/shared/widgets/app_text_field.dart';
 
@@ -30,7 +29,6 @@ class _AdminCategoryFormDialogState
   late TextEditingController _nomController;
   late TextEditingController _iconeUrlController;
   late TextEditingController _imageUrlController;
-  String? _selectedParentId;
   bool _estActive = true;
   bool _isLoading = false;
 
@@ -43,7 +41,6 @@ class _AdminCategoryFormDialogState
     _nomController = TextEditingController(text: cat?.nom ?? '');
     _iconeUrlController = TextEditingController(text: cat?.iconeUrl ?? '');
     _imageUrlController = TextEditingController(text: cat?.imageUrl ?? '');
-    _selectedParentId = cat?.parentId;
     _estActive = cat?.estActive ?? true;
   }
 
@@ -66,7 +63,6 @@ class _AdminCategoryFormDialogState
 
       final updatedCategory = Categorie(
         categorieId: id,
-        parentId: _selectedParentId,
         nom: _nomController.text.trim(),
         iconeUrl: _iconeUrlController.text.trim().isNotEmpty
             ? _iconeUrlController.text.trim()
@@ -114,15 +110,6 @@ class _AdminCategoryFormDialogState
 
   @override
   Widget build(BuildContext context) {
-    final allCategories =
-        ref.watch(categoriesAdminStreamProvider).value ?? [];
-    // Filtrer pour ne pas permettre de choisir la catégorie elle-même comme parent
-    final potentialParents = allCategories
-        .where((c) =>
-            c.parentId == null &&
-            (!_isEditing || c.categorieId != widget.categorieToEdit!.categorieId))
-        .toList();
-
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ConstrainedBox(
@@ -175,26 +162,6 @@ class _AdminCategoryFormDialogState
                     }
                     return null;
                   },
-                ),
-                AppSpacing.verticalMd,
-                // Catégorie parente optionnelle
-                AppDropdown<String?>(
-                  label: "Catégorie parente (Optionnelle)",
-                  hintText: "Aucune (Catégorie principale)",
-                  value: _selectedParentId,
-                  items: [
-                    const AppDropdownItem(
-                      value: null,
-                      label: "Aucune (Catégorie principale)",
-                    ),
-                    ...potentialParents.map(
-                      (cat) => AppDropdownItem(
-                        value: cat.categorieId,
-                        label: cat.nom,
-                      ),
-                    ),
-                  ],
-                  onChanged: (val) => setState(() => _selectedParentId = val),
                 ),
                 AppSpacing.verticalMd,
                 // URL de l'icône

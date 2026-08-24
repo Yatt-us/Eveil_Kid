@@ -23,6 +23,7 @@ class GoogleSignInService {
 
   static bool _initialized = false;
 
+
   // -----------------------------------------------------------------------
   // INITIALISATION  (appeler une seule fois dans main())
   // -----------------------------------------------------------------------
@@ -35,16 +36,117 @@ class GoogleSignInService {
     if (_initialized) return;
     _initialized = true;
 
-    await GoogleSignIn.instance.initialize(
-      // clientId : inutile sur Android (gere par google-services.json)
-      //            et sur iOS (pris dans GoogleService-Info.plist).
-      //            Obligatoire uniquement sur le Web.
-      serverClientId: serverClientId,
-    );
+    // Sur le Web, Firebase Auth gère directement l'authentification Google via signInWithPopup.
+    // L'initialisation du plugin mobile google_sign_in n'est pas nécessaire sur le Web.
+    if (kIsWeb) return;
 
-    // Tentative silencieuse : reconnecte l utilisateur sans afficher d UI
-    // si celui-ci s etait deja connecte precedemment.
-    GoogleSignIn.instance.attemptLightweightAuthentication();
+    try {
+      await GoogleSignIn.instance.initialize(
+        // clientId : inutile sur Android (gere par google-services.json)
+        //            et sur iOS (pris dans GoogleService-Info.plist).
+        //            Obligatoire uniquement sur le Web.
+        serverClientId: serverClientId,
+      );
+
+      // Écouter les événements Google avant de lancer le lightweight,
+      // afin de ne manquer aucun événement émis immédiatement.
+      GoogleSignIn.instance.authenticationEvents
+          .listen(
+            _onGoogleAuthEvent,
+            onError: (Object error) {
+              debugPrint('[GoogleSignInService] authenticationEvents error: $error');
+            },
+          );
+
+      // IMPORTANT : Firebase Auth restaure sa session de façon asynchrone.
+      // `currentUser` est null au tout début du démarrage même si l'utilisateur
+      // était connecté. On attend donc le premier événement de authStateChanges
+      // (avec timeout) pour savoir si une session est déjà active avant de décider
+      // de lancer le lightweight sign-in.
+      //
+      // Si l'utilisateur est déjà connecté à Firebase, on ne déclenche PAS
+      // attemptLightweightAuthentication afin d'éviter d'afficher le sélecteur
+      // de compte Google inutilement.
+      final firebaseUser = await FirebaseAuth.instance
+          .authStateChanges()
+          .first
+          .timeout(
+            const Duration(seconds: 3),
+            onTimeout: () => FirebaseAuth.instance.currentUser,
+          );
+
+      if (firebaseUser != null) {
+        debugPrint(
+          '[GoogleSignInService] Firebase session already active (${firebaseUser.email}), '
+          'skipping attemptLightweightAuthentication.',
+        );
+        return;
+      }
+
+      // Tentative silencieuse : reconnecte l'utilisateur sans afficher d'UI
+      // si celui-ci s'était déjà connecté avec Google précédemment.
+      GoogleSignIn.instance.attemptLightweightAuthentication();
+    } catch (e) {
+      debugPrint('[GoogleSignInService] initialize error: $e');
+    }
+  }
+
+  // -----------------------------------------------------------------------
+  // TRAITEMENT DES EVENEMENTS GOOGLE (lightweight)
+  // -----------------------------------------------------------------------
+
+  /// Appele pour chaque evenement emis par [authenticationEvents].
+  ///
+  /// - [GoogleSignInAuthenticationEventSignIn] : l utilisateur a ete identifie
+  ///   via le lightweight. On signe dans Firebase si aucune session n est deja
+  ///   active.
+  /// - [GoogleSignInAuthenticationEventSignOut] : on ne touche pas a Firebase
+  ///   pour eviter une deconnexion involontaire.
+  /// Les erreurs du stream sont capturees par le handler onError du listen.
+  static Future<void> _onGoogleAuthEvent(
+    GoogleSignInAuthenticationEvent event,
+  ) async {
+    if (event is GoogleSignInAuthenticationEventSignIn) {
+      await _signLightweightAccountToFirebase(event.user);
+    }
+    // GoogleSignInAuthenticationEventSignOut : on ne touche pas a Firebase
+    // pour eviter une deconnexion involontaire (l utilisateur aurait a se
+    // reconnecter manuellement via le bouton).
+  }
+
+  /// Convertit un [GoogleSignInAccount] issu du lightweight en session Firebase,
+  /// **uniquement** si Firebase n a pas deja une session active.
+  static Future<void> _signLightweightAccountToFirebase(
+    GoogleSignInAccount account,
+  ) async {
+    // Ne pas ecraser une session Firebase deja valide.
+    if (FirebaseAuth.instance.currentUser != null) {
+      debugPrint(
+        '[GoogleSignInService] Firebase session already active, skipping lightweight sign-in.',
+      );
+      return;
+    }
+
+    try {
+      final String? idToken = account.authentication.idToken;
+
+      if (idToken == null) {
+        debugPrint(
+          '[GoogleSignInService] lightweight: idToken null, skipping Firebase sign-in.',
+        );
+        return;
+      }
+
+      final credential = GoogleAuthProvider.credential(idToken: idToken);
+      await FirebaseAuth.instance.signInWithCredential(credential);
+
+      debugPrint(
+        '[GoogleSignInService] lightweight sign-in to Firebase successful.',
+      );
+    } catch (e) {
+      // Echec non bloquant : l utilisateur pourra utiliser le bouton sign-in.
+      debugPrint('[GoogleSignInService] lightweight Firebase sign-in error: $e');
+    }
   }
 
   // -----------------------------------------------------------------------
@@ -57,9 +159,9 @@ class GoogleSignInService {
   /// Leve une [UnsupportedError] si la plateforme ne supporte pas
   /// l authentification interactive (ex. certains contextes Web).
   static Future<OAuthCredential> getFirebaseCredential() async {
-    if (!GoogleSignIn.instance.supportsAuthenticate()) {
+    if (kIsWeb || !GoogleSignIn.instance.supportsAuthenticate()) {
       throw UnsupportedError(
-        'La connexion Google interactive n\'est pas disponible sur cette plateforme.',
+        'La connexion Google interactive via GoogleSignIn n\'est pas disponible sur cette plateforme.',
       );
     }
 
@@ -91,6 +193,7 @@ class GoogleSignInService {
   /// Deconnecte l utilisateur du cote Google Sign-In.
   /// A appeler en complement de [FirebaseAuth.signOut].
   static Future<void> signOut() async {
+    if (kIsWeb) return;
     try {
       await GoogleSignIn.instance.signOut();
     } catch (e) {

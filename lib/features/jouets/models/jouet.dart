@@ -110,48 +110,40 @@ class Jouet {
   factory Jouet.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> snapshot,
   ) {
-    final data = snapshot.data()!;
+    final data = snapshot.data() ?? {};
+    final id = snapshot.id;
 
     return Jouet(
-      jouetId: data['jouetId'] ?? snapshot.id,
+      jouetId: id,
       categorieId: data['categorieId'] ?? '',
       createurId: data['createurId'] ?? '',
-
       nom: data['nom'] ?? '',
       description: data['description'] ?? '',
       nomCategorieDenormalise:
-          data['nomCategorieDenormalise'] ?? '',
+          data['nomCategorie'] ?? data['nomCategorieDenormalise'] ?? '',
 
       images: List<String>.from(data['images'] ?? []),
-      imagePrincipaleUrl:
-          data['imagePrincipaleUrl'] ?? '',
-
+      imagePrincipaleUrl: data['imagePrincipaleUrl'] ?? '',
       ageMinimum: data['ageMinimum'] ?? 0,
       ageMaximum: data['ageMaximum'] ?? 0,
-
       prix: (data['prix'] ?? 0).toDouble(),
       devise: data['devise'] ?? 'FCFA',
-
       stock: data['stock'] ?? 0,
       stockDisponible: data['stockDisponible'] ?? 0,
 
       noteMoyenneDenormalise:
-          (data['noteMoyenneDenormalise'] ?? 0).toDouble(),
+          (data['noteMoyenne'] ?? data['noteMoyenneDenormalise'] ?? 0).toDouble(),
 
       nombreAvisDenormalise:
-          data['nombreAvisDenormalise'] ?? 0,
+          data['nombreAvis'] ?? data['nombreAvisDenormalise'] ?? 0,
 
       nbTutorielsAssocies:
           data['nbTutorielsAssocies'] ?? 0,
 
       estActif: data['estActif'] ?? true,
       estPopulaire: data['estPopulaire'] ?? false,
-
-      dateCreation:
-          data['dateCreation'] ?? Timestamp.now(),
-
-      dateModification:
-          data['dateModification'] ?? Timestamp.now(),
+      dateCreation: data['dateCreation'] ?? Timestamp.now(),
+      dateModification: data['dateModification'] ?? Timestamp.now(),
     );
   }
 
@@ -160,35 +152,29 @@ class Jouet {
       'jouetId': jouetId,
       'categorieId': categorieId,
       'createurId': createurId,
-
       'nom': nom,
       'description': description,
+      'nomCategorie': nomCategorieDenormalise,
       'nomCategorieDenormalise': nomCategorieDenormalise,
-
       'images': images,
       'imagePrincipaleUrl': imagePrincipaleUrl,
-
       'ageMinimum': ageMinimum,
       'ageMaximum': ageMaximum,
-
       'prix': prix,
       'devise': devise,
-
       'stock': stock,
       'stockDisponible': stockDisponible,
 
-      'noteMoyenneDenormalise':
-          noteMoyenneDenormalise,
+      'noteMoyenne': noteMoyenneDenormalise,
+      'noteMoyenneDenormalise': noteMoyenneDenormalise,
 
-      'nombreAvisDenormalise':
-          nombreAvisDenormalise,
+      'nombreAvis': nombreAvisDenormalise,
+      'nombreAvisDenormalise': nombreAvisDenormalise,
 
-      'nbTutorielsAssocies':
-          nbTutorielsAssocies,
+      'nbTutorielsAssocies': nbTutorielsAssocies,
 
       'estActif': estActif,
       'estPopulaire': estPopulaire,
-
       'dateCreation': dateCreation,
       'dateModification': dateModification,
     };
