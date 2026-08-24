@@ -1,3 +1,4 @@
+import 'package:eveilkid/features/tutoriels/presentation/pages/tutoriel_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -18,7 +19,6 @@ import 'package:eveilkid/features/auth/presentation/pages/splash_page.dart';
 import 'package:eveilkid/features/auth/providers/auth_provider.dart';
 import 'package:eveilkid/features/home/presentation/pages/home_page.dart';
 import 'package:eveilkid/features/jouets/models/jouet.dart';
-import 'package:eveilkid/features/tutoriels/presentations/pages/tutorielPage.dart';
 import 'package:eveilkid/features/activites/presentation/pages/client/activites_list_page.dart';
 import 'package:eveilkid/features/activites/presentation/pages/client/activites_play_page.dart';
 import 'package:eveilkid/features/activites/presentation/pages/client/activites_resultat_page.dart';

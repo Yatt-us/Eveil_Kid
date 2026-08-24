@@ -1,3 +1,5 @@
+import 'package:eveilkid/core/router/app_router.dart';
+import 'package:eveilkid/core/themes/AppTheme.dart';
 import 'package:eveilkid/features/enfant/presentation/pages/acceuil_enfant_page.dart';
 import 'package:eveilkid/features/tutoriels/presentation/pages/tutoriel_page.dart';
 import 'package:eveilkid/firebase_options.dart';
