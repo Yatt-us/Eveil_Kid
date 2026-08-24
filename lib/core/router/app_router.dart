@@ -1,5 +1,6 @@
-import 'package:eveilkid/features/parents/presentation/pages/accueil_parent.dart';
-import 'package:eveilkid/features/parents/presentation/pages/profil_parent.dart';
+import 'package:eveilkid/features/parent/presentation/pages/accueil_parent.dart';
+import 'package:eveilkid/features/parent/presentation/pages/profil_parent.dart';
+import 'package:eveilkid/features/parent/presentation/pages/parent_main_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -123,19 +124,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.home,
         pageBuilder: (context, state) {
-          return const NoTransitionPage(child: AccueilParentPage());
+          return const NoTransitionPage(child: ParentMainScaffold(initialIndex: 0));
         },
       ),
       GoRoute(
         path: AppRoutes.profile,
         pageBuilder: (context, state) {
-          return const NoTransitionPage(child: ProfilParentPage());
+          return const NoTransitionPage(child: ParentMainScaffold(initialIndex: 3));
         },
       ),
       GoRoute(
         path: AppRoutes.tutoriels,
         pageBuilder: (context, state) {
-          return const NoTransitionPage(child: TutorielPage());
+          return const NoTransitionPage(child: ParentMainScaffold(initialIndex: 2));
         },
       ),
 

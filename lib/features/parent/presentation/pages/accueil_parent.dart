@@ -592,59 +592,70 @@ class AccueilParentPage extends ConsumerWidget {
           return Container(
             width: 120,
             margin: const EdgeInsets.only(right: AppSpacing.md),
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
+            child: InkWell(
+              onTap: () {
+                AppDialogs.showSnackBar(
+                  context: context,
+                  message: 'Détail de ${child.nom} bientôt disponible',
+                );
+              },
               borderRadius: AppRadius.card,
-              border: Border.all(color: AppColors.border),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.textPrimary.withValues(alpha: 0.03),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircleAvatar(
-                  radius: 28,
-                  backgroundColor: badgeBg,
-                  child: Icon(
-                    Icons.face_rounded,
-                    color: badgeText,
-                    size: 36,
-                  ),
-                ),
-                AppSpacing.verticalSm,
-                Text(
-                  child.name,
-                  style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.bold),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  '${child.age} ans',
-                  style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
-                ),
-                AppSpacing.verticalXs,
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: badgeBg,
-                    borderRadius: AppRadius.badge,
-                  ),
-                  child: Text(
-                    child.level,
-                    style: TextStyle(
-                      color: badgeText,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 10,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: AppRadius.card,
+                  border: Border.all(color: AppColors.border),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.textPrimary.withValues(alpha: 0.03),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircleAvatar(
+                      radius: 28,
+                      backgroundColor: badgeBg,
+                      child: Icon(
+                        Icons.face_rounded,
+                        color: badgeText,
+                        size: 36,
+                      ),
+                    ),
+                    AppSpacing.verticalSm,
+                    Text(
+                      child.nom,
+                      style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.bold),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      '${child.age} ans',
+                      style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                    ),
+                    AppSpacing.verticalXs,
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: badgeBg,
+                        borderRadius: AppRadius.badge,
+                      ),
+                      child: Text(
+                        child.level,
+                        style: TextStyle(
+                          color: badgeText,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           );
         },
@@ -942,7 +953,7 @@ class AccueilParentPage extends ConsumerWidget {
           scrollDirection: Axis.horizontal,
           itemCount: 3,
           itemBuilder: (context, index) => Container(
-            width: 175,
+            width: 160,
             margin: const EdgeInsets.only(right: AppSpacing.md),
             decoration: BoxDecoration(
               color: AppColors.surfaceVariant,
@@ -957,7 +968,7 @@ class AccueilParentPage extends ConsumerWidget {
 
   Widget _buildToyCard(BuildContext context, Jouet jouet) {
     return Container(
-      width: 175,
+      width: 160,
       margin: const EdgeInsets.only(right: AppSpacing.md),
       decoration: BoxDecoration(
         color: AppColors.surface,
