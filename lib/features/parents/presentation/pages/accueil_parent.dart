@@ -16,13 +16,17 @@ import '../../../../shared/widgets/app_bottom_nav_bar.dart';
 import '../../../../shared/widgets/email_verification_banner.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../../jouets/models/jouet.dart';
+import '../../../jouets/presentation/page/jouet_detail_screen.dart';
 import '../../../jouets/providers/jouet_provider.dart';
 import '../../../auth/models/utilisateur.dart';
+import '../../../../core/provider/bottom_nav_bar_provider.dart';
+import '../../../categories/providers/categorie_provider.dart';
 import 'package:eveilkid/features/enfant/model/enfant_model.dart';
 import '../../providers/parent_provider.dart';
 import 'ajouter_enfant.dart';
+import 'detail_enfant.dart';
 import 'liste_enfants.dart';
-import 'securite_page.dart';
+import 'notification_settings_page.dart';
 
 class AccueilParentPage extends ConsumerWidget {
   final ValueChanged<int>? onNavigateTab;
@@ -36,9 +40,10 @@ class AccueilParentPage extends ConsumerWidget {
     final isEmailVerified = authState.isEmailVerified;
     final isFullyVerified = isAuthenticated && isEmailVerified;
     final parentAsync = ref.watch(parentNotifierProvider);
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: _buildAppBar(context, ref, isFullyVerified, isAuthenticated),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -47,6 +52,7 @@ class AccueilParentPage extends ConsumerWidget {
             ref.read(authProvider.notifier).reloadAndCheckEmailVerified();
           }
           ref.invalidate(jouetsProvider);
+          ref.invalidate(categoriesStreamProvider);
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -126,25 +132,17 @@ class AccueilParentPage extends ConsumerWidget {
                 title: 'Catégories de jouets',
                 actionText: 'Voir tout',
                 onActionPressed: () {
-                  if (onNavigateTab != null) {
-                    onNavigateTab!(1); // Onglet Jouets
-                  } else {
-                    AppDialogs.showSnackBar(
-                      context: context,
-                      message: 'Explorez nos catégories dans l\'onglet Jouets.',
-                    );
-                  }
+                  ref.read(selectedCategoryFilterProvider.notifier).clear();
+                  ref.read(bottomIndexProvider.notifier).setIndex(1);
+                  context.go(AppRoutes.jouetscreen);
                 },
               ),
               AppSpacing.verticalMd,
-              _buildRealisticCategoriesGrid(context),
+              _buildRealisticCategoriesGrid(context, ref),
               AppSpacing.verticalXxl,
 
-              // ── BANNIÈRE CRÉATION DE COMPTE (POUR VISITEUR) ──
-              if (!isAuthenticated) ...[
-                _buildVisitorRegisterBanner(context),
-                AppSpacing.verticalXxl,
-              ] else ...[
+              // ── BANNIÈRE DÉCOUVERTE (POUR PARENT CONNECTÉ) ──
+              if (isAuthenticated) ...[
                 _buildDiscoveryBanner(context),
                 AppSpacing.verticalXxl,
               ],
@@ -227,7 +225,9 @@ class AccueilParentPage extends ConsumerWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const SecuritePage()),
+                MaterialPageRoute(
+                  builder: (_) => const NotificationSettingsPage(),
+                ),
               );
             },
           )
@@ -351,56 +351,51 @@ class AccueilParentPage extends ConsumerWidget {
   Widget _buildVisitorHeroBanner(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFFFFF7ED), Color(0xFFFEF3C7)],
+          colors: [Color(0xFFF3E8FF), Color(0xFFEDE9FE)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: AppRadius.card,
-        border: Border.all(color: const Color(0xFFFDE68A)),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFF59E0B).withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: const Color(0xFFDDD6FE).withValues(alpha: 0.8),
+          width: 1.2,
+        ),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  'Découvrez le monde du jeu intelligent 🚀',
+                  'Découvrez le monde du jeu intelligent',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.w900,
-                    color: Color(0xFF78350F),
+                    color: Color(0xFF1E1B4B),
                     height: 1.25,
                   ),
                 ),
-                AppSpacing.verticalSm,
-                const Text(
-                  'Des jouets éducatifs et interactifs pour accompagner chaque étape d\'éveil de votre enfant.',
+                AppSpacing.verticalXs,
+                Text(
+                  'Des jouets éducatifs et amusants pour accompagner chaque étape de développement de votre enfant.',
                   style: TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF92400E),
-                    height: 1.3,
+                    fontSize: 12,
+                    color: const Color(0xFF4C1D95).withValues(alpha: 0.75),
+                    height: 1.35,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 AppSpacing.verticalMd,
                 ElevatedButton(
-                  onPressed: () {
-                    if (onNavigateTab != null) {
-                      onNavigateTab!(1);
-                    }
-                  },
+                  onPressed: () => context.go(AppRoutes.register),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: const Color(0xFF381272),
                     foregroundColor: AppColors.white,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 18,
@@ -410,105 +405,78 @@ class AccueilParentPage extends ConsumerWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    elevation: 2,
-                  ),
-                  child: const Text(
-                    'Explorer les jouets',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          AppSpacing.horizontalSm,
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: AppColors.white.withValues(alpha: 0.85),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.smart_toy_rounded,
-              size: 52,
-              color: Color(0xFFF59E0B),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildVisitorRegisterBanner(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFF5F3FF), Color(0xFFEDE9FE)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: AppRadius.card,
-        border: Border.all(color: const Color(0xFFDDD6FE)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Rejoignez Éveil Kid 🌟',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                AppSpacing.verticalXs,
-                const Text(
-                  'Créez un compte gratuit pour enregistrer vos enfants et suivre leurs progrès.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                    height: 1.3,
-                  ),
-                ),
-                AppSpacing.verticalMd,
-                ElevatedButton(
-                  onPressed: () => context.go(AppRoutes.register),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 9,
-                    ),
-                    minimumSize: Size.zero,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
+                    elevation: 0,
                   ),
                   child: const Text(
                     'Créer un compte',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
                   ),
                 ),
               ],
             ),
           ),
-          AppSpacing.horizontalMd,
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.white.withValues(alpha: 0.9),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.family_restroom_rounded,
-              size: 42,
-              color: AppColors.primary,
-            ),
+          const SizedBox(width: 8),
+          Stack(
+            alignment: Alignment.center,
+            clipBehavior: Clip.none,
+            children: [
+              Positioned(
+                top: -4,
+                right: 8,
+                child: Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFBCFE8).withValues(alpha: 0.7),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 8,
+                left: -2,
+                child: Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFA7F3D0).withValues(alpha: 0.8),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 22,
+                right: -6,
+                child: Container(
+                  width: 14,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFBAE6FD).withValues(alpha: 0.8),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 110,
+                height: 110,
+                child: Image.asset(
+                  'assets/images/teddy_bear.png',
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.white.withValues(alpha: 0.9),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.smart_toy_rounded,
+                      size: 48,
+                      color: Color(0xFF381272),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -673,7 +641,6 @@ class AccueilParentPage extends ConsumerWidget {
           return Container(
             width: 120,
             margin: const EdgeInsets.only(right: AppSpacing.md),
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: AppRadius.card,
@@ -686,49 +653,90 @@ class AccueilParentPage extends ConsumerWidget {
                 ),
               ],
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircleAvatar(
-                  radius: 28,
-                  backgroundColor: badgeBg,
-                  child: Icon(Icons.face_rounded, color: badgeText, size: 36),
+            child: InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => DetailEnfantPage(enfant: child),
+                  ),
+                );
+              },
+              borderRadius: AppRadius.card,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 14,
+                  horizontal: 8,
                 ),
-                AppSpacing.verticalSm,
-                Text(
-                  child.nom,
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  '${child.age} ans',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                AppSpacing.verticalXs,
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: badgeBg,
-                    borderRadius: AppRadius.badge,
-                  ),
-                  child: Text(
-                    'Profil enfant',
-                    style: TextStyle(
-                      color: badgeText,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 10,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircleAvatar(
+                      radius: 28,
+                      backgroundColor: badgeBg,
+                      child: ClipOval(
+                        child:
+                            child.avatarUrl != null &&
+                                child.avatarUrl!.isNotEmpty
+                            ? Image.network(
+                                child.avatarUrl!,
+                                fit: BoxFit.cover,
+                                width: 56,
+                                height: 56,
+                                errorBuilder: (_, __, ___) => Icon(
+                                  child.genre.toLowerCase() == 'fille'
+                                      ? Icons.face_3_rounded
+                                      : Icons.face_rounded,
+                                  color: badgeText,
+                                  size: 36,
+                                ),
+                              )
+                            : Icon(
+                                child.genre.toLowerCase() == 'fille'
+                                    ? Icons.face_3_rounded
+                                    : Icons.face_rounded,
+                                color: badgeText,
+                                size: 36,
+                              ),
+                      ),
                     ),
-                  ),
+                    AppSpacing.verticalSm,
+                    Text(
+                      child.nom,
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      '${child.age} ans',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    AppSpacing.verticalXs,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: badgeBg,
+                        borderRadius: AppRadius.badge,
+                      ),
+                      child: Text(
+                        'Profil enfant',
+                        style: TextStyle(
+                          color: badgeText,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           );
         },
@@ -779,160 +787,321 @@ class AccueilParentPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildRealisticCategoriesGrid(BuildContext context) {
-    final categories = [
+  Widget _buildRealisticCategoriesGrid(BuildContext context, WidgetRef ref) {
+    final categoriesAsync = ref.watch(categoriesStreamProvider);
+
+    final defaultPalettes = [
       {
-        'title': 'Éveil &\nApprentissage',
-        'icon': Icons.auto_stories_rounded,
         'bgGradient': [const Color(0xFFEFF6FF), const Color(0xFFDBEAFE)],
         'iconColor': const Color(0xFF2563EB),
         'borderColor': const Color(0xFFBFDBFE),
+        'defaultIcon': Icons.auto_stories_rounded,
       },
       {
-        'title': 'Construction\n& Blocs',
-        'icon': Icons.view_in_ar_rounded,
         'bgGradient': [const Color(0xFFFFFBEB), const Color(0xFFFEF3C7)],
         'iconColor': const Color(0xFFD97706),
         'borderColor': const Color(0xFFFDE68A),
+        'defaultIcon': Icons.view_in_ar_rounded,
       },
       {
-        'title': 'Jeux de Rôle\n& Imitation',
-        'icon': Icons.theater_comedy_rounded,
         'bgGradient': [const Color(0xFFFAF5FF), const Color(0xFFF3E8FF)],
         'iconColor': const Color(0xFF9333EA),
         'borderColor': const Color(0xFFE9D5FF),
+        'defaultIcon': Icons.theater_comedy_rounded,
       },
       {
-        'title': 'Créatif &\nArtistique',
-        'icon': Icons.palette_rounded,
         'bgGradient': [const Color(0xFFFFF7ED), const Color(0xFFFFEDD5)],
         'iconColor': const Color(0xFFEA580C),
         'borderColor': const Color(0xFFFED7AA),
+        'defaultIcon': Icons.palette_rounded,
       },
       {
-        'title': 'Plein air &\nSport',
-        'icon': Icons.sports_soccer_rounded,
         'bgGradient': [const Color(0xFFFEF2F2), const Color(0xFFFEE2E2)],
         'iconColor': const Color(0xFFDC2626),
         'borderColor': const Color(0xFFFECACA),
+        'defaultIcon': Icons.sports_soccer_rounded,
       },
       {
-        'title': 'Poupées &\nPeluches',
-        'icon': Icons.cruelty_free_rounded,
         'bgGradient': [const Color(0xFFFDF2F8), const Color(0xFFFCE7F3)],
         'iconColor': const Color(0xFFDB2777),
         'borderColor': const Color(0xFFFBCFE8),
+        'defaultIcon': Icons.cruelty_free_rounded,
       },
       {
-        'title': 'Jeux de société\n& Puzzles',
-        'icon': Icons.extension_rounded,
         'bgGradient': [const Color(0xFFF0F9FF), const Color(0xFFE0F2FE)],
         'iconColor': const Color(0xFF0284C7),
         'borderColor': const Color(0xFFBAE6FD),
+        'defaultIcon': Icons.extension_rounded,
       },
       {
-        'title': 'Technologie\n& Robotique',
-        'icon': Icons.smart_toy_rounded,
         'bgGradient': [const Color(0xFFF0FDFA), const Color(0xFFCCFBF1)],
         'iconColor': const Color(0xFF0D9488),
         'borderColor': const Color(0xFF99F6E4),
+        'defaultIcon': Icons.smart_toy_rounded,
       },
       {
-        'title': 'Musique &\nÉveil Sonore',
-        'icon': Icons.music_note_rounded,
         'bgGradient': [const Color(0xFFFFFBEB), const Color(0xFFFEF08A)],
         'iconColor': const Color(0xFFCA8A04),
         'borderColor': const Color(0xFFFDE047),
+        'defaultIcon': Icons.music_note_rounded,
       },
     ];
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 0.90,
-      ),
-      itemCount: categories.length,
-      itemBuilder: (context, index) {
-        final cat = categories[index];
-        final gradientColors = cat['bgGradient'] as List<Color>;
-        final iconColor = cat['iconColor'] as Color;
-        final borderColor = cat['borderColor'] as Color;
+    IconData getIconForCategory(String nom, IconData fallback) {
+      final n = nom.toLowerCase();
+      if (n.contains('éveil') || n.contains('livre') || n.contains('appr')) {
+        return Icons.auto_stories_rounded;
+      }
+      if (n.contains('const') || n.contains('bloc') || n.contains('lego')) {
+        return Icons.view_in_ar_rounded;
+      }
+      if (n.contains('rôle') ||
+          n.contains('théâtre') ||
+          n.contains('imitation')) {
+        return Icons.theater_comedy_rounded;
+      }
+      if (n.contains('art') || n.contains('créat') || n.contains('dessin')) {
+        return Icons.palette_rounded;
+      }
+      if (n.contains('sport') || n.contains('air') || n.contains('ballon')) {
+        return Icons.sports_soccer_rounded;
+      }
+      if (n.contains('poup') || n.contains('peluche') || n.contains('bébé')) {
+        return Icons.cruelty_free_rounded;
+      }
+      if (n.contains('société') || n.contains('puzzle') || n.contains('jeu')) {
+        return Icons.extension_rounded;
+      }
+      if (n.contains('tech') || n.contains('robot') || n.contains('interact')) {
+        return Icons.smart_toy_rounded;
+      }
+      if (n.contains('musi') || n.contains('son') || n.contains('audio')) {
+        return Icons.music_note_rounded;
+      }
+      return fallback;
+    }
 
-        return InkWell(
-          onTap: () {
-            if (onNavigateTab != null) {
-              onNavigateTab!(1);
-            } else {
-              AppDialogs.showSnackBar(
-                context: context,
-                message:
-                    'Catégorie sélectionnée : ${cat['title'].toString().replaceAll('\n', ' ')}',
-              );
-            }
-          },
-          borderRadius: BorderRadius.circular(18),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: gradientColors,
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+    return categoriesAsync.when(
+      data: (categoriesFirestore) {
+        final List<Map<String, dynamic>> items;
+
+        if (categoriesFirestore.isNotEmpty) {
+          items = categoriesFirestore.asMap().entries.map((entry) {
+            final idx = entry.key;
+            final cat = entry.value;
+            final palette = defaultPalettes[idx % defaultPalettes.length];
+            return {
+              'id': cat.categorieId,
+              'title': cat.nom,
+              'icon': getIconForCategory(
+                cat.nom,
+                palette['defaultIcon'] as IconData,
               ),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: borderColor, width: 1.2),
-              boxShadow: [
-                BoxShadow(
-                  color: iconColor.withValues(alpha: 0.08),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(9),
-                  decoration: BoxDecoration(
-                    color: AppColors.white.withValues(alpha: 0.95),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: iconColor.withValues(alpha: 0.18),
-                        blurRadius: 5,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    cat['icon'] as IconData,
-                    size: 28,
-                    color: iconColor,
-                  ),
-                ),
-                AppSpacing.verticalSm,
-                Text(
-                  cat['title'] as String,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                    height: 1.2,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
+              'imageUrl': cat.imageUrl,
+              'bgGradient': palette['bgGradient'] as List<Color>,
+              'iconColor': palette['iconColor'] as Color,
+              'borderColor': palette['borderColor'] as Color,
+            };
+          }).toList();
+        } else {
+          items = [
+            {
+              'id': '1',
+              'title': 'Éveil &\nApprentissage',
+              'icon': Icons.auto_stories_rounded,
+              'bgGradient': defaultPalettes[0]['bgGradient'] as List<Color>,
+              'iconColor': defaultPalettes[0]['iconColor'] as Color,
+              'borderColor': defaultPalettes[0]['borderColor'] as Color,
+            },
+            {
+              'id': '2',
+              'title': 'Construction\n& Blocs',
+              'icon': Icons.view_in_ar_rounded,
+              'bgGradient': defaultPalettes[1]['bgGradient'] as List<Color>,
+              'iconColor': defaultPalettes[1]['iconColor'] as Color,
+              'borderColor': defaultPalettes[1]['borderColor'] as Color,
+            },
+            {
+              'id': '3',
+              'title': 'Jeux de Rôle\n& Imitation',
+              'icon': Icons.theater_comedy_rounded,
+              'bgGradient': defaultPalettes[2]['bgGradient'] as List<Color>,
+              'iconColor': defaultPalettes[2]['iconColor'] as Color,
+              'borderColor': defaultPalettes[2]['borderColor'] as Color,
+            },
+            {
+              'id': '4',
+              'title': 'Créatif &\nArtistique',
+              'icon': Icons.palette_rounded,
+              'bgGradient': defaultPalettes[3]['bgGradient'] as List<Color>,
+              'iconColor': defaultPalettes[3]['iconColor'] as Color,
+              'borderColor': defaultPalettes[3]['borderColor'] as Color,
+            },
+            {
+              'id': '5',
+              'title': 'Plein air &\nSport',
+              'icon': Icons.sports_soccer_rounded,
+              'bgGradient': defaultPalettes[4]['bgGradient'] as List<Color>,
+              'iconColor': defaultPalettes[4]['iconColor'] as Color,
+              'borderColor': defaultPalettes[4]['borderColor'] as Color,
+            },
+            {
+              'id': '6',
+              'title': 'Poupées &\nPeluches',
+              'icon': Icons.cruelty_free_rounded,
+              'bgGradient': defaultPalettes[5]['bgGradient'] as List<Color>,
+              'iconColor': defaultPalettes[5]['iconColor'] as Color,
+              'borderColor': defaultPalettes[5]['borderColor'] as Color,
+            },
+            {
+              'id': '7',
+              'title': 'Jeux de société\n& Puzzles',
+              'icon': Icons.extension_rounded,
+              'bgGradient': defaultPalettes[6]['bgGradient'] as List<Color>,
+              'iconColor': defaultPalettes[6]['iconColor'] as Color,
+              'borderColor': defaultPalettes[6]['borderColor'] as Color,
+            },
+            {
+              'id': '8',
+              'title': 'Technologie\n& Robotique',
+              'icon': Icons.smart_toy_rounded,
+              'bgGradient': defaultPalettes[7]['bgGradient'] as List<Color>,
+              'iconColor': defaultPalettes[7]['iconColor'] as Color,
+              'borderColor': defaultPalettes[7]['borderColor'] as Color,
+            },
+            {
+              'id': '9',
+              'title': 'Musique &\nÉveil Sonore',
+              'icon': Icons.music_note_rounded,
+              'bgGradient': defaultPalettes[8]['bgGradient'] as List<Color>,
+              'iconColor': defaultPalettes[8]['iconColor'] as Color,
+              'borderColor': defaultPalettes[8]['borderColor'] as Color,
+            },
+          ];
+        }
+
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 0.90,
           ),
+          itemCount: items.length,
+          itemBuilder: (context, index) {
+            final cat = items[index];
+            final gradientColors = cat['bgGradient'] as List<Color>;
+            final iconColor = cat['iconColor'] as Color;
+            final borderColor = cat['borderColor'] as Color;
+            final imageUrl = cat['imageUrl'] as String?;
+
+            return InkWell(
+              onTap: () {
+                ref
+                    .read(selectedCategoryFilterProvider.notifier)
+                    .selectCategory(cat['id'] as String?);
+                ref.read(bottomIndexProvider.notifier).setIndex(1);
+                context.go(AppRoutes.jouetscreen);
+              },
+              borderRadius: BorderRadius.circular(18),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 8,
+                ),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: gradientColors,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: borderColor, width: 1.2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: iconColor.withValues(alpha: 0.08),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(9),
+                      decoration: BoxDecoration(
+                        color: AppColors.white.withValues(alpha: 0.95),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: iconColor.withValues(alpha: 0.18),
+                            blurRadius: 5,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: imageUrl != null && imageUrl.isNotEmpty
+                          ? ClipOval(
+                              child: Image.network(
+                                imageUrl,
+                                width: 28,
+                                height: 28,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Icon(
+                                  cat['icon'] as IconData,
+                                  size: 28,
+                                  color: iconColor,
+                                ),
+                              ),
+                            )
+                          : Icon(
+                              cat['icon'] as IconData,
+                              size: 28,
+                              color: iconColor,
+                            ),
+                    ),
+                    AppSpacing.verticalSm,
+                    Text(
+                      cat['title'] as String,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                        height: 1.2,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
+      loading: () => GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 0.90,
+        ),
+        itemCount: 6,
+        itemBuilder: (context, index) => Container(
+          decoration: BoxDecoration(
+            color: AppColors.surfaceVariant,
+            borderRadius: BorderRadius.circular(18),
+          ),
+        ),
+      ),
+      error: (_, __) =>
+          const Center(child: Text('Erreur lors du chargement des catégories')),
     );
   }
 
@@ -1058,10 +1227,19 @@ class AccueilParentPage extends ConsumerWidget {
       ),
       child: InkWell(
         onTap: () {
-          AppDialogs.showSnackBar(
-            context: context,
-            message: '${jouet.nom} - ${jouet.prix.toInt()} CFA',
-          );
+          try {
+            context.push(AppRoutes.jouetdetail, extra: jouet);
+          } catch (_) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => JouetDetailScreen(
+                  jouet: jouet,
+                  utilisateurId: '0FCX2CD3IlcC2tPxiOujc0b0N9v1',
+                ),
+              ),
+            );
+          }
         },
         borderRadius: AppRadius.card,
         child: Column(
