@@ -77,6 +77,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         context: context,
         message: 'Connexion Google réussie !',
       );
+      context.go(AppRoutes.home);
     } else {
       final error = ref.read(authProvider).errorMessage;
       AppDialogs.showSnackBar(
@@ -106,9 +107,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     // LOGO OFFICIEL
-                    const Center(
-                      child: AppLogo(size: 76),
-                    ),
+                    const Center(child: AppLogo(size: 76)),
 
                     const SizedBox(height: 16),
 

@@ -10,6 +10,7 @@ import '../../../../core/router/app_routes.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
 import '../../../../shared/widgets/app_google_button.dart';
+import '../../../../shared/widgets/app_icon_button.dart';
 import '../../../../shared/widgets/app_logo.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../providers/auth_provider.dart';
@@ -51,10 +52,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     if (!mounted) return;
 
     if (success) {
-      AppDialogs.showSnackBar(
-        context: context,
-        message: 'Connexion réussie !',
-      );
+      AppDialogs.showSnackBar(context: context, message: 'Connexion réussie !');
+      context.go(AppRoutes.home);
     } else {
       final errorMessage = ref.read(authProvider).errorMessage;
       AppDialogs.showSnackBar(
@@ -71,7 +70,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     if (email.isEmpty) {
       AppDialogs.showSnackBar(
         context: context,
-        message: 'Veuillez saisir votre adresse email pour réinitialiser le mot de passe.',
+        message:
+            'Veuillez saisir votre adresse email pour réinitialiser le mot de passe.',
         isError: true,
       );
       return;
@@ -92,7 +92,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       final errorMessage = ref.read(authProvider).errorMessage;
       AppDialogs.showSnackBar(
         context: context,
-        message: errorMessage ?? 'Impossible d’envoyer l’email de réinitialisation.',
+        message:
+            errorMessage ?? 'Impossible d’envoyer l’email de réinitialisation.',
         isError: true,
       );
     }
@@ -107,6 +108,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         context: context,
         message: 'Connexion Google réussie !',
       );
+      context.go(AppRoutes.home);
     } else {
       final errorMessage = ref.read(authProvider).errorMessage;
       AppDialogs.showSnackBar(
@@ -135,10 +137,19 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // LOGO BRANDING
-                    const Center(
-                      child: AppLogo(size: 90),
+                    // BOUTON RETOUR VERS ACCUEIL
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: AppIconButton(
+                        icon: Icons.arrow_back_rounded,
+                        size: 36,
+                        onPressed: () => context.go(AppRoutes.home),
+                      ),
                     ),
+                    AppSpacing.verticalSm,
+
+                    // LOGO BRANDING
+                    const Center(child: AppLogo(size: 90)),
 
                     AppSpacing.verticalLg,
 
@@ -228,7 +239,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     // BOUTON DE CONNEXION
                     AppButton(
                       text: 'Se connecter',
-                     // icon: Icons.login_rounded,
+                      // icon: Icons.login_rounded,
                       size: AppButtonSize.large,
                       isLoading: authState.isLoading,
                       onPressed: _login,

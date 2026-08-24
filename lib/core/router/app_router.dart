@@ -1,4 +1,7 @@
+import 'package:eveilkid/features/enfant/model/enfant_model.dart';
 import 'package:eveilkid/features/parents/presentation/pages/accueil_parent.dart';
+import 'package:eveilkid/features/parents/presentation/pages/aide_support_page.dart';
+import 'package:eveilkid/features/parents/presentation/pages/detail_enfant.dart';
 import 'package:eveilkid/features/parents/presentation/pages/profil_parent.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -265,6 +268,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             utilisateurId: '0FCX2CD3IlcC2tPxiOujc0b0N9v1',
           );
         },
+      ),
+      GoRoute(
+        path: AppRoutes.enfantDetail,
+        builder: (context, state) {
+          final enfant = state.extra as EnfantModel;
+          return DetailEnfantPage(enfant: enfant);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.aideSupport,
+        builder: (context, state) => const AideSupportPage(),
       ),
     ],
 

@@ -31,4 +31,8 @@ class AppRoutes {
   // Espace Jouets
   static const String jouetdetail = '/jouet-detail';
   static const String jouetscreen = '/jouets-screen';
+
+  // Espace Enfant & Parents
+  static const String enfantDetail = '/enfant-detail';
+  static const String aideSupport = '/aide-support';
 }
