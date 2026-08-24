@@ -1,4 +1,5 @@
 import 'package:eveilkid/features/admin/presentation/widgets/admin_drawer.dart';
+import 'package:eveilkid/features/enfant/presentation/pages/acceuil_enfant_page.dart';
 import 'package:eveilkid/features/tutoriels/presentation/pages/tutoriel_page.dart';
 import 'package:eveilkid/features/enfant/model/enfant_model.dart';
 import 'package:eveilkid/features/parents/presentation/pages/accueil_parent.dart';
@@ -279,6 +280,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return DetailEnfantPage(enfant: enfant);
         },
       ),
+
+
+     // ── Espace Enfant ── 
+      GoRoute(
+        path: '${AppRoutes.espaceEnfant}/:enfantId',
+        builder: (context, state) {
+          final enfantId = state.pathParameters['enfantId'];
+          return AccueilEnfantPage(initialEnfantId: enfantId);
+        },
+      ),
+
+      // ── Aide & Support ──
       GoRoute(
         path: AppRoutes.aideSupport,
         builder: (context, state) => const AideSupportPage(),
