@@ -6,7 +6,6 @@ import 'package:eveilkid/core/router/app_routes.dart';
 import 'package:eveilkid/features/admin/providers/admin_catalog_controller.dart';
 import 'admin_category_list_page.dart';
 import 'admin_product_list_page.dart';
-import '../../widgets/admin_category_form_dialog.dart';
 
 class AdminCatalogPage extends ConsumerStatefulWidget {
   const AdminCatalogPage({super.key});
@@ -51,78 +50,113 @@ class _AdminCatalogPageState extends ConsumerState<AdminCatalogPage>
         backgroundColor: AppColors.surface,
         elevation: 0,
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(100),
-          child: Column(
-            children: [
-              // Indicateurs statistiques rapides
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                child: Row(
-                  children: [
-                    _buildKpiChip(
-                      label: "Produits",
-                      value: "${stats.totalProducts}",
-                      color: AppColors.primary,
-                      icon: Icons.inventory_2_outlined,
-                    ),
-                    const SizedBox(width: 8),
-                    _buildKpiChip(
-                      label: "Actifs",
-                      value: "${stats.activeProducts}",
-                      color: AppColors.success,
-                      icon: Icons.check_circle_outline,
-                    ),
-                    const SizedBox(width: 8),
-                    _buildKpiChip(
-                      label: "Rupture",
-                      value: "${stats.outOfStockProducts}",
-                      color: stats.outOfStockProducts > 0
-                          ? AppColors.danger
-                          : AppColors.textSecondary,
-                      icon: Icons.warning_amber_rounded,
-                    ),
-                    const SizedBox(width: 8),
-                    _buildKpiChip(
-                      label: "Populaires",
-                      value: "${stats.popularProducts}",
-                      color: AppColors.accent,
-                      icon: Icons.star_border,
-                    ),
-                  ],
-                ),
+          preferredSize: const Size.fromHeight(46),
+          child: Container(
+            margin: const EdgeInsets.fromLTRB(14, 0, 14, 6),
+            padding: const EdgeInsets.all(3),
+            height: 38,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceVariant.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: AppColors.border.withValues(alpha: 0.6),
+                width: 1,
               ),
-              // Onglets
-              TabBar(
-                controller: _tabController,
-                indicatorColor: AppColors.primary,
-                indicatorWeight: 3,
-                labelColor: AppColors.primary,
-                unselectedLabelColor: AppColors.textSecondary,
-                labelStyle: const TextStyle(fontWeight: FontWeight.bold),
-                tabs: [
-                  Tab(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.toys_outlined, size: 18),
-                        const SizedBox(width: 6),
-                        Text("Produits (${stats.totalProducts})"),
-                      ],
-                    ),
-                  ),
-                  Tab(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.category_outlined, size: 18),
-                        const SizedBox(width: 6),
-                        Text("Catégories (${stats.totalCategories})"),
-                      ],
-                    ),
+            ),
+            child: TabBar(
+              controller: _tabController,
+              indicatorSize: TabBarIndicatorSize.tab,
+              dividerColor: Colors.transparent,
+              indicator: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: AppColors.border.withValues(alpha: 0.5),
+                  width: 0.8,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 3,
+                    offset: const Offset(0, 1),
                   ),
                 ],
               ),
-            ],
+              labelColor: AppColors.primary,
+              unselectedLabelColor: AppColors.textSecondary,
+              labelStyle: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+              splashFactory: NoSplash.splashFactory,
+              overlayColor: WidgetStateProperty.all(Colors.transparent),
+              tabs: [
+                Tab(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.toys_outlined, size: 16),
+                      const SizedBox(width: 6),
+                      const Text("Produits"),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: _tabController.index == 0
+                              ? AppColors.primary.withValues(alpha: 0.12)
+                              : AppColors.surfaceVariant,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          "${stats.totalProducts}",
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: _tabController.index == 0
+                                ? AppColors.primary
+                                : AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Tab(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.category_outlined, size: 16),
+                      const SizedBox(width: 6),
+                      const Text("Catégories"),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: _tabController.index == 1
+                              ? AppColors.primary.withValues(alpha: 0.12)
+                              : AppColors.surfaceVariant,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          "${stats.totalCategories}",
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: _tabController.index == 1
+                                ? AppColors.primary
+                                : AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -144,59 +178,9 @@ class _AdminCatalogPageState extends ConsumerState<AdminCatalogPage>
           if (_tabController.index == 0) {
             context.push(AppRoutes.adminProductForm);
           } else {
-            showDialog(
-              context: context,
-              builder: (ctx) => const AdminCategoryFormDialog(),
-            );
+            context.push(AppRoutes.adminCategoryForm);
           }
         },
-      ),
-    );
-  }
-
-  Widget _buildKpiChip({
-    required String label,
-    required String value,
-    required Color color,
-    required IconData icon,
-  }) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, size: 12, color: color),
-                const SizedBox(width: 3),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                  ),
-                ),
-              ],
-            ),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                color: color.withValues(alpha: 0.85),
-                fontWeight: FontWeight.w500,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
       ),
     );
   }

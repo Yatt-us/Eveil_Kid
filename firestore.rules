@@ -1,0 +1,97 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function userDocExists() {
+      return exists(/databases/$(database)/documents/utilisateurs/$(request.auth.uid));
+    }
+
+    function getUserRole() {
+      return userDocExists() ? get(/databases/$(database)/documents/utilisateurs/$(request.auth.uid)).data.role : 'VISITEUR';
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (request.auth.token.role == 'ADMIN' || getUserRole() == 'ADMIN');
+    }
+
+    function isManager() {
+      return isAuthenticated() && 
+        (request.auth.token.role == 'MANAGER' || getUserRole() == 'MANAGER');
+    }
+
+    function isAdminOrManager() {
+      return isAdmin() || isManager();
+    }
+
+    // ── Collection : utilisateurs ──
+    match /utilisateurs/{userId} {
+      // Lecture : l'utilisateur lui-même, ou un admin/manager
+      allow read: if isOwner(userId) || isAdminOrManager();
+
+      // Création : l'utilisateur lui-même (création de son propre compte) ou un admin
+      allow create: if isOwner(userId) || isAdmin();
+
+      // Modification : l'utilisateur lui-même ou un admin
+      allow update: if isOwner(userId) || isAdmin();
+
+      // Suppression : uniquement les admins
+      allow delete: if isAdmin();
+
+      // ── Sous-collection : enfants ──
+      match /enfants/{enfantId} {
+        allow read, write: if isOwner(userId) || isAdminOrManager();
+      }
+    }
+
+    // ── Collection : categories ──
+    match /categories/{categorieId} {
+      allow read: if true;
+      allow write: if isAdminOrManager();
+    }
+
+    // ── Collection : jouets ──
+    match /jouets/{jouetId} {
+      allow read: if true;
+      allow write: if isAdminOrManager();
+    }
+
+    // ── Collection : tutoriels ──
+    match /tutoriels/{tutorielId} {
+      allow read: if true;
+      allow write: if isAdminOrManager();
+    }
+
+    // ── Collection : favoris ──
+    match /favoris/{favoriId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.utilisateurId == request.auth.uid || isAdminOrManager());
+      allow create: if isAuthenticated() && request.resource.data.utilisateurId == request.auth.uid;
+      allow update, delete: if isAuthenticated() && (resource == null || resource.data.utilisateurId == request.auth.uid || isAdminOrManager());
+    }
+
+    // ── Collection : avis ──
+    match /avis/{avisId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && request.resource.data.utilisateurId == request.auth.uid;
+      allow update, delete: if isAuthenticated() && (resource == null || resource.data.utilisateurId == request.auth.uid || isAdminOrManager());
+    }
+
+    // ── Collection : panier / commandes ──
+    match /panier/{panierId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.utilisateurId == request.auth.uid || request.resource.data.utilisateurId == request.auth.uid || isAdminOrManager());
+    }
+
+    match /paniers/{panierId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.utilisateurId == request.auth.uid || request.resource.data.utilisateurId == request.auth.uid || isAdminOrManager());
+    }
+  }
+}

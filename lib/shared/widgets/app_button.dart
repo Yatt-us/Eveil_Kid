@@ -5,6 +5,9 @@ enum AppButtonVariant { primary, outlined, text, danger }
 
 enum AppButtonSize { small, medium, large }
 
+/// Bouton réutilisable avec le même langage visuel que [AppGoogleButton] :
+/// Container décoré + Material + InkWell pour un rendu premium et des ripples
+/// parfaitement clippés.
 class AppButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
@@ -25,19 +28,123 @@ class AppButton extends StatelessWidget {
     this.size = AppButtonSize.medium,
   });
 
+  // ── Helpers de sizing ─────────────────────────────────────────────────────
+
+  double get _height => switch (size) {
+        AppButtonSize.small => 40,
+        AppButtonSize.medium => 48,
+        AppButtonSize.large => 54,
+      };
+
+  EdgeInsets get _padding => switch (size) {
+        AppButtonSize.small => const EdgeInsets.symmetric(horizontal: 16),
+        AppButtonSize.medium => const EdgeInsets.symmetric(horizontal: 24),
+        AppButtonSize.large => const EdgeInsets.symmetric(horizontal: 32),
+      };
+
+  double get _fontSize => switch (size) {
+        AppButtonSize.small => 13,
+        AppButtonSize.medium => 14,
+        AppButtonSize.large => 16,
+      };
+
+  double get _iconSize => switch (size) {
+        AppButtonSize.small => 16,
+        AppButtonSize.medium => 18,
+        AppButtonSize.large => 22,
+      };
+
+  double get _spinnerSize => switch (size) {
+        AppButtonSize.small => 16,
+        AppButtonSize.medium => 20,
+        AppButtonSize.large => 22,
+      };
+
+  // ── Couleurs selon la variante ─────────────────────────────────────────────
+
+  Color get _backgroundColor => switch (variant) {
+        AppButtonVariant.primary => AppColors.primary,
+        AppButtonVariant.danger => AppColors.danger,
+        AppButtonVariant.outlined || AppButtonVariant.text => AppColors.surface,
+      };
+
+  Color get _foregroundColor => switch (variant) {
+        AppButtonVariant.primary || AppButtonVariant.danger => AppColors.white,
+        AppButtonVariant.outlined || AppButtonVariant.text => AppColors.primary,
+      };
+
+  Color get _spinnerColor => switch (variant) {
+        AppButtonVariant.primary || AppButtonVariant.danger => AppColors.white,
+        AppButtonVariant.outlined || AppButtonVariant.text => AppColors.primary,
+      };
+
+  // Couleur de fond quand disabled (isLoading)
+  Color get _disabledBgColor => switch (variant) {
+        AppButtonVariant.primary =>
+          AppColors.primary.withValues(alpha: 0.55),
+        AppButtonVariant.danger =>
+          AppColors.danger.withValues(alpha: 0.55),
+        AppButtonVariant.outlined || AppButtonVariant.text => AppColors.surface,
+      };
+
+  Color get _disabledFgColor => switch (variant) {
+        AppButtonVariant.primary || AppButtonVariant.danger =>
+          AppColors.white.withValues(alpha: 0.7),
+        AppButtonVariant.outlined || AppButtonVariant.text =>
+          AppColors.primary.withValues(alpha: 0.45),
+      };
+
+  Border? get _border => switch (variant) {
+        AppButtonVariant.outlined => Border.all(
+            color: onPressed != null && !isLoading
+                ? AppColors.primary
+                : AppColors.primary.withValues(alpha: 0.35),
+            width: 1.5,
+          ),
+        AppButtonVariant.text => null,
+        AppButtonVariant.primary || AppButtonVariant.danger => null,
+      };
+
+  List<BoxShadow> get _shadow => switch (variant) {
+        AppButtonVariant.primary => [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.25),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        AppButtonVariant.danger => [
+            BoxShadow(
+              color: AppColors.danger.withValues(alpha: 0.22),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        AppButtonVariant.outlined => [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        AppButtonVariant.text => [],
+      };
+
+  // ── Build ──────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
-    final padding = _getPadding();
-    final fontSize = _getFontSize();
-    final iconSize = _getIconSize();
+    final bool disabled = isLoading || onPressed == null;
+    final Color bgColor = disabled ? _disabledBgColor : _backgroundColor;
+    final Color fgColor = disabled ? _disabledFgColor : _foregroundColor;
 
-    Widget childWidget = isLoading
+    Widget content = isLoading
         ? SizedBox(
-            height: iconSize,
-            width: iconSize,
+            width: _spinnerSize,
+            height: _spinnerSize,
             child: CircularProgressIndicator(
-              strokeWidth: 2.5,
-              valueColor: AlwaysStoppedAnimation<Color>(_getSpinnerColor()),
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(_spinnerColor),
             ),
           )
         : Row(
@@ -45,139 +152,50 @@ class AppButton extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (icon != null) ...[
-                Icon(icon, size: iconSize),
+                Icon(icon, size: _iconSize, color: fgColor),
                 const SizedBox(width: 8),
               ],
               Text(
                 text,
                 style: TextStyle(
-                  fontSize: fontSize,
+                  fontSize: _fontSize,
                   fontWeight: FontWeight.w600,
+                  color: fgColor,
+                  letterSpacing: 0.1,
                 ),
               ),
             ],
           );
 
-    Widget button;
-
-    final minSize = isFullWidth ? const Size(double.infinity, 48) : Size.zero;
-
-    switch (variant) {
-      case AppButtonVariant.primary:
-        button = ElevatedButton(
-          onPressed: isLoading ? null : onPressed,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: AppColors.white,
-            disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.6),
-            disabledForegroundColor: AppColors.white,
-            padding: padding,
-            minimumSize: minSize,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            elevation: 1,
+    final Widget button = AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      height: _height,
+      width: isFullWidth ? double.infinity : null,
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(14),
+        border: _border,
+        boxShadow: disabled ? [] : _shadow,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: disabled ? null : onPressed,
+          borderRadius: BorderRadius.circular(14),
+          splashColor: fgColor.withValues(alpha: 0.12),
+          highlightColor: fgColor.withValues(alpha: 0.06),
+          child: Padding(
+            padding: _padding,
+            child: Center(child: content),
           ),
-          child: childWidget,
-        );
-        break;
-      case AppButtonVariant.outlined:
-        button = OutlinedButton(
-          onPressed: isLoading ? null : onPressed,
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.primary,
-            side: const BorderSide(color: AppColors.primary, width: 1.5),
-            padding: padding,
-            minimumSize: minSize,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          child: childWidget,
-        );
-        break;
-      case AppButtonVariant.text:
-        button = TextButton(
-          onPressed: isLoading ? null : onPressed,
-          style: TextButton.styleFrom(
-            foregroundColor: AppColors.primary,
-            padding: padding,
-            minimumSize: minSize,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          child: childWidget,
-        );
-        break;
-      case AppButtonVariant.danger:
-        button = ElevatedButton(
-          onPressed: isLoading ? null : onPressed,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.danger,
-            foregroundColor: AppColors.white,
-            disabledBackgroundColor: AppColors.danger.withValues(alpha: 0.6),
-            disabledForegroundColor: AppColors.white,
-            padding: padding,
-            minimumSize: minSize,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            elevation: 1,
-          ),
-          child: childWidget,
-        );
-        break;
-    }
+        ),
+      ),
+    );
 
     if (isFullWidth) {
       return SizedBox(width: double.infinity, child: button);
     }
 
     return button;
-  }
-
-  EdgeInsets _getPadding() {
-    switch (size) {
-      case AppButtonSize.small:
-        return const EdgeInsets.symmetric(vertical: 10, horizontal: 16);
-      case AppButtonSize.medium:
-        return const EdgeInsets.symmetric(vertical: 14, horizontal: 24);
-      case AppButtonSize.large:
-        return const EdgeInsets.symmetric(vertical: 18, horizontal: 32);
-    }
-  }
-
-  double _getFontSize() {
-    switch (size) {
-      case AppButtonSize.small:
-        return 14;
-      case AppButtonSize.medium:
-        return 16;
-      case AppButtonSize.large:
-        return 18;
-    }
-  }
-
-  double _getIconSize() {
-    switch (size) {
-      case AppButtonSize.small:
-        return 16;
-      case AppButtonSize.medium:
-        return 20;
-      case AppButtonSize.large:
-        return 24;
-    }
-  }
-
-  Color _getSpinnerColor() {
-    switch (variant) {
-      case AppButtonVariant.primary:
-      case AppButtonVariant.danger:
-        return AppColors.white;
-      case AppButtonVariant.outlined:
-      case AppButtonVariant.text:
-        return AppColors.primary;
-    }
   }
 }

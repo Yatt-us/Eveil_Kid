@@ -31,23 +31,26 @@ class EnfantNotifier extends Notifier<EnfantState> {
     }
 
     state = state.copyWith(isLoading: true, forceNullError: true);
+
     try {
-      final enfants = await _enfantRepository.recupererEnfantsDuParent(
-        parentId,
-      );
-      final current = state.enfantSelectionne;
-      final selection = current == null
-          ? (enfants.isEmpty ? null : enfants.first)
-          : enfants.where((e) => e.enfantId == current.enfantId).firstOrNull ??
-                (enfants.isEmpty ? null : enfants.first);
+      final enfants = await _enfantRepository.recupererEnfantsDuParent(parentId);
+      EnfantModel? selection = state.enfantSelectionne;
+
+      if (selection == null && enfants.isNotEmpty) {
+        selection = enfants.first;
+      } else if (selection != null) {
+        final index = enfants.indexWhere((e) => e.enfantId == selection!.enfantId);
+        selection = index != -1 ? enfants[index] : (enfants.isNotEmpty ? enfants.first : null);
+      }
+
       state = state.copyWith(
         enfants: enfants,
         enfantSelectionne: selection,
         forceNullSelection: selection == null,
       );
-    } catch (error) {
+    } catch (e) {
       state = state.copyWith(
-        errorMessage: 'Erreur lors du chargement : $error',
+        errorMessage: 'Erreur lors du chargement des enfants : $e',
       );
     } finally {
       state = state.copyWith(isLoading: false);
@@ -62,18 +65,16 @@ class EnfantNotifier extends Notifier<EnfantState> {
     state = state.copyWith(forceNullSelection: true);
   }
 
-  /// Ajoute un enfant et met à jour l'état local.
   Future<bool> ajouterEnfant(EnfantModel enfant) async {
     state = state.copyWith(isLoading: true, forceNullError: true);
 
     try {
-      // Le modèle contient déjà dynamiquement son utilisateurId (ID Parent)
       await _enfantRepository.ajouterEnfant(
-        parentId: enfant.utilisateurId, 
+        parentId: enfant.utilisateurId,
         enfant: enfant,
       );
-      final nouveauxEnfants = [...state.enfants, enfant];
 
+      final nouveauxEnfants = [...state.enfants, enfant];
       state = state.copyWith(
         enfants: nouveauxEnfants,
         enfantSelectionne: state.enfantSelectionne ?? enfant,
@@ -87,22 +88,20 @@ class EnfantNotifier extends Notifier<EnfantState> {
     }
   }
 
-  /// Modifie un enfant et actualise la sélection si elle le concerne.
   Future<bool> modifierEnfant(EnfantModel enfant) async {
     state = state.copyWith(isLoading: true, forceNullError: true);
 
     try {
-      // Passage de l'ID Parent indispensable pour cibler le bon chemin Firestore
       await _enfantRepository.modifierEnfant(
-        parentId: enfant.utilisateurId, 
+        parentId: enfant.utilisateurId,
         enfant: enfant,
       );
+
       final nouveauxEnfants = state.enfants.map((e) {
         return e.enfantId == enfant.enfantId ? enfant : e;
       }).toList();
 
       final selectionEstModifiee = state.enfantSelectionne?.enfantId == enfant.enfantId;
-
       state = state.copyWith(
         enfants: nouveauxEnfants,
         enfantSelectionne: selectionEstModifiee ? enfant : state.enfantSelectionne,
@@ -116,12 +115,13 @@ class EnfantNotifier extends Notifier<EnfantState> {
     }
   }
 
-  /// Supprime un enfant de la base et réajuste la sélection.
-  Future<bool> supprimerEnfant({required String parentId, required String enfantId}) async {
+  Future<bool> supprimerEnfant({
+    required String parentId,
+    required String enfantId,
+  }) async {
     state = state.copyWith(isLoading: true, forceNullError: true);
 
     try {
-      // Ajout du parentId requis pour localiser la sous-collection du document à détruire
       await _enfantRepository.supprimerEnfant(parentId: parentId, enfantId: enfantId);
       final nouveauxEnfants = state.enfants.where((e) => e.enfantId != enfantId).toList();
 
@@ -144,19 +144,17 @@ class EnfantNotifier extends Notifier<EnfantState> {
     }
   }
 
-  /// Met à jour la photo d'avatar de l'enfant.
   Future<bool> mettreAJourPhoto({
-    required String parentId, 
-    required String enfantId, 
+    required String parentId,
+    required String enfantId,
     required String photoUrl,
   }) async {
     state = state.copyWith(isLoading: true, forceNullError: true);
 
     try {
-      // Ajout du parentId pour cibler précisément le document imbriqué
       await _enfantRepository.mettreAJourPhoto(
-        parentId: parentId, 
-        enfantId: enfantId, 
+        parentId: parentId,
+        enfantId: enfantId,
         photoUrl: photoUrl,
       );
 
@@ -186,7 +184,27 @@ class EnfantNotifier extends Notifier<EnfantState> {
     }
   }
 
-  /// Réinitialise le message d'erreur.
+  Future<bool> ajouterEnfantLegacy({
+    required String parentId,
+    required EnfantModel enfant,
+  }) async {
+    return ajouterEnfant(enfant.copyWith(utilisateurId: parentId));
+  }
+
+  Future<bool> modifierEnfantLegacy({
+    required String parentId,
+    required EnfantModel enfant,
+  }) async {
+    return modifierEnfant(enfant.copyWith(utilisateurId: parentId));
+  }
+
+  Future<bool> supprimerEnfantLegacy({
+    required String parentId,
+    required String enfantId,
+  }) async {
+    return supprimerEnfant(parentId: parentId, enfantId: enfantId);
+  }
+
   void clearError() {
     state = state.copyWith(forceNullError: true);
   }

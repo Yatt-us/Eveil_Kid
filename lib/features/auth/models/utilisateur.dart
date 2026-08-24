@@ -92,7 +92,7 @@ class Utilisateur {
     }).copyWith(enfants: enfants);
   }
 
-  Object? get uid => null;
+  String get uid => utilisateurId;
 
   Map<String, dynamic> toMap() {
     return {
@@ -149,6 +149,10 @@ class Utilisateur {
 
     if (value is DateTime) {
       return value;
+    }
+
+    if (value is String) {
+      return DateTime.tryParse(value);
     }
 
     return null;
