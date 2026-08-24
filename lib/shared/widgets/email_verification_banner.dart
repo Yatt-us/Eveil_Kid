@@ -15,9 +15,29 @@ class EmailVerificationBanner extends ConsumerStatefulWidget {
 }
 
 class _EmailVerificationBannerState
-    extends ConsumerState<EmailVerificationBanner> {
+    extends ConsumerState<EmailVerificationBanner>
+    with WidgetsBindingObserver {
   bool _isResending = false;
   bool _isChecking = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref.read(authProvider.notifier).reloadAndCheckEmailVerified();
+    }
+  }
 
   Future<void> _resendVerificationEmail() async {
     setState(() => _isResending = true);

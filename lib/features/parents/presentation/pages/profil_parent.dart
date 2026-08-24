@@ -102,7 +102,7 @@ class ProfilParentPage extends ConsumerWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    onPressed: () => context.push(AppRoutes.login),
+                    onPressed: () => context.go(AppRoutes.login),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: AppColors.white,
@@ -478,7 +478,7 @@ class ProfilParentPage extends ConsumerWidget {
               ] else ...[
                 InkWell(
                   onTap: () {
-                    context.push(AppRoutes.login);
+                    context.go(AppRoutes.login);
                   },
                   borderRadius: BorderRadius.circular(12),
                   child: Padding(

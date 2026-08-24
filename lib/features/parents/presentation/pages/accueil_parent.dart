@@ -272,7 +272,7 @@ class AccueilParentPage extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: TextButton.icon(
-              onPressed: () => context.push(AppRoutes.login),
+              onPressed: () => context.go(AppRoutes.login),
               style: TextButton.styleFrom(
                 backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                 foregroundColor: AppColors.primary,
@@ -476,13 +476,7 @@ class AccueilParentPage extends ConsumerWidget {
                 ),
                 AppSpacing.verticalMd,
                 ElevatedButton(
-                  onPressed: () {
-                    try {
-                      context.push(AppRoutes.register);
-                    } catch (_) {
-                      Navigator.pushNamed(context, '/register');
-                    }
-                  },
+                  onPressed: () => context.go(AppRoutes.register),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: AppColors.white,

@@ -151,6 +151,10 @@ class Utilisateur {
       return value;
     }
 
+    if (value is String) {
+      return DateTime.tryParse(value);
+    }
+
     return null;
   }
 }

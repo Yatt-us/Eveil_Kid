@@ -10,7 +10,6 @@ import '../../../../core/router/app_routes.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
 import '../../../../shared/widgets/app_google_button.dart';
-import '../../../../shared/widgets/app_icon_button.dart';
 import '../../../../shared/widgets/app_logo.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../providers/auth_provider.dart';
@@ -33,14 +32,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
-  }
-
-  void _popOrGoHome() {
-    if (context.canPop()) {
-      context.pop();
-    } else {
-      context.go(AppRoutes.home);
-    }
   }
 
   Future<void> _login() async {
@@ -144,18 +135,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // BOUTON RETOUR VERS L'ACCUEIL
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: AppIconButton(
-                        icon: Icons.arrow_back_rounded,
-                        size: 36,
-                        onPressed: _popOrGoHome,
-                      ),
-                    ),
-
-                    AppSpacing.verticalSm,
-
                     // LOGO BRANDING
                     const Center(
                       child: AppLogo(size: 90),
@@ -304,7 +283,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         TextButton(
                           onPressed: authState.isLoading
                               ? null
-                              : () => context.push(AppRoutes.register),
+                              : () => context.go(AppRoutes.register),
                           style: TextButton.styleFrom(
                             foregroundColor: AppColors.primary,
                             padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -323,7 +302,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     // LIEN RETOUR ACCUEIL
                     Center(
                       child: TextButton.icon(
-                        onPressed: _popOrGoHome,
+                        onPressed: () => context.go(AppRoutes.home),
                         icon: const Icon(Icons.home_outlined, size: 18),
                         label: const Text('Continuer sans se connecter'),
                         style: TextButton.styleFrom(

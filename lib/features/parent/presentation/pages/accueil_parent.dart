@@ -379,13 +379,7 @@ class AccueilParentPage extends ConsumerWidget {
                 ),
                 AppSpacing.verticalMd,
                 ElevatedButton(
-                  onPressed: () {
-                    try {
-                      context.push(AppRoutes.register);
-                    } catch (_) {
-                      Navigator.pushNamed(context, '/register');
-                    }
-                  },
+                  onPressed: () => context.go(AppRoutes.register),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: AppColors.white,

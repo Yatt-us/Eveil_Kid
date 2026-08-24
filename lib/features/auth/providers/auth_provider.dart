@@ -88,13 +88,17 @@ class AuthNotifier extends Notifier<AuthState> {
         try {
           state = state.copyWith(isLoading: true, clearError: true);
 
+          try {
+            await user.reload();
+          } catch (_) {}
+          final refreshedUser = _repository.currentFirebaseUser ?? user;
           final utilisateur = await _repository.getCurrentUserProfile();
 
           state = state.copyWith(
             utilisateur: utilisateur,
             isLoading: false,
             isInitialized: true,
-            isEmailVerified: user.emailVerified,
+            isEmailVerified: refreshedUser.emailVerified,
             clearError: true,
           );
         } catch (e) {
@@ -274,6 +278,19 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<bool> reloadAndCheckEmailVerified() async {
     try {
       final isVerified = await _repository.isEmailVerified();
+      if (isVerified) {
+        final user = _repository.currentFirebaseUser;
+        if (user != null) {
+          final utilisateur =
+              await _repository.syncPendingUserToFirestoreIfVerified(user.uid);
+          state = state.copyWith(
+            utilisateur: utilisateur,
+            isEmailVerified: true,
+            clearError: true,
+          );
+          return true;
+        }
+      }
       state = state.copyWith(isEmailVerified: isVerified);
       return isVerified;
     } catch (e) {

@@ -8,7 +8,6 @@ import '../../../../core/router/app_routes.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
 import '../../../../shared/widgets/app_google_button.dart';
-import '../../../../shared/widgets/app_icon_button.dart';
 import '../../../../shared/widgets/app_logo.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../providers/auth_provider.dart';
@@ -35,22 +34,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
-  }
-
-  void _popOrGoHome() {
-    if (context.canPop()) {
-      context.pop();
-    } else {
-      context.go(AppRoutes.home);
-    }
-  }
-
-  void _popOrGoLogin() {
-    if (context.canPop()) {
-      context.pop();
-    } else {
-      context.go(AppRoutes.login);
-    }
   }
 
   Future<void> _register() async {
@@ -122,18 +105,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // BOUTON RETOUR VERS L'ACCUEIL / PRECEDENT
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: AppIconButton(
-                        icon: Icons.arrow_back_rounded,
-                        size: 36,
-                        onPressed: _popOrGoHome,
-                      ),
-                    ),
-
-                    const SizedBox(height: 8),
-
                     // LOGO OFFICIEL
                     const Center(
                       child: AppLogo(size: 76),
@@ -303,7 +274,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         ),
                         const SizedBox(width: 4),
                         GestureDetector(
-                          onTap: _popOrGoLogin,
+                          onTap: () => context.go(AppRoutes.login),
                           child: const Text(
                             'Se connecter',
                             style: TextStyle(
@@ -321,7 +292,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     // LIEN RETOUR ACCUEIL
                     Center(
                       child: TextButton.icon(
-                        onPressed: _popOrGoHome,
+                        onPressed: () => context.go(AppRoutes.home),
                         icon: const Icon(Icons.home_outlined, size: 18),
                         label: const Text('Continuer sans se connecter'),
                         style: TextButton.styleFrom(
