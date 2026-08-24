@@ -1,8 +1,8 @@
 import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/features/tutoriels/providers/tutorielProvider.dart';
+import 'package:eveilkid/shared/widgets/app_bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 
 class TutorielPage extends ConsumerWidget {
   const TutorielPage({super.key});
@@ -12,17 +12,13 @@ class TutorielPage extends ConsumerWidget {
     final tutorielsAsync = ref.watch(tutorielsProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Tutoriels'),
-      ),
+      appBar: AppBar(title: const Text('Tutoriels')),
 
       body: tutorielsAsync.when(
         // Données chargées
         data: (tutoriels) {
           if (tutoriels.isEmpty) {
-            return const Center(
-              child: Text('Aucun tutoriel disponible'),
-            );
+            return const Center(child: Text('Aucun tutoriel disponible'));
           }
 
           return ListView.builder(
@@ -52,10 +48,7 @@ class TutorielPage extends ConsumerWidget {
                             height: 180,
                             color: Colors.grey.shade300,
                             child: const Center(
-                              child: Icon(
-                                Icons.image_not_supported,
-                                size: 50,
-                              ),
+                              child: Icon(Icons.image_not_supported, size: 50),
                             ),
                           );
                         },
@@ -88,16 +81,11 @@ class TutorielPage extends ConsumerWidget {
 
                           Row(
                             children: [
-                              const Icon(
-                                Icons.access_time,
-                                size: 18,
-                              ),
+                              const Icon(Icons.access_time, size: 18),
 
                               const SizedBox(width: 5),
 
-                              Text(
-                                '${tutoriel.duree} secondes',
-                              ),
+                              Text('${tutoriel.duree} secondes'),
 
                               const Spacer(),
 
@@ -118,9 +106,7 @@ class TutorielPage extends ConsumerWidget {
 
         // Chargement
         loading: () {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
+          return const Center(child: CircularProgressIndicator());
         },
 
         // Erreur
@@ -141,18 +127,12 @@ class TutorielPage extends ConsumerWidget {
 
                   const Text(
                     'Une erreur est survenue',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
 
                   const SizedBox(height: 8),
 
-                  Text(
-                    error.toString(),
-                    textAlign: TextAlign.center,
-                  ),
+                  Text(error.toString(), textAlign: TextAlign.center),
 
                   const SizedBox(height: 16),
 
@@ -168,6 +148,7 @@ class TutorielPage extends ConsumerWidget {
           );
         },
       ),
+      bottomNavigationBar: AppBottomNavBar(),
     );
   }
 }
