@@ -12,6 +12,7 @@ import '../../../../core/router/app_routes.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
 import '../../../../shared/widgets/app_bottom_nav_bar.dart';
 import '../../../../shared/widgets/app_theme_mode_sheet.dart';
+import '../../../../shared/widgets/email_verification_banner.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../providers/parent_provider.dart';
 import 'liste_enfants.dart';
@@ -32,9 +33,12 @@ class ProfilParentPage extends ConsumerWidget {
     );
 
     if (confirmed == true && context.mounted) {
-      Navigator.of(context).popUntil((route) => route.isFirst);
-      await ref.read(authProvider.notifier).logout();
+      final authNotifier = ref.read(authProvider.notifier);
       ref.invalidate(parentNotifierProvider);
+      await authNotifier.logout();
+      if (context.mounted) {
+        context.go(AppRoutes.home);
+      }
     }
   }
 
@@ -42,8 +46,9 @@ class ProfilParentPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
     final isAuthenticated = authState.isAuthenticated;
+    final isEmailVerified = authState.isEmailVerified;
 
-    // Si non connecté (mode visiteur)
+    // 1. Si non connecté (mode visiteur pur)
     if (!isAuthenticated) {
       return Scaffold(
         backgroundColor: AppColors.background,
@@ -97,7 +102,7 @@ class ProfilParentPage extends ConsumerWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    onPressed: () => context.push(AppRoutes.login),
+                    onPressed: () => context.go(AppRoutes.login),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: AppColors.white,
@@ -120,6 +125,67 @@ class ProfilParentPage extends ConsumerWidget {
             ),
           ),
         ),
+        bottomNavigationBar: const AppBottomNavBar(),
+      );
+    }
+
+    // 2. Si connecté mais email NON vérifié (considéré comme non authentifié pour les fonctionnalités)
+    if (!isEmailVerified) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          title: const Text(
+            'Mon Profil',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          centerTitle: true,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.logout_rounded, color: AppColors.danger),
+              tooltip: 'Se déconnecter',
+              onPressed: () => _logout(context, ref),
+            ),
+          ],
+        ),
+        body: Center(
+          child: SingleChildScrollView(
+            padding: AppPadding.screen,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const EmailVerificationBanner(),
+                AppSpacing.verticalXl,
+                OutlinedButton.icon(
+                  onPressed: () => _logout(context, ref),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.danger,
+                    side: const BorderSide(color: AppColors.danger),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: AppRadius.button,
+                    ),
+                  ),
+                  icon: const Icon(Icons.logout_rounded, size: 18),
+                  label: const Text(
+                    'Se déconnecter',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        bottomNavigationBar: const AppBottomNavBar(),
       );
     }
 
@@ -411,8 +477,8 @@ class ProfilParentPage extends ConsumerWidget {
                 ),
               ] else ...[
                 InkWell(
-                  onTap: () async {
-                    await ref.read(authProvider.notifier).logout();
+                  onTap: () {
+                    context.go(AppRoutes.login);
                   },
                   borderRadius: BorderRadius.circular(12),
                   child: Padding(

@@ -17,8 +17,11 @@
 //   }
 // }
 
+import 'dart:ui';
+
 import 'package:eveilkid/core/router/app_router.dart';
 import 'package:eveilkid/core/provider/theme_provider.dart';
+import 'package:eveilkid/core/services/google_sign_in_service.dart';
 import 'package:eveilkid/core/themes/AppTheme.dart';
 
 import 'package:firebase_core/firebase_core.dart';
@@ -31,6 +34,11 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Initialise Google Sign-In v7+ une seule fois avant runApp.
+  // Tente egalement une re-connexion legere (sans UI) si l'utilisateur
+  // etait deja connecte precedemment.
+  await GoogleSignInService.initialize();
 
   runApp(const ProviderScope(child: MyApp()));
 }
@@ -50,7 +58,22 @@ class MyApp extends ConsumerWidget {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: themeMode,
-      routerConfig: router, // Injecte la configuration des routes
+      routerConfig: router,
+      builder: (context, child) {
+        return GestureDetector(
+          onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+          behavior: HitTestBehavior.translucent,
+          child: child,
+        );
+      },
+      scrollBehavior: const MaterialScrollBehavior().copyWith(
+        dragDevices: {
+          PointerDeviceKind.touch,
+          PointerDeviceKind.mouse,
+          PointerDeviceKind.trackpad,
+          PointerDeviceKind.stylus,
+        },
+      ),
     );
   }
 }

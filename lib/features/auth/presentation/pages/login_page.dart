@@ -135,8 +135,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    AppSpacing.verticalLg,
-
                     // LOGO BRANDING
                     const Center(
                       child: AppLogo(size: 90),
@@ -285,7 +283,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         TextButton(
                           onPressed: authState.isLoading
                               ? null
-                              : () => context.push(AppRoutes.register),
+                              : () => context.go(AppRoutes.register),
                           style: TextButton.styleFrom(
                             foregroundColor: AppColors.primary,
                             padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -297,6 +295,24 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           child: const Text('S’inscrire'),
                         ),
                       ],
+                    ),
+
+                    AppSpacing.verticalSm,
+
+                    // LIEN RETOUR ACCUEIL
+                    Center(
+                      child: TextButton.icon(
+                        onPressed: () => context.go(AppRoutes.home),
+                        icon: const Icon(Icons.home_outlined, size: 18),
+                        label: const Text('Continuer sans se connecter'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.textSecondary,
+                          textStyle: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
                     ),
 
                     AppSpacing.verticalLg,

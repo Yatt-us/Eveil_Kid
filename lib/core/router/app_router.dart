@@ -9,6 +9,7 @@ import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/core/router/app_routes.dart';
 
 import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_catalog_page.dart';
+import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_category_detail_page.dart';
 import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_category_list_page.dart';
 import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_product_form_page.dart';
 import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_product_list_page.dart';
@@ -19,10 +20,14 @@ import 'package:eveilkid/features/auth/presentation/pages/login_page.dart';
 import 'package:eveilkid/features/auth/presentation/pages/register_page.dart';
 import 'package:eveilkid/features/auth/presentation/pages/splash_page.dart';
 import 'package:eveilkid/features/auth/providers/auth_provider.dart';
+import 'package:eveilkid/features/categories/models/categorie.dart';
 import 'package:eveilkid/features/jouets/models/jouet.dart';
+
+import 'package:eveilkid/features/tutoriels/presentations/pages/tutorielPage.dart';
+import 'package:eveilkid/features/admin/presentation/widgets/admin_drawer.dart';
+
 import 'package:eveilkid/features/jouets/presentation/page/jouet_detail_screen.dart';
 import 'package:eveilkid/features/jouets/presentation/page/jouets_screen.dart';
-import 'package:eveilkid/features/tutoriels/presentations/pages/tutorielPage.dart';
 
 /// Notifier pour déclencher les rafraîchissements de GoRouter lors des changements d'état d'authentification Riverpod
 class _RouterRefreshNotifier extends ChangeNotifier {
@@ -56,47 +61,74 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           state.matchedLocation == AppRoutes.register;
       final isSplash = state.matchedLocation == AppRoutes.splash;
 
-      // 2. Utilisateur non authentifié
+      // 2. Utilisateur non authentifié (mode visiteur)
       if (!isAuthenticated) {
-        // Autoriser l'accès aux pages d'authentification ou pages publiques autorisées
-        if (isGoingToAuth || state.matchedLocation == AppRoutes.tutoriels) {
+        // Rediriger le splash vers la page d'accueil par défaut (mode visiteur)
+        if (isSplash) {
+          return AppRoutes.home;
+        }
+
+        // Autoriser l'accès aux pages d'authentification, accueil public, boutique et tutoriels
+        if (isGoingToAuth ||
+            state.matchedLocation == AppRoutes.home ||
+            state.matchedLocation == AppRoutes.jouetscreen ||
+            state.matchedLocation == AppRoutes.jouetdetail ||
+            state.matchedLocation == AppRoutes.tutoriels) {
           return null;
         }
-        // Rediriger vers la page de connexion pour toute autre page
+        // Rediriger vers la page de connexion pour toute page protégée (admin, profil...)
         return AppRoutes.login;
       }
 
       final role = authState.utilisateur?.role;
       final isAdminOrManager =
           role == UserRole.admin || role == UserRole.manager;
+      final isEmailVerified = authState.isEmailVerified;
 
-      // 3. Utilisateur Administrateur / Manager -> strictement dirigé et confiné à l'espace Admin
+      // 3. Utilisateur Administrateur / Manager -> dirigé vers l'espace Admin si vérifié
       if (isAdminOrManager) {
+        if (!isEmailVerified) {
+          // Si non vérifié, reste sur l'accueil public avec la bannière de confirmation
+          if (isSplash ||
+              isGoingToAuth ||
+              state.matchedLocation.startsWith('/admin')) {
+            return AppRoutes.home;
+          }
+          return null;
+        }
+
+        // Un Manager n'a absolument pas accès à la gestion des utilisateurs -> redirection vers /admin
+        if (role == UserRole.manager &&
+            state.matchedLocation.startsWith(AppRoutes.adminUsers)) {
+          return AppRoutes.admin;
+        }
+
         // Si l'admin est sur splash, auth ou tente d'aller sur l'accueil parent
         if (isSplash ||
             isGoingToAuth ||
             state.matchedLocation == AppRoutes.home) {
           return AppRoutes.admin;
         }
-        // Accès autorisé aux pages d'administration
+
+        // Accès autorisé aux pages d'administration ou tutoriels
         if (state.matchedLocation.startsWith('/admin') ||
             state.matchedLocation == AppRoutes.tutoriels) {
           return null;
         }
+
         // Toute autre tentative d'accès -> rediriger vers /admin
         return AppRoutes.admin;
       }
 
-      // 4. Utilisateur Parent -> confiné à l'espace Parent
-      if (!isAdminOrManager) {
-        // Redirection vers la racine / accueil depuis splash ou auth
-        if (isSplash || isGoingToAuth) {
-          return AppRoutes.home;
-        }
-        // Accès formellement interdit à l'espace administration
-        if (state.matchedLocation.startsWith('/admin')) {
-          return AppRoutes.home;
-        }
+      // 4. Utilisateur Parent / Client -> confiné à l'espace Parent
+      // Redirection vers la racine / accueil depuis splash ou auth
+      if (isSplash || isGoingToAuth) {
+        return AppRoutes.home;
+      }
+
+      // Accès formellement interdit à l'espace administration
+      if (state.matchedLocation.startsWith('/admin')) {
+        return AppRoutes.home;
       }
 
       return null;
@@ -139,32 +171,71 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ── Espace Administration ──
-      GoRoute(
-        path: AppRoutes.admin,
-        builder: (context, state) => const DashboardPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.adminProducts,
-        builder: (context, state) => const AdminProductListPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.adminCategories,
-        builder: (context, state) => const AdminCategoryListPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.adminUsers,
-        builder: (context, state) => const AdminUserListPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.adminCatalog,
-        builder: (context, state) => const AdminCatalogPage(),
+      // ── Espace Administration (StatefulShellRoute avec sidebar persistant) ──
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return AdminShellScaffold(navigationShell: navigationShell);
+        },
+        branches: [
+          // 0. Tableau de bord
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.admin,
+                builder: (context, state) => const DashboardPage(),
+              ),
+            ],
+          ),
+          // 1. Produits
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.adminProducts,
+                builder: (context, state) => const AdminProductListPage(),
+              ),
+            ],
+          ),
+          // 2. Catégories
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.adminCategories,
+                builder: (context, state) => const AdminCategoryListPage(),
+              ),
+            ],
+          ),
+          // 3. Utilisateurs
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.adminUsers,
+                builder: (context, state) => const AdminUserListPage(),
+              ),
+            ],
+          ),
+          // 4. Catalogue global
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.adminCatalog,
+                builder: (context, state) => const AdminCatalogPage(),
+              ),
+            ],
+          ),
+        ],
       ),
       GoRoute(
         path: AppRoutes.adminProductForm,
         builder: (context, state) {
           final jouet = state.extra as Jouet?;
           return AdminProductFormPage(jouetToEdit: jouet);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.adminCategoryForm,
+        builder: (context, state) {
+          final cat = state.extra as Categorie?;
+          return AdminCategoryDetailPage(categorieToEdit: cat);
         },
       ),
 
@@ -186,7 +257,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.jouetdetail,
         builder: (context, state) {
           final jouet = state.extra as Jouet;
-          final authState = ref.watch(authProvider);
+
           // final userId = authState.utilisateur?.uid ?? '0FCX2CD3IlcC2tPxiOujc0b0N9v1';
 
           return JouetDetailScreen(

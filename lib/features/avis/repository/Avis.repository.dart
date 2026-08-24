@@ -210,4 +210,65 @@ class AvisRepository {
       throw Exception('Erreur: $e');
     }
   }
+
+  Stream<List<Avis>> getAvisStream() {
+    return _avisRef
+        .orderBy('dateCreation', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => Avis.fromFirestore(doc)).toList());
+  }
+
+  Stream<List<Avis>> getAvisByJouetStream(String jouetId) {
+    return _avisRef
+        .where('cibleId', isEqualTo: jouetId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => Avis.fromFirestore(doc)).toList());
+  }
+
+  Stream<List<Avis>> getAvisByUtilisateurStream(String utilisateurId) {
+    return _avisRef
+        .where('utilisateurId', isEqualTo: utilisateurId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => Avis.fromFirestore(doc)).toList());
+  }
+
+  Future<List<Avis>> getAvisSignales() async {
+    try {
+      QuerySnapshot snapshot = await _avisRef
+          .where('statut', isEqualTo: 'signale')
+          .orderBy('dateCreation', descending: true)
+          .get();
+      return snapshot.docs.map((doc) => Avis.fromFirestore(doc)).toList();
+    } catch (e) {
+      throw Exception('Erreur: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> getStatistiquesAvis(String jouetId) async {
+    try {
+      List<Avis> avisList = await getAvisByCible(jouetId, 'jouet');
+      if (avisList.isEmpty) {
+        return {
+          'total': 0,
+          'moyenne': 0.0,
+          'distribution': {1: 0, 2: 0, 3: 0, 4: 0, 5: 0},
+        };
+      }
+      int total = avisList.length;
+      double somme = avisList.fold(0.0, (acc, a) => acc + a.note);
+      double moyenne = somme / total;
+      Map<int, int> distribution = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
+      for (var a in avisList) {
+        int n = a.note.round().clamp(1, 5);
+        distribution[n] = (distribution[n] ?? 0) + 1;
+      }
+      return {
+        'total': total,
+        'moyenne': moyenne,
+        'distribution': distribution,
+      };
+    } catch (e) {
+      throw Exception('Erreur: $e');
+    }
+  }
 }

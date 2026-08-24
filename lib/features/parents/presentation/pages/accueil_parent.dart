@@ -13,6 +13,7 @@ import '../../../../core/constants/AppTextStyles.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
 import '../../../../shared/widgets/app_bottom_nav_bar.dart';
+import '../../../../shared/widgets/email_verification_banner.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../../jouets/models/jouet.dart';
 import '../../../jouets/providers/jouet_provider.dart';
@@ -32,15 +33,18 @@ class AccueilParentPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
     final isAuthenticated = authState.isAuthenticated;
+    final isEmailVerified = authState.isEmailVerified;
+    final isFullyVerified = isAuthenticated && isEmailVerified;
     final parentAsync = ref.watch(parentNotifierProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: _buildAppBar(context, isAuthenticated),
+      appBar: _buildAppBar(context, ref, isFullyVerified, isAuthenticated),
       body: RefreshIndicator(
         onRefresh: () async {
           if (isAuthenticated) {
             ref.invalidate(parentNotifierProvider);
+            ref.read(authProvider.notifier).reloadAndCheckEmailVerified();
           }
           ref.invalidate(jouetsProvider);
         },
@@ -52,8 +56,14 @@ class AccueilParentPage extends ConsumerWidget {
             children: [
               AppSpacing.verticalSm,
 
-              // ── EN-TÊTE OU BANNIÈRE HERO SELON L'ÉTAT DE CONNEXION ──
-              if (isAuthenticated) ...[
+              // ── BANNIÈRE DE VÉRIFICATION EMAIL (SI CONNECTÉ ET NON VÉRIFIÉ) ──
+              if (isAuthenticated && !isEmailVerified) ...[
+                const EmailVerificationBanner(),
+                AppSpacing.verticalLg,
+              ],
+
+              // ── EN-TÊTE OU BANNIÈRE HERO SELON L'ÉTAT DE VÉRIFICATION ──
+              if (isFullyVerified) ...[
                 parentAsync.when(
                   data: (parent) => _buildConnectedHeader(context, parent),
                   loading: () => _buildHeaderSkeleton(),
@@ -71,8 +81,8 @@ class AccueilParentPage extends ConsumerWidget {
               ],
               AppSpacing.verticalXxl,
 
-              // ── SECTION ENFANTS (SI CONNECTÉ) ──
-              if (isAuthenticated) ...[
+              // ── SECTION ENFANTS (UNIQUEMENT SI COMPTE PLEINEMENT VÉRIFIÉ) ──
+              if (isFullyVerified) ...[
                 parentAsync.when(
                   data: (parent) {
                     if (parent.enfants.isEmpty) {
@@ -166,7 +176,12 @@ class AccueilParentPage extends ConsumerWidget {
     );
   }
 
-  PreferredSizeWidget _buildAppBar(BuildContext context, bool isAuthenticated) {
+  PreferredSizeWidget _buildAppBar(
+    BuildContext context,
+    WidgetRef ref,
+    bool isFullyVerified,
+    bool isAuthenticated,
+  ) {
     return AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
@@ -202,7 +217,7 @@ class AccueilParentPage extends ConsumerWidget {
         ],
       ),
       actions: [
-        if (isAuthenticated)
+        if (isFullyVerified)
           IconButton(
             icon: const Icon(
               Icons.notifications_none_rounded,
@@ -216,11 +231,48 @@ class AccueilParentPage extends ConsumerWidget {
               );
             },
           )
+        else if (isAuthenticated)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: TextButton.icon(
+              onPressed: () async {
+                final confirmed = await AppDialogs.showConfirmDialog(
+                  context: context,
+                  title: 'Déconnexion',
+                  message: 'Voulez-vous vous déconnecter ?',
+                  confirmText: 'Se déconnecter',
+                  cancelText: 'Annuler',
+                  isDanger: true,
+                );
+                if (confirmed == true && context.mounted) {
+                  final authNotifier = ref.read(authProvider.notifier);
+                  ref.invalidate(parentNotifierProvider);
+                  await authNotifier.logout();
+                }
+              },
+              style: TextButton.styleFrom(
+                backgroundColor: AppColors.danger.withValues(alpha: 0.1),
+                foregroundColor: AppColors.danger,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
+              ),
+              icon: const Icon(Icons.logout_rounded, size: 18),
+              label: const Text(
+                'Déconnexion',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+              ),
+            ),
+          )
         else
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: TextButton.icon(
-              onPressed: () => context.push(AppRoutes.login),
+              onPressed: () => context.go(AppRoutes.login),
               style: TextButton.styleFrom(
                 backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                 foregroundColor: AppColors.primary,
@@ -424,13 +476,7 @@ class AccueilParentPage extends ConsumerWidget {
                 ),
                 AppSpacing.verticalMd,
                 ElevatedButton(
-                  onPressed: () {
-                    try {
-                      context.push(AppRoutes.register);
-                    } catch (_) {
-                      Navigator.pushNamed(context, '/register');
-                    }
-                  },
+                  onPressed: () => context.go(AppRoutes.register),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: AppColors.white,

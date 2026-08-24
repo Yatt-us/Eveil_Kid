@@ -71,43 +71,50 @@ class JouetRepository {
   }
 
   Future<void> ajouterJouet(Jouet jouet) async {
-    await _jouetsCollection
-        .doc(jouet.jouetId)
-        .set(jouet.toFirestore());
+    final docRef = jouet.jouetId.isNotEmpty
+        ? _jouetsCollection.doc(jouet.jouetId)
+        : _jouetsCollection.doc();
+    final effectiveJouet = jouet.jouetId.isNotEmpty
+        ? jouet
+        : jouet.copyWith(jouetId: docRef.id);
+    await docRef.set(effectiveJouet.toFirestore(), SetOptions(merge: true));
   }
 
   Future<void> modifierJouet(Jouet jouet) async {
     await _jouetsCollection
         .doc(jouet.jouetId)
-        .update(jouet.toFirestore());
+        .set(jouet.toFirestore(), SetOptions(merge: true));
   }
 
   Future<void> supprimerJouet(String jouetId) async {
     await _jouetsCollection.doc(jouetId).delete();
   }
 
-  Future<void> modifierStock(String jouetId, int nouveauStock,) async {
-    await _jouetsCollection.doc(jouetId).update({
+  Future<void> modifierStock(
+    String jouetId,
+    int nouveauStock,
+  ) async {
+    await _jouetsCollection.doc(jouetId).set({
       'stock': nouveauStock,
       'stockDisponible': nouveauStock,
       'dateModification': Timestamp.now(),
-    });
+    }, SetOptions(merge: true));
   }
 
   /// Active ou désactive un jouet
   Future<void> toggleActif(String jouetId, bool estActif) async {
-    await _jouetsCollection.doc(jouetId).update({
+    await _jouetsCollection.doc(jouetId).set({
       'estActif': estActif,
       'dateModification': Timestamp.now(),
-    });
+    }, SetOptions(merge: true));
   }
 
   /// Définit si un jouet est populaire (mis en avant)
   Future<void> togglePopulaire(String jouetId, bool estPopulaire) async {
-    await _jouetsCollection.doc(jouetId).update({
+    await _jouetsCollection.doc(jouetId).set({
       'estPopulaire': estPopulaire,
       'dateModification': Timestamp.now(),
-    });
+    }, SetOptions(merge: true));
   }
 
   /// Modification express prix et stock
@@ -117,12 +124,12 @@ class JouetRepository {
     required int stock,
     required int stockDisponible,
   }) async {
-    await _jouetsCollection.doc(jouetId).update({
+    await _jouetsCollection.doc(jouetId).set({
       'prix': prix,
       'stock': stock,
       'stockDisponible': stockDisponible,
       'dateModification': Timestamp.now(),
-    });
+    }, SetOptions(merge: true));
   }
 
   /// Modifie la catégorie d'un jouet
@@ -131,10 +138,11 @@ class JouetRepository {
     required String categorieId,
     required String nomCategorieDenormalise,
   }) async {
-    await _jouetsCollection.doc(jouetId).update({
+    await _jouetsCollection.doc(jouetId).set({
       'categorieId': categorieId,
+      'nomCategorie': nomCategorieDenormalise,
       'nomCategorieDenormalise': nomCategorieDenormalise,
       'dateModification': Timestamp.now(),
-    });
+    }, SetOptions(merge: true));
   }
 }

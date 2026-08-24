@@ -27,7 +27,6 @@ class JouetsScreen extends ConsumerStatefulWidget {
 class _JouetsScreenState extends ConsumerState<JouetsScreen> {
   final TextEditingController _searchController = TextEditingController();
 
-  int _currentIndex = 1;
   String _recherche = '';
   String? _categorieIdSelectionnee; // null pour "Tous"
 
@@ -149,32 +148,8 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: AppBottomNavBar(),
+      bottomNavigationBar: const AppBottomNavBar(),
     );
-  }
-
-  void _onNavigationTap(int index) {
-    if (index == _currentIndex) return;
-
-    setState(() {
-      _currentIndex = index;
-    });
-
-    // Exemple de routage bas de page selon l'onglet cliqué :
-    switch (index) {
-      case 0:
-        context.go(AppRoutes.home);
-        break;
-      case 1:
-        // Déjà sur le catalogue (JouetsScreen)
-        break;
-      case 2:
-        context.go(AppRoutes.activites);
-        break;
-      case 3:
-        context.go(AppRoutes.tutoriels);
-        break;
-    }
   }
 
   // HEADER DYNAMIQUE (Compteur du panier via Riverpod)

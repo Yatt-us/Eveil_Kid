@@ -110,17 +110,18 @@ class Jouet {
   factory Jouet.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> snapshot,
   ) {
-    final data = snapshot.data()!;
+    final data = snapshot.data() ?? {};
+    final id = snapshot.id;
 
     return Jouet(
-      jouetId: data['jouetId'] ?? snapshot.id,
+      jouetId: id,
       categorieId: data['categorieId'] ?? '',
       createurId: data['createurId'] ?? '',
 
       nom: data['nom'] ?? '',
       description: data['description'] ?? '',
       nomCategorieDenormalise:
-          data['nomCategorieDenormalise'] ?? '',
+          data['nomCategorie'] ?? data['nomCategorieDenormalise'] ?? '',
 
       images: List<String>.from(data['images'] ?? []),
       imagePrincipaleUrl:
@@ -136,10 +137,10 @@ class Jouet {
       stockDisponible: data['stockDisponible'] ?? 0,
 
       noteMoyenneDenormalise:
-          (data['noteMoyenneDenormalise'] ?? 0).toDouble(),
+          (data['noteMoyenne'] ?? data['noteMoyenneDenormalise'] ?? 0).toDouble(),
 
       nombreAvisDenormalise:
-          data['nombreAvisDenormalise'] ?? 0,
+          data['nombreAvis'] ?? data['nombreAvisDenormalise'] ?? 0,
 
       nbTutorielsAssocies:
           data['nbTutorielsAssocies'] ?? 0,
@@ -163,6 +164,7 @@ class Jouet {
 
       'nom': nom,
       'description': description,
+      'nomCategorie': nomCategorieDenormalise,
       'nomCategorieDenormalise': nomCategorieDenormalise,
 
       'images': images,
@@ -177,14 +179,13 @@ class Jouet {
       'stock': stock,
       'stockDisponible': stockDisponible,
 
-      'noteMoyenneDenormalise':
-          noteMoyenneDenormalise,
+      'noteMoyenne': noteMoyenneDenormalise,
+      'noteMoyenneDenormalise': noteMoyenneDenormalise,
 
-      'nombreAvisDenormalise':
-          nombreAvisDenormalise,
+      'nombreAvis': nombreAvisDenormalise,
+      'nombreAvisDenormalise': nombreAvisDenormalise,
 
-      'nbTutorielsAssocies':
-          nbTutorielsAssocies,
+      'nbTutorielsAssocies': nbTutorielsAssocies,
 
       'estActif': estActif,
       'estPopulaire': estPopulaire,
