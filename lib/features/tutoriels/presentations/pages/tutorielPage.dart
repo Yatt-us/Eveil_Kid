@@ -1,3 +1,4 @@
+import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/features/tutoriels/providers/tutorielProvider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -133,7 +134,7 @@ class TutorielPage extends ConsumerWidget {
                   const Icon(
                     Icons.error_outline,
                     size: 50,
-                    color: Colors.red,
+                    color: AppColors.danger,
                   ),
 
                   const SizedBox(height: 16),

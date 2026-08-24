@@ -1,4 +1,11 @@
 import 'package:eveilkid/features/activites/presentation/pages/admin/activites_liste.dart';
+import 'package:eveilkid/features/activites/presentation/pages/admin/add_activity_screen.dart';
+import 'package:eveilkid/features/questions/enums/question_type.enum.dart';
+import 'package:eveilkid/features/questions/options_questions/choose_question_type_screen.dart';
+import 'package:eveilkid/features/questions/presentation/pages/add_question_screen.dart';
+import 'package:eveilkid/features/questions/presentation/pages/edit_question_screen.dart';
+import 'package:eveilkid/features/questions/presentation/pages/question_detail_screen.dart';
+import 'package:eveilkid/features/questions/presentation/pages/questions_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -172,8 +179,64 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.adminActivites,
-        builder: (context, state) => const ActivitesListe(),
+        builder: (context, state) => const ActivitiesListScreen(),
       ),
+      GoRoute(
+        path: AppRoutes.adminAddActivity,
+        builder: (context, state) => const AddActivityScreen(),
+      ),
+
+      GoRoute(
+      path: AppRoutes.adminActivityQuestions,
+      builder: (context, state) {
+      
+        final activityId = state.pathParameters['activityId']!;
+        return QuestionsListScreen(activityId: activityId);
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.adminActivityTypeQuestions,
+      builder: (context, state) {
+        final activityId = state.pathParameters['activityId']!;
+        return ChooseQuestionTypeScreen(activityId: activityId);
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.adminActivityAddQuestions,
+      builder: (context, state) {
+        final activityId = state.pathParameters['activityId']!;
+        final type = state.uri.queryParameters['type'] ?? 'choixMultiple';
+        final questionType = QuestionTypeExtension.fromString(type);
+        return AddQuestionScreen(
+          activityId: activityId,
+          type: questionType,
+        );
+      },
+    ),
+   
+    GoRoute(
+      path: AppRoutes.adminActivityEditQuestions,
+      builder: (context, state) {
+        final activityId = state.pathParameters['activityId']!;
+        final questionId = state.pathParameters['questionId']!;
+        return EditQuestionScreen(
+          activityId: activityId,
+          questionId: questionId,
+        );
+      },
+    ),
+    
+    GoRoute(
+      path: AppRoutes.adminActivityDetailQuestions,
+      builder: (context, state) {
+        final activityId = state.pathParameters['activityId']!;
+        final questionId = state.pathParameters['questionId']!;
+        return QuestionDetailScreen(
+          activityId: activityId,
+          questionId: questionId,
+        );
+      },
+    ),
       
     ],
 
