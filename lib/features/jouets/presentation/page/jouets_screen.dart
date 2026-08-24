@@ -15,6 +15,8 @@ import 'package:eveilkid/features/jouets/providers/jouet_provider.dart';
 import 'package:eveilkid/features/jouets/presentation/page/jouet_card.dart';
 import 'package:eveilkid/features/panier/providers/panier_provider.dart';
 
+import 'package:eveilkid/core/provider/bottom_nav_bar_provider.dart';
+
 class JouetsScreen extends ConsumerStatefulWidget {
   final String utilisateurId;
 
@@ -27,9 +29,7 @@ class JouetsScreen extends ConsumerStatefulWidget {
 class _JouetsScreenState extends ConsumerState<JouetsScreen> {
   final TextEditingController _searchController = TextEditingController();
 
-  int _currentIndex = 1;
   String _recherche = '';
-  String? _categorieIdSelectionnee; // null pour "Tous"
 
   @override
   void dispose() {
@@ -37,7 +37,7 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
     super.dispose();
   }
 
-  List<Jouet> _filtrerJouets(List<Jouet> jouets) {
+  List<Jouet> _filtrerJouets(List<Jouet> jouets, String? selectedCategory) {
     return jouets.where((jouet) {
       final rechercheLower = _recherche.trim().toLowerCase();
 
@@ -47,8 +47,8 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
           jouet.description.toLowerCase().contains(rechercheLower);
 
       final correspondCategorie =
-          _categorieIdSelectionnee == null ||
-          jouet.categorieId == _categorieIdSelectionnee;
+          selectedCategory == null ||
+          jouet.categorieId == selectedCategory;
 
       return correspondRecherche && correspondCategorie;
     }).toList();
@@ -57,12 +57,22 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
   @override
   Widget build(BuildContext context) {
     final jouetsAsync = ref.watch(jouetsProvider);
+    final selectedCategory = ref.watch(selectedCategoryFilterProvider);
+    final theme = Theme.of(context);
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          ref.read(bottomIndexProvider.notifier).setIndex(0);
+          context.go(AppRoutes.home);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: SafeArea(
+          child: Column(
+            children: [
             Expanded(
               child: CustomScrollView(
                 slivers: [
@@ -101,7 +111,7 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
                       child: _buildError(error),
                     ),
                     data: (jouets) {
-                      final jouetsFiltres = _filtrerJouets(jouets);
+                      final jouetsFiltres = _filtrerJouets(jouets, selectedCategory);
 
                       if (jouetsFiltres.isEmpty) {
                         return SliverFillRemaining(
@@ -149,33 +159,10 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: AppBottomNavBar(),
-    );
-  }
-
-  void _onNavigationTap(int index) {
-    if (index == _currentIndex) return;
-
-    setState(() {
-      _currentIndex = index;
-    });
-
-    // Exemple de routage bas de page selon l'onglet cliqué :
-    switch (index) {
-      case 0:
-        context.go(AppRoutes.home);
-        break;
-      case 1:
-        // Déjà sur le catalogue (JouetsScreen)
-        break;
-      case 2:
-        context.go(AppRoutes.activites);
-        break;
-      case 3:
-        context.go(AppRoutes.tutoriels);
-        break;
-    }
-  }
+      bottomNavigationBar: const AppBottomNavBar(),
+    ),
+  );
+}
 
   // HEADER DYNAMIQUE (Compteur du panier via Riverpod)
   Widget _buildHeader() {
@@ -372,7 +359,9 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
 
   // CATEGORIES DYNAMIQUES
   Widget _buildCategoriesBar() {
-    final categoriesAsync = ref.watch(categoriesPrincipalesProvider);
+    final categoriesAsync = ref.watch(categoriesStreamProvider);
+    final selectedCategoryId = ref.watch(selectedCategoryFilterProvider);
+    final theme = Theme.of(context);
 
     return categoriesAsync.when(
       loading: () => const SizedBox(
@@ -391,36 +380,42 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
             itemBuilder: (context, index) {
               final isTous = index == 0;
               final selected = isTous
-                  ? _categorieIdSelectionnee == null
-                  : _categorieIdSelectionnee ==
-                        categories[index - 1].categorieId;
+                  ? selectedCategoryId == null
+                  : selectedCategoryId == categories[index - 1].categorieId;
 
               final nomCategorie = isTous ? 'Tous' : categories[index - 1].nom;
 
               return GestureDetector(
                 onTap: () {
-                  setState(() {
-                    _categorieIdSelectionnee = isTous
-                        ? null
-                        : categories[index - 1].categorieId;
-                  });
+                  ref
+                      .read(selectedCategoryFilterProvider.notifier)
+                      .selectCategory(
+                        isTous ? null : categories[index - 1].categorieId,
+                      );
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: selected ? AppColors.primary : AppColors.surface,
+                    color: selected
+                        ? AppColors.primary
+                        : theme.colorScheme.surface,
                     borderRadius: AppRadius.circularRadius,
                     border: selected
                         ? null
-                        : Border.all(color: AppColors.border),
+                        : Border.all(
+                            color: theme.dividerColor.withValues(alpha: 0.8),
+                          ),
                   ),
                   child: Text(
                     nomCategorie,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                      color: selected ? Colors.white : AppColors.textPrimary,
+                      color: selected
+                          ? Colors.white
+                          : (theme.textTheme.bodyMedium?.color ??
+                              AppColors.textPrimary),
                     ),
                   ),
                 ),

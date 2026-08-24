@@ -1,4 +1,7 @@
+import 'package:eveilkid/features/enfant/model/enfant_model.dart';
 import 'package:eveilkid/features/parents/presentation/pages/accueil_parent.dart';
+import 'package:eveilkid/features/parents/presentation/pages/aide_support_page.dart';
+import 'package:eveilkid/features/parents/presentation/pages/detail_enfant.dart';
 import 'package:eveilkid/features/parents/presentation/pages/profil_parent.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -56,14 +59,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           state.matchedLocation == AppRoutes.register;
       final isSplash = state.matchedLocation == AppRoutes.splash;
 
-      // 2. Utilisateur non authentifié
+      // 2. Utilisateur non authentifié (Mode Visiteur)
       if (!isAuthenticated) {
-        // Autoriser l'accès aux pages d'authentification ou pages publiques autorisées
-        if (isGoingToAuth || state.matchedLocation == AppRoutes.tutoriels) {
-          return null;
+        // Rediriger depuis splash vers accueil visiteur
+        if (isSplash) {
+          return AppRoutes.home;
         }
-        // Rediriger vers la page de connexion pour toute autre page
-        return AppRoutes.login;
+        // Interdire l'accès à l'espace administration
+        if (state.matchedLocation.startsWith('/admin')) {
+          return AppRoutes.login;
+        }
+        // Rediriger l'accès au profil vers l'accueil visiteur
+        if (state.matchedLocation.startsWith(AppRoutes.profile)) {
+          return AppRoutes.home;
+        }
+        // Autoriser l'accès aux pages publiques (Accueil, Boutique, Tutos, Auth)
+        return null;
       }
 
       final role = authState.utilisateur?.role;
@@ -186,14 +197,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.jouetdetail,
         builder: (context, state) {
           final jouet = state.extra as Jouet;
-          final authState = ref.watch(authProvider);
-          // final userId = authState.utilisateur?.uid ?? '0FCX2CD3IlcC2tPxiOujc0b0N9v1';
-
           return JouetDetailScreen(
             jouet: jouet,
             utilisateurId: '0FCX2CD3IlcC2tPxiOujc0b0N9v1',
           );
         },
+      ),
+      GoRoute(
+        path: AppRoutes.enfantDetail,
+        builder: (context, state) {
+          final enfant = state.extra as EnfantModel;
+          return DetailEnfantPage(enfant: enfant);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.aideSupport,
+        builder: (context, state) => const AideSupportPage(),
       ),
     ],
 

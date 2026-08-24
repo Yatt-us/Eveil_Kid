@@ -61,6 +61,12 @@ final rechercheCategoriesProvider =
   },
 );
 
+/// Stream en temps réel des catégories actives (pour accueil parent et boutique)
+final categoriesStreamProvider = StreamProvider<List<Categorie>>((ref) {
+  final repository = ref.read(categorieRepositoryProvider);
+  return repository.streamCategoriesActives();
+});
+
 /// Stream en temps réel de toutes les catégories (actives et inactives)
 final categoriesAdminStreamProvider = StreamProvider<List<Categorie>>((ref) {
   final repository = ref.read(categorieRepositoryProvider);
@@ -72,3 +78,23 @@ final categoriesAdminProvider = FutureProvider<List<Categorie>>((ref) async {
   final repository = ref.read(categorieRepositoryProvider);
   return repository.getAllCategoriesAdmin();
 });
+
+/// Notifier pour filtrer la boutique selon la catégorie sélectionnée
+class SelectedCategoryFilterNotifier extends Notifier<String?> {
+  @override
+  String? build() => null;
+
+  void selectCategory(String? categoryId) {
+    state = categoryId;
+  }
+
+  void clear() {
+    state = null;
+  }
+}
+
+/// Provider pour filtrer la boutique selon la catégorie sélectionnée
+final selectedCategoryFilterProvider =
+    NotifierProvider<SelectedCategoryFilterNotifier, String?>(
+  SelectedCategoryFilterNotifier.new,
+);

@@ -108,6 +108,18 @@ class CategorieRepository {
         .toList();
   }
 
+  /// Écoute en temps réel les catégories actives (pour les parents/utilisateurs)
+  Stream<List<Categorie>> streamCategoriesActives() {
+    return _categoriesCollection
+        .where('estActive', isEqualTo: true)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => Categorie.fromFirestore(doc))
+              .toList(),
+        );
+  }
+
   /// Écoute en temps réel toutes les catégories
   Stream<List<Categorie>> streamCategoriesAdmin() {
     return _categoriesCollection.snapshots().map(

@@ -37,14 +37,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     super.dispose();
   }
 
-  void _popOrGoLogin() {
-    if (context.canPop()) {
-      context.pop();
-    } else {
-      context.go(AppRoutes.login);
-    }
-  }
-
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -65,7 +57,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         context: context,
         message: 'Votre compte a été créé avec succès.',
       );
-      _popOrGoLogin();
+      context.go(AppRoutes.home);
     } else {
       final error = ref.read(authProvider).errorMessage;
       AppDialogs.showSnackBar(
@@ -85,6 +77,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         context: context,
         message: 'Connexion Google réussie !',
       );
+      context.go(AppRoutes.home);
     } else {
       final error = ref.read(authProvider).errorMessage;
       AppDialogs.showSnackBar(
@@ -119,16 +112,14 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       child: AppIconButton(
                         icon: Icons.arrow_back_rounded,
                         size: 36,
-                        onPressed: _popOrGoLogin,
+                        onPressed: () => context.go(AppRoutes.home),
                       ),
                     ),
 
                     const SizedBox(height: 8),
 
                     // LOGO OFFICIEL
-                    const Center(
-                      child: AppLogo(size: 76),
-                    ),
+                    const Center(child: AppLogo(size: 76)),
 
                     const SizedBox(height: 16),
 
@@ -294,7 +285,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         ),
                         const SizedBox(width: 4),
                         GestureDetector(
-                          onTap: _popOrGoLogin,
+                          onTap: () => context.go(AppRoutes.login),
                           child: const Text(
                             'Se connecter',
                             style: TextStyle(

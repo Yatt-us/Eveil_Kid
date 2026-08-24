@@ -92,7 +92,7 @@ class Utilisateur {
     }).copyWith(enfants: enfants);
   }
 
-  Object? get uid => null;
+  String get uid => utilisateurId;
 
   Map<String, dynamic> toMap() {
     return {

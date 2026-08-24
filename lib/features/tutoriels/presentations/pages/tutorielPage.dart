@@ -1,7 +1,10 @@
+import 'package:eveilkid/core/provider/bottom_nav_bar_provider.dart';
+import 'package:eveilkid/core/router/app_routes.dart';
 import 'package:eveilkid/features/tutoriels/providers/tutorielProvider.dart';
 import 'package:eveilkid/shared/widgets/app_bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class TutorielPage extends ConsumerWidget {
   const TutorielPage({super.key});
@@ -10,8 +13,16 @@ class TutorielPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tutorielsAsync = ref.watch(tutorielsProvider);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Tutoriels')),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          ref.read(bottomIndexProvider.notifier).setIndex(0);
+          context.go(AppRoutes.home);
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Tutoriels')),
 
       body: tutorielsAsync.when(
         // Données chargées
@@ -143,7 +154,8 @@ class TutorielPage extends ConsumerWidget {
           );
         },
       ),
-      bottomNavigationBar: AppBottomNavBar(),
-    );
+      bottomNavigationBar: const AppBottomNavBar(),
+    ),
+  );
   }
 }

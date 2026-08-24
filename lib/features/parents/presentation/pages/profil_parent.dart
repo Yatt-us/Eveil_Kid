@@ -11,12 +11,15 @@ import '../../../../core/constants/AppTextStyles.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
 import '../../../../shared/widgets/app_bottom_nav_bar.dart';
-import '../../../../shared/widgets/app_theme_mode_sheet.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../providers/parent_provider.dart';
 import 'liste_enfants.dart';
 import 'modifier_profil.dart';
+import 'notification_settings_page.dart';
+import 'parametre_page.dart';
 import 'securite_page.dart';
+
+import '../../../../core/provider/bottom_nav_bar_provider.dart';
 
 class ProfilParentPage extends ConsumerWidget {
   const ProfilParentPage({super.key});
@@ -32,9 +35,12 @@ class ProfilParentPage extends ConsumerWidget {
     );
 
     if (confirmed == true && context.mounted) {
-      Navigator.of(context).popUntil((route) => route.isFirst);
       await ref.read(authProvider.notifier).logout();
       ref.invalidate(parentNotifierProvider);
+      if (context.mounted) {
+        ref.read(bottomIndexProvider.notifier).setIndex(0);
+        context.go(AppRoutes.home);
+      }
     }
   }
 
@@ -43,10 +49,20 @@ class ProfilParentPage extends ConsumerWidget {
     final authState = ref.watch(authProvider);
     final isAuthenticated = authState.isAuthenticated;
 
+    final theme = Theme.of(context);
+
     // Si non connecté (mode visiteur)
     if (!isAuthenticated) {
-      return Scaffold(
-        backgroundColor: AppColors.background,
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) {
+            ref.read(bottomIndexProvider.notifier).setIndex(0);
+            context.go(AppRoutes.home);
+          }
+        },
+        child: Scaffold(
+          backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -120,13 +136,22 @@ class ProfilParentPage extends ConsumerWidget {
             ),
           ),
         ),
-      );
-    }
+      ),
+    );
+  }
 
     final parentAsync = ref.watch(parentNotifierProvider);
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          ref.read(bottomIndexProvider.notifier).setIndex(0);
+          context.go(AppRoutes.home);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -335,10 +360,24 @@ class ProfilParentPage extends ConsumerWidget {
                       icon: Icons.notifications_none_rounded,
                       title: 'Notifications',
                       onTap: () {
-                        AppDialogs.showSnackBar(
-                          context: context,
-                          message:
-                              'Les notifications seront configurées prochainement.',
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const NotificationSettingsPage(),
+                          ),
+                        );
+                      },
+                    ),
+                    const Divider(height: 1, color: AppColors.border),
+                    _buildMenuItem(
+                      icon: Icons.security_rounded,
+                      title: 'Sécurité du compte',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const SecuritePage(),
+                          ),
                         );
                       },
                     ),
@@ -347,7 +386,12 @@ class ProfilParentPage extends ConsumerWidget {
                       icon: Icons.settings_outlined,
                       title: 'Paramètres',
                       onTap: () {
-                        AppThemeModeSheet.show(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ParametresPage(),
+                          ),
+                        );
                       },
                     ),
                     const Divider(height: 1, color: AppColors.border),
@@ -411,8 +455,8 @@ class ProfilParentPage extends ConsumerWidget {
                 ),
               ] else ...[
                 InkWell(
-                  onTap: () async {
-                    await ref.read(authProvider.notifier).logout();
+                  onTap: () {
+                    context.push(AppRoutes.login);
                   },
                   borderRadius: BorderRadius.circular(12),
                   child: Padding(
@@ -450,7 +494,8 @@ class ProfilParentPage extends ConsumerWidget {
         error: (err, _) => Center(child: Text('Erreur: $err')),
       ),
       bottomNavigationBar: const AppBottomNavBar(),
-    );
+    ),
+  );
   }
 
   Widget _buildMenuItem({
