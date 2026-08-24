@@ -6,6 +6,7 @@ import 'package:eveilkid/features/tutoriels/presentation/widgets/category_filter
 import 'package:eveilkid/features/tutoriels/presentation/widgets/tutoriel_card.dart';
 import 'package:eveilkid/features/tutoriels/presentation/widgets/tutoriel_search.dart';
 import 'package:eveilkid/features/tutoriels/providers/tutoriel_provider.dart';
+import 'package:eveilkid/shared/widgets/app_bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -271,6 +272,8 @@ class _TutorielPageState extends ConsumerState<TutorielPage> {
           ),
         ),
       ),
+
+      bottomNavigationBar: AppBottomNavBar(),
     );
   }
 

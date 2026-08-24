@@ -111,14 +111,17 @@ class Jouet {
     DocumentSnapshot<Map<String, dynamic>> snapshot,
   ) {
     final data = snapshot.data() ?? {};
+    final id = snapshot.id;
 
     return Jouet(
-      jouetId: data['jouetId'] ?? snapshot.id,
+      jouetId: id,
       categorieId: data['categorieId'] ?? '',
       createurId: data['createurId'] ?? '',
       nom: data['nom'] ?? '',
       description: data['description'] ?? '',
-      nomCategorieDenormalise: data['nomCategorieDenormalise'] ?? '',
+      nomCategorieDenormalise:
+          data['nomCategorie'] ?? data['nomCategorieDenormalise'] ?? '',
+
       images: List<String>.from(data['images'] ?? []),
       imagePrincipaleUrl: data['imagePrincipaleUrl'] ?? '',
       ageMinimum: data['ageMinimum'] ?? 0,
@@ -127,9 +130,16 @@ class Jouet {
       devise: data['devise'] ?? 'FCFA',
       stock: data['stock'] ?? 0,
       stockDisponible: data['stockDisponible'] ?? 0,
-      noteMoyenneDenormalise: (data['noteMoyenneDenormalise'] ?? 0).toDouble(),
-      nombreAvisDenormalise: data['nombreAvisDenormalise'] ?? 0,
-      nbTutorielsAssocies: data['nbTutorielsAssocies'] ?? 0,
+
+      noteMoyenneDenormalise:
+          (data['noteMoyenne'] ?? data['noteMoyenneDenormalise'] ?? 0).toDouble(),
+
+      nombreAvisDenormalise:
+          data['nombreAvis'] ?? data['nombreAvisDenormalise'] ?? 0,
+
+      nbTutorielsAssocies:
+          data['nbTutorielsAssocies'] ?? 0,
+
       estActif: data['estActif'] ?? true,
       estPopulaire: data['estPopulaire'] ?? false,
       dateCreation: data['dateCreation'] ?? Timestamp.now(),
@@ -144,6 +154,7 @@ class Jouet {
       'createurId': createurId,
       'nom': nom,
       'description': description,
+      'nomCategorie': nomCategorieDenormalise,
       'nomCategorieDenormalise': nomCategorieDenormalise,
       'images': images,
       'imagePrincipaleUrl': imagePrincipaleUrl,
@@ -153,9 +164,15 @@ class Jouet {
       'devise': devise,
       'stock': stock,
       'stockDisponible': stockDisponible,
+
+      'noteMoyenne': noteMoyenneDenormalise,
       'noteMoyenneDenormalise': noteMoyenneDenormalise,
+
+      'nombreAvis': nombreAvisDenormalise,
       'nombreAvisDenormalise': nombreAvisDenormalise,
+
       'nbTutorielsAssocies': nbTutorielsAssocies,
+
       'estActif': estActif,
       'estPopulaire': estPopulaire,
       'dateCreation': dateCreation,

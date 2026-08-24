@@ -56,9 +56,10 @@ class AppDatePicker extends StatelessWidget {
           Text(
             label!,
             style: const TextStyle(
-              fontSize: 14,
+              fontSize: 13,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
+              letterSpacing: -0.1,
             ),
           ),
           const SizedBox(height: 6),
@@ -67,32 +68,43 @@ class AppDatePicker extends StatelessWidget {
           onTap: () => _pickDate(context),
           borderRadius: BorderRadius.circular(12),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(
+                color: AppColors.border,
+                width: 1.0,
+              ),
             ),
             child: Row(
               children: [
                 const Icon(
                   Icons.calendar_today_outlined,
                   color: AppColors.icon,
-                  size: 20,
+                  size: 19,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     formattedDate ?? hintText,
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: 14,
+                      fontWeight: formattedDate != null
+                          ? FontWeight.w500
+                          : FontWeight.normal,
                       color: formattedDate != null
                           ? AppColors.textPrimary
-                          : AppColors.textSecondary,
+                          : AppColors.textSecondary.withValues(alpha: 0.65),
+                      letterSpacing: 0.1,
                     ),
                   ),
                 ),
-                const Icon(Icons.arrow_drop_down, color: AppColors.icon),
+                const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: AppColors.icon,
+                  size: 20,
+                ),
               ],
             ),
           ),

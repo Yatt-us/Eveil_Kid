@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:eveilkid/core/constants/app_colors.dart';
-import 'package:eveilkid/core/constants/AppSpacing.dart';
-import 'package:eveilkid/features/admin/presentation/widgets/admin_category_form_dialog.dart';
+import 'package:eveilkid/core/router/app_routes.dart';
 import 'package:eveilkid/features/admin/presentation/widgets/admin_category_tile.dart';
 import 'package:eveilkid/features/admin/presentation/widgets/admin_drawer.dart';
-import 'package:eveilkid/features/admin/providers/admin_catalog_controller.dart';
 import 'package:eveilkid/features/categories/providers/categorie_provider.dart';
 import 'package:eveilkid/shared/widgets/app_search_bar.dart';
 import 'package:eveilkid/shared/widgets/app_states.dart';
 
+/// Page d'administration des catégories avec onglets Actives / Inactives.
 class AdminCategoryListPage extends ConsumerStatefulWidget {
   const AdminCategoryListPage({super.key});
 
@@ -18,13 +18,35 @@ class AdminCategoryListPage extends ConsumerStatefulWidget {
       _AdminCategoryListPageState();
 }
 
-class _AdminCategoryListPageState extends ConsumerState<AdminCategoryListPage> {
+class _AdminCategoryListPageState extends ConsumerState<AdminCategoryListPage>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        setState(() {});
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final categoriesAsync = ref.watch(categoriesAdminStreamProvider);
-    final stats = ref.watch(adminCatalogStatsProvider);
+
+    final allCategories = categoriesAsync.value ?? [];
+    final activeCategoriesCount = allCategories.where((c) => c.estActive).length;
+    final inactiveCategoriesCount = allCategories.where((c) => !c.estActive).length;
 
     return AdminScaffold(
       currentRoute: AdminNavRoute.categories,
@@ -33,46 +55,120 @@ class _AdminCategoryListPageState extends ConsumerState<AdminCategoryListPage> {
           "Gestion des Catégories",
           style: TextStyle(
             color: AppColors.textPrimary,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+            letterSpacing: -0.3,
           ),
         ),
         backgroundColor: AppColors.surface,
         elevation: 0,
         leading: Builder(
           builder: (context) => IconButton(
-            icon: const Icon(Icons.menu, color: AppColors.textPrimary),
+            icon: const Icon(Icons.menu_rounded, color: AppColors.textPrimary),
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: AppColors.textPrimary),
-            tooltip: "Actualiser",
-            onPressed: () {
-              ref.invalidate(categoriesAdminStreamProvider);
-            },
-          ),
-        ],
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
+          preferredSize: const Size.fromHeight(46),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            decoration: const BoxDecoration(
-              color: AppColors.surface,
-              border: Border(bottom: BorderSide(color: AppColors.border)),
+            margin: const EdgeInsets.fromLTRB(14, 0, 14, 6),
+            padding: const EdgeInsets.all(3),
+            height: 38,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceVariant.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: AppColors.border.withValues(alpha: 0.6),
+                width: 1,
+              ),
             ),
-            child: Row(
-              children: [
-                _buildKpiBadge(
-                  label: "Total Catégories",
-                  value: "${stats.totalCategories}",
-                  color: AppColors.primary,
+            child: TabBar(
+              controller: _tabController,
+              indicatorSize: TabBarIndicatorSize.tab,
+              dividerColor: Colors.transparent,
+              indicator: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: AppColors.border.withValues(alpha: 0.5),
+                  width: 0.8,
                 ),
-                const SizedBox(width: 8),
-                _buildKpiBadge(
-                  label: "Produits associés",
-                  value: "${stats.totalProducts}",
-                  color: AppColors.teal,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 3,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+              labelColor: AppColors.primary,
+              unselectedLabelColor: AppColors.textSecondary,
+              labelStyle: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+              splashFactory: NoSplash.splashFactory,
+              overlayColor: WidgetStateProperty.all(Colors.transparent),
+              tabs: [
+                Tab(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text("Actives"),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: _tabController.index == 0
+                              ? AppColors.primary.withValues(alpha: 0.12)
+                              : AppColors.surfaceVariant,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          "$activeCategoriesCount",
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: _tabController.index == 0
+                                ? AppColors.primary
+                                : AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Tab(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text("Inactives"),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: _tabController.index == 1
+                              ? AppColors.primary.withValues(alpha: 0.12)
+                              : AppColors.surfaceVariant,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          "$inactiveCategoriesCount",
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: _tabController.index == 1
+                                ? AppColors.primary
+                                : AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -81,9 +177,9 @@ class _AdminCategoryListPageState extends ConsumerState<AdminCategoryListPage> {
       ),
       body: Column(
         children: [
-          // Barre de recherche
+          // Barre de recherche compacte
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
             child: AppSearchBar(
               hintText: "Rechercher une catégorie...",
               onChanged: (val) => setState(() => _searchQuery = val),
@@ -94,7 +190,10 @@ class _AdminCategoryListPageState extends ConsumerState<AdminCategoryListPage> {
           Expanded(
             child: categoriesAsync.when(
               loading: () => const Center(
-                child: CircularProgressIndicator(),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                ),
               ),
               error: (err, stack) => AppErrorState(
                 title: "Erreur de chargement",
@@ -102,8 +201,10 @@ class _AdminCategoryListPageState extends ConsumerState<AdminCategoryListPage> {
                 onRetry: () => ref.refresh(categoriesAdminStreamProvider),
               ),
               data: (categories) {
+                final isViewingActive = _tabController.index == 0;
+                var list = categories.where((c) => c.estActive == isViewingActive).toList();
+
                 // Filtrage par recherche
-                var list = categories;
                 if (_searchQuery.trim().isNotEmpty) {
                   final q = _searchQuery.toLowerCase().trim();
                   list = list
@@ -114,91 +215,45 @@ class _AdminCategoryListPageState extends ConsumerState<AdminCategoryListPage> {
                 if (list.isEmpty) {
                   return AppEmptyState(
                     icon: Icons.category_outlined,
-                    title: "Aucune catégorie trouvée",
-                    description: _searchQuery.isNotEmpty
-                        ? "Aucune catégorie ne correspond à votre recherche."
-                        : "Créez votre première catégorie pour organiser les produits.",
-                    actionText: "Ajouter une catégorie",
-                    onActionPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (ctx) => const AdminCategoryFormDialog(),
-                      );
-                    },
+                    title: isViewingActive
+                        ? (_searchQuery.isNotEmpty
+                            ? "Aucune catégorie correspondante"
+                            : "Aucune catégorie active")
+                        : "Aucune catégorie inactive",
+                    description: isViewingActive
+                        ? (_searchQuery.isNotEmpty
+                            ? "Essayez d'autres mots-clés."
+                            : "Créez votre première catégorie pour organiser les produits.")
+                        : "Toutes vos catégories sont actuellement actives.",
+                    actionText: isViewingActive && _searchQuery.isEmpty
+                        ? "Ajouter une catégorie"
+                        : null,
+                    onActionPressed: isViewingActive && _searchQuery.isEmpty
+                        ? () => context.push(AppRoutes.adminCategoryForm)
+                        : null,
                   );
                 }
 
-                // Organiser les catégories principales et sous-catégories
-                final rootCategories =
-                    list.where((c) => c.parentId == null || c.parentId!.isEmpty).toList();
-                final subCategories =
-                    list.where((c) => c.parentId != null && c.parentId!.isNotEmpty).toList();
-
-                // Map pour retrouver le nom du parent
-                final categoryMap = {for (var c in categories) c.categorieId: c.nom};
-
                 return RefreshIndicator(
+                  color: AppColors.primary,
                   onRefresh: () async {
                     ref.invalidate(categoriesAdminStreamProvider);
                   },
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
-                    children: [
-                      if (rootCategories.isNotEmpty) ...[
-                        const Padding(
-                          padding: EdgeInsets.only(bottom: 8, top: 4),
-                          child: Text(
-                            "Catégories Principales",
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ),
-                        ...rootCategories.map(
-                          (cat) => AdminCategoryTile(
-                            categorie: cat,
-                            onEdit: () {
-                              showDialog(
-                                context: context,
-                                builder: (ctx) => AdminCategoryFormDialog(
-                                  categorieToEdit: cat,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                      if (subCategories.isNotEmpty) ...[
-                        AppSpacing.verticalMd,
-                        const Padding(
-                          padding: EdgeInsets.only(bottom: 8),
-                          child: Text(
-                            "Sous-Catégories",
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ),
-                        ...subCategories.map(
-                          (cat) => AdminCategoryTile(
-                            categorie: cat,
-                            parentCategoryName: categoryMap[cat.parentId],
-                            onEdit: () {
-                              showDialog(
-                                context: context,
-                                builder: (ctx) => AdminCategoryFormDialog(
-                                  categorieToEdit: cat,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ],
+                  child: ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 80),
+                    itemCount: list.length,
+                    itemBuilder: (context, index) {
+                      final cat = list[index];
+                      return AdminCategoryTile(
+                        categorie: cat,
+                        onEdit: () {
+                          context.push(
+                            AppRoutes.adminCategoryForm,
+                            extra: cat,
+                          );
+                        },
+                      );
+                    },
                   ),
                 );
               },
@@ -209,51 +264,14 @@ class _AdminCategoryListPageState extends ConsumerState<AdminCategoryListPage> {
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.white,
-        icon: const Icon(Icons.add),
-        label: const Text("Nouvelle Catégorie"),
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (ctx) => const AdminCategoryFormDialog(),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildKpiBadge({
-    required String label,
-    required String value,
-    required Color color,
-  }) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(6),
+        elevation: 3,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        icon: const Icon(Icons.add_rounded, size: 20),
+        label: const Text(
+          "Nouvelle Catégorie",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              "$label: ",
-              style: TextStyle(
-                fontSize: 11,
-                color: color.withValues(alpha: 0.85),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-          ],
-        ),
+        onPressed: () => context.push(AppRoutes.adminCategoryForm),
       ),
     );
   }
