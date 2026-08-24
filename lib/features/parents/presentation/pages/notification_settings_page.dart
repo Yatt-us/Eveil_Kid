@@ -1,4 +1,4 @@
-// lib/features/parent/presentation/pages/notification_settings_page.dart
+// lib/features/parents/presentation/pages/notification_settings_page.dart
 
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -10,7 +10,8 @@ class NotificationSettingsPage extends StatefulWidget {
   const NotificationSettingsPage({super.key});
 
   @override
-  State<NotificationSettingsPage> createState() => _NotificationSettingsPageState();
+  State<NotificationSettingsPage> createState() =>
+      _NotificationSettingsPageState();
 }
 
 class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
@@ -25,16 +26,20 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 22),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.textPrimary,
+            size: 22,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Notification',
+          'Notifications',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -56,7 +61,10 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
               decoration: BoxDecoration(
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.border.withValues(alpha: 0.8), width: 1.2),
+                border: Border.all(
+                  color: AppColors.border.withValues(alpha: 0.8),
+                  width: 1.2,
+                ),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -72,7 +80,9 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                   Switch(
                     value: _enableAllNotifications,
                     activeThumbColor: AppColors.primary,
-                    activeTrackColor: AppColors.primaryLight.withValues(alpha: 0.5),
+                    activeTrackColor: AppColors.primaryLight.withValues(
+                      alpha: 0.5,
+                    ),
                     onChanged: (val) {
                       setState(() {
                         _enableAllNotifications = val;
@@ -92,7 +102,9 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                       });
                       AppDialogs.showSnackBar(
                         context: context,
-                        message: val ? 'Notifications activées' : 'Notifications désactivées',
+                        message: val
+                            ? 'Notifications activées'
+                            : 'Notifications désactivées',
                       );
                     },
                   ),
@@ -116,7 +128,10 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
               decoration: BoxDecoration(
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.border.withValues(alpha: 0.8), width: 1.2),
+                border: Border.all(
+                  color: AppColors.border.withValues(alpha: 0.8),
+                  width: 1.2,
+                ),
               ),
               child: Column(
                 children: [
@@ -130,6 +145,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                         ? (v) => setState(() => _notifActivites = v)
                         : null,
                   ),
+                  const Divider(height: 1, color: AppColors.border),
                   _buildNotificationTile(
                     title: 'Nouveaux jouets',
                     icon: Icons.star_rounded,
@@ -140,6 +156,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                         ? (v) => setState(() => _notifJouets = v)
                         : null,
                   ),
+                  const Divider(height: 1, color: AppColors.border),
                   _buildNotificationTile(
                     title: 'Tutoriels',
                     icon: Icons.play_arrow_rounded,
@@ -150,6 +167,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                         ? (v) => setState(() => _notifTutoriels = v)
                         : null,
                   ),
+                  const Divider(height: 1, color: AppColors.border),
                   _buildNotificationTile(
                     title: 'Nouvelles commandes',
                     icon: Icons.calendar_month_rounded,
@@ -160,6 +178,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                         ? (v) => setState(() => _notifCommandes = v)
                         : null,
                   ),
+                  const Divider(height: 1, color: AppColors.border),
                   _buildNotificationTile(
                     title: 'Promotions',
                     icon: Icons.campaign_rounded,

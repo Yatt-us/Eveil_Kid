@@ -117,22 +117,17 @@ class Jouet {
       jouetId: id,
       categorieId: data['categorieId'] ?? '',
       createurId: data['createurId'] ?? '',
-
       nom: data['nom'] ?? '',
       description: data['description'] ?? '',
       nomCategorieDenormalise:
           data['nomCategorie'] ?? data['nomCategorieDenormalise'] ?? '',
 
       images: List<String>.from(data['images'] ?? []),
-      imagePrincipaleUrl:
-          data['imagePrincipaleUrl'] ?? '',
-
+      imagePrincipaleUrl: data['imagePrincipaleUrl'] ?? '',
       ageMinimum: data['ageMinimum'] ?? 0,
       ageMaximum: data['ageMaximum'] ?? 0,
-
       prix: (data['prix'] ?? 0).toDouble(),
       devise: data['devise'] ?? 'FCFA',
-
       stock: data['stock'] ?? 0,
       stockDisponible: data['stockDisponible'] ?? 0,
 
@@ -147,12 +142,8 @@ class Jouet {
 
       estActif: data['estActif'] ?? true,
       estPopulaire: data['estPopulaire'] ?? false,
-
-      dateCreation:
-          data['dateCreation'] ?? Timestamp.now(),
-
-      dateModification:
-          data['dateModification'] ?? Timestamp.now(),
+      dateCreation: data['dateCreation'] ?? Timestamp.now(),
+      dateModification: data['dateModification'] ?? Timestamp.now(),
     );
   }
 
@@ -161,21 +152,16 @@ class Jouet {
       'jouetId': jouetId,
       'categorieId': categorieId,
       'createurId': createurId,
-
       'nom': nom,
       'description': description,
       'nomCategorie': nomCategorieDenormalise,
       'nomCategorieDenormalise': nomCategorieDenormalise,
-
       'images': images,
       'imagePrincipaleUrl': imagePrincipaleUrl,
-
       'ageMinimum': ageMinimum,
       'ageMaximum': ageMaximum,
-
       'prix': prix,
       'devise': devise,
-
       'stock': stock,
       'stockDisponible': stockDisponible,
 
@@ -189,10 +175,8 @@ class Jouet {
 
       'estActif': estActif,
       'estPopulaire': estPopulaire,
-
       'dateCreation': dateCreation,
       'dateModification': dateModification,
     };
   }
-
 }
