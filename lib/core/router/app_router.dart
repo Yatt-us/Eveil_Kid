@@ -19,6 +19,7 @@ import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_product
 import 'package:eveilkid/features/admin/presentation/pages/dashboard_page.dart';
 import 'package:eveilkid/features/admin/users/presentation/pages/admin_user_list_page.dart';
 import 'package:eveilkid/features/auth/models/utilisateur.dart';
+import 'package:eveilkid/features/auth/presentation/pages/auth_action_page.dart';
 import 'package:eveilkid/features/auth/presentation/pages/login_page.dart';
 import 'package:eveilkid/features/auth/presentation/pages/register_page.dart';
 import 'package:eveilkid/features/auth/presentation/pages/splash_page.dart';
@@ -59,12 +60,53 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       }
 
       final isAuthenticated = authState.isAuthenticated;
+      final uri = state.uri;
+      final host = uri.host;
+      final path = uri.path;
+
+      // Normalisation des Custom URL Schemes (eveilkid://...)
+      if (host == 'reset-password') {
+        final query = uri.query.isNotEmpty ? '?${uri.query}' : '';
+        if (state.matchedLocation != AppRoutes.resetPassword) {
+          return '${AppRoutes.resetPassword}$query';
+        }
+      }
+
+      if (host == 'auth' && (path == '/action' || path == 'action' || path.isEmpty)) {
+        final query = uri.query.isNotEmpty ? '?${uri.query}' : '';
+        if (state.matchedLocation != AppRoutes.authAction) {
+          return '${AppRoutes.authAction}$query';
+        }
+      }
+
+      if (host == 'verify-email') {
+        final query = uri.query.isNotEmpty ? '&${uri.query}' : '';
+        return '${AppRoutes.authAction}?mode=verifyEmail$query';
+      }
+
+      if (host == 'login' && state.matchedLocation != AppRoutes.login) {
+        return AppRoutes.login;
+      }
+
+      if (host == 'home' && state.matchedLocation != AppRoutes.home) {
+        return AppRoutes.home;
+      }
+
       final isGoingToAuth =
           state.matchedLocation == AppRoutes.login ||
           state.matchedLocation == AppRoutes.register;
+      final isAuthAction =
+          state.matchedLocation.startsWith(AppRoutes.authAction) ||
+          state.matchedLocation.startsWith(AppRoutes.resetPassword) ||
+          state.matchedLocation == '/action';
       final isSplash = state.matchedLocation == AppRoutes.splash;
 
-      // 2. Utilisateur non authentifié (mode visiteur)
+      // 2. Actions d'authentification directes (Deep Links Firebase : resetPassword, verifyEmail)
+      if (isAuthAction) {
+        return null;
+      }
+
+      // 3. Utilisateur non authentifié (mode visiteur)
       if (!isAuthenticated) {
         // Rediriger le splash vers la page d'accueil par défaut (mode visiteur)
         if (isSplash) {
@@ -86,41 +128,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final role = authState.utilisateur?.role;
       final isAdminOrManager =
           role == UserRole.admin || role == UserRole.manager;
-      final isEmailVerified = authState.isEmailVerified;
 
-      // 3. Utilisateur Administrateur / Manager -> dirigé vers l'espace Admin si vérifié
+      // 3. Utilisateur Administrateur / Manager -> dirigé par défaut vers l'espace Admin
       if (isAdminOrManager) {
-        if (!isEmailVerified) {
-          // Si non vérifié, reste sur l'accueil public avec la bannière de confirmation
-          if (isSplash ||
-              isGoingToAuth ||
-              state.matchedLocation.startsWith('/admin')) {
-            return AppRoutes.home;
-          }
-          return null;
-        }
-
-        // Un Manager n'a absolument pas accès à la gestion des utilisateurs -> redirection vers /admin
+        // Un Manager n'a pas accès à la gestion des utilisateurs -> redirection vers /admin
         if (role == UserRole.manager &&
             state.matchedLocation.startsWith(AppRoutes.adminUsers)) {
           return AppRoutes.admin;
         }
 
-        // Si l'admin est sur splash, auth ou tente d'aller sur l'accueil parent
-        if (isSplash ||
-            isGoingToAuth ||
-            state.matchedLocation == AppRoutes.home) {
+        // Si l'admin/manager vient de splash ou login/register -> rediriger vers /admin
+        if (isSplash || isGoingToAuth) {
           return AppRoutes.admin;
         }
 
-        // Accès autorisé aux pages d'administration ou tutoriels
-        if (state.matchedLocation.startsWith('/admin') ||
-            state.matchedLocation == AppRoutes.tutoriels) {
-          return null;
-        }
-
-        // Toute autre tentative d'accès -> rediriger vers /admin
-        return AppRoutes.admin;
+        // Accès autorisé à toutes les autres pages (admin, profil, boutique, etc.)
+        return null;
       }
 
       // 4. Utilisateur Parent / Client -> confiné à l'espace Parent
@@ -129,7 +152,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return AppRoutes.home;
       }
 
-      // Accès formellement interdit à l'espace administration
+      // Accès formellement interdit à l'espace administration pour un Parent
       if (state.matchedLocation.startsWith('/admin')) {
         return AppRoutes.home;
       }
@@ -143,15 +166,58 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SplashPage(),
       ),
 
-      // ── Authentification ──
+      // ── Authentification & Deep Links ──
       GoRoute(
         path: AppRoutes.login,
-
         builder: (context, state) => const LoginPage(),
       ),
       GoRoute(
         path: AppRoutes.register,
         builder: (context, state) => const RegisterPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.authAction,
+        builder: (context, state) {
+          final mode = state.uri.queryParameters['mode'];
+          final oobCode = state.uri.queryParameters['oobCode'];
+          final apiKey = state.uri.queryParameters['apiKey'];
+          final continueUrl = state.uri.queryParameters['continueUrl'];
+          return AuthActionPage(
+            mode: mode,
+            oobCode: oobCode,
+            apiKey: apiKey,
+            continueUrl: continueUrl,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/action',
+        builder: (context, state) {
+          final mode = state.uri.queryParameters['mode'];
+          final oobCode = state.uri.queryParameters['oobCode'];
+          final apiKey = state.uri.queryParameters['apiKey'];
+          final continueUrl = state.uri.queryParameters['continueUrl'];
+          return AuthActionPage(
+            mode: mode,
+            oobCode: oobCode,
+            apiKey: apiKey,
+            continueUrl: continueUrl,
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.resetPassword,
+        builder: (context, state) {
+          final oobCode = state.uri.queryParameters['oobCode'];
+          final apiKey = state.uri.queryParameters['apiKey'];
+          final continueUrl = state.uri.queryParameters['continueUrl'];
+          return AuthActionPage(
+            mode: 'resetPassword',
+            oobCode: oobCode,
+            apiKey: apiKey,
+            continueUrl: continueUrl,
+          );
+        },
       ),
 
       // ── Accueil & Fonctionnalités Utilisateur ──

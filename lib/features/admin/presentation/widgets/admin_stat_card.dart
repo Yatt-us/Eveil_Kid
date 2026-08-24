@@ -30,6 +30,11 @@ class AdminStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textSecondary = theme.textTheme.bodySmall?.color?.withValues(alpha: 0.75) ??
+        (isDark ? Colors.white70 : AppColors.textSecondary);
+
     final hasSubtitle = subtitle != null && subtitle!.trim().isNotEmpty;
     final hasBadge = badgeText != null && badgeText!.trim().isNotEmpty;
 
@@ -59,7 +64,7 @@ class AdminStatCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: isCompact ? 12 : 13,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
+                        color: textSecondary,
                         letterSpacing: -0.1,
                       ),
                       maxLines: 1,
@@ -70,7 +75,7 @@ class AdminStatCard extends StatelessWidget {
                   Container(
                     padding: EdgeInsets.all(isCompact ? 5 : 6),
                     decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.12),
+                      color: color.withValues(alpha: isDark ? 0.22 : 0.12),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
@@ -113,7 +118,7 @@ class AdminStatCard extends StatelessWidget {
                             vertical: 1.5,
                           ),
                           decoration: BoxDecoration(
-                            color: (badgeColor ?? color).withValues(alpha: 0.15),
+                            color: (badgeColor ?? color).withValues(alpha: isDark ? 0.25 : 0.15),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -135,7 +140,7 @@ class AdminStatCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: isCompact ? 10 : 11,
                         fontWeight: FontWeight.w500,
-                        color: AppColors.textSecondary,
+                        color: textSecondary,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

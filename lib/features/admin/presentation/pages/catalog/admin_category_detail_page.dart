@@ -94,7 +94,7 @@ class _AdminCategoryDetailPageState
         context.pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            backgroundColor: AppColors.success,
+            backgroundColor: const Color(0xFF10B981),
             content: Text(_isEditing
                 ? "Catégorie modifiée avec succès !"
                 : "Nouvelle catégorie créée avec succès !"),
@@ -106,7 +106,7 @@ class _AdminCategoryDetailPageState
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            backgroundColor: AppColors.danger,
+            backgroundColor: Theme.of(context).colorScheme.error,
             content: Text("Erreur : $e"),
           ),
         );
@@ -133,7 +133,7 @@ class _AdminCategoryDetailPageState
           context.pop();
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              backgroundColor: AppColors.success,
+              backgroundColor: Color(0xFF10B981),
               content: Text("Catégorie supprimée avec succès."),
             ),
           );
@@ -142,7 +142,7 @@ class _AdminCategoryDetailPageState
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              backgroundColor: AppColors.danger,
+              backgroundColor: Theme.of(context).colorScheme.error,
               content: Text("Erreur lors de la suppression : $e"),
             ),
           );
@@ -153,7 +153,6 @@ class _AdminCategoryDetailPageState
 
   @override
   Widget build(BuildContext context) {
-    // Récupérer les produits associés si on est en mode édition
     final allProducts = ref.watch(jouetsAdminStreamProvider).value ?? [];
     final associatedProducts = _isEditing
         ? allProducts
@@ -161,28 +160,35 @@ class _AdminCategoryDetailPageState
             .toList()
         : <Jouet>[];
 
+    final theme = Theme.of(context);
+    final titleColor = theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface;
+    final dividerColor = theme.dividerColor.withValues(alpha: 0.2);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
           _isEditing ? "Détails de la catégorie" : "Nouvelle catégorie",
-          style: const TextStyle(
-            color: AppColors.textPrimary,
+          style: TextStyle(
+            color: titleColor,
             fontWeight: FontWeight.w800,
             fontSize: 18,
             letterSpacing: -0.3,
           ),
         ),
-        backgroundColor: AppColors.surface,
+        backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          icon: Icon(
+            Icons.arrow_back_rounded,
+            color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
+          ),
           onPressed: () => context.pop(),
         ),
         actions: [
           if (_isEditing)
             IconButton(
-              icon: const Icon(Icons.delete_outline_rounded, color: AppColors.danger),
+              icon: Icon(Icons.delete_outline_rounded, color: theme.colorScheme.error),
               tooltip: "Supprimer la catégorie",
               onPressed: _confirmDelete,
             ),
@@ -196,7 +202,7 @@ class _AdminCategoryDetailPageState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // ── APERÇU DE LA CATÉGORIE ──
-              _buildHeaderPreview(),
+              _buildHeaderPreview(context),
               AppSpacing.verticalMd,
 
               // ── INFORMATIONS PRINCIPALES ──
@@ -205,12 +211,12 @@ class _AdminCategoryDetailPageState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       "Informations générales",
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                        color: titleColor,
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -265,28 +271,28 @@ class _AdminCategoryDetailPageState
                         children: [
                           Text(
                             "Produits associés (${associatedProducts.length})",
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
+                              color: titleColor,
                             ),
                           ),
                           InkWell(
                             onTap: () => context.push(AppRoutes.adminProductForm),
                             borderRadius: BorderRadius.circular(6),
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.add_rounded, size: 16, color: AppColors.primary),
-                                  SizedBox(width: 2),
+                                  Icon(Icons.add_rounded, size: 16, color: theme.colorScheme.primary),
+                                  const SizedBox(width: 2),
                                   Text(
                                     "Ajouter",
                                     style: TextStyle(
                                       fontSize: 12.5,
                                       fontWeight: FontWeight.bold,
-                                      color: AppColors.primary,
+                                      color: theme.colorScheme.primary,
                                     ),
                                   ),
                                 ],
@@ -300,11 +306,12 @@ class _AdminCategoryDetailPageState
                         Container(
                           padding: const EdgeInsets.symmetric(vertical: 20),
                           alignment: Alignment.center,
-                          child: const Text(
+                          child: Text(
                             "Aucun produit dans cette catégorie pour le moment.",
                             style: TextStyle(
                               fontSize: 12.5,
-                              color: AppColors.textSecondary,
+                              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+                                  AppColors.textSecondary,
                             ),
                           ),
                         )
@@ -314,7 +321,7 @@ class _AdminCategoryDetailPageState
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: associatedProducts.length,
                           separatorBuilder: (context, index) =>
-                              const Divider(height: 12, color: AppColors.border),
+                              Divider(height: 12, color: dividerColor),
                           itemBuilder: (context, index) {
                             final jouet = associatedProducts[index];
                             return InkWell(
@@ -333,7 +340,9 @@ class _AdminCategoryDetailPageState
                                       width: 36,
                                       height: 36,
                                       decoration: BoxDecoration(
-                                        color: AppColors.surfaceVariant,
+                                        color: theme.brightness == Brightness.dark
+                                            ? theme.colorScheme.surfaceContainerHighest
+                                            : AppColors.surfaceVariant,
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: jouet.imagePrincipaleUrl.isNotEmpty
@@ -342,17 +351,18 @@ class _AdminCategoryDetailPageState
                                               child: Image.network(
                                                 jouet.imagePrincipaleUrl,
                                                 fit: BoxFit.cover,
-                                                errorBuilder: (context, error, stackTrace) => const Icon(
+                                                errorBuilder: (context, error, stackTrace) => Icon(
                                                   Icons.toys_outlined,
                                                   size: 16,
-                                                  color: AppColors.icon,
+                                                  color: theme.iconTheme.color?.withValues(alpha: 0.5) ??
+                                                      AppColors.icon,
                                                 ),
                                               ),
                                             )
-                                          : const Icon(
+                                          : Icon(
                                               Icons.toys_outlined,
                                               size: 16,
-                                              color: AppColors.icon,
+                                              color: theme.colorScheme.primary,
                                             ),
                                     ),
                                     const SizedBox(width: 10),
@@ -362,28 +372,30 @@ class _AdminCategoryDetailPageState
                                         children: [
                                           Text(
                                             jouet.nom,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 13,
                                               fontWeight: FontWeight.w600,
-                                              color: AppColors.textPrimary,
+                                              color: titleColor,
                                             ),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                           Text(
                                             "${jouet.prix.toStringAsFixed(0)} ${jouet.devise} • Stock : ${jouet.stockDisponible}",
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 11.5,
-                                              color: AppColors.textSecondary,
+                                              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+                                                  AppColors.textSecondary,
                                             ),
                                           ),
                                         ],
                                       ),
                                     ),
-                                    const Icon(
+                                    Icon(
                                       Icons.chevron_right_rounded,
                                       size: 18,
-                                      color: AppColors.icon,
+                                      color: theme.iconTheme.color?.withValues(alpha: 0.5) ??
+                                          AppColors.icon,
                                     ),
                                   ],
                                 ),
@@ -415,7 +427,14 @@ class _AdminCategoryDetailPageState
   }
 
   /// Carte d'aperçu d'en-tête dynamique
-  Widget _buildHeaderPreview() {
+  Widget _buildHeaderPreview(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final dividerColor = theme.dividerColor.withValues(alpha: 0.2);
+    final titleColor = theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface;
+    final textSecondary = theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+        (isDark ? Colors.white70 : AppColors.textSecondary);
+
     final iconUrl = _iconeUrlController.text.trim();
     final hasIcon = iconUrl.isNotEmpty;
     final nomAffiche = _nomController.text.trim().isNotEmpty
@@ -425,9 +444,9 @@ class _AdminCategoryDetailPageState
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: dividerColor, width: 1),
       ),
       child: Row(
         children: [
@@ -436,8 +455,8 @@ class _AdminCategoryDetailPageState
             height: 48,
             decoration: BoxDecoration(
               color: _estActive
-                  ? AppColors.primary.withValues(alpha: 0.1)
-                  : AppColors.surfaceVariant,
+                  ? theme.colorScheme.primary.withValues(alpha: isDark ? 0.2 : 0.1)
+                  : (isDark ? theme.colorScheme.surfaceContainerHighest : AppColors.surfaceVariant),
               borderRadius: BorderRadius.circular(10),
             ),
             child: hasIcon
@@ -446,16 +465,16 @@ class _AdminCategoryDetailPageState
                     child: Image.network(
                       iconUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => const Icon(
+                      errorBuilder: (context, error, stackTrace) => Icon(
                         Icons.category_outlined,
-                        color: AppColors.primary,
+                        color: theme.colorScheme.primary,
                         size: 22,
                       ),
                     ),
                   )
-                : const Icon(
+                : Icon(
                     Icons.category_outlined,
-                    color: AppColors.primary,
+                    color: theme.colorScheme.primary,
                     size: 22,
                   ),
           ),
@@ -466,10 +485,10 @@ class _AdminCategoryDetailPageState
               children: [
                 Text(
                   nomAffiche,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                    color: titleColor,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -479,9 +498,9 @@ class _AdminCategoryDetailPageState
                   _isEditing
                       ? "${widget.categorieToEdit!.nombreJouetsDenormalise} produit(s) associés"
                       : "Aperçu de la nouvelle catégorie",
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textSecondary,
+                    color: textSecondary,
                   ),
                 ),
               ],
@@ -490,8 +509,8 @@ class _AdminCategoryDetailPageState
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: (_estActive ? AppColors.success : AppColors.textSecondary)
-                  .withValues(alpha: 0.12),
+              color: (_estActive ? const Color(0xFF10B981) : textSecondary)
+                  .withValues(alpha: isDark ? 0.22 : 0.12),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
@@ -499,7 +518,7 @@ class _AdminCategoryDetailPageState
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
-                color: _estActive ? AppColors.success : AppColors.textSecondary,
+                color: _estActive ? const Color(0xFF10B981) : textSecondary,
               ),
             ),
           ),

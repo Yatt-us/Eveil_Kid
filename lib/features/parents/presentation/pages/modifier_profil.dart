@@ -1,4 +1,4 @@
-// lib/features/parent/presentation/pages/modifier_profil.dart
+// lib/features/parents/presentation/pages/modifier_profil.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,31 +24,15 @@ class _ModifierProfilPageState extends ConsumerState<ModifierProfilPage> {
   late TextEditingController _nomController;
   late TextEditingController _emailController;
   late TextEditingController _telController;
-  late TextEditingController _adresseController;
-  late TextEditingController _dateNaissanceController;
 
-  DateTime? _selectedDate;
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _nomController = TextEditingController(
-      text: widget.parent.name.isNotEmpty
-          ? widget.parent.name
-          : 'Aminata DIARRA',
-    );
-    _emailController = TextEditingController(
-      text: widget.parent.email.isNotEmpty
-          ? widget.parent.email
-          : 'aminata.diarra@gmail.com',
-    );
-    _telController = TextEditingController(
-      text: widget.parent.telephone ?? '+223 70 12 34 56',
-    );
-    _adresseController = TextEditingController(text: 'Bamako, Mali');
-    _selectedDate = DateTime(1990, 5, 15);
-    _dateNaissanceController = TextEditingController(text: '15 / 05 / 1990');
+    _nomController = TextEditingController(text: widget.parent.name);
+    _emailController = TextEditingController(text: widget.parent.email);
+    _telController = TextEditingController(text: widget.parent.telephone ?? '');
   }
 
   @override
@@ -56,38 +40,7 @@ class _ModifierProfilPageState extends ConsumerState<ModifierProfilPage> {
     _nomController.dispose();
     _emailController.dispose();
     _telController.dispose();
-    _adresseController.dispose();
-    _dateNaissanceController.dispose();
     super.dispose();
-  }
-
-  Future<void> _pickDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate ?? DateTime(1990, 1, 1),
-      firstDate: DateTime(1940),
-      lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.primary,
-              onPrimary: AppColors.white,
-              onSurface: AppColors.textPrimary,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (picked != null) {
-      setState(() {
-        _selectedDate = picked;
-        _dateNaissanceController.text =
-            '${picked.day.toString().padLeft(2, '0')} / ${picked.month.toString().padLeft(2, '0')} / ${picked.year}';
-      });
-    }
   }
 
   Future<void> _save() async {
@@ -127,25 +80,29 @@ class _ModifierProfilPageState extends ConsumerState<ModifierProfilPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: AppColors.textPrimary,
+            color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
             size: 22,
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Modifier mon profil',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+            color: theme.textTheme.titleMedium?.color ??
+                theme.colorScheme.onSurface,
           ),
         ),
         centerTitle: true,
@@ -169,27 +126,30 @@ class _ModifierProfilPageState extends ConsumerState<ModifierProfilPage> {
                       height: 100,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppColors.surfaceVariant,
-                        border: Border.all(color: AppColors.border, width: 2),
+                        color: isDark
+                            ? theme.colorScheme.surfaceContainerHighest
+                            : AppColors.surfaceVariant,
+                        border: Border.all(
+                          color: theme.dividerColor.withValues(alpha: 0.2),
+                          width: 2,
+                        ),
                       ),
                       child: ClipOval(
-                        child:
-                            widget.parent.photoUrl != null &&
+                        child: widget.parent.photoUrl != null &&
                                 widget.parent.photoUrl!.isNotEmpty
                             ? Image.network(
                                 widget.parent.photoUrl!,
                                 fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    const Icon(
-                                      Icons.person,
-                                      size: 60,
-                                      color: AppColors.primary,
-                                    ),
+                                errorBuilder: (_, _, _) => Icon(
+                                  Icons.person_rounded,
+                                  size: 55,
+                                  color: theme.colorScheme.primary,
+                                ),
                               )
-                            : const Icon(
-                                Icons.person,
-                                size: 60,
-                                color: AppColors.primary,
+                            : Icon(
+                                Icons.person_rounded,
+                                size: 55,
+                                color: theme.colorScheme.primary,
                               ),
                       ),
                     ),
@@ -205,14 +165,18 @@ class _ModifierProfilPageState extends ConsumerState<ModifierProfilPage> {
                         },
                         child: Container(
                           padding: const EdgeInsets.all(8),
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary,
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary,
                             shape: BoxShape.circle,
+                            border: Border.all(
+                              color: theme.scaffoldBackgroundColor,
+                              width: 2,
+                            ),
                           ),
-                          child: const Icon(
-                            Icons.camera_alt,
-                            size: 18,
-                            color: AppColors.white,
+                          child: Icon(
+                            Icons.camera_alt_rounded,
+                            size: 16,
+                            color: theme.colorScheme.onPrimary,
                           ),
                         ),
                       ),
@@ -224,18 +188,26 @@ class _ModifierProfilPageState extends ConsumerState<ModifierProfilPage> {
 
               // --- CHAMP NOM COMPLET ---
               _buildFieldContainer(
+                context: context,
                 label: 'Nom complet',
                 child: TextFormField(
                   controller: _nomController,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                    color: theme.textTheme.bodyLarge?.color ??
+                        theme.colorScheme.onSurface,
                   ),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     border: InputBorder.none,
                     isDense: true,
                     contentPadding: EdgeInsets.zero,
+                    hintText: 'Votre nom complet',
+                    hintStyle: TextStyle(
+                      color: theme.textTheme.bodyMedium?.color
+                              ?.withValues(alpha: 0.4) ??
+                          AppColors.textSecondary,
+                    ),
                   ),
                   validator: (v) =>
                       v == null || v.trim().isEmpty ? 'Nom requis' : null,
@@ -245,19 +217,27 @@ class _ModifierProfilPageState extends ConsumerState<ModifierProfilPage> {
 
               // --- CHAMP EMAIL ---
               _buildFieldContainer(
-                label: 'Email',
+                context: context,
+                label: 'Adresse email',
                 child: TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                    color: theme.textTheme.bodyLarge?.color ??
+                        theme.colorScheme.onSurface,
                   ),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     border: InputBorder.none,
                     isDense: true,
                     contentPadding: EdgeInsets.zero,
+                    hintText: 'exemple@email.com',
+                    hintStyle: TextStyle(
+                      color: theme.textTheme.bodyMedium?.color
+                              ?.withValues(alpha: 0.4) ??
+                          AppColors.textSecondary,
+                    ),
                   ),
                   validator: (v) {
                     if (v == null || v.trim().isEmpty) return 'Email requis';
@@ -270,62 +250,26 @@ class _ModifierProfilPageState extends ConsumerState<ModifierProfilPage> {
 
               // --- CHAMP TÉLÉPHONE ---
               _buildFieldContainer(
-                label: 'Téléphone',
+                context: context,
+                label: 'Numéro de téléphone',
                 child: TextFormField(
                   controller: _telController,
                   keyboardType: TextInputType.phone,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                    color: theme.textTheme.bodyLarge?.color ??
+                        theme.colorScheme.onSurface,
                   ),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     border: InputBorder.none,
                     isDense: true,
                     contentPadding: EdgeInsets.zero,
-                  ),
-                ),
-              ),
-              AppSpacing.verticalMd,
-
-              // --- CHAMP ADRESSE ---
-              _buildFieldContainer(
-                label: 'Adresse',
-                child: TextFormField(
-                  controller: _adresseController,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                ),
-              ),
-              AppSpacing.verticalMd,
-
-              // --- CHAMP DATE DE NAISSANCE ---
-              _buildFieldContainer(
-                label: 'Date de naissance',
-                trailing: GestureDetector(
-                  onTap: _pickDate,
-                  child: const Icon(
-                    Icons.calendar_today_outlined,
-                    color: AppColors.textPrimary,
-                    size: 22,
-                  ),
-                ),
-                child: GestureDetector(
-                  onTap: _pickDate,
-                  child: Text(
-                    _dateNaissanceController.text,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                    hintText: '+223 ...',
+                    hintStyle: TextStyle(
+                      color: theme.textTheme.bodyMedium?.color
+                              ?.withValues(alpha: 0.4) ??
+                          AppColors.textSecondary,
                     ),
                   ),
                 ),
@@ -334,7 +278,7 @@ class _ModifierProfilPageState extends ConsumerState<ModifierProfilPage> {
 
               // --- BOUTON ENREGISTRER ---
               AppButton(
-                text: 'Enregistrer',
+                text: 'Enregistrer les modifications',
                 size: AppButtonSize.large,
                 isLoading: _isLoading,
                 onPressed: _save,
@@ -348,18 +292,21 @@ class _ModifierProfilPageState extends ConsumerState<ModifierProfilPage> {
   }
 
   Widget _buildFieldContainer({
+    required BuildContext context,
     required String label,
     required Widget child,
     Widget? trailing,
   }) {
+    final theme = Theme.of(context);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.textPrimary.withValues(alpha: 0.7),
+          color: theme.dividerColor.withValues(alpha: 0.25),
           width: 1.2,
         ),
       ),
@@ -375,8 +322,10 @@ class _ModifierProfilPageState extends ConsumerState<ModifierProfilPage> {
                   label,
                   style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textSecondary.withValues(alpha: 0.9),
-                    fontWeight: FontWeight.w500,
+                    color: theme.textTheme.bodySmall?.color
+                            ?.withValues(alpha: 0.8) ??
+                        AppColors.textSecondary,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 4),

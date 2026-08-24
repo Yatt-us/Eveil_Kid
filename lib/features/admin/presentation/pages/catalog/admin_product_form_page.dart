@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/core/constants/AppSpacing.dart';
 import 'package:eveilkid/core/router/app_routes.dart';
 import 'package:eveilkid/features/jouets/models/jouet.dart';
@@ -18,10 +17,6 @@ import 'package:eveilkid/shared/widgets/app_text_field.dart';
 import '../../widgets/admin_multi_image_input.dart';
 
 /// Page d'ajout et de modification d'un produit du catalogue.
-///
-/// Interface soignée, structurée par sections avec cartes dédiées,
-/// gestion avancée de l'image principale et de la galerie secondaire,
-/// et disposition adaptative (mobile / tablette / desktop).
 class AdminProductFormPage extends ConsumerStatefulWidget {
   final Jouet? jouetToEdit;
 
@@ -209,23 +204,27 @@ class _AdminProductFormPageState extends ConsumerState<AdminProductFormPage> {
   Widget build(BuildContext context) {
     final categoriesAsync = ref.watch(categoriesAdminStreamProvider);
     final List<Categorie> categories = categoriesAsync.value ?? [];
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
           _isEditing ? "Modifier le produit" : "Nouveau Produit",
-          style: const TextStyle(
-            color: AppColors.textPrimary,
+          style: TextStyle(
+            color: theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface,
             fontWeight: FontWeight.w800,
             fontSize: 18,
             letterSpacing: -0.3,
           ),
         ),
-        backgroundColor: AppColors.surface,
+        backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          icon: Icon(
+            Icons.arrow_back_rounded,
+            color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
+          ),
           onPressed: () {
             if (context.canPop()) {
               context.pop();
@@ -253,7 +252,6 @@ class _AdminProductFormPageState extends ConsumerState<AdminProductFormPage> {
     );
   }
 
-  /// Disposition standard (Mobile)
   Widget _buildStandardForm(List<Categorie> categories) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -273,14 +271,12 @@ class _AdminProductFormPageState extends ConsumerState<AdminProductFormPage> {
     );
   }
 
-  /// Disposition 2 colonnes (Tablette / Desktop)
   Widget _buildWideForm(List<Categorie> categories) {
     return Column(
       children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Colonne gauche : Infos de base + Médias
             Expanded(
               flex: 5,
               child: Column(
@@ -292,7 +288,6 @@ class _AdminProductFormPageState extends ConsumerState<AdminProductFormPage> {
               ),
             ),
             const SizedBox(width: 16),
-            // Colonne droite : Tarifs, Âge & Publication
             Expanded(
               flex: 4,
               child: Column(
@@ -313,7 +308,6 @@ class _AdminProductFormPageState extends ConsumerState<AdminProductFormPage> {
     );
   }
 
-  /// Section 1 : Informations Générales
   Widget _buildGeneralInfoSection(List<Categorie> categories) {
     return AppCard(
       padding: const EdgeInsets.all(16),
@@ -377,7 +371,6 @@ class _AdminProductFormPageState extends ConsumerState<AdminProductFormPage> {
     );
   }
 
-  /// Section 2 : Visuels & Galerie
   Widget _buildMediaSection() {
     return AppCard(
       padding: const EdgeInsets.all(16),
@@ -394,7 +387,6 @@ class _AdminProductFormPageState extends ConsumerState<AdminProductFormPage> {
     );
   }
 
-  /// Section 3 : Tarification & Disponibilité
   Widget _buildPricingAndStockSection() {
     return AppCard(
       padding: const EdgeInsets.all(16),
@@ -453,7 +445,6 @@ class _AdminProductFormPageState extends ConsumerState<AdminProductFormPage> {
     );
   }
 
-  /// Section 4 : Tranche d'Âge
   Widget _buildAgeSection() {
     return AppCard(
       padding: const EdgeInsets.all(16),
@@ -485,8 +476,10 @@ class _AdminProductFormPageState extends ConsumerState<AdminProductFormPage> {
     );
   }
 
-  /// Section 5 : Statut & Visibilité
   Widget _buildStatusSection() {
+    final theme = Theme.of(context);
+    final dividerColor = theme.dividerColor.withValues(alpha: 0.2);
+
     return AppCard(
       padding: const EdgeInsets.all(16),
       title: "5. Paramètres de Publication",
@@ -500,7 +493,7 @@ class _AdminProductFormPageState extends ConsumerState<AdminProductFormPage> {
             value: _estActif,
             onChanged: (val) => setState(() => _estActif = val),
           ),
-          const Divider(height: 16, color: AppColors.border),
+          Divider(height: 16, color: dividerColor),
           AppSwitchTile(
             title: "Produit Populaire ⭐",
             subtitle: "Afficher dans les sélections phares et recommandations",
@@ -513,7 +506,6 @@ class _AdminProductFormPageState extends ConsumerState<AdminProductFormPage> {
     );
   }
 
-  /// Bouton d'enregistrement
   Widget _buildSubmitButton() {
     return AppButton(
       text: _isEditing ? "Enregistrer les modifications" : "Créer le produit",

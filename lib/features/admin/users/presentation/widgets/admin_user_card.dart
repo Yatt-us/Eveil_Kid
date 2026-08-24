@@ -8,10 +8,7 @@ import 'package:eveilkid/shared/widgets/app_dialogs.dart';
 import '../../models/admin_user_model.dart';
 import '../../providers/admin_user_provider.dart';
 
-/// Carte d'administration d'utilisateur responsive et optimisée.
-///
-/// Ne gaspille aucun espace si certaines données sont absentes et s'adapte
-/// aux différentes largeurs d'écran.
+/// Carte d'administration d'utilisateur responsive et adaptée aux thèmes clair et sombre.
 class AdminUserCard extends ConsumerWidget {
   final AdminUserModel user;
 
@@ -48,8 +45,14 @@ class AdminUserCard extends ConsumerWidget {
     dynamic repo,
     bool isNarrow,
   ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textSecondary = theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+        (isDark ? Colors.white70 : AppColors.textSecondary);
+    final dividerColor = theme.dividerColor.withValues(alpha: 0.2);
+
     final hasEmail = user.email.trim().isNotEmpty;
-    final roleColor = _getRoleColor(user.role);
+    final roleColor = _getRoleColor(context, user.role);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,10 +60,8 @@ class AdminUserCard extends ConsumerWidget {
       children: [
         Row(
           children: [
-            // Avatar
-            _buildAvatar(22, roleColor),
+            _buildAvatar(context, 22, roleColor),
             SizedBox(width: isNarrow ? 8 : 12),
-            // Nom & Email
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -75,8 +76,9 @@ class AdminUserCard extends ConsumerWidget {
                             fontSize: isNarrow ? 14 : 15,
                             fontWeight: FontWeight.bold,
                             color: user.estActif
-                                ? AppColors.textPrimary
-                                : AppColors.textSecondary,
+                                ? (theme.textTheme.bodyLarge?.color ??
+                                    theme.colorScheme.onSurface)
+                                : textSecondary,
                             decoration:
                                 user.estActif ? null : TextDecoration.lineThrough,
                           ),
@@ -85,16 +87,16 @@ class AdminUserCard extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(width: 6),
-                      _buildRoleBadge(user.role),
+                      _buildRoleBadge(context, user.role),
                     ],
                   ),
                   if (hasEmail) ...[
                     const SizedBox(height: 2),
                     Text(
                       user.email,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.textSecondary,
+                        color: textSecondary,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -106,12 +108,10 @@ class AdminUserCard extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 8),
-        const Divider(height: 1, color: AppColors.border),
+        Divider(height: 1, color: dividerColor),
         const SizedBox(height: 4),
-        // Actions
         Row(
           children: [
-            // Switch Statut
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -119,7 +119,7 @@ class AdminUserCard extends ConsumerWidget {
                   scale: 0.72,
                   child: Switch(
                     value: user.estActif,
-                    activeThumbColor: AppColors.success,
+                    activeThumbColor: theme.colorScheme.primary,
                     onChanged: (val) async {
                       await repo.toggleUserStatus(user.utilisateurId, val);
                     },
@@ -130,17 +130,16 @@ class AdminUserCard extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 12,
                     color: user.estActif
-                        ? AppColors.success
-                        : AppColors.textSecondary,
+                        ? const Color(0xFF10B981)
+                        : textSecondary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
             ),
             const Spacer(),
-            // Bouton Changer de Rôle
             TextButton.icon(
-              icon: const Icon(Icons.swap_horiz, size: 16, color: AppColors.primary),
+              icon: Icon(Icons.swap_horiz, size: 16, color: theme.colorScheme.primary),
               label: const Text(
                 "Changer rôle",
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
@@ -148,6 +147,7 @@ class AdminUserCard extends ConsumerWidget {
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 minimumSize: Size.zero,
+                foregroundColor: theme.colorScheme.primary,
               ),
               onPressed: () => _showRoleSelectionDialog(context, ref),
             ),
@@ -159,12 +159,17 @@ class AdminUserCard extends ConsumerWidget {
 
   /// Disposition large (tablette / desktop)
   Widget _buildWideLayout(BuildContext context, WidgetRef ref, dynamic repo) {
-    final roleColor = _getRoleColor(user.role);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textSecondary = theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+        (isDark ? Colors.white70 : AppColors.textSecondary);
+
+    final roleColor = _getRoleColor(context, user.role);
     final hasEmail = user.email.trim().isNotEmpty;
 
     return Row(
       children: [
-        _buildAvatar(22, roleColor),
+        _buildAvatar(context, 22, roleColor),
         AppSpacing.horizontalMd,
         Expanded(
           child: Column(
@@ -180,8 +185,9 @@ class AdminUserCard extends ConsumerWidget {
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
                         color: user.estActif
-                            ? AppColors.textPrimary
-                            : AppColors.textSecondary,
+                            ? (theme.textTheme.bodyLarge?.color ??
+                                theme.colorScheme.onSurface)
+                            : textSecondary,
                         decoration:
                             user.estActif ? null : TextDecoration.lineThrough,
                       ),
@@ -190,16 +196,16 @@ class AdminUserCard extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  _buildRoleBadge(user.role),
+                  _buildRoleBadge(context, user.role),
                 ],
               ),
               if (hasEmail) ...[
                 const SizedBox(height: 2),
                 Text(
                   user.email,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textSecondary,
+                    color: textSecondary,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -209,7 +215,6 @@ class AdminUserCard extends ConsumerWidget {
           ),
         ),
         AppSpacing.horizontalMd,
-        // Switch & Actions
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -217,7 +222,7 @@ class AdminUserCard extends ConsumerWidget {
               scale: 0.75,
               child: Switch(
                 value: user.estActif,
-                activeThumbColor: AppColors.success,
+                activeThumbColor: theme.colorScheme.primary,
                 onChanged: (val) async {
                   await repo.toggleUserStatus(user.utilisateurId, val);
                 },
@@ -228,17 +233,20 @@ class AdminUserCard extends ConsumerWidget {
               style: TextStyle(
                 fontSize: 12,
                 color: user.estActif
-                    ? AppColors.success
-                    : AppColors.textSecondary,
+                    ? const Color(0xFF10B981)
+                    : textSecondary,
                 fontWeight: FontWeight.w500,
               ),
             ),
             const SizedBox(width: 12),
             TextButton.icon(
-              icon: const Icon(Icons.swap_horiz, size: 16, color: AppColors.primary),
+              icon: Icon(Icons.swap_horiz, size: 16, color: theme.colorScheme.primary),
               label: const Text(
                 "Changer rôle",
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+              style: TextButton.styleFrom(
+                foregroundColor: theme.colorScheme.primary,
               ),
               onPressed: () => _showRoleSelectionDialog(context, ref),
             ),
@@ -248,12 +256,14 @@ class AdminUserCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildAvatar(double radius, Color roleColor) {
+  Widget _buildAvatar(BuildContext context, double radius, Color roleColor) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final hasPhoto = user.photoUrl != null && user.photoUrl!.trim().isNotEmpty;
 
     return CircleAvatar(
       radius: radius,
-      backgroundColor: roleColor.withValues(alpha: 0.15),
+      backgroundColor: roleColor.withValues(alpha: isDark ? 0.25 : 0.15),
       backgroundImage: hasPhoto ? NetworkImage(user.photoUrl!) : null,
       child: !hasPhoto
           ? Text(
@@ -269,13 +279,21 @@ class AdminUserCard extends ConsumerWidget {
   }
 
   void _showRoleSelectionDialog(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: theme.colorScheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           "Modifier le rôle de ${user.nom}",
-          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.bold,
+            color: theme.textTheme.titleMedium?.color ??
+                theme.colorScheme.onSurface,
+          ),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -298,18 +316,22 @@ class AdminUserCard extends ConsumerWidget {
   ) {
     final isCurrent = user.role.toUpperCase() == roleKey;
     final repo = ref.read(adminUserRepositoryProvider);
+    final theme = Theme.of(context);
 
     return ListTile(
-      leading: Icon(icon, color: _getRoleColor(roleKey)),
+      leading: Icon(icon, color: _getRoleColor(context, roleKey)),
       title: Text(
         title,
         style: TextStyle(
           fontSize: 13,
           fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-          color: isCurrent ? AppColors.primary : AppColors.textPrimary,
+          color: isCurrent
+              ? theme.colorScheme.primary
+              : (theme.textTheme.bodyMedium?.color ??
+                  theme.colorScheme.onSurface),
         ),
       ),
-      trailing: isCurrent ? const Icon(Icons.check, color: AppColors.primary) : null,
+      trailing: isCurrent ? Icon(Icons.check, color: theme.colorScheme.primary) : null,
       onTap: () async {
         if (context.canPop()) context.pop();
         if (!isCurrent) {
@@ -325,12 +347,15 @@ class AdminUserCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildRoleBadge(String role) {
-    final color = _getRoleColor(role);
+  Widget _buildRoleBadge(BuildContext context, String role) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final color = _getRoleColor(context, role);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: color.withValues(alpha: isDark ? 0.22 : 0.12),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
@@ -344,15 +369,17 @@ class AdminUserCard extends ConsumerWidget {
     );
   }
 
-  Color _getRoleColor(String role) {
+  Color _getRoleColor(BuildContext context, String role) {
+    final theme = Theme.of(context);
+
     switch (role.toUpperCase()) {
       case 'ADMIN':
-        return AppColors.danger;
+        return theme.colorScheme.error;
       case 'MANAGER':
-        return AppColors.primary;
+        return const Color(0xFFD97706);
       case 'PARENT':
       default:
-        return AppColors.teal;
+        return theme.colorScheme.primary;
     }
   }
 }

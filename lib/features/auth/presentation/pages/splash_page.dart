@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/core/constants/AppTextStyles.dart';
 import 'package:eveilkid/core/constants/AppSpacing.dart';
 import 'package:eveilkid/shared/widgets/app_logo.dart';
@@ -10,8 +9,16 @@ class SplashPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
+    final titleColor = colorScheme.onSurface;
+    final subtitleColor = colorScheme.onSurfaceVariant;
+    final primaryColor = colorScheme.primary;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -21,28 +28,33 @@ class SplashPage extends StatelessWidget {
             AppSpacing.verticalLg,
 
             // Titre de l'application
-            const Text(
+            Text(
               'Éveil Kid',
-              style: AppTextStyles.headingLarge,
+              style: AppTextStyles.headingLarge.copyWith(
+                color: titleColor,
+              ),
             ),
             AppSpacing.verticalXs,
 
             // Sous-titre
             Text(
               'Ludothèque & Éveil Pédagogique',
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.textSecondary,
-              ),
+              style: textTheme.bodyMedium?.copyWith(
+                    color: subtitleColor,
+                  ) ??
+                  AppTextStyles.bodyMedium.copyWith(
+                    color: subtitleColor,
+                  ),
             ),
             AppSpacing.verticalXxl,
 
             // Indicateur de chargement stylisé
-            const SizedBox(
+            SizedBox(
               width: 28,
               height: 28,
               child: CircularProgressIndicator(
                 strokeWidth: 2.8,
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
               ),
             ),
           ],

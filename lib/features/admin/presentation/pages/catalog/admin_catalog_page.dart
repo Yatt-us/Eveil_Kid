@@ -36,18 +36,24 @@ class _AdminCatalogPageState extends ConsumerState<AdminCatalogPage>
   @override
   Widget build(BuildContext context) {
     final stats = ref.watch(adminCatalogStatsProvider);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final dividerColor = theme.dividerColor.withValues(alpha: 0.2);
+    final textSecondary = theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+        (isDark ? Colors.white70 : AppColors.textSecondary);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           "Gestion du Catalogue",
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+            color: theme.textTheme.titleMedium?.color ??
+                theme.colorScheme.onSurface,
           ),
         ),
-        backgroundColor: AppColors.surface,
+        backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(46),
@@ -56,10 +62,12 @@ class _AdminCatalogPageState extends ConsumerState<AdminCatalogPage>
             padding: const EdgeInsets.all(3),
             height: 38,
             decoration: BoxDecoration(
-              color: AppColors.surfaceVariant.withValues(alpha: 0.6),
+              color: isDark
+                  ? theme.colorScheme.surfaceContainerHighest
+                  : AppColors.surfaceVariant.withValues(alpha: 0.6),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: AppColors.border.withValues(alpha: 0.6),
+                color: dividerColor,
                 width: 1,
               ),
             ),
@@ -68,22 +76,22 @@ class _AdminCatalogPageState extends ConsumerState<AdminCatalogPage>
               indicatorSize: TabBarIndicatorSize.tab,
               dividerColor: Colors.transparent,
               indicator: BoxDecoration(
-                color: AppColors.surface,
+                color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: AppColors.border.withValues(alpha: 0.5),
+                  color: dividerColor,
                   width: 0.8,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
                     blurRadius: 3,
                     offset: const Offset(0, 1),
                   ),
                 ],
               ),
-              labelColor: AppColors.primary,
-              unselectedLabelColor: AppColors.textSecondary,
+              labelColor: theme.colorScheme.primary,
+              unselectedLabelColor: textSecondary,
               labelStyle: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -107,8 +115,8 @@ class _AdminCatalogPageState extends ConsumerState<AdminCatalogPage>
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                         decoration: BoxDecoration(
                           color: _tabController.index == 0
-                              ? AppColors.primary.withValues(alpha: 0.12)
-                              : AppColors.surfaceVariant,
+                              ? theme.colorScheme.primary.withValues(alpha: isDark ? 0.25 : 0.12)
+                              : (isDark ? theme.colorScheme.surface : AppColors.surfaceVariant),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -117,8 +125,8 @@ class _AdminCatalogPageState extends ConsumerState<AdminCatalogPage>
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             color: _tabController.index == 0
-                                ? AppColors.primary
-                                : AppColors.textSecondary,
+                                ? theme.colorScheme.primary
+                                : textSecondary,
                           ),
                         ),
                       ),
@@ -137,8 +145,8 @@ class _AdminCatalogPageState extends ConsumerState<AdminCatalogPage>
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                         decoration: BoxDecoration(
                           color: _tabController.index == 1
-                              ? AppColors.primary.withValues(alpha: 0.12)
-                              : AppColors.surfaceVariant,
+                              ? theme.colorScheme.primary.withValues(alpha: isDark ? 0.25 : 0.12)
+                              : (isDark ? theme.colorScheme.surface : AppColors.surfaceVariant),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -147,8 +155,8 @@ class _AdminCatalogPageState extends ConsumerState<AdminCatalogPage>
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             color: _tabController.index == 1
-                                ? AppColors.primary
-                                : AppColors.textSecondary,
+                                ? theme.colorScheme.primary
+                                : textSecondary,
                           ),
                         ),
                       ),
@@ -168,8 +176,8 @@ class _AdminCatalogPageState extends ConsumerState<AdminCatalogPage>
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.white,
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
         icon: const Icon(Icons.add),
         label: Text(
           _tabController.index == 0 ? "Nouveau Produit" : "Nouvelle Catégorie",
