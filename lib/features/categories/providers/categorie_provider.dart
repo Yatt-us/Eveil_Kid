@@ -15,6 +15,8 @@ final categoriesProvider = FutureProvider<List<Categorie>>((ref) async {
   return repository.getCategories();
 });
 
+final categoriesPrincipalesProvider = categoriesProvider;
+
 final categorieByIdProvider =
     FutureProvider.family<Categorie?, String>((ref, categorieId) async {
   final repository = ref.read(categorieRepositoryProvider);

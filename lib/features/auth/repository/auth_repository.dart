@@ -66,6 +66,10 @@ class AuthRepository {
         'dateCreation': FieldValue.serverTimestamp(),
         'dateModification': FieldValue.serverTimestamp(),
       });
+
+      // Mise à jour du displayName et envoi du mail de confirmation
+      await user.updateDisplayName(nom);
+      await user.sendEmailVerification();
     } on FirebaseAuthException {
       // L'inscription Firebase Auth a échoué.
       rethrow;
@@ -196,6 +200,26 @@ class AuthRepository {
     await _auth.sendPasswordResetEmail(
       email: email,
     );
+  }
+
+  // RENVOI DE L'EMAIL DE VÉRIFICATION
+
+  Future<void> sendEmailVerification() async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      await user.sendEmailVerification();
+    }
+  }
+
+  // VÉRIFICATION DU STATUT EMAIL
+
+  Future<bool> isEmailVerified() async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      await user.reload();
+      return _auth.currentUser?.emailVerified ?? false;
+    }
+    return false;
   }
 
   // CONNEXION GOOGLE

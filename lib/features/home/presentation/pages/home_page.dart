@@ -1,3 +1,4 @@
+import 'package:eveilkid/shared/widgets/app_bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -36,7 +37,8 @@ class HomePage extends ConsumerWidget {
     final authState = ref.watch(authProvider);
     final user = authState.utilisateur;
 
-    final isAdminOrManager = user?.role == UserRole.admin || user?.role == UserRole.manager;
+    final isAdminOrManager =
+        user?.role == UserRole.admin || user?.role == UserRole.manager;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -71,10 +73,7 @@ class HomePage extends ConsumerWidget {
         actions: [
           IconButton(
             tooltip: 'Déconnexion',
-            icon: const Icon(
-              Icons.logout_rounded,
-              color: AppColors.danger,
-            ),
+            icon: const Icon(Icons.logout_rounded, color: AppColors.danger),
             onPressed: () => _logout(context, ref),
           ),
           AppSpacing.horizontalXs,
@@ -111,6 +110,7 @@ class HomePage extends ConsumerWidget {
           ],
         ),
       ),
+      bottomNavigationBar: AppBottomNavBar(),
     );
   }
 
@@ -183,7 +183,10 @@ class HomePage extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: roleColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(20),
@@ -191,11 +194,7 @@ class HomePage extends ConsumerWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      _getRoleIcon(user?.role),
-                      size: 14,
-                      color: roleColor,
-                    ),
+                    Icon(_getRoleIcon(user?.role), size: 14, color: roleColor),
                     const SizedBox(width: 6),
                     Text(
                       roleLabel,
@@ -242,11 +241,8 @@ class HomePage extends ConsumerWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.indigo,
-            AppColors.primary,
-          ],
+        gradient: const LinearGradient(
+          colors: [AppColors.indigo, AppColors.primary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -291,10 +287,7 @@ class HomePage extends ConsumerWidget {
                     ),
                     Text(
                       'Gestion des produits, catégories et utilisateurs',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.white,
-                      ),
+                      style: TextStyle(fontSize: 12, color: AppColors.white),
                     ),
                   ],
                 ),
@@ -414,16 +407,12 @@ class HomePage extends ConsumerWidget {
         description: 'Explorez la sélection de jeux d’éveil disponibles.',
         icon: Icons.toys_rounded,
         iconColor: AppColors.secondary,
-        onTap: () {
-          AppDialogs.showSnackBar(
-            context: context,
-            message: 'Le catalogue public sera bientôt disponible !',
-          );
-        },
+        onTap: () => context.go(AppRoutes.jouetscreen),
       ),
       _FeatureModule(
         title: 'Espace Enfants',
-        description: 'Gérez les profils et les centres d’intérêt de vos enfants.',
+        description:
+            'Gérez les profils et les centres d’intérêt de vos enfants.',
         icon: Icons.face_rounded,
         iconColor: AppColors.teal,
         onTap: () {
@@ -472,11 +461,7 @@ class HomePage extends ConsumerWidget {
                     color: item.iconColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Icon(
-                    item.icon,
-                    color: item.iconColor,
-                    size: 26,
-                  ),
+                  child: Icon(item.icon, color: item.iconColor, size: 26),
                 ),
                 AppSpacing.horizontalMd,
                 Expanded(

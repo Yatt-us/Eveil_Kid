@@ -194,4 +194,5 @@ class Jouet {
       'dateModification': dateModification,
     };
   }
+
 }

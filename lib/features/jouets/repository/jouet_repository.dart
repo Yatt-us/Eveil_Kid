@@ -37,8 +37,7 @@ class JouetRepository {
         .where('estActif', isEqualTo: true)
         .get();
 
-    return snapshot.docs
-        .map((doc) => Jouet.fromFirestore(doc))
+    return snapshot.docs.map((doc) => Jouet.fromFirestore(doc))
         .toList();
   }
 
@@ -49,12 +48,8 @@ class JouetRepository {
 
     final rechercheLower = recherche.toLowerCase();
 
-    return snapshot.docs
-        .map((doc) => Jouet.fromFirestore(doc))
-        .where(
-          (jouet) =>
-              jouet.nom.toLowerCase().contains(rechercheLower),
-        )
+    return snapshot.docs.map((doc) => Jouet.fromFirestore(doc))
+        .where((jouet) => jouet.nom.toLowerCase().contains(rechercheLower),)
         .toList();
   }
 

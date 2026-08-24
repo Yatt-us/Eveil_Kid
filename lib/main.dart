@@ -20,13 +20,14 @@
 import 'dart:ui';
 
 import 'package:eveilkid/core/router/app_router.dart';
+import 'package:eveilkid/core/provider/theme_provider.dart';
 import 'package:eveilkid/core/services/google_sign_in_service.dart';
 import 'package:eveilkid/core/themes/AppTheme.dart';
-import 'package:eveilkid/core/themes/theme_provider.dart';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+// Importez le fichier où se trouve appRouterProvider
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -47,12 +48,13 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Écoute de la configuration GoRouter
     final router = ref.watch(appRouterProvider);
     final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
-      title: 'Éveil Kid',
+      title: 'Eveil Kid',
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: themeMode,

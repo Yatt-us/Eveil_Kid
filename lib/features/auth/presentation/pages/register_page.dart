@@ -37,6 +37,14 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     super.dispose();
   }
 
+  void _popOrGoHome() {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go(AppRoutes.home);
+    }
+  }
+
   void _popOrGoLogin() {
     if (context.canPop()) {
       context.pop();
@@ -63,9 +71,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     if (success) {
       AppDialogs.showSnackBar(
         context: context,
-        message: 'Votre compte a été créé avec succès.',
+        message:
+            'Compte créé avec succès ! Un email de confirmation vous a été envoyé.',
       );
-      _popOrGoLogin();
+      context.go(AppRoutes.home);
     } else {
       final error = ref.read(authProvider).errorMessage;
       AppDialogs.showSnackBar(
@@ -113,13 +122,13 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // BOUTON RETOUR MINIMALISTE
+                    // BOUTON RETOUR VERS L'ACCUEIL / PRECEDENT
                     Align(
                       alignment: Alignment.centerLeft,
                       child: AppIconButton(
                         icon: Icons.arrow_back_rounded,
                         size: 36,
-                        onPressed: _popOrGoLogin,
+                        onPressed: _popOrGoHome,
                       ),
                     ),
 
@@ -305,6 +314,24 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                           ),
                         ),
                       ],
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // LIEN RETOUR ACCUEIL
+                    Center(
+                      child: TextButton.icon(
+                        onPressed: _popOrGoHome,
+                        icon: const Icon(Icons.home_outlined, size: 18),
+                        label: const Text('Continuer sans se connecter'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.textSecondary,
+                          textStyle: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
                     ),
 
                     const SizedBox(height: 12),
