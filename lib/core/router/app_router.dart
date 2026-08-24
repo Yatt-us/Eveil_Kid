@@ -1,3 +1,5 @@
+import 'package:eveilkid/features/admin/presentation/widgets/admin_drawer.dart';
+import 'package:eveilkid/features/tutoriels/presentation/pages/tutoriel_page.dart';
 import 'package:eveilkid/features/enfant/model/enfant_model.dart';
 import 'package:eveilkid/features/parents/presentation/pages/accueil_parent.dart';
 import 'package:eveilkid/features/parents/presentation/pages/aide_support_page.dart';
@@ -25,12 +27,13 @@ import 'package:eveilkid/features/auth/presentation/pages/splash_page.dart';
 import 'package:eveilkid/features/auth/providers/auth_provider.dart';
 import 'package:eveilkid/features/categories/models/categorie.dart';
 import 'package:eveilkid/features/jouets/models/jouet.dart';
-
-import 'package:eveilkid/features/tutoriels/presentations/pages/tutorielPage.dart';
-import 'package:eveilkid/features/admin/presentation/widgets/admin_drawer.dart';
-
+//import 'package:eveilkid/features/activites/presentation/pages/client/activites_list_page.dart';
+//import 'package:eveilkid/features/activites/presentation/pages/client/activites_play_page.dart';
+//import 'package:eveilkid/features/activites/presentation/pages/client/activites_resultat_page.dart';
+//import 'package:eveilkid/features/activites/presentation/pages/client/activites_corrige_page.dart';
 import 'package:eveilkid/features/jouets/presentation/page/jouet_detail_screen.dart';
 import 'package:eveilkid/features/jouets/presentation/page/jouets_screen.dart';
+//import 'package:eveilkid/features/tutoriels/presentations/pages/tutorielPage.dart';
 
 /// Notifier pour déclencher les rafraîchissements de GoRouter lors des changements d'état d'authentification Riverpod
 class _RouterRefreshNotifier extends ChangeNotifier {
