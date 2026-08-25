@@ -16,6 +16,7 @@ class AppRoutes {
   static const String tutoriels = '/tutoriels';
   static const String activites = '/activites';
   static const String jouets = '/jouets';
+  static const String panier = '/panier';
   static const String profile = '/profile';
   static const String activitesPlay = '/activites/play';
   static const String activitesResultat = '/activites/resultat';

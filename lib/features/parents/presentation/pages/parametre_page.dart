@@ -28,8 +28,10 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
   String _selectedLanguage = 'Français';
 
   void _showLanguageSelector() {
+    final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
+      backgroundColor: theme.colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -38,17 +40,28 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Padding(
-                padding: EdgeInsets.all(16),
+              Padding(
+                padding: const EdgeInsets.all(16),
                 child: Text(
                   'Choisir la langue',
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: theme.textTheme.titleMedium?.color ??
+                        theme.colorScheme.onSurface,
+                  ),
                 ),
               ),
               ListTile(
-                title: const Text('Français'),
+                title: Text(
+                  'Français',
+                  style: TextStyle(
+                    color: theme.textTheme.bodyLarge?.color ??
+                        theme.colorScheme.onSurface,
+                  ),
+                ),
                 trailing: _selectedLanguage == 'Français'
-                    ? const Icon(Icons.check, color: AppColors.primary)
+                    ? Icon(Icons.check, color: theme.colorScheme.primary)
                     : null,
                 onTap: () {
                   setState(() => _selectedLanguage = 'Français');
@@ -56,9 +69,15 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
                 },
               ),
               ListTile(
-                title: const Text('Bambara'),
+                title: Text(
+                  'Bambara',
+                  style: TextStyle(
+                    color: theme.textTheme.bodyLarge?.color ??
+                        theme.colorScheme.onSurface,
+                  ),
+                ),
                 trailing: _selectedLanguage == 'Bambara'
-                    ? const Icon(Icons.check, color: AppColors.primary)
+                    ? Icon(Icons.check, color: theme.colorScheme.primary)
                     : null,
                 onTap: () {
                   setState(() => _selectedLanguage = 'Bambara');
@@ -66,9 +85,15 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
                 },
               ),
               ListTile(
-                title: const Text('English'),
+                title: Text(
+                  'English',
+                  style: TextStyle(
+                    color: theme.textTheme.bodyLarge?.color ??
+                        theme.colorScheme.onSurface,
+                  ),
+                ),
                 trailing: _selectedLanguage == 'English'
-                    ? const Icon(Icons.check, color: AppColors.primary)
+                    ? Icon(Icons.check, color: theme.colorScheme.primary)
                     : null,
                 onTap: () {
                   setState(() => _selectedLanguage = 'English');
@@ -83,8 +108,10 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
   }
 
   void _showThemeSelector(ThemeMode currentMode) {
+    final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
+      backgroundColor: theme.colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -93,18 +120,32 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Padding(
-                padding: EdgeInsets.all(16),
+              Padding(
+                padding: const EdgeInsets.all(16),
                 child: Text(
                   'Choisir le thème',
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: theme.textTheme.titleMedium?.color ??
+                        theme.colorScheme.onSurface,
+                  ),
                 ),
               ),
               ListTile(
-                leading: const Icon(Icons.light_mode_outlined, color: AppColors.primary),
-                title: const Text('Clair'),
+                leading: Icon(
+                  Icons.light_mode_outlined,
+                  color: theme.colorScheme.primary,
+                ),
+                title: Text(
+                  'Clair',
+                  style: TextStyle(
+                    color: theme.textTheme.bodyLarge?.color ??
+                        theme.colorScheme.onSurface,
+                  ),
+                ),
                 trailing: currentMode == ThemeMode.light
-                    ? const Icon(Icons.check, color: AppColors.primary)
+                    ? Icon(Icons.check, color: theme.colorScheme.primary)
                     : null,
                 onTap: () {
                   ref.read(themeModeProvider.notifier).setThemeMode(ThemeMode.light);
@@ -112,10 +153,19 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.dark_mode_outlined, color: AppColors.primary),
-                title: const Text('Sombre'),
+                leading: Icon(
+                  Icons.dark_mode_outlined,
+                  color: theme.colorScheme.primary,
+                ),
+                title: Text(
+                  'Sombre',
+                  style: TextStyle(
+                    color: theme.textTheme.bodyLarge?.color ??
+                        theme.colorScheme.onSurface,
+                  ),
+                ),
                 trailing: currentMode == ThemeMode.dark
-                    ? const Icon(Icons.check, color: AppColors.primary)
+                    ? Icon(Icons.check, color: theme.colorScheme.primary)
                     : null,
                 onTap: () {
                   ref.read(themeModeProvider.notifier).setThemeMode(ThemeMode.dark);
@@ -123,10 +173,19 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.settings_suggest_outlined, color: AppColors.primary),
-                title: const Text('Système (Automatique)'),
+                leading: Icon(
+                  Icons.settings_suggest_outlined,
+                  color: theme.colorScheme.primary,
+                ),
+                title: Text(
+                  'Système (Automatique)',
+                  style: TextStyle(
+                    color: theme.textTheme.bodyLarge?.color ??
+                        theme.colorScheme.onSurface,
+                  ),
+                ),
                 trailing: currentMode == ThemeMode.system
-                    ? const Icon(Icons.check, color: AppColors.primary)
+                    ? Icon(Icons.check, color: theme.colorScheme.primary)
                     : null,
                 onTap: () {
                   ref.read(themeModeProvider.notifier).setThemeMode(ThemeMode.system);
@@ -153,27 +212,31 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final authState = ref.watch(authProvider);
+
     if (!authState.isAuthenticated) {
       return Scaffold(
-        backgroundColor: AppColors.surface,
+        backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: AppColors.surface,
+          backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.arrow_back_ios_new_rounded,
-              color: AppColors.textPrimary,
+              color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
               size: 22,
             ),
             onPressed: () => Navigator.pop(context),
           ),
-          title: const Text(
+          title: Text(
             'Paramètres',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+              color: theme.textTheme.titleMedium?.color ??
+                  theme.colorScheme.onSurface,
             ),
           ),
           centerTitle: true,
@@ -187,26 +250,31 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
                 Container(
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.lock_outline_rounded,
                     size: 48,
-                    color: AppColors.primary,
+                    color: theme.colorScheme.primary,
                   ),
                 ),
                 AppSpacing.verticalLg,
-                const Text(
+                Text(
                   'Accès Restreint',
-                  style: AppTextStyles.headingMedium,
+                  style: AppTextStyles.headingMedium.copyWith(
+                    color: theme.textTheme.titleLarge?.color ??
+                        theme.colorScheme.onSurface,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 AppSpacing.verticalSm,
                 Text(
                   'Veuillez vous connecter à votre compte parent pour modifier vos paramètres et préférences.',
                   style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.textSecondary,
+                    color: theme.textTheme.bodyMedium?.color
+                            ?.withValues(alpha: 0.7) ??
+                        theme.colorScheme.onSurfaceVariant,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -216,8 +284,8 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
                   child: ElevatedButton.icon(
                     onPressed: () => context.push(AppRoutes.login),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.white,
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: AppRadius.button,
@@ -238,17 +306,16 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
     }
 
     final currentThemeMode = ref.watch(themeModeProvider);
-    final theme = Theme.of(context);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: theme.appBarTheme.backgroundColor ?? theme.colorScheme.surface,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface,
+            color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
             size: 22,
           ),
           onPressed: () => Navigator.pop(context),
@@ -258,7 +325,8 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface,
+            color: theme.textTheme.titleMedium?.color ??
+                theme.colorScheme.onSurface,
           ),
         ),
         centerTitle: true,
@@ -303,7 +371,7 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
                   );
                 },
               ),
-            ], context),
+            ], context, isDark),
             AppSpacing.verticalLg,
 
             // ── Section Sécurité ──
@@ -312,8 +380,8 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
             _buildCard([
               _buildRow(
                 context: context,
-                icon: Icons.verified_user_outlined,
-                title: 'Sécurité',
+                icon: Icons.security_rounded,
+                title: 'Sécurité du compte',
                 onTap: () {
                   Navigator.push(
                     context,
@@ -321,19 +389,7 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
                   );
                 },
               ),
-              Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.2)),
-              _buildRow(
-                context: context,
-                icon: Icons.lock_outline_rounded,
-                title: 'Changer le mot de passe',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const SecuritePage()),
-                  );
-                },
-              ),
-            ], context),
+            ], context, isDark),
             AppSpacing.verticalLg,
 
             // ── Section Confidentialité ──
@@ -366,7 +422,7 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
                   );
                 },
               ),
-            ], context),
+            ], context, isDark),
             AppSpacing.verticalLg,
 
             // ── Section Autres ──
@@ -400,7 +456,7 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
                   );
                 },
               ),
-            ], context),
+            ], context, isDark),
             AppSpacing.verticalXxl,
           ],
         ),
@@ -415,12 +471,13 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
       style: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w800,
-        color: theme.textTheme.titleMedium?.color ?? AppColors.textPrimary,
+        color: theme.textTheme.titleMedium?.color ??
+            theme.colorScheme.onSurface,
       ),
     );
   }
 
-  Widget _buildCard(List<Widget> children, BuildContext context) {
+  Widget _buildCard(List<Widget> children, BuildContext context, bool isDark) {
     final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
@@ -430,6 +487,14 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
           color: theme.dividerColor.withValues(alpha: 0.2),
           width: 1.2,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: (isDark ? Colors.black : AppColors.textPrimary)
+                .withValues(alpha: isDark ? 0.25 : 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(children: children),
     );
@@ -458,7 +523,8 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: theme.textTheme.titleMedium?.color ?? AppColors.textPrimary,
+                  color: theme.textTheme.titleMedium?.color ??
+                      theme.colorScheme.onSurface,
                 ),
               ),
             ),
@@ -468,7 +534,7 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
                 style: TextStyle(
                   fontSize: 14,
                   color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7) ??
-                      AppColors.textSecondary,
+                      theme.colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -477,7 +543,7 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
             Icon(
               Icons.chevron_right_rounded,
               color: theme.iconTheme.color?.withValues(alpha: 0.5) ??
-                  AppColors.textSecondary,
+                  theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
               size: 22,
             ),
           ],

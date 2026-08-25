@@ -5,6 +5,7 @@ import 'package:eveilkid/core/constants/AppRadius.dart';
 import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/features/jouets/models/jouet.dart';
 import 'package:eveilkid/features/panier/providers/panier_provider.dart';
+import 'package:eveilkid/features/panier/presentation/widgets/panier_app_bar_action.dart';
 
 class JouetDetailScreen extends ConsumerStatefulWidget {
   final Jouet jouet;
@@ -139,13 +140,7 @@ class _JouetDetailScreenState extends ConsumerState<JouetDetailScreen> {
             ),
             onPressed: () => setState(() => _isFavorite = !_isFavorite),
           ),
-          IconButton(
-            icon: const Icon(
-              Icons.share_outlined,
-              color: AppColors.textPrimary,
-            ),
-            onPressed: () {},
-          ),
+          const PanierAppBarAction(),
         ],
       ),
       body: SafeArea(
