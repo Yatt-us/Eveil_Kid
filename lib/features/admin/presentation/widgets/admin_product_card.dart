@@ -8,11 +8,7 @@ import 'package:eveilkid/shared/widgets/app_card.dart';
 import 'package:eveilkid/shared/widgets/app_dialogs.dart';
 import 'admin_quick_stock_price_dialog.dart';
 
-/// Carte d'administration de produit épurée et ultra-minimaliste sur mobile.
-///
-/// Permet d'afficher un maximum d'éléments sur l'écran.
-/// Un simple appui ouvre l'édition directe, et un appui long affiche
-/// le tiroir d'actions (options de suppression, modification rapide, statut).
+/// Carte d'administration de produit épurée et responsive pour le thème clair et sombre.
 class AdminProductCard extends ConsumerWidget {
   final Jouet jouet;
   final VoidCallback onEdit;
@@ -44,20 +40,27 @@ class AdminProductCard extends ConsumerWidget {
     );
   }
 
-  /// Disposition minimaliste pour mobile (hauteur réduite ~64px, dense)
+  /// Disposition minimaliste pour mobile
   Widget _buildMinimalMobileTile(
     BuildContext context,
     WidgetRef ref,
     dynamic jouetRepo,
   ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textSecondary = theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+        (isDark ? Colors.white70 : AppColors.textSecondary);
     final hasCategory = jouet.nomCategorieDenormalise.trim().isNotEmpty;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.8), width: 1),
+        border: Border.all(
+          color: theme.dividerColor.withValues(alpha: 0.2),
+          width: 1,
+        ),
       ),
       child: Material(
         color: Colors.transparent,
@@ -70,11 +73,9 @@ class AdminProductCard extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             child: Row(
               children: [
-                // Vignette compacte
-                _buildThumbnail(44),
+                _buildThumbnail(context, 44),
                 const SizedBox(width: 10),
 
-                // Détails produit
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,8 +90,9 @@ class AdminProductCard extends ConsumerWidget {
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w600,
                                 color: jouet.estActif
-                                    ? AppColors.textPrimary
-                                    : AppColors.textSecondary,
+                                    ? (theme.textTheme.bodyLarge?.color ??
+                                        theme.colorScheme.onSurface)
+                                    : textSecondary,
                                 decoration: jouet.estActif
                                     ? null
                                     : TextDecoration.lineThrough,
@@ -105,7 +107,7 @@ class AdminProductCard extends ConsumerWidget {
                               child: Icon(
                                 Icons.star_rounded,
                                 size: 15,
-                                color: AppColors.accent,
+                                color: AppColors.warning,
                               ),
                             ),
                         ],
@@ -115,34 +117,34 @@ class AdminProductCard extends ConsumerWidget {
                         children: [
                           Text(
                             "${jouet.prix.toStringAsFixed(0)} ${jouet.devise}",
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12.5,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.primary,
+                              color: theme.colorScheme.primary,
                             ),
                           ),
-                          const Text(
+                          Text(
                             " • ",
                             style: TextStyle(
                               fontSize: 12,
-                              color: AppColors.textSecondary,
+                              color: textSecondary,
                             ),
                           ),
-                          _buildStockText(jouet.stockDisponible),
+                          _buildStockText(context, jouet.stockDisponible),
                           if (hasCategory) ...[
-                            const Text(
+                            Text(
                               " • ",
                               style: TextStyle(
                                 fontSize: 12,
-                                color: AppColors.textSecondary,
+                                color: textSecondary,
                               ),
                             ),
                             Expanded(
                               child: Text(
                                 jouet.nomCategorieDenormalise,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11.5,
-                                  color: AppColors.textSecondary,
+                                  color: textSecondary,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -155,12 +157,12 @@ class AdminProductCard extends ConsumerWidget {
                   ),
                 ),
 
-                // Bouton options discrètes (déclenche aussi le menu d'actions)
                 IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.more_vert_rounded,
                     size: 20,
-                    color: AppColors.icon,
+                    color: theme.iconTheme.color?.withValues(alpha: 0.6) ??
+                        AppColors.icon,
                   ),
                   tooltip: "Actions",
                   onPressed: () =>
@@ -178,14 +180,17 @@ class AdminProductCard extends ConsumerWidget {
 
   /// Disposition large (tablette / desktop)
   Widget _buildWideLayout(BuildContext context, dynamic jouetRepo) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textSecondary = theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+        (isDark ? Colors.white70 : AppColors.textSecondary);
     final hasCategory = jouet.nomCategorieDenormalise.trim().isNotEmpty;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        _buildThumbnail(56),
+        _buildThumbnail(context, 56),
         AppSpacing.horizontalMd,
-        // Infos au centre
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,8 +205,9 @@ class AdminProductCard extends ConsumerWidget {
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
                         color: jouet.estActif
-                            ? AppColors.textPrimary
-                            : AppColors.textSecondary,
+                            ? (theme.textTheme.bodyLarge?.color ??
+                                theme.colorScheme.onSurface)
+                            : textSecondary,
                         decoration: jouet.estActif
                             ? null
                             : TextDecoration.lineThrough,
@@ -212,16 +218,16 @@ class AdminProductCard extends ConsumerWidget {
                   ),
                   const SizedBox(width: 6),
                   if (jouet.estPopulaire)
-                    const Icon(Icons.star_rounded, size: 16, color: AppColors.accent),
+                    const Icon(Icons.star_rounded, size: 16, color: AppColors.warning),
                 ],
               ),
               if (hasCategory) ...[
                 const SizedBox(height: 2),
                 Text(
                   jouet.nomCategorieDenormalise,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textSecondary,
+                    color: textSecondary,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -232,27 +238,29 @@ class AdminProductCard extends ConsumerWidget {
                 children: [
                   Text(
                     "${jouet.prix.toStringAsFixed(0)} ${jouet.devise}",
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
+                      color: theme.colorScheme.primary,
                     ),
                   ),
                   const SizedBox(width: 10),
-                  _buildStockBadge(jouet.stockDisponible),
+                  _buildStockBadge(context, jouet.stockDisponible),
                 ],
               ),
             ],
           ),
         ),
         const SizedBox(width: 6),
-        // Actions à droite
         _buildWideActions(context, jouetRepo),
       ],
     );
   }
 
-  Widget _buildThumbnail(double size) {
+  Widget _buildThumbnail(BuildContext context, double size) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Stack(
       children: [
         ClipRRect(
@@ -260,17 +268,23 @@ class AdminProductCard extends ConsumerWidget {
           child: Container(
             width: size,
             height: size,
-            color: AppColors.surfaceVariant,
+            color: isDark
+                ? theme.colorScheme.surfaceContainerHighest
+                : AppColors.surfaceVariant,
             child: jouet.imagePrincipaleUrl.isNotEmpty
                 ? Image.network(
                     jouet.imagePrincipaleUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) =>
-                        const Icon(Icons.broken_image_rounded, color: AppColors.icon, size: 20),
+                    errorBuilder: (context, error, stackTrace) => Icon(
+                      Icons.broken_image_rounded,
+                      color: theme.iconTheme.color?.withValues(alpha: 0.5) ??
+                          AppColors.icon,
+                      size: 20,
+                    ),
                   )
-                : const Icon(
+                : Icon(
                     Icons.toys_outlined,
-                    color: AppColors.primary,
+                    color: theme.colorScheme.primary,
                     size: 22,
                   ),
           ),
@@ -282,10 +296,10 @@ class AdminProductCard extends ConsumerWidget {
             child: Container(
               padding: const EdgeInsets.all(2),
               decoration: const BoxDecoration(
-                color: AppColors.accent,
+                color: AppColors.warning,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.star, size: 8, color: AppColors.white),
+              child: const Icon(Icons.star, size: 8, color: Colors.white),
             ),
           ),
       ],
@@ -293,6 +307,11 @@ class AdminProductCard extends ConsumerWidget {
   }
 
   Widget _buildWideActions(BuildContext context, dynamic jouetRepo) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textSecondary = theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+        (isDark ? Colors.white70 : AppColors.textSecondary);
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -303,7 +322,7 @@ class AdminProductCard extends ConsumerWidget {
               scale: 0.70,
               child: Switch(
                 value: jouet.estActif,
-                activeThumbColor: AppColors.success,
+                activeThumbColor: theme.colorScheme.primary,
                 onChanged: (val) async {
                   try {
                     await jouetRepo.toggleActif(jouet.jouetId, val);
@@ -311,7 +330,7 @@ class AdminProductCard extends ConsumerWidget {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          backgroundColor: AppColors.danger,
+                          backgroundColor: theme.colorScheme.error,
                           content: Text('Erreur : $e'),
                         ),
                       );
@@ -326,15 +345,19 @@ class AdminProductCard extends ConsumerWidget {
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
                 color: jouet.estActif
-                    ? AppColors.success
-                    : AppColors.textSecondary,
+                    ? const Color(0xFF10B981)
+                    : textSecondary,
               ),
             ),
           ],
         ),
         const SizedBox(width: 4),
         IconButton(
-          icon: const Icon(Icons.tune_rounded, size: 18, color: AppColors.secondary),
+          icon: Icon(
+            Icons.tune_rounded,
+            size: 18,
+            color: theme.colorScheme.secondary,
+          ),
           tooltip: "Modifier Prix / Stock",
           onPressed: () {
             showDialog(
@@ -346,14 +369,22 @@ class AdminProductCard extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
         ),
         IconButton(
-          icon: const Icon(Icons.edit_outlined, size: 18, color: AppColors.primary),
+          icon: Icon(
+            Icons.edit_outlined,
+            size: 18,
+            color: theme.colorScheme.primary,
+          ),
           tooltip: "Modifier",
           onPressed: onEdit,
           constraints: const BoxConstraints(),
           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
         ),
         IconButton(
-          icon: const Icon(Icons.delete_outline, size: 18, color: AppColors.danger),
+          icon: Icon(
+            Icons.delete_outline,
+            size: 18,
+            color: theme.colorScheme.error,
+          ),
           tooltip: "Supprimer",
           onPressed: () => _confirmDelete(context, jouetRepo),
           constraints: const BoxConstraints(),
@@ -363,16 +394,18 @@ class AdminProductCard extends ConsumerWidget {
     );
   }
 
-  /// Tiroir d'actions modal affiché lors d'un appui long sur un produit
   void _showActionBottomSheet(
     BuildContext context,
     WidgetRef ref,
     dynamic jouetRepo,
   ) {
+    final theme = Theme.of(context);
+    final dividerColor = theme.dividerColor.withValues(alpha: 0.2);
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: theme.colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -387,23 +420,21 @@ class AdminProductCard extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Poignée de glissement
                   Container(
                     width: 38,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: AppColors.border,
+                      color: dividerColor,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                   const SizedBox(height: 12),
 
-                  // En-tête avec détails du produit
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     child: Row(
                       children: [
-                        _buildThumbnail(44),
+                        _buildThumbnail(context, 44),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
@@ -411,10 +442,11 @@ class AdminProductCard extends ConsumerWidget {
                             children: [
                               Text(
                                 jouet.nom,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
+                                  color: theme.textTheme.titleSmall?.color ??
+                                      theme.colorScheme.onSurface,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -422,24 +454,26 @@ class AdminProductCard extends ConsumerWidget {
                               const SizedBox(height: 2),
                               Text(
                                 "${jouet.prix.toStringAsFixed(0)} ${jouet.devise} • Stock : ${jouet.stockDisponible}",
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
-                                  color: AppColors.textSecondary,
+                                  color: theme.textTheme.bodySmall?.color
+                                          ?.withValues(alpha: 0.7) ??
+                                      AppColors.textSecondary,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        _buildStockBadge(jouet.stockDisponible),
+                        _buildStockBadge(context, jouet.stockDisponible),
                       ],
                     ),
                   ),
-                  const Divider(height: 16, color: AppColors.border),
+                  Divider(height: 16, color: dividerColor),
 
                   // Option 1 : Modifier
                   ListTile(
                     dense: true,
-                    leading: const Icon(Icons.edit_outlined, color: AppColors.primary),
+                    leading: Icon(Icons.edit_outlined, color: theme.colorScheme.primary),
                     title: const Text(
                       "Modifier le produit",
                       style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
@@ -457,7 +491,7 @@ class AdminProductCard extends ConsumerWidget {
                   // Option 2 : Ajuster Prix & Stock express
                   ListTile(
                     dense: true,
-                    leading: const Icon(Icons.tune_rounded, color: AppColors.secondary),
+                    leading: Icon(Icons.tune_rounded, color: theme.colorScheme.secondary),
                     title: const Text(
                       "Ajuster Prix & Stock",
                       style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
@@ -482,7 +516,9 @@ class AdminProductCard extends ConsumerWidget {
                       jouet.estActif
                           ? Icons.visibility_off_outlined
                           : Icons.visibility_outlined,
-                      color: jouet.estActif ? AppColors.warning : AppColors.success,
+                      color: jouet.estActif
+                          ? const Color(0xFFF59E0B)
+                          : const Color(0xFF10B981),
                     ),
                     title: Text(
                       jouet.estActif ? "Désactiver le produit" : "Activer le produit",
@@ -501,7 +537,7 @@ class AdminProductCard extends ConsumerWidget {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              backgroundColor: AppColors.success,
+                              backgroundColor: const Color(0xFF10B981),
                               content: Text(
                                 jouet.estActif
                                     ? "Produit désactivé (déplacé vers Inactifs)"
@@ -514,7 +550,7 @@ class AdminProductCard extends ConsumerWidget {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              backgroundColor: AppColors.danger,
+                              backgroundColor: theme.colorScheme.error,
                               content: Text('Erreur : $e'),
                             ),
                           );
@@ -530,7 +566,7 @@ class AdminProductCard extends ConsumerWidget {
                       jouet.estPopulaire
                           ? Icons.star_border_rounded
                           : Icons.star_rounded,
-                      color: AppColors.accent,
+                      color: AppColors.warning,
                     ),
                     title: Text(
                       jouet.estPopulaire
@@ -551,7 +587,7 @@ class AdminProductCard extends ConsumerWidget {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              backgroundColor: AppColors.success,
+                              backgroundColor: const Color(0xFF10B981),
                               content: Text(
                                 jouet.estPopulaire
                                     ? "Retiré des populaires"
@@ -564,7 +600,7 @@ class AdminProductCard extends ConsumerWidget {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              backgroundColor: AppColors.danger,
+                              backgroundColor: theme.colorScheme.error,
                               content: Text('Erreur : $e'),
                             ),
                           );
@@ -576,11 +612,11 @@ class AdminProductCard extends ConsumerWidget {
                   // Option 5 : Supprimer
                   ListTile(
                     dense: true,
-                    leading: const Icon(Icons.delete_outline_rounded, color: AppColors.danger),
-                    title: const Text(
+                    leading: Icon(Icons.delete_outline_rounded, color: theme.colorScheme.error),
+                    title: Text(
                       "Supprimer le produit",
                       style: TextStyle(
-                        color: AppColors.danger,
+                        color: theme.colorScheme.error,
                         fontWeight: FontWeight.bold,
                         fontSize: 13.5,
                       ),
@@ -604,6 +640,8 @@ class AdminProductCard extends ConsumerWidget {
   }
 
   Future<void> _confirmDelete(BuildContext context, dynamic jouetRepo) async {
+    final theme = Theme.of(context);
+
     final confirmed = await AppDialogs.showConfirmDialog(
       context: context,
       title: "Supprimer le produit",
@@ -618,7 +656,7 @@ class AdminProductCard extends ConsumerWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              backgroundColor: AppColors.success,
+              backgroundColor: Color(0xFF10B981),
               content: Text('Produit supprimé avec succès.'),
             ),
           );
@@ -627,7 +665,7 @@ class AdminProductCard extends ConsumerWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              backgroundColor: AppColors.danger,
+              backgroundColor: theme.colorScheme.error,
               content: Text('Erreur lors de la suppression : $e'),
             ),
           );
@@ -636,18 +674,19 @@ class AdminProductCard extends ConsumerWidget {
     }
   }
 
-  Widget _buildStockText(int stockDispo) {
+  Widget _buildStockText(BuildContext context, int stockDispo) {
+    final theme = Theme.of(context);
     final Color color;
     final String label;
 
     if (stockDispo <= 0) {
-      color = AppColors.danger;
+      color = theme.colorScheme.error;
       label = "Rupture";
     } else if (stockDispo <= 5) {
       color = const Color(0xFFD97706);
       label = "Stock: $stockDispo";
     } else {
-      color = AppColors.success;
+      color = const Color(0xFF10B981);
       label = "Stock: $stockDispo";
     }
 
@@ -661,22 +700,24 @@ class AdminProductCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildStockBadge(int stockDispo) {
+  Widget _buildStockBadge(BuildContext context, int stockDispo) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final Color bg;
     final Color fg;
     final String label;
 
     if (stockDispo <= 0) {
-      bg = AppColors.danger.withValues(alpha: 0.12);
-      fg = AppColors.danger;
+      bg = theme.colorScheme.error.withValues(alpha: isDark ? 0.2 : 0.12);
+      fg = theme.colorScheme.error;
       label = "Rupture";
     } else if (stockDispo <= 5) {
-      bg = AppColors.warning.withValues(alpha: 0.15);
-      fg = const Color(0xFFB45309);
+      bg = const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.25 : 0.15);
+      fg = const Color(0xFFD97706);
       label = "Stock: $stockDispo";
     } else {
-      bg = AppColors.success.withValues(alpha: 0.12);
-      fg = AppColors.success;
+      bg = const Color(0xFF10B981).withValues(alpha: isDark ? 0.2 : 0.12);
+      fg = const Color(0xFF10B981);
       label = "Stock: $stockDispo";
     }
 

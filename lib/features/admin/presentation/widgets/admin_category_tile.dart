@@ -7,10 +7,7 @@ import 'package:eveilkid/features/categories/providers/categorie_provider.dart';
 import 'package:eveilkid/shared/widgets/app_card.dart';
 import 'package:eveilkid/shared/widgets/app_dialogs.dart';
 
-/// Tuile de catégorie épurée et ultra-minimaliste pour l'espace administration.
-///
-/// Affiche les éléments de manière compacte sur mobile.
-/// Un simple appui ouvre l'édition, et un appui long affiche le menu contextuel.
+/// Tuile de catégorie épurée et adaptée aux thèmes clair et sombre.
 class AdminCategoryTile extends ConsumerWidget {
   final Categorie categorie;
   final VoidCallback onEdit;
@@ -42,18 +39,26 @@ class AdminCategoryTile extends ConsumerWidget {
     );
   }
 
-  /// Disposition minimaliste pour mobile (hauteur ~56px)
+  /// Disposition minimaliste pour mobile
   Widget _buildMinimalMobileTile(
     BuildContext context,
     WidgetRef ref,
     dynamic repo,
   ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textSecondary = theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+        (isDark ? Colors.white70 : AppColors.textSecondary);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.8), width: 1),
+        border: Border.all(
+          color: theme.dividerColor.withValues(alpha: 0.2),
+          width: 1,
+        ),
       ),
       child: Material(
         color: Colors.transparent,
@@ -66,7 +71,7 @@ class AdminCategoryTile extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             child: Row(
               children: [
-                _buildIcon(36),
+                _buildIcon(context, 36),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -79,8 +84,9 @@ class AdminCategoryTile extends ConsumerWidget {
                           fontSize: 13.5,
                           fontWeight: FontWeight.w600,
                           color: categorie.estActive
-                              ? AppColors.textPrimary
-                              : AppColors.textSecondary,
+                              ? (theme.textTheme.bodyLarge?.color ??
+                                  theme.colorScheme.onSurface)
+                              : textSecondary,
                           decoration: categorie.estActive
                               ? null
                               : TextDecoration.lineThrough,
@@ -91,19 +97,20 @@ class AdminCategoryTile extends ConsumerWidget {
                       const SizedBox(height: 2),
                       Text(
                         "${categorie.nombreJouetsDenormalise} produit${categorie.nombreJouetsDenormalise > 1 ? 's' : ''}",
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11.5,
-                          color: AppColors.textSecondary,
+                          color: textSecondary,
                         ),
                       ),
                     ],
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.more_vert_rounded,
                     size: 20,
-                    color: AppColors.icon,
+                    color: theme.iconTheme.color?.withValues(alpha: 0.6) ??
+                        AppColors.icon,
                   ),
                   tooltip: "Actions",
                   onPressed: () => _showActionBottomSheet(context, ref, repo),
@@ -120,9 +127,14 @@ class AdminCategoryTile extends ConsumerWidget {
 
   /// Disposition large (tablette / desktop)
   Widget _buildWideLayout(BuildContext context, dynamic repo) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textSecondary = theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+        (isDark ? Colors.white70 : AppColors.textSecondary);
+
     return Row(
       children: [
-        _buildIcon(44),
+        _buildIcon(context, 44),
         AppSpacing.horizontalMd,
         Expanded(
           child: Column(
@@ -135,8 +147,9 @@ class AdminCategoryTile extends ConsumerWidget {
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
                   color: categorie.estActive
-                      ? AppColors.textPrimary
-                      : AppColors.textSecondary,
+                      ? (theme.textTheme.bodyLarge?.color ??
+                          theme.colorScheme.onSurface)
+                      : textSecondary,
                   decoration:
                       categorie.estActive ? null : TextDecoration.lineThrough,
                 ),
@@ -144,17 +157,16 @@ class AdminCategoryTile extends ConsumerWidget {
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 4),
-              _buildCountBadges(),
+              _buildCountBadges(context),
             ],
           ),
         ),
         const SizedBox(width: 8),
-        // Switch Actif
         Transform.scale(
           scale: 0.72,
           child: Switch(
             value: categorie.estActive,
-            activeThumbColor: AppColors.success,
+            activeThumbColor: theme.colorScheme.primary,
             onChanged: (val) async {
               try {
                 await repo.toggleActif(categorie.categorieId, val);
@@ -162,7 +174,7 @@ class AdminCategoryTile extends ConsumerWidget {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      backgroundColor: AppColors.danger,
+                      backgroundColor: theme.colorScheme.error,
                       content: Text('Erreur : $e'),
                     ),
                   );
@@ -172,14 +184,22 @@ class AdminCategoryTile extends ConsumerWidget {
           ),
         ),
         IconButton(
-          icon: const Icon(Icons.edit_outlined, size: 18, color: AppColors.primary),
+          icon: Icon(
+            Icons.edit_outlined,
+            size: 18,
+            color: theme.colorScheme.primary,
+          ),
           tooltip: "Modifier",
           onPressed: onEdit,
           constraints: const BoxConstraints(),
           padding: const EdgeInsets.symmetric(horizontal: 5),
         ),
         IconButton(
-          icon: const Icon(Icons.delete_outline, size: 18, color: AppColors.danger),
+          icon: Icon(
+            Icons.delete_outline,
+            size: 18,
+            color: theme.colorScheme.error,
+          ),
           tooltip: "Supprimer",
           onPressed: () => _confirmDelete(context, repo),
           constraints: const BoxConstraints(),
@@ -189,7 +209,9 @@ class AdminCategoryTile extends ConsumerWidget {
     );
   }
 
-  Widget _buildIcon(double size) {
+  Widget _buildIcon(BuildContext context, double size) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final hasIcon = categorie.iconeUrl != null && categorie.iconeUrl!.trim().isNotEmpty;
 
     return Container(
@@ -197,8 +219,10 @@ class AdminCategoryTile extends ConsumerWidget {
       height: size,
       decoration: BoxDecoration(
         color: categorie.estActive
-            ? AppColors.primary.withValues(alpha: 0.1)
-            : AppColors.surfaceVariant,
+            ? theme.colorScheme.primary.withValues(alpha: isDark ? 0.2 : 0.1)
+            : (isDark
+                ? theme.colorScheme.surfaceContainerHighest
+                : AppColors.surfaceVariant),
         borderRadius: BorderRadius.circular(8),
       ),
       child: hasIcon
@@ -207,37 +231,45 @@ class AdminCategoryTile extends ConsumerWidget {
               child: Image.network(
                 categorie.iconeUrl!,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => const Icon(
+                errorBuilder: (context, error, stackTrace) => Icon(
                   Icons.category_outlined,
-                  color: AppColors.primary,
+                  color: theme.colorScheme.primary,
                   size: 20,
                 ),
               ),
             )
           : Icon(
               Icons.category_outlined,
-              color: AppColors.primary,
+              color: theme.colorScheme.primary,
               size: size * 0.55,
             ),
     );
   }
 
-  Widget _buildCountBadges() {
+  Widget _buildCountBadges(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textSecondary = theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+        (isDark ? Colors.white70 : AppColors.textSecondary);
+    final badgeBg = isDark
+        ? theme.colorScheme.surfaceContainerHighest
+        : AppColors.surfaceVariant;
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
-            color: AppColors.surfaceVariant,
+            color: badgeBg,
             borderRadius: BorderRadius.circular(4),
           ),
           child: Text(
             "${categorie.nombreJouetsDenormalise} produits",
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
+              color: textSecondary,
             ),
           ),
         ),
@@ -246,15 +278,15 @@ class AdminCategoryTile extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: AppColors.surfaceVariant,
+              color: badgeBg,
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
               "${categorie.nbTutoriels} tutos",
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textSecondary,
+                color: textSecondary,
               ),
             ),
           ),
@@ -263,16 +295,19 @@ class AdminCategoryTile extends ConsumerWidget {
     );
   }
 
-  /// Tiroir d'actions modal affiché lors d'un appui long sur une catégorie
   void _showActionBottomSheet(
     BuildContext context,
     WidgetRef ref,
     dynamic repo,
   ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final dividerColor = theme.dividerColor.withValues(alpha: 0.2);
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: theme.colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -287,23 +322,21 @@ class AdminCategoryTile extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Poignée du drawer
                   Container(
                     width: 36,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: AppColors.border,
+                      color: dividerColor,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                   const SizedBox(height: 12),
 
-                  // En-tête de la catégorie
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     child: Row(
                       children: [
-                        _buildIcon(40),
+                        _buildIcon(context, 40),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
@@ -311,10 +344,11 @@ class AdminCategoryTile extends ConsumerWidget {
                             children: [
                               Text(
                                 categorie.nom,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
+                                  color: theme.textTheme.titleSmall?.color ??
+                                      theme.colorScheme.onSurface,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -322,9 +356,11 @@ class AdminCategoryTile extends ConsumerWidget {
                               const SizedBox(height: 2),
                               Text(
                                 "${categorie.nombreJouetsDenormalise} produit(s) associés",
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
-                                  color: AppColors.textSecondary,
+                                  color: theme.textTheme.bodySmall?.color
+                                          ?.withValues(alpha: 0.7) ??
+                                      AppColors.textSecondary,
                                 ),
                               ),
                             ],
@@ -333,8 +369,10 @@ class AdminCategoryTile extends ConsumerWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: (categorie.estActive ? AppColors.success : AppColors.textSecondary)
-                                .withValues(alpha: 0.12),
+                            color: (categorie.estActive
+                                    ? const Color(0xFF10B981)
+                                    : (isDark ? Colors.white24 : AppColors.textSecondary))
+                                .withValues(alpha: isDark ? 0.2 : 0.12),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -342,19 +380,20 @@ class AdminCategoryTile extends ConsumerWidget {
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
-                              color: categorie.estActive ? AppColors.success : AppColors.textSecondary,
+                              color: categorie.estActive
+                                  ? const Color(0xFF10B981)
+                                  : (isDark ? Colors.white70 : AppColors.textSecondary),
                             ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const Divider(height: 16, color: AppColors.border),
+                  Divider(height: 16, color: dividerColor),
 
-                  // Option 1 : Modifier
                   ListTile(
                     dense: true,
-                    leading: const Icon(Icons.edit_outlined, color: AppColors.primary),
+                    leading: Icon(Icons.edit_outlined, color: theme.colorScheme.primary),
                     title: const Text(
                       "Modifier la catégorie",
                       style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
@@ -369,14 +408,15 @@ class AdminCategoryTile extends ConsumerWidget {
                     },
                   ),
 
-                  // Option 2 : Activer / Désactiver
                   ListTile(
                     dense: true,
                     leading: Icon(
                       categorie.estActive
                           ? Icons.visibility_off_outlined
                           : Icons.visibility_outlined,
-                      color: categorie.estActive ? AppColors.warning : AppColors.success,
+                      color: categorie.estActive
+                          ? const Color(0xFFF59E0B)
+                          : const Color(0xFF10B981),
                     ),
                     title: Text(
                       categorie.estActive ? "Désactiver la catégorie" : "Activer la catégorie",
@@ -395,7 +435,7 @@ class AdminCategoryTile extends ConsumerWidget {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              backgroundColor: AppColors.success,
+                              backgroundColor: const Color(0xFF10B981),
                               content: Text(
                                 categorie.estActive
                                     ? "Catégorie désactivée (déplacée vers Inactives)"
@@ -408,7 +448,7 @@ class AdminCategoryTile extends ConsumerWidget {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              backgroundColor: AppColors.danger,
+                              backgroundColor: theme.colorScheme.error,
                               content: Text('Erreur : $e'),
                             ),
                           );
@@ -417,14 +457,13 @@ class AdminCategoryTile extends ConsumerWidget {
                     },
                   ),
 
-                  // Option 3 : Supprimer
                   ListTile(
                     dense: true,
-                    leading: const Icon(Icons.delete_outline_rounded, color: AppColors.danger),
-                    title: const Text(
+                    leading: Icon(Icons.delete_outline_rounded, color: theme.colorScheme.error),
+                    title: Text(
                       "Supprimer la catégorie",
                       style: TextStyle(
-                        color: AppColors.danger,
+                        color: theme.colorScheme.error,
                         fontWeight: FontWeight.bold,
                         fontSize: 13.5,
                       ),
@@ -448,6 +487,8 @@ class AdminCategoryTile extends ConsumerWidget {
   }
 
   void _confirmDelete(BuildContext context, dynamic repo) async {
+    final theme = Theme.of(context);
+
     final confirmed = await AppDialogs.showConfirmDialog(
       context: context,
       title: "Supprimer la catégorie",
@@ -464,7 +505,7 @@ class AdminCategoryTile extends ConsumerWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              backgroundColor: AppColors.success,
+              backgroundColor: Color(0xFF10B981),
               content: Text('Catégorie supprimée avec succès.'),
             ),
           );
@@ -473,7 +514,7 @@ class AdminCategoryTile extends ConsumerWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              backgroundColor: AppColors.danger,
+              backgroundColor: theme.colorScheme.error,
               content: Text('Erreur lors de la suppression : $e'),
             ),
           );
