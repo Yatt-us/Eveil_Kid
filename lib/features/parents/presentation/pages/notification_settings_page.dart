@@ -10,7 +10,8 @@ class NotificationSettingsPage extends StatefulWidget {
   const NotificationSettingsPage({super.key});
 
   @override
-  State<NotificationSettingsPage> createState() => _NotificationSettingsPageState();
+  State<NotificationSettingsPage> createState() =>
+      _NotificationSettingsPageState();
 }
 
 class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
@@ -79,8 +80,9 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                   Switch(
                     value: _enableAllNotifications,
                     activeThumbColor: AppColors.primary,
-                    activeTrackColor:
-                        AppColors.primaryLight.withValues(alpha: 0.5),
+                    activeTrackColor: AppColors.primaryLight.withValues(
+                      alpha: 0.5,
+                    ),
                     onChanged: (val) {
                       setState(() {
                         _enableAllNotifications = val;

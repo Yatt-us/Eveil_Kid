@@ -346,8 +346,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-
-     // ── Espace Enfant ── 
+      // ── Espace Enfant ──
       GoRoute(
         path: '${AppRoutes.espaceEnfant}/:enfantId',
         builder: (context, state) {

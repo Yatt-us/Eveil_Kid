@@ -14,11 +14,9 @@ class AuthRepository {
 
   static const String _pendingUserPrefix = 'pending_user_';
 
-  AuthRepository({
-    FirebaseAuth? auth,
-    FirebaseFirestore? firestore,
-  })  : _auth = auth ?? FirebaseAuth.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance;
+  AuthRepository({FirebaseAuth? auth, FirebaseFirestore? firestore})
+    : _auth = auth ?? FirebaseAuth.instance,
+      _firestore = firestore ?? FirebaseFirestore.instance;
 
   // ── GESTION DU STOCKAGE LOCAL DES INSCRIPTIONS EN ATTENTE ──
 
@@ -80,9 +78,7 @@ class AuthRepository {
       final user = credential.user;
 
       if (user == null) {
-        throw Exception(
-          'Impossible de récupérer l’utilisateur créé.',
-        );
+        throw Exception('Impossible de récupérer l’utilisateur créé.');
       }
 
       // 2. Mise à jour du displayName
@@ -128,7 +124,8 @@ class AuthRepository {
       return Utilisateur.fromMap(docSnap.data()!);
     }
 
-    final isVerified = refreshedUser != null &&
+    final isVerified =
+        refreshedUser != null &&
         refreshedUser.uid == uid &&
         refreshedUser.emailVerified;
 
@@ -154,7 +151,7 @@ class AuthRepository {
     final nom = ((localData?['nom'] as String?)?.isNotEmpty == true)
         ? (localData!['nom'] as String)
         : (refreshedUser.displayName ??
-            (email.isNotEmpty ? email.split('@')[0] : 'Parent'));
+              (email.isNotEmpty ? email.split('@')[0] : 'Parent'));
     final telephone = localData?['telephone'];
     final role = localData?['role'] ?? 'PARENT';
 
@@ -212,9 +209,7 @@ class AuthRepository {
     final user = credential.user;
 
     if (user == null) {
-      throw Exception(
-        'Impossible de récupérer l’utilisateur connecté.',
-      );
+      throw Exception('Impossible de récupérer l’utilisateur connecté.');
     }
 
     // Récupération du profil
@@ -223,9 +218,7 @@ class AuthRepository {
     // Vérification de l'état actif du compte
     if (!utilisateur.estActif) {
       await _auth.signOut();
-      throw Exception(
-        'Ce compte est désactivé.',
-      );
+      throw Exception('Ce compte est désactivé.');
     }
 
     return utilisateur;
@@ -269,7 +262,8 @@ class AuthRepository {
     // 4. Fallback si l'utilisateur est présent dans Auth
     if (refreshedUser != null && refreshedUser.uid == uid) {
       final fallbackEmail = refreshedUser.email ?? '';
-      final fallbackNom = refreshedUser.displayName ??
+      final fallbackNom =
+          refreshedUser.displayName ??
           (fallbackEmail.isNotEmpty ? fallbackEmail.split('@')[0] : 'Parent');
 
       return Utilisateur(
@@ -285,9 +279,7 @@ class AuthRepository {
       );
     }
 
-    throw Exception(
-      'Le profil utilisateur est introuvable.',
-    );
+    throw Exception('Le profil utilisateur est introuvable.');
   }
 
   // UTILISATEUR FIREBASE ACTUEL
@@ -325,12 +317,8 @@ class AuthRepository {
 
   // MOT DE PASSE OUBLIÉ
 
-  Future<void> resetPassword({
-    required String email,
-  }) async {
-    await _auth.sendPasswordResetEmail(
-      email: email,
-    );
+  Future<void> resetPassword({required String email}) async {
+    await _auth.sendPasswordResetEmail(email: email);
   }
 
   // RENVOI DE L'EMAIL DE VÉRIFICATION

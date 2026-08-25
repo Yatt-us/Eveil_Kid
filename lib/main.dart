@@ -10,7 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart'; // Indispensable pour P
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // Initialise Google Sign-In v7+ une seule fois avant runApp.

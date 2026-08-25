@@ -5,9 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/categorie.dart';
 
 final categorieRepositoryProvider = Provider<CategorieRepository>((ref) {
-  return CategorieRepository(
-    FirebaseFirestore.instance,
-  );
+  return CategorieRepository(FirebaseFirestore.instance);
 });
 
 final categoriesProvider = FutureProvider<List<Categorie>>((ref) async {
@@ -17,17 +15,19 @@ final categoriesProvider = FutureProvider<List<Categorie>>((ref) async {
 
 final categoriesPrincipalesProvider = categoriesProvider;
 
-final categorieByIdProvider =
-    FutureProvider.family<Categorie?, String>((ref, categorieId) async {
+final categorieByIdProvider = FutureProvider.family<Categorie?, String>((
+  ref,
+  categorieId,
+) async {
   final repository = ref.read(categorieRepositoryProvider);
   return repository.getCategorieById(categorieId);
 });
 
 final rechercheCategoriesProvider =
     FutureProvider.family<List<Categorie>, String>((ref, recherche) async {
-  final repository = ref.read(categorieRepositoryProvider);
-  return repository.searchCategories(recherche);
-});
+      final repository = ref.read(categorieRepositoryProvider);
+      return repository.searchCategories(recherche);
+    });
 
 /// Stream en temps réel des catégories actives (pour accueil parent et boutique)
 final categoriesStreamProvider = StreamProvider<List<Categorie>>((ref) {
@@ -64,5 +64,5 @@ class SelectedCategoryFilterNotifier extends Notifier<String?> {
 /// Provider pour filtrer la boutique selon la catégorie sélectionnée
 final selectedCategoryFilterProvider =
     NotifierProvider<SelectedCategoryFilterNotifier, String?>(
-  SelectedCategoryFilterNotifier.new,
-);
+      SelectedCategoryFilterNotifier.new,
+    );

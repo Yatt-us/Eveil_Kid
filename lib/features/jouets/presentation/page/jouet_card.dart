@@ -8,11 +8,7 @@ class JouetCard extends StatelessWidget {
   final Jouet jouet;
   final VoidCallback? onTap;
 
-  const JouetCard({
-    super.key,
-    required this.jouet,
-    this.onTap,
-  });
+  const JouetCard({super.key, required this.jouet, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -32,8 +28,9 @@ class JouetCard extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: (isDark ? Colors.black : AppColors.textPrimary)
-                  .withValues(alpha: isDark ? 0.25 : 0.03),
+              color: (isDark ? Colors.black : AppColors.textPrimary).withValues(
+                alpha: isDark ? 0.25 : 0.03,
+              ),
               blurRadius: 8,
               offset: const Offset(0, 3),
             ),
@@ -69,16 +66,16 @@ class JouetCard extends StatelessWidget {
                           loadingBuilder: (context, child, loadingProgress) {
                             if (loadingProgress == null) return child;
                             return const Center(
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             );
                           },
                         )
                       : Icon(
                           Icons.toys_outlined,
                           size: 48,
-                          color: theme.colorScheme.primary.withValues(alpha: 0.4),
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.4,
+                          ),
                         ),
                 ),
               ),
@@ -88,7 +85,10 @@ class JouetCard extends StatelessWidget {
             Expanded(
               flex: 4,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -99,7 +99,8 @@ class JouetCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: theme.textTheme.titleSmall?.color ??
+                        color:
+                            theme.textTheme.titleSmall?.color ??
                             theme.colorScheme.onSurface,
                       ),
                     ),
@@ -127,8 +128,10 @@ class JouetCard extends StatelessWidget {
                               : '4.8',
                           style: TextStyle(
                             fontSize: 12,
-                            color: theme.textTheme.bodySmall?.color
-                                    ?.withValues(alpha: 0.7) ??
+                            color:
+                                theme.textTheme.bodySmall?.color?.withValues(
+                                  alpha: 0.7,
+                                ) ??
                                 AppColors.textSecondary,
                             fontWeight: FontWeight.w600,
                           ),
