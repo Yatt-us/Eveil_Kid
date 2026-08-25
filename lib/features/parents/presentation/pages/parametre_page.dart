@@ -238,26 +238,27 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
     }
 
     final currentThemeMode = ref.watch(themeModeProvider);
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: theme.appBarTheme.backgroundColor ?? theme.colorScheme.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: AppColors.textPrimary,
+            color: theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface,
             size: 22,
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Paramètres',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+            color: theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface,
           ),
         ),
         centerTitle: true,
@@ -270,24 +271,27 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
             AppSpacing.verticalSm,
 
             // ── Section Générale ──
-            _buildSectionTitle('Générale'),
+            _buildSectionTitle('Générale', context),
             AppSpacing.verticalSm,
             _buildCard([
               _buildRow(
+                context: context,
                 icon: Icons.language_rounded,
                 title: 'Langue',
                 trailingText: _selectedLanguage,
                 onTap: _showLanguageSelector,
               ),
-              const Divider(height: 1, color: AppColors.border),
+              Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.2)),
               _buildRow(
+                context: context,
                 icon: Icons.nightlight_round_outlined,
                 title: 'Thème',
                 trailingText: _getThemeLabel(currentThemeMode),
                 onTap: () => _showThemeSelector(currentThemeMode),
               ),
-              const Divider(height: 1, color: AppColors.border),
+              Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.2)),
               _buildRow(
+                context: context,
                 icon: Icons.notifications_none_rounded,
                 title: 'Notifications',
                 onTap: () {
@@ -299,14 +303,15 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
                   );
                 },
               ),
-            ]),
+            ], context),
             AppSpacing.verticalLg,
 
             // ── Section Sécurité ──
-            _buildSectionTitle('Sécurité'),
+            _buildSectionTitle('Sécurité', context),
             AppSpacing.verticalSm,
             _buildCard([
               _buildRow(
+                context: context,
                 icon: Icons.verified_user_outlined,
                 title: 'Sécurité',
                 onTap: () {
@@ -316,8 +321,9 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
                   );
                 },
               ),
-              const Divider(height: 1, color: AppColors.border),
+              Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.2)),
               _buildRow(
+                context: context,
                 icon: Icons.lock_outline_rounded,
                 title: 'Changer le mot de passe',
                 onTap: () {
@@ -327,14 +333,15 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
                   );
                 },
               ),
-            ]),
+            ], context),
             AppSpacing.verticalLg,
 
             // ── Section Confidentialité ──
-            _buildSectionTitle('Confidentialité'),
+            _buildSectionTitle('Confidentialité', context),
             AppSpacing.verticalSm,
             _buildCard([
               _buildRow(
+                context: context,
                 icon: Icons.shield_outlined,
                 title: 'Confidentialité',
                 onTap: () {
@@ -345,8 +352,9 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
                   );
                 },
               ),
-              const Divider(height: 1, color: AppColors.border),
+              Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.2)),
               _buildRow(
+                context: context,
                 icon: Icons.people_outline_rounded,
                 title: 'Contrôle parental',
                 onTap: () {
@@ -358,14 +366,15 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
                   );
                 },
               ),
-            ]),
+            ], context),
             AppSpacing.verticalLg,
 
             // ── Section Autres ──
-            _buildSectionTitle('Autres'),
+            _buildSectionTitle('Autres', context),
             AppSpacing.verticalSm,
             _buildCard([
               _buildRow(
+                context: context,
                 icon: Icons.help_outline_rounded,
                 title: 'Aide et support',
                 onTap: () {
@@ -377,8 +386,9 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
                   );
                 },
               ),
-              const Divider(height: 1, color: AppColors.border),
+              Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.2)),
               _buildRow(
+                context: context,
                 icon: Icons.info_outline_rounded,
                 title: 'A propos',
                 onTap: () {
@@ -390,7 +400,7 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
                   );
                 },
               ),
-            ]),
+            ], context),
             AppSpacing.verticalXxl,
           ],
         ),
@@ -398,24 +408,26 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(String title, BuildContext context) {
+    final theme = Theme.of(context);
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w800,
-        color: AppColors.textPrimary,
+        color: theme.textTheme.titleMedium?.color ?? AppColors.textPrimary,
       ),
     );
   }
 
-  Widget _buildCard(List<Widget> children) {
+  Widget _buildCard(List<Widget> children, BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: AppColors.border.withValues(alpha: 0.8),
+          color: theme.dividerColor.withValues(alpha: 0.2),
           width: 1.2,
         ),
       ),
@@ -424,11 +436,13 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
   }
 
   Widget _buildRow({
+    required BuildContext context,
     required IconData icon,
     required String title,
     String? trailingText,
     required VoidCallback onTap,
   }) {
+    final theme = Theme.of(context);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(18),
@@ -436,24 +450,25 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
           children: [
-            Icon(icon, color: AppColors.textPrimary, size: 24),
+            Icon(icon, color: theme.colorScheme.primary, size: 24),
             AppSpacing.horizontalMd,
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: theme.textTheme.titleMedium?.color ?? AppColors.textPrimary,
                 ),
               ),
             ),
             if (trailingText != null) ...[
               Text(
                 trailingText,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
-                  color: AppColors.textSecondary,
+                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7) ??
+                      AppColors.textSecondary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -461,7 +476,8 @@ class _ParametresPageState extends ConsumerState<ParametresPage> {
             ],
             Icon(
               Icons.chevron_right_rounded,
-              color: AppColors.textSecondary.withValues(alpha: 0.7),
+              color: theme.iconTheme.color?.withValues(alpha: 0.5) ??
+                  AppColors.textSecondary,
               size: 22,
             ),
           ],

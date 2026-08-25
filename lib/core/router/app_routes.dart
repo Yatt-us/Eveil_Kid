@@ -6,9 +6,11 @@ class AppRoutes {
   static const String splash = '/splash';
   static const String home = '/';
 
-  // Authentification
+  // Authentification & Deep Links
   static const String login = '/login';
   static const String register = '/register';
+  static const String authAction = '/auth/action';
+  static const String resetPassword = '/reset-password';
 
   // Fonctionnalités Générales
   static const String tutoriels = '/tutoriels';

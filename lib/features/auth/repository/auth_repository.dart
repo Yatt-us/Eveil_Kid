@@ -106,12 +106,24 @@ class AuthRepository {
 
   Future<Utilisateur> syncPendingUserToFirestoreIfVerified(String uid) async {
     final user = _auth.currentUser;
-    if (user != null) {
+    if (user != null && user.uid == uid) {
       try {
         await user.reload();
       } catch (_) {}
     }
     final refreshedUser = _auth.currentUser ?? user;
+
+    // 1. D'abord, vérifier si le document existe DÉJÀ dans Firestore
+    final docRef = _firestore.collection('utilisateurs').doc(uid);
+    final docSnap = await docRef.get();
+
+    if (docSnap.exists && docSnap.data() != null) {
+      // Le document existe déjà dans Firestore (ex: ADMIN, MANAGER, ou compte déjà synchronisé).
+      // Ne JAMAIS écraser les données ni le rôle existant !
+      await _clearPendingRegistrationLocal(uid);
+      return Utilisateur.fromMap(docSnap.data()!);
+    }
+
     final isVerified =
         refreshedUser != null &&
         refreshedUser.uid == uid &&
@@ -132,9 +144,8 @@ class AuthRepository {
       );
     }
 
-    // Le compte est vérifié : on prépare les données pour Firestore
+    // Le compte est vérifié et n'existe pas encore dans Firestore : on le crée
     final localData = await _getPendingRegistrationLocal(uid);
-    final docRef = _firestore.collection('utilisateurs').doc(uid);
 
     final email = refreshedUser.email ?? localData?['email'] ?? '';
     final nom = ((localData?['nom'] as String?)?.isNotEmpty == true)
@@ -158,16 +169,16 @@ class AuthRepository {
       'dateModification': FieldValue.serverTimestamp(),
     };
 
-    // Écriture dans Firestore
-    await docRef.set(firestoreData, SetOptions(merge: true));
+    // Écriture initiale dans Firestore
+    await docRef.set(firestoreData);
 
     // Suppression des données locales dans SharedPreferences après succès
     await _clearPendingRegistrationLocal(uid);
 
     // Lecture du profil créé
-    final docSnap = await docRef.get();
-    if (docSnap.exists && docSnap.data() != null) {
-      return Utilisateur.fromMap(docSnap.data()!);
+    final createdSnap = await docRef.get();
+    if (createdSnap.exists && createdSnap.data() != null) {
+      return Utilisateur.fromMap(createdSnap.data()!);
     }
 
     return Utilisateur(
@@ -201,7 +212,7 @@ class AuthRepository {
       throw Exception('Impossible de récupérer l’utilisateur connecté.');
     }
 
-    // Récupération ou synchronisation du profil
+    // Récupération du profil
     final utilisateur = await getUserProfile(user.uid);
 
     // Vérification de l'état actif du compte
@@ -224,53 +235,51 @@ class AuthRepository {
     }
     final refreshedUser = _auth.currentUser ?? user;
 
-    // 1. Si l'utilisateur est vérifié, synchroniser Firestore et vider SharedPreferences
+    // 1. Toujours vérifier d'abord si le document existe dans Firestore
+    final docRef = _firestore.collection('utilisateurs').doc(uid);
+    final docSnap = await docRef.get();
+
+    if (docSnap.exists && docSnap.data() != null) {
+      // Document Firestore existant -> Nettoyer le pending local s'il existe et retourner le profil officiel
+      await _clearPendingRegistrationLocal(uid);
+      return Utilisateur.fromMap(docSnap.data()!);
+    }
+
+    // 2. Si le document n'existe pas encore dans Firestore :
+    // Si l'utilisateur est vérifié, synchroniser la création vers Firestore
     if (refreshedUser != null &&
         refreshedUser.uid == uid &&
         refreshedUser.emailVerified) {
       return await syncPendingUserToFirestoreIfVerified(uid);
     }
 
-    // 2. Si l'utilisateur est connecté mais non vérifié, on lit depuis SharedPreferences
-    if (refreshedUser != null &&
-        refreshedUser.uid == uid &&
-        !refreshedUser.emailVerified) {
-      final localData = await _getPendingRegistrationLocal(uid);
-      if (localData != null) {
-        return Utilisateur.fromMap(localData);
-      }
+    // 3. Si l'utilisateur est connecté mais non vérifié, on lit depuis SharedPreferences
+    final localData = await _getPendingRegistrationLocal(uid);
+    if (localData != null) {
+      return Utilisateur.fromMap(localData);
     }
 
-    // 3. Lecture directe dans Firestore
-    final docRef = _firestore.collection('utilisateurs').doc(uid);
-    final document = await docRef.get();
+    // 4. Fallback si l'utilisateur est présent dans Auth
+    if (refreshedUser != null && refreshedUser.uid == uid) {
+      final fallbackEmail = refreshedUser.email ?? '';
+      final fallbackNom =
+          refreshedUser.displayName ??
+          (fallbackEmail.isNotEmpty ? fallbackEmail.split('@')[0] : 'Parent');
 
-    if (!document.exists || document.data() == null) {
-      // Si l'utilisateur est présent dans Auth
-      if (refreshedUser != null && refreshedUser.uid == uid) {
-        final fallbackEmail = refreshedUser.email ?? '';
-        final fallbackNom =
-            refreshedUser.displayName ??
-            (fallbackEmail.isNotEmpty ? fallbackEmail.split('@')[0] : 'Parent');
-
-        return Utilisateur(
-          utilisateurId: uid,
-          role: UserRole.parent,
-          nombreFavoris: 0,
-          nombreEnfants: 0,
-          email: fallbackEmail,
-          nom: fallbackNom,
-          photoUrl: refreshedUser.photoURL,
-          telephone: null,
-          estActif: true,
-        );
-      }
-
-      throw Exception('Le profil utilisateur est introuvable.');
+      return Utilisateur(
+        utilisateurId: uid,
+        role: UserRole.parent,
+        nombreFavoris: 0,
+        nombreEnfants: 0,
+        email: fallbackEmail,
+        nom: fallbackNom,
+        photoUrl: refreshedUser.photoURL,
+        telephone: null,
+        estActif: true,
+      );
     }
 
-    final data = document.data()!;
-    return Utilisateur.fromMap(data);
+    throw Exception('Le profil utilisateur est introuvable.');
   }
 
   // UTILISATEUR FIREBASE ACTUEL
@@ -292,7 +301,6 @@ class AuthRepository {
     final utilisateur = await getUserProfile(user.uid);
 
     // Vérification du compte
-
     if (!utilisateur.estActif) {
       await _auth.signOut();
       return null;

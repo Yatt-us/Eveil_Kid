@@ -4,8 +4,7 @@ import 'package:eveilkid/shared/widgets/app_button.dart';
 import 'package:eveilkid/shared/widgets/app_card.dart';
 import 'package:eveilkid/shared/widgets/app_text_field.dart';
 
-/// Composant moderne et ergonomique pour la gestion de l'image principale
-/// et de la galerie d'images secondaires d'un produit.
+/// Composant pour la gestion de l'image principale et de la galerie d'images secondaires.
 class AdminMultiImageInput extends StatefulWidget {
   final List<String> initialImages;
   final String initialMainImageUrl;
@@ -107,6 +106,12 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textSecondary = theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+        (isDark ? Colors.white70 : AppColors.textSecondary);
+    final dividerColor = theme.dividerColor.withValues(alpha: 0.2);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -121,23 +126,24 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
+                      color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.2 : 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.star_rounded,
                       size: 16,
-                      color: AppColors.primary,
+                      color: theme.colorScheme.primary,
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       "Image Principale (Couverture)",
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                        color: theme.textTheme.titleSmall?.color ??
+                            theme.colorScheme.onSurface,
                       ),
                     ),
                   ),
@@ -148,7 +154,7 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
                         vertical: 2.5,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.success.withValues(alpha: 0.12),
+                        color: const Color(0xFF10B981).withValues(alpha: isDark ? 0.25 : 0.12),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: const Text(
@@ -156,7 +162,7 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
                         style: TextStyle(
                           fontSize: 10.5,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.success,
+                          color: Color(0xFF10B981),
                         ),
                       ),
                     ),
@@ -172,9 +178,11 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
                     height: 170,
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: AppColors.surfaceVariant.withValues(alpha: 0.5),
+                      color: isDark
+                          ? theme.colorScheme.surfaceContainerHighest
+                          : AppColors.surfaceVariant.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.border),
+                      border: Border.all(color: dividerColor),
                     ),
                     child: Stack(
                       fit: StackFit.expand,
@@ -182,19 +190,22 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
                         Image.network(
                           _mainImageUrl,
                           fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Center(
+                          errorBuilder: (context, error, stackTrace) => Center(
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.broken_image_rounded,
-                                    size: 36, color: AppColors.icon),
-                                SizedBox(height: 4),
+                                Icon(
+                                  Icons.broken_image_rounded,
+                                  size: 36,
+                                  color: theme.iconTheme.color?.withValues(alpha: 0.5) ??
+                                      AppColors.icon,
+                                ),
+                                const SizedBox(height: 4),
                                 Text(
                                   "URL d'image invalide ou inaccessible",
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: AppColors.textSecondary,
+                                    color: textSecondary,
                                   ),
                                 ),
                               ],
@@ -216,14 +227,14 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
                             },
                             child: Container(
                               padding: const EdgeInsets.all(6),
-                              decoration: const BoxDecoration(
-                                color: AppColors.danger,
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.error,
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
                                 Icons.close_rounded,
                                 size: 14,
-                                color: AppColors.white,
+                                color: Colors.white,
                               ),
                             ),
                           ),
@@ -258,7 +269,7 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: AppColors.teal.withValues(alpha: 0.1),
+                      color: AppColors.teal.withValues(alpha: isDark ? 0.2 : 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
@@ -268,13 +279,14 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       "Images Secondaires (Galerie)",
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                        color: theme.textTheme.titleSmall?.color ??
+                            theme.colorScheme.onSurface,
                       ),
                     ),
                   ),
@@ -284,15 +296,17 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
                       vertical: 2.5,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.surfaceVariant,
+                      color: isDark
+                          ? theme.colorScheme.surfaceContainerHighest
+                          : AppColors.surfaceVariant,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
                       "${_secondaryImages.length} photo(s)",
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
+                        color: textSecondary,
                       ),
                     ),
                   ),
@@ -315,7 +329,7 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
                         width: 100,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppColors.border),
+                          border: Border.all(color: dividerColor),
                         ),
                         child: Stack(
                           fit: StackFit.expand,
@@ -327,10 +341,13 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) =>
                                     Container(
-                                  color: AppColors.surfaceVariant,
-                                  child: const Icon(
+                                  color: isDark
+                                      ? theme.colorScheme.surfaceContainerHighest
+                                      : AppColors.surfaceVariant,
+                                  child: Icon(
                                     Icons.broken_image_rounded,
-                                    color: AppColors.icon,
+                                    color: theme.iconTheme.color?.withValues(alpha: 0.5) ??
+                                        AppColors.icon,
                                     size: 24,
                                   ),
                                 ),
@@ -348,8 +365,7 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
                                     vertical: 3,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.textPrimary
-                                        .withValues(alpha: 0.75),
+                                    color: Colors.black.withValues(alpha: 0.75),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: const Text(
@@ -358,7 +374,7 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
                                     style: TextStyle(
                                       fontSize: 9,
                                       fontWeight: FontWeight.bold,
-                                      color: AppColors.white,
+                                      color: Colors.white,
                                     ),
                                   ),
                                 ),
@@ -372,14 +388,14 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
                                 onTap: () => _removeSecondaryImage(url),
                                 child: Container(
                                   padding: const EdgeInsets.all(3),
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.danger,
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.error,
                                     shape: BoxShape.circle,
                                   ),
                                   child: const Icon(
                                     Icons.close_rounded,
                                     size: 11,
-                                    color: AppColors.white,
+                                    color: Colors.white,
                                   ),
                                 ),
                               ),
@@ -425,9 +441,9 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
                     style: TextButton.styleFrom(
                       visualDensity: VisualDensity.compact,
                     ),
-                    child: const Text(
+                    child: Text(
                       "Annuler",
-                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      style: TextStyle(fontSize: 12, color: textSecondary),
                     ),
                   ),
                 ),
@@ -440,8 +456,8 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
                     style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                   ),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                    side: const BorderSide(color: AppColors.primary, width: 1.0),
+                    foregroundColor: theme.colorScheme.primary,
+                    side: BorderSide(color: theme.colorScheme.primary, width: 1.0),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),

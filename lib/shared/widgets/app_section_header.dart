@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 
 class AppSectionHeader extends StatelessWidget {
   final String title;
@@ -17,6 +16,8 @@ class AppSectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
@@ -29,19 +30,22 @@ class AppSectionHeader extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                    color: theme.textTheme.titleMedium?.color ??
+                        theme.colorScheme.onSurface,
                   ),
                 ),
                 if (subtitle != null) ...[
                   const SizedBox(height: 2),
                   Text(
                     subtitle!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
-                      color: AppColors.textSecondary,
+                      color: theme.textTheme.bodyMedium?.color
+                              ?.withValues(alpha: 0.7) ??
+                          theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -52,7 +56,7 @@ class AppSectionHeader extends StatelessWidget {
             TextButton(
               onPressed: onActionPressed,
               style: TextButton.styleFrom(
-                foregroundColor: AppColors.primary,
+                foregroundColor: theme.colorScheme.primary,
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               ),
               child: Text(
