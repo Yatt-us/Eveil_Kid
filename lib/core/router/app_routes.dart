@@ -36,5 +36,7 @@ class AppRoutes {
 
   // Espace Enfant & Parents
   static const String enfantDetail = '/enfant-detail';
+  static const String espaceEnfant = '/espace-enfant';
+  static String espaceEnfantFor(String enfantId) => '$espaceEnfant/$enfantId';
   static const String aideSupport = '/aide-support';
 }

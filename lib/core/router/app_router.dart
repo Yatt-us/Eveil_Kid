@@ -1,3 +1,6 @@
+import 'package:eveilkid/features/admin/presentation/widgets/admin_drawer.dart';
+import 'package:eveilkid/features/enfant/presentation/pages/acceuil_enfant_page.dart';
+import 'package:eveilkid/features/tutoriels/presentation/pages/tutoriel_page.dart';
 import 'package:eveilkid/features/enfant/model/enfant_model.dart';
 import 'package:eveilkid/features/parents/presentation/pages/accueil_parent.dart';
 import 'package:eveilkid/features/parents/presentation/pages/aide_support_page.dart';
@@ -6,7 +9,6 @@ import 'package:eveilkid/features/parents/presentation/pages/profil_parent.dart'
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 import 'package:eveilkid/core/constants/AppTextStyles.dart';
 import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/core/router/app_routes.dart';
@@ -26,12 +28,13 @@ import 'package:eveilkid/features/auth/presentation/pages/splash_page.dart';
 import 'package:eveilkid/features/auth/providers/auth_provider.dart';
 import 'package:eveilkid/features/categories/models/categorie.dart';
 import 'package:eveilkid/features/jouets/models/jouet.dart';
-
-import 'package:eveilkid/features/tutoriels/presentations/pages/tutorielPage.dart';
-import 'package:eveilkid/features/admin/presentation/widgets/admin_drawer.dart';
-
+//import 'package:eveilkid/features/activites/presentation/pages/client/activites_list_page.dart';
+//import 'package:eveilkid/features/activites/presentation/pages/client/activites_play_page.dart';
+//import 'package:eveilkid/features/activites/presentation/pages/client/activites_resultat_page.dart';
+//import 'package:eveilkid/features/activites/presentation/pages/client/activites_corrige_page.dart';
 import 'package:eveilkid/features/jouets/presentation/page/jouet_detail_screen.dart';
 import 'package:eveilkid/features/jouets/presentation/page/jouets_screen.dart';
+//import 'package:eveilkid/features/tutoriels/presentations/pages/tutorielPage.dart';
 
 /// Notifier pour déclencher les rafraîchissements de GoRouter lors des changements d'état d'authentification Riverpod
 class _RouterRefreshNotifier extends ChangeNotifier {
@@ -342,6 +345,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return DetailEnfantPage(enfant: enfant);
         },
       ),
+
+
+     // ── Espace Enfant ── 
+      GoRoute(
+        path: '${AppRoutes.espaceEnfant}/:enfantId',
+        builder: (context, state) {
+          final enfantId = state.pathParameters['enfantId'];
+          return AccueilEnfantPage(initialEnfantId: enfantId);
+        },
+      ),
+
+      // ── Aide & Support ──
       GoRoute(
         path: AppRoutes.aideSupport,
         builder: (context, state) => const AideSupportPage(),
