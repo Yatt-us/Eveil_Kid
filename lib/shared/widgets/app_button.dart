@@ -160,13 +160,17 @@ class AppButton extends StatelessWidget {
                 Icon(icon, size: _iconSize, color: fgColor),
                 const SizedBox(width: 8),
               ],
-              Text(
-                text,
-                style: TextStyle(
-                  fontSize: _fontSize,
-                  fontWeight: FontWeight.w600,
-                  color: fgColor,
-                  letterSpacing: 0.1,
+              Flexible(
+                child: Text(
+                  text,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: _fontSize,
+                    fontWeight: FontWeight.w600,
+                    color: fgColor,
+                    letterSpacing: 0.1,
+                  ),
                 ),
               ),
             ],

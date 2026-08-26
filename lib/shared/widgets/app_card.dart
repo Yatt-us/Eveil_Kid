@@ -61,54 +61,58 @@ class AppCard extends StatelessWidget {
           final effectivePadding = padding ??
               EdgeInsets.all(isCompact ? 12 : 16);
 
+          final cardContent = Container(
+            padding: effectivePadding,
+            decoration: BoxDecoration(
+              borderRadius: effectiveRadius,
+              border: effectiveBorder,
+              boxShadow: customShadow ??
+                  (elevation > 0
+                      ? null
+                      : [
+                          BoxShadow(
+                            color: (theme.textTheme.bodyMedium?.color ?? Colors.black)
+                                .withValues(alpha: 0.03),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ]),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_hasHeader) ...[
+                  _buildHeader(context, isCompact),
+                  SizedBox(height: isCompact ? 8 : 12),
+                ],
+                child,
+                if (footer != null) ...[
+                  SizedBox(height: isCompact ? 8 : 12),
+                  Divider(
+                    height: 1,
+                    color: theme.dividerColor.withValues(alpha: 0.2),
+                  ),
+                  SizedBox(height: isCompact ? 6 : 8),
+                  footer!,
+                ],
+              ],
+            ),
+          );
+
           return Material(
             color: backgroundColor ??
                 theme.cardTheme.color ??
                 theme.colorScheme.surface,
             borderRadius: effectiveRadius,
             elevation: elevation,
-            child: InkWell(
-              onTap: onTap,
-              borderRadius: effectiveRadius,
-              child: Container(
-                padding: effectivePadding,
-                decoration: BoxDecoration(
-                  borderRadius: effectiveRadius,
-                  border: effectiveBorder,
-                  boxShadow: customShadow ??
-                      (elevation > 0
-                          ? null
-                          : [
-                              BoxShadow(
-                                color: (theme.textTheme.bodyMedium?.color ?? Colors.black)
-                                    .withValues(alpha: 0.03),
-                                blurRadius: 10,
-                                offset: const Offset(0, 3),
-                              ),
-                            ]),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (_hasHeader) ...[
-                      _buildHeader(context, isCompact),
-                      SizedBox(height: isCompact ? 8 : 12),
-                    ],
-                    child,
-                    if (footer != null) ...[
-                      SizedBox(height: isCompact ? 8 : 12),
-                      Divider(
-                        height: 1,
-                        color: theme.dividerColor.withValues(alpha: 0.2),
-                      ),
-                      SizedBox(height: isCompact ? 6 : 8),
-                      footer!,
-                    ],
-                  ],
-                ),
-              ),
-            ),
+            child: onTap != null
+                ? InkWell(
+                    onTap: onTap,
+                    borderRadius: effectiveRadius,
+                    child: cardContent,
+                  )
+                : cardContent,
           );
         },
       ),

@@ -21,11 +21,13 @@ class AppAvatar extends StatelessWidget {
 
   String get _initials {
     if (name == null || name!.trim().isEmpty) return '';
-    final parts = name!.trim().split(' ');
+    final parts = name!.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
     if (parts.length >= 2) {
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+      final first = parts[0].isNotEmpty ? parts[0][0] : '';
+      final second = parts[1].isNotEmpty ? parts[1][0] : '';
+      return '$first$second'.toUpperCase();
     }
-    return name![0].toUpperCase();
+    return parts.isNotEmpty && parts[0].isNotEmpty ? parts[0][0].toUpperCase() : '';
   }
 
   @override

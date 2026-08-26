@@ -1,38 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:eveilkid/core/constants/app_colors.dart';
+import 'package:eveilkid/core/router/app_routes.dart';
 import 'package:eveilkid/features/admin/core/providers/admin_role_provider.dart';
 import 'package:eveilkid/features/admin/presentation/widgets/admin_drawer.dart';
-import 'package:eveilkid/features/admin/users/presentation/widgets/admin_user_card.dart';
+import 'package:eveilkid/features/admin/users/presentation/widgets/admin_staff_card.dart';
 import 'package:eveilkid/features/admin/users/providers/admin_user_provider.dart';
 import 'package:eveilkid/shared/widgets/app_search_bar.dart';
 import 'package:eveilkid/shared/widgets/app_states.dart';
 
-enum ParentSortOption {
+enum StaffSortOption {
+  role,
   newestFirst,
   nameAsc,
   nameDesc,
-  mostChildren,
 }
 
-/// Page d'administration des comptes Parents (utilisateurs lambda).
-class AdminUserListPage extends ConsumerStatefulWidget {
-  const AdminUserListPage({super.key});
+/// Page d'administration dédiée exclusivement à l'Équipe & Staff (Admins & Managers).
+class AdminStaffListPage extends ConsumerStatefulWidget {
+  const AdminStaffListPage({super.key});
 
   @override
-  ConsumerState<AdminUserListPage> createState() => _AdminUserListPageState();
+  ConsumerState<AdminStaffListPage> createState() => _AdminStaffListPageState();
 }
 
-class _AdminUserListPageState extends ConsumerState<AdminUserListPage>
+class _AdminStaffListPageState extends ConsumerState<AdminStaffListPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   String _searchQuery = '';
-  ParentSortOption _sortOption = ParentSortOption.newestFirst;
+  StaffSortOption _sortOption = StaffSortOption.role;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(() {
       setState(() {});
     });
@@ -44,7 +46,9 @@ class _AdminUserListPageState extends ConsumerState<AdminUserListPage>
     super.dispose();
   }
 
-  bool get _hasActiveFilters => _sortOption != ParentSortOption.newestFirst;
+  bool get _hasActiveFilters => _sortOption != StaffSortOption.role;
+
+
 
   void _showFilterBottomSheet(
     BuildContext context,
@@ -86,7 +90,7 @@ class _AdminUserListPageState extends ConsumerState<AdminUserListPage>
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          "Trier les parents",
+                          "Trier l'équipe",
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -98,7 +102,7 @@ class _AdminUserListPageState extends ConsumerState<AdminUserListPage>
                           TextButton(
                             onPressed: () {
                               setModalState(() {
-                                _sortOption = ParentSortOption.newestFirst;
+                                _sortOption = StaffSortOption.role;
                               });
                               setState(() {});
                             },
@@ -125,48 +129,47 @@ class _AdminUserListPageState extends ConsumerState<AdminUserListPage>
                       runSpacing: 8,
                       children: [
                         _buildFilterChip(
+                          label: "Par Rôle (Admins puis Managers)",
+                          isSelected: _sortOption == StaffSortOption.role,
+                          theme: theme,
+                          isDark: isDark,
+                          onTap: () {
+                            setModalState(
+                                () => _sortOption = StaffSortOption.role);
+                            setState(() {});
+                          },
+                        ),
+                        _buildFilterChip(
                           label: "Plus récents d'abord",
                           isSelected:
-                              _sortOption == ParentSortOption.newestFirst,
+                              _sortOption == StaffSortOption.newestFirst,
                           theme: theme,
                           isDark: isDark,
                           onTap: () {
                             setModalState(() =>
-                                _sortOption = ParentSortOption.newestFirst);
+                                _sortOption = StaffSortOption.newestFirst);
                             setState(() {});
                           },
                         ),
                         _buildFilterChip(
                           label: "Nom (A - Z)",
-                          isSelected: _sortOption == ParentSortOption.nameAsc,
+                          isSelected: _sortOption == StaffSortOption.nameAsc,
                           theme: theme,
                           isDark: isDark,
                           onTap: () {
                             setModalState(
-                                () => _sortOption = ParentSortOption.nameAsc);
+                                () => _sortOption = StaffSortOption.nameAsc);
                             setState(() {});
                           },
                         ),
                         _buildFilterChip(
                           label: "Nom (Z - A)",
-                          isSelected: _sortOption == ParentSortOption.nameDesc,
+                          isSelected: _sortOption == StaffSortOption.nameDesc,
                           theme: theme,
                           isDark: isDark,
                           onTap: () {
                             setModalState(
-                                () => _sortOption = ParentSortOption.nameDesc);
-                            setState(() {});
-                          },
-                        ),
-                        _buildFilterChip(
-                          label: "Nombre d'enfants",
-                          isSelected:
-                              _sortOption == ParentSortOption.mostChildren,
-                          theme: theme,
-                          isDark: isDark,
-                          onTap: () {
-                            setModalState(() =>
-                                _sortOption = ParentSortOption.mostChildren);
+                                () => _sortOption = StaffSortOption.nameDesc);
                             setState(() {});
                           },
                         ),
@@ -259,7 +262,7 @@ class _AdminUserListPageState extends ConsumerState<AdminUserListPage>
 
     if (!currentRole.canManageUsers) {
       return AdminScaffold(
-        currentRoute: AdminNavRoute.utilisateurs,
+        currentRoute: AdminNavRoute.staff,
         appBar: AppBar(
           title: Text("Accès restreint", style: TextStyle(color: titleColor)),
           backgroundColor: theme.colorScheme.surface,
@@ -305,16 +308,27 @@ class _AdminUserListPageState extends ConsumerState<AdminUserListPage>
     }
 
     final allUsers = usersAsync.value ?? [];
-    // Filtration stricte des parents uniquement (utilisateurs lambda)
-    final parentUsers = allUsers.where((u) => u.isParent).toList();
-    final activeCount = parentUsers.where((u) => u.estActif).length;
-    final inactiveCount = parentUsers.where((u) => !u.estActif).length;
+    // Filtration stricte du Staff uniquement (Admins & Managers)
+    final staffUsers = allUsers.where((u) => u.isAdmin || u.isManager).toList();
+    final totalStaff = staffUsers.length;
+    final managerCount = staffUsers.where((u) => u.isManager).length;
+    final adminCount = staffUsers.where((u) => u.isAdmin).length;
 
     return AdminScaffold(
-      currentRoute: AdminNavRoute.utilisateurs,
+      currentRoute: AdminNavRoute.staff,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.push(AppRoutes.adminManagerForm),
+        backgroundColor: const Color(0xFFD97706),
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.person_add_rounded, size: 20),
+        label: const Text(
+          "Nouveau Manager",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+        ),
+      ),
       appBar: AppBar(
         title: Text(
-          "Parents",
+          "Équipe & Staff",
           style: TextStyle(
             color: titleColor,
             fontWeight: FontWeight.w800,
@@ -381,11 +395,11 @@ class _AdminUserListPageState extends ConsumerState<AdminUserListPage>
               labelColor: theme.colorScheme.primary,
               unselectedLabelColor: textSecondary,
               labelStyle: const TextStyle(
-                fontSize: 13,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w700,
               ),
               unselectedLabelStyle: const TextStyle(
-                fontSize: 13,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w500,
               ),
               splashFactory: NoSplash.splashFactory,
@@ -395,11 +409,11 @@ class _AdminUserListPageState extends ConsumerState<AdminUserListPage>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text("Actifs"),
-                      const SizedBox(width: 6),
+                      const Text("Tous"),
+                      const SizedBox(width: 5),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 1.5),
+                            horizontal: 5.5, vertical: 1),
                         decoration: BoxDecoration(
                           color: _tabController.index == 0
                               ? theme.colorScheme.primary.withValues(
@@ -410,7 +424,7 @@ class _AdminUserListPageState extends ConsumerState<AdminUserListPage>
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          "$activeCount",
+                          "$totalStaff",
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
@@ -427,14 +441,14 @@ class _AdminUserListPageState extends ConsumerState<AdminUserListPage>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text("Inactifs"),
-                      const SizedBox(width: 6),
+                      const Text("Managers"),
+                      const SizedBox(width: 5),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 1.5),
+                            horizontal: 5.5, vertical: 1),
                         decoration: BoxDecoration(
                           color: _tabController.index == 1
-                              ? theme.colorScheme.primary.withValues(
+                              ? const Color(0xFFD97706).withValues(
                                   alpha: isDark ? 0.25 : 0.12)
                               : (isDark
                                   ? theme.colorScheme.surface
@@ -442,12 +456,44 @@ class _AdminUserListPageState extends ConsumerState<AdminUserListPage>
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          "$inactiveCount",
+                          "$managerCount",
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             color: _tabController.index == 1
-                                ? theme.colorScheme.primary
+                                ? const Color(0xFFD97706)
+                                : textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Tab(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text("Admins"),
+                      const SizedBox(width: 5),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 5.5, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: _tabController.index == 2
+                              ? theme.colorScheme.error.withValues(
+                                  alpha: isDark ? 0.25 : 0.12)
+                              : (isDark
+                                  ? theme.colorScheme.surface
+                                  : AppColors.surfaceVariant),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          "$adminCount",
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: _tabController.index == 2
+                                ? theme.colorScheme.error
                                 : textSecondary,
                           ),
                         ),
@@ -469,7 +515,7 @@ class _AdminUserListPageState extends ConsumerState<AdminUserListPage>
               children: [
                 Expanded(
                   child: AppSearchBar(
-                    hintText: "Rechercher un parent (nom, email)...",
+                    hintText: "Rechercher un membre du staff...",
                     onChanged: (val) => setState(() => _searchQuery = val),
                   ),
                 ),
@@ -526,7 +572,7 @@ class _AdminUserListPageState extends ConsumerState<AdminUserListPage>
             ),
           ),
 
-          // Liste des parents
+          // Liste des membres du Staff
           Expanded(
             child: usersAsync.when(
               loading: () => Center(
@@ -538,14 +584,20 @@ class _AdminUserListPageState extends ConsumerState<AdminUserListPage>
               ),
               error: (err, stack) => AppErrorState(
                 title: "Erreur de chargement",
-                message: "Impossible de charger les parents : $err",
+                message: "Impossible de charger le staff : $err",
                 onRetry: () => ref.refresh(adminUsersStreamProvider),
               ),
               data: (users) {
-                final isViewingActive = _tabController.index == 0;
                 var list = users
-                    .where((u) => u.isParent && u.estActif == isViewingActive)
+                    .where((u) => u.isAdmin || u.isManager)
                     .toList();
+
+                // Filtrage selon l'onglet actif (0: Tous, 1: Managers, 2: Admins)
+                if (_tabController.index == 1) {
+                  list = list.where((u) => u.isManager).toList();
+                } else if (_tabController.index == 2) {
+                  list = list.where((u) => u.isAdmin).toList();
+                }
 
                 // Filtrage recherche
                 if (_searchQuery.trim().isNotEmpty) {
@@ -559,13 +611,16 @@ class _AdminUserListPageState extends ConsumerState<AdminUserListPage>
                 // Tri
                 list.sort((a, b) {
                   switch (_sortOption) {
-                    case ParentSortOption.nameAsc:
+                    case StaffSortOption.role:
+                      // Admins d'abord, puis Managers
+                      if (a.isAdmin && !b.isAdmin) return -1;
+                      if (!a.isAdmin && b.isAdmin) return 1;
                       return a.nom.toLowerCase().compareTo(b.nom.toLowerCase());
-                    case ParentSortOption.nameDesc:
+                    case StaffSortOption.nameAsc:
+                      return a.nom.toLowerCase().compareTo(b.nom.toLowerCase());
+                    case StaffSortOption.nameDesc:
                       return b.nom.toLowerCase().compareTo(a.nom.toLowerCase());
-                    case ParentSortOption.mostChildren:
-                      return b.nombreEnfants.compareTo(a.nombreEnfants);
-                    case ParentSortOption.newestFirst:
+                    case StaffSortOption.newestFirst:
                       final aDate = a.dateCreation.toDate();
                       final bDate = b.dateCreation.toDate();
                       return bDate.compareTo(aDate);
@@ -574,17 +629,13 @@ class _AdminUserListPageState extends ConsumerState<AdminUserListPage>
 
                 if (list.isEmpty) {
                   return AppEmptyState(
-                    icon: Icons.family_restroom_rounded,
-                    title: isViewingActive
-                        ? (_searchQuery.isNotEmpty
-                            ? "Aucun parent correspondant"
-                            : "Aucun compte parent actif")
-                        : "Aucun compte parent inactif",
-                    description: isViewingActive
-                        ? (_searchQuery.isNotEmpty
-                            ? "Essayez d'autres mots-clés."
-                            : "Les nouveaux comptes parents créés apparaîtront ici.")
-                        : "Tous les parents enregistrés sont actuellement actifs.",
+                    icon: Icons.shield_outlined,
+                    title: _searchQuery.isNotEmpty
+                        ? "Aucun membre correspondant"
+                        : "Aucun membre dans cette catégorie",
+                    description: _searchQuery.isNotEmpty
+                        ? "Essayez d'autres mots-clés de recherche."
+                        : "Les membres du staff apparaîtront ici.",
                   );
                 }
 
@@ -598,7 +649,7 @@ class _AdminUserListPageState extends ConsumerState<AdminUserListPage>
                     itemCount: list.length,
                     itemBuilder: (context, index) {
                       final user = list[index];
-                      return AdminUserCard(user: user);
+                      return AdminStaffCard(user: user);
                     },
                   ),
                 );

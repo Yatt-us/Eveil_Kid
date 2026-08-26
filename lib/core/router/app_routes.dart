@@ -24,12 +24,15 @@ class AppRoutes {
 
   // Espace Administration
   static const String admin = '/admin';
+  static const String adminProfile = '/admin/profile';
   static const String adminProducts = '/admin/products';
   static const String adminCategories = '/admin/categories';
   static const String adminUsers = '/admin/users';
+  static const String adminStaff = '/admin/staff';
   static const String adminCatalog = '/admin/catalog';
   static const String adminProductForm = '/admin/product-form';
   static const String adminCategoryForm = '/admin/category-form';
+  static const String adminManagerForm = '/admin/manager-form';
 
   // Espace Jouets
   static const String jouetdetail = '/jouet-detail';

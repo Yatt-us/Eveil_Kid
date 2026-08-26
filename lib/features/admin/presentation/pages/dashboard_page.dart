@@ -55,21 +55,25 @@ class DashboardPage extends ConsumerWidget {
         ),
         actions: [
           Tooltip(
-            message: "Rôle : ${currentRole.label}",
-            child: Container(
-              margin: const EdgeInsets.only(right: 14),
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: roleColor.withValues(alpha: isDark ? 0.22 : 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                currentRole == AdminRole.admin
-                    ? Icons.admin_panel_settings_rounded
-                    : Icons.storefront_rounded,
-                size: 19,
-                color: roleColor,
+            message: "Mon Profil (${currentRole.label})",
+            child: InkWell(
+              onTap: () => context.go(AppRoutes.adminProfile),
+              borderRadius: BorderRadius.circular(18),
+              child: Container(
+                margin: const EdgeInsets.only(right: 14),
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: roleColor.withValues(alpha: isDark ? 0.22 : 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  currentRole == AdminRole.admin
+                      ? Icons.admin_panel_settings_rounded
+                      : Icons.storefront_rounded,
+                  size: 19,
+                  color: roleColor,
+                ),
               ),
             ),
           ),
