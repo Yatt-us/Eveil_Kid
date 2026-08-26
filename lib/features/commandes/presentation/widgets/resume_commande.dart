@@ -6,24 +6,20 @@ class ResumeCommandeWidget extends StatelessWidget {
   final double total;
 
   const ResumeCommandeWidget({
-    super.key,
+    Key? key,
     required this.sousTotal,
     required this.fraisLivraison,
     required this.total,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final textSecondary = theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
-        theme.colorScheme.onSurfaceVariant;
-
     return Column(
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Sous-total', style: TextStyle(color: textSecondary)),
+            const Text('Sous-total'),
             Text('${sousTotal.toStringAsFixed(0)} FCFA'),
           ],
         ),
@@ -31,31 +27,24 @@ class ResumeCommandeWidget extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Livraison', style: TextStyle(color: textSecondary)),
-            Text(
-              fraisLivraison == 0 ? 'Gratuite' : '${fraisLivraison.toStringAsFixed(0)} FCFA',
-              style: const TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.bold),
-            ),
+            const Text('Livraison'),
+            Text('${fraisLivraison.toStringAsFixed(0)} FCFA'),
           ],
         ),
         const Divider(height: 20),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
+            const Text(
               'Total',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             Text(
               '${total.toStringAsFixed(0)} FCFA',
-              style: TextStyle(
+              style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
-                color: theme.colorScheme.primary,
+                color: Colors.blueAccent,
               ),
             ),
           ],
