@@ -17,20 +17,16 @@ enum UserRole {
     }
   }
 
-  static UserRole fromValue(String value) {
-    switch (value.toUpperCase()) {
-      case 'PARENT':
-        return UserRole.parent;
-
-      case 'MANAGER':
-        return UserRole.manager;
-
-      case 'ADMIN':
-        return UserRole.admin;
-
-      default:
-        throw ArgumentError('Rôle utilisateur inconnu : $value');
+  static UserRole fromValue(dynamic value) {
+    if (value == null) return UserRole.parent;
+    final str = value.toString().trim().toUpperCase();
+    if (str == 'ADMIN' || str == 'USERROLE.ADMIN' || str.contains('ADMIN')) {
+      return UserRole.admin;
     }
+    if (str == 'MANAGER' || str == 'USERROLE.MANAGER' || str.contains('MANAGER')) {
+      return UserRole.manager;
+    }
+    return UserRole.parent;
   }
 }
 
@@ -67,12 +63,12 @@ class Utilisateur {
 
   factory Utilisateur.fromMap(Map<String, dynamic> map) {
     return Utilisateur(
-      utilisateurId: map['utilisateurId'] as String,
-      role: UserRole.fromValue(map['role'] as String),
-      nombreFavoris: map['nombreFavoris'] as int?,
-      nombreEnfants: map['nombreEnfants'] as int?,
-      email: map['email'] as String,
-      nom: map['nom'] as String,
+      utilisateurId: (map['utilisateurId'] as String?) ?? '',
+      role: UserRole.fromValue(map['role']),
+      nombreFavoris: (map['nombreFavoris'] as num?)?.toInt(),
+      nombreEnfants: (map['nombreEnfants'] as num?)?.toInt(),
+      email: (map['email'] as String?) ?? '',
+      nom: (map['nom'] as String?) ?? '',
       photoUrl: map['photoUrl'] as String?,
       telephone: map['telephone'] as String?,
       estActif: map['estActif'] as bool? ?? true,

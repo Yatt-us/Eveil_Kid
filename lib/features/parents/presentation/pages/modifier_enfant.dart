@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/AppPadding.dart';
 import '../../../../core/constants/AppSpacing.dart';
-import '../../../../core/constants/AppTextStyles.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_date_picker.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
@@ -161,26 +160,32 @@ class _ModifierEnfantPageState extends ConsumerState<ModifierEnfantPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: AppColors.textPrimary,
+            color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
             size: 20,
           ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'Modifier ${widget.enfant.nom}',
-          style: AppTextStyles.headingSmall,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface,
+          ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete_outline_rounded, color: AppColors.danger),
+            icon: Icon(Icons.delete_outline_rounded, color: theme.colorScheme.error),
             tooltip: 'Supprimer l\'enfant',
             onPressed: _deleteChild,
           ),
@@ -206,9 +211,9 @@ class _ModifierEnfantPageState extends ConsumerState<ModifierEnfantPage> {
                       height: 100,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: const Color(0xFFEDE9FE),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.12),
                         border: Border.all(
-                          color: const Color(0xFF763CD1).withValues(alpha: 0.3),
+                          color: theme.colorScheme.primary.withValues(alpha: 0.3),
                           width: 2,
                         ),
                       ),
@@ -217,13 +222,13 @@ class _ModifierEnfantPageState extends ConsumerState<ModifierEnfantPage> {
                             ? Image.network(
                                 _selectedAvatarUrl!,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Center(
+                                errorBuilder: (_, _, _) => Center(
                                   child: Icon(
                                     _selectedGenre == 'Fille'
                                         ? Icons.face_3_rounded
                                         : Icons.face_rounded,
                                     size: 60,
-                                    color: const Color(0xFF763CD1),
+                                    color: theme.colorScheme.primary,
                                   ),
                                 ),
                               )
@@ -233,7 +238,7 @@ class _ModifierEnfantPageState extends ConsumerState<ModifierEnfantPage> {
                                       ? Icons.face_3_rounded
                                       : Icons.face_rounded,
                                   size: 60,
-                                  color: const Color(0xFF763CD1),
+                                  color: theme.colorScheme.primary,
                                 ),
                               ),
                       ),
@@ -244,14 +249,17 @@ class _ModifierEnfantPageState extends ConsumerState<ModifierEnfantPage> {
                       child: Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF763CD1),
+                          color: theme.colorScheme.primary,
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.white, width: 2),
+                          border: Border.all(
+                            color: theme.scaffoldBackgroundColor,
+                            width: 2,
+                          ),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.camera_alt_rounded,
                           size: 16,
-                          color: AppColors.white,
+                          color: theme.colorScheme.onPrimary,
                         ),
                       ),
                     ),
@@ -276,12 +284,13 @@ class _ModifierEnfantPageState extends ConsumerState<ModifierEnfantPage> {
               AppSpacing.verticalMd,
 
               // ── GENRE ──
-              const Text(
+              Text(
                 'Genre',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: theme.textTheme.titleSmall?.color ??
+                      theme.colorScheme.onSurface,
                 ),
               ),
               AppSpacing.verticalXs,
@@ -289,6 +298,7 @@ class _ModifierEnfantPageState extends ConsumerState<ModifierEnfantPage> {
                 children: [
                   Expanded(
                     child: _buildGenreCard(
+                      context: context,
                       label: 'Garçon',
                       icon: Icons.face_rounded,
                       isSelected: _selectedGenre == 'Garçon',
@@ -298,6 +308,7 @@ class _ModifierEnfantPageState extends ConsumerState<ModifierEnfantPage> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _buildGenreCard(
+                      context: context,
                       label: 'Fille',
                       icon: Icons.face_3_rounded,
                       isSelected: _selectedGenre == 'Fille',
@@ -324,12 +335,13 @@ class _ModifierEnfantPageState extends ConsumerState<ModifierEnfantPage> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Âge calculé',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
+                          color: theme.textTheme.titleSmall?.color ??
+                              theme.colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -339,16 +351,18 @@ class _ModifierEnfantPageState extends ConsumerState<ModifierEnfantPage> {
                           vertical: 14,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEDE9FE),
+                          color: theme.colorScheme.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFDDD6FE)),
+                          border: Border.all(
+                            color: theme.colorScheme.primary.withValues(alpha: 0.25),
+                          ),
                         ),
                         child: Text(
                           '$_calculatedAge ans',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF763CD1),
+                            color: theme.colorScheme.primary,
                           ),
                         ),
                       ),
@@ -359,12 +373,13 @@ class _ModifierEnfantPageState extends ConsumerState<ModifierEnfantPage> {
               AppSpacing.verticalMd,
 
               // ── CENTRES D'INTÉRÊT & SOUHAITS ──
-              const Text(
+              Text(
                 'Centres d\'intérêt & Préférences',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: theme.textTheme.titleSmall?.color ??
+                      theme.colorScheme.onSurface,
                 ),
               ),
               AppSpacing.verticalXs,
@@ -385,21 +400,22 @@ class _ModifierEnfantPageState extends ConsumerState<ModifierEnfantPage> {
                         }
                       });
                     },
-                    selectedColor: const Color(0xFFEDE9FE),
-                    checkmarkColor: const Color(0xFF763CD1),
-                    backgroundColor: AppColors.surface,
+                    selectedColor: theme.colorScheme.primary.withValues(alpha: 0.15),
+                    checkmarkColor: theme.colorScheme.primary,
+                    backgroundColor: theme.colorScheme.surface,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                       side: BorderSide(
                         color: isSelected
-                            ? const Color(0xFF763CD1)
-                            : AppColors.border,
+                            ? theme.colorScheme.primary
+                            : theme.dividerColor.withValues(alpha: 0.2),
                       ),
                     ),
                     labelStyle: TextStyle(
                       color: isSelected
-                          ? const Color(0xFF763CD1)
-                          : AppColors.textPrimary,
+                          ? theme.colorScheme.primary
+                          : (theme.textTheme.bodyMedium?.color ??
+                              theme.colorScheme.onSurface),
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                       fontSize: 13,
                     ),
@@ -442,21 +458,28 @@ class _ModifierEnfantPageState extends ConsumerState<ModifierEnfantPage> {
   }
 
   Widget _buildGenreCard({
+    required BuildContext context,
     required String label,
     required IconData icon,
     required bool isSelected,
     required VoidCallback onTap,
   }) {
+    final theme = Theme.of(context);
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFEDE9FE) : AppColors.surface,
+          color: isSelected
+              ? theme.colorScheme.primary.withValues(alpha: 0.12)
+              : theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? const Color(0xFF763CD1) : AppColors.border,
+            color: isSelected
+                ? theme.colorScheme.primary
+                : theme.dividerColor.withValues(alpha: 0.2),
             width: isSelected ? 1.5 : 1,
           ),
         ),
@@ -465,7 +488,10 @@ class _ModifierEnfantPageState extends ConsumerState<ModifierEnfantPage> {
           children: [
             Icon(
               icon,
-              color: isSelected ? const Color(0xFF763CD1) : AppColors.icon,
+              color: isSelected
+                  ? theme.colorScheme.primary
+                  : (theme.iconTheme.color?.withValues(alpha: 0.6) ??
+                      theme.colorScheme.onSurfaceVariant),
               size: 20,
             ),
             const SizedBox(width: 8),
@@ -474,7 +500,10 @@ class _ModifierEnfantPageState extends ConsumerState<ModifierEnfantPage> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: isSelected ? const Color(0xFF763CD1) : AppColors.textPrimary,
+                color: isSelected
+                    ? theme.colorScheme.primary
+                    : (theme.textTheme.bodyMedium?.color ??
+                        theme.colorScheme.onSurface),
               ),
             ),
           ],

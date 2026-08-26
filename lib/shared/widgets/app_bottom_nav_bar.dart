@@ -1,7 +1,5 @@
-import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/core/provider/bottom_nav_bar_provider.dart';
 import 'package:eveilkid/core/router/app_routes.dart';
-import 'package:eveilkid/features/auth/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -48,9 +46,10 @@ class AppBottomNavBar extends ConsumerWidget {
       backgroundColor: theme.bottomNavigationBarTheme.backgroundColor ??
           theme.colorScheme.surface,
       selectedItemColor: theme.bottomNavigationBarTheme.selectedItemColor ??
-          AppColors.primary,
+          theme.colorScheme.primary,
       unselectedItemColor: theme.bottomNavigationBarTheme.unselectedItemColor ??
-          AppColors.textSecondary,
+          (theme.iconTheme.color?.withValues(alpha: 0.6) ??
+              theme.colorScheme.onSurfaceVariant),
 
       selectedFontSize: 12,
       unselectedFontSize: 12,

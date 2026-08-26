@@ -10,9 +10,15 @@ import '../repository/parent_repository.dart';
 
 final currentUserIdProvider = Provider<String>((ref) {
   final authState = ref.watch(authProvider);
-  final userId = authState.utilisateur?.utilisateurId ??
-      FirebaseAuth.instance.currentUser?.uid;
-  return userId ?? '';
+  if (authState.utilisateur?.utilisateurId.isNotEmpty == true) {
+    return authState.utilisateur!.utilisateurId;
+  }
+  try {
+    final authUser = FirebaseAuth.instance.currentUser;
+    return authUser?.uid ?? '';
+  } catch (_) {
+    return '';
+  }
 });
 
 final parentRepositoryProvider = Provider<ParentRepository>((ref) {
@@ -22,22 +28,14 @@ final parentRepositoryProvider = Provider<ParentRepository>((ref) {
 final parentProfileStreamProvider = StreamProvider<Utilisateur>((ref) {
   final repository = ref.watch(parentRepositoryProvider);
   final userId = ref.watch(currentUserIdProvider);
-  if (userId.isEmpty) {
-    return Stream.value(const Utilisateur(
-      utilisateurId: '',
-      nom: 'Visiteur',
-      email: '',
-    ));
-  }
+  if (userId.isEmpty) return Stream.value(const Utilisateur(utilisateurId: ''));
   return repository.watchParentProfile(userId);
 });
 
 final enfantsStreamProvider = StreamProvider<List<EnfantModel>>((ref) {
   final repository = ref.watch(parentRepositoryProvider);
   final userId = ref.watch(currentUserIdProvider);
-  if (userId.isEmpty) {
-    return Stream.value([]);
-  }
+  if (userId.isEmpty) return Stream.value([]);
   return repository.watchEnfants(userId);
 });
 
@@ -59,16 +57,11 @@ final enfantParIdProvider = Provider.family<EnfantModel?, String>((
 class ParentNotifier extends AsyncNotifier<Utilisateur> {
   @override
   Future<Utilisateur> build() async {
+    final repository = ref.read(parentRepositoryProvider);
     final userId = ref.watch(currentUserIdProvider);
     if (userId.isEmpty) {
-      return const Utilisateur(
-        utilisateurId: '',
-        nom: 'Visiteur',
-        email: '',
-      );
+      return const Utilisateur(utilisateurId: '');
     }
-
-    final repository = ref.watch(parentRepositoryProvider);
     final parent = await repository.fetchParentProfile(userId);
     await ref.read(enfantNotifierProvider.notifier).chargerEnfants(userId);
     return parent;
@@ -129,5 +122,5 @@ class ParentNotifier extends AsyncNotifier<Utilisateur> {
 
 final parentNotifierProvider =
     AsyncNotifierProvider<ParentNotifier, Utilisateur>(() {
-  return ParentNotifier();
-});
+      return ParentNotifier();
+    });

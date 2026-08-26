@@ -43,6 +43,12 @@ class _AdminCategoryListPageState extends ConsumerState<AdminCategoryListPage>
   @override
   Widget build(BuildContext context) {
     final categoriesAsync = ref.watch(categoriesAdminStreamProvider);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final dividerColor = theme.dividerColor.withValues(alpha: 0.2);
+    final titleColor = theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface;
+    final textSecondary = theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+        (isDark ? Colors.white70 : AppColors.textSecondary);
 
     final allCategories = categoriesAsync.value ?? [];
     final activeCategoriesCount = allCategories.where((c) => c.estActive).length;
@@ -51,20 +57,23 @@ class _AdminCategoryListPageState extends ConsumerState<AdminCategoryListPage>
     return AdminScaffold(
       currentRoute: AdminNavRoute.categories,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           "Gestion des Catégories",
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: titleColor,
             fontWeight: FontWeight.w800,
             fontSize: 18,
             letterSpacing: -0.3,
           ),
         ),
-        backgroundColor: AppColors.surface,
+        backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         leading: Builder(
           builder: (context) => IconButton(
-            icon: const Icon(Icons.menu_rounded, color: AppColors.textPrimary),
+            icon: Icon(
+              Icons.menu_rounded,
+              color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
+            ),
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
@@ -75,10 +84,12 @@ class _AdminCategoryListPageState extends ConsumerState<AdminCategoryListPage>
             padding: const EdgeInsets.all(3),
             height: 38,
             decoration: BoxDecoration(
-              color: AppColors.surfaceVariant.withValues(alpha: 0.6),
+              color: isDark
+                  ? theme.colorScheme.surfaceContainerHighest
+                  : AppColors.surfaceVariant.withValues(alpha: 0.6),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: AppColors.border.withValues(alpha: 0.6),
+                color: dividerColor,
                 width: 1,
               ),
             ),
@@ -87,22 +98,22 @@ class _AdminCategoryListPageState extends ConsumerState<AdminCategoryListPage>
               indicatorSize: TabBarIndicatorSize.tab,
               dividerColor: Colors.transparent,
               indicator: BoxDecoration(
-                color: AppColors.surface,
+                color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: AppColors.border.withValues(alpha: 0.5),
+                  color: dividerColor,
                   width: 0.8,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
                     blurRadius: 3,
                     offset: const Offset(0, 1),
                   ),
                 ],
               ),
-              labelColor: AppColors.primary,
-              unselectedLabelColor: AppColors.textSecondary,
+              labelColor: theme.colorScheme.primary,
+              unselectedLabelColor: textSecondary,
               labelStyle: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -124,8 +135,8 @@ class _AdminCategoryListPageState extends ConsumerState<AdminCategoryListPage>
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                         decoration: BoxDecoration(
                           color: _tabController.index == 0
-                              ? AppColors.primary.withValues(alpha: 0.12)
-                              : AppColors.surfaceVariant,
+                              ? theme.colorScheme.primary.withValues(alpha: isDark ? 0.25 : 0.12)
+                              : (isDark ? theme.colorScheme.surface : AppColors.surfaceVariant),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -134,8 +145,8 @@ class _AdminCategoryListPageState extends ConsumerState<AdminCategoryListPage>
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             color: _tabController.index == 0
-                                ? AppColors.primary
-                                : AppColors.textSecondary,
+                                ? theme.colorScheme.primary
+                                : textSecondary,
                           ),
                         ),
                       ),
@@ -152,8 +163,8 @@ class _AdminCategoryListPageState extends ConsumerState<AdminCategoryListPage>
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                         decoration: BoxDecoration(
                           color: _tabController.index == 1
-                              ? AppColors.primary.withValues(alpha: 0.12)
-                              : AppColors.surfaceVariant,
+                              ? theme.colorScheme.primary.withValues(alpha: isDark ? 0.25 : 0.12)
+                              : (isDark ? theme.colorScheme.surface : AppColors.surfaceVariant),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -162,8 +173,8 @@ class _AdminCategoryListPageState extends ConsumerState<AdminCategoryListPage>
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             color: _tabController.index == 1
-                                ? AppColors.primary
-                                : AppColors.textSecondary,
+                                ? theme.colorScheme.primary
+                                : textSecondary,
                           ),
                         ),
                       ),
@@ -189,10 +200,10 @@ class _AdminCategoryListPageState extends ConsumerState<AdminCategoryListPage>
           // Liste des catégories
           Expanded(
             child: categoriesAsync.when(
-              loading: () => const Center(
+              loading: () => Center(
                 child: CircularProgressIndicator(
                   strokeWidth: 2.5,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                  valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
                 ),
               ),
               error: (err, stack) => AppErrorState(
@@ -235,7 +246,7 @@ class _AdminCategoryListPageState extends ConsumerState<AdminCategoryListPage>
                 }
 
                 return RefreshIndicator(
-                  color: AppColors.primary,
+                  color: theme.colorScheme.primary,
                   onRefresh: () async {
                     ref.invalidate(categoriesAdminStreamProvider);
                   },
@@ -262,8 +273,8 @@ class _AdminCategoryListPageState extends ConsumerState<AdminCategoryListPage>
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.white,
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
         elevation: 3,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         icon: const Icon(Icons.add_rounded, size: 20),

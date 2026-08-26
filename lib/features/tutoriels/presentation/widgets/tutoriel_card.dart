@@ -12,9 +12,6 @@ final Tutoriel tutoriel;
 
   @override
   Widget build(BuildContext context) {
-   
-
-  
     
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -43,7 +40,7 @@ final Tutoriel tutoriel;
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    tutoriel.duree as String, // Ex: "12:20"
+                    tutoriel.durationLabel,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 10,
@@ -85,7 +82,10 @@ final Tutoriel tutoriel;
     fontWeight: FontWeight.w500,
   ),
 ),
+
+
                 ),
+                
               ],
             ),
           ),
