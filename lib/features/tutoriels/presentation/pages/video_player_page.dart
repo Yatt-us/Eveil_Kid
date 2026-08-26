@@ -124,7 +124,7 @@ class _VideoPlayerPageState
     // Appeler le Provider avec l'ID du tutoriel
     final progression = await ref.read(
       progressionProvider(
-        widget.tutoriel.tutorielId,
+        widget.tutoriel.tutorielId!,
       ).future,
     );
 
@@ -198,7 +198,7 @@ class _VideoPlayerPageState
     await ref.read(
       progressionControllerProvider,
     ).saveProgression(
-      tutorielId: widget.tutoriel.tutorielId,
+      tutorielId: widget.tutoriel.tutorielId!,
       position: position,
       duree: duree,
     );
