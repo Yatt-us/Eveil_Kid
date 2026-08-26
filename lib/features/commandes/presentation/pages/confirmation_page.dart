@@ -6,13 +6,16 @@ import 'mes_commandes_page.dart';
 class ConfirmationPage extends StatelessWidget {
   final CommandeModel commande;
 
-  // Constructeur propre avec uniquement le paramètre 'commande'
   const ConfirmationPage({super.key, required this.commande});
 
   @override
   Widget build(BuildContext context) {
     const Color primaryColor = Color(0xFF7E3DBE);
-    const Color successColor = Color(0xFF289F51);
+
+    // Formatage propre du numéro de commande si besoin
+    String numeroCommandeAffiche = commande.id.isNotEmpty
+        ? '#CMD-${commande.id.substring(0, commande.id.length > 6 ? 6 : commande.id.length).toUpperCase()}'
+        : '#CMD-2026-000123';
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -28,29 +31,21 @@ class ConfirmationPage extends StatelessWidget {
       ),
       body: Column(
         children: [
-          // Stepper à l'étape 3
           const CheckoutStepper(stepActuel: 3),
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Icône de succès
-                  Container(
-                    width: 90,
-                    height: 90,
-                    decoration: const BoxDecoration(
-                      color: successColor,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.check,
-                      size: 55,
-                      color: Colors.white,
-                    ),
+                  // Image de confirmation avec taille augmentée
+                  Image.asset(
+                    'assets/images/confirmation.PNG',
+                    height: 220,
+                    fit: BoxFit.contain,
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
+                  
                   const Text(
                     'Merci pour votre commande !',
                     style: TextStyle(
@@ -58,7 +53,7 @@ class ConfirmationPage extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text(
                     'Votre commande a été passée avec succès.',
                     style: TextStyle(
@@ -66,47 +61,60 @@ class ConfirmationPage extends StatelessWidget {
                       fontSize: 12,
                     ),
                   ),
-                  const SizedBox(height: 32),
-                  // Informations de livraison & numéro
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      Column(
-                        children: [
-                          const Text(
-                            'Numéro de commande',
-                            style: TextStyle(fontSize: 11, color: Colors.grey),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '#${commande.id}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
+                  const SizedBox(height: 20),
+                  
+                  // Encadré Numéro de commande / Livraison
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Numero de commande',
+                              style: TextStyle(fontSize: 11, color: Colors.grey),
                             ),
-                          ),
-                        ],
-                      ),
-                      Column(
-                        children: [
-                          const Text(
-                            'Livraison estimée',
-                            style: TextStyle(fontSize: 11, color: Colors.grey),
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            '12-15 MAI 2026',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
+                            const SizedBox(height: 4),
+                            Text(
+                              numeroCommandeAffiche,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                        Container(height: 25, width: 1, color: Colors.grey.shade300),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Livraison estimée',
+                              style: TextStyle(fontSize: 11, color: Colors.grey),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              '12-15 MAI 2026',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                  const Spacer(),
-                  // Bouton Voir mes commandes
+                  const SizedBox(height: 30),
+                  
+                  // Bouton "Voir mes commandes"
                   SizedBox(
                     width: double.infinity,
                     height: 50,
@@ -136,7 +144,8 @@ class ConfirmationPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  // Bouton Retour à l'accueil
+                  
+                  // Bouton "Retour à l'accueil"
                   SizedBox(
                     width: double.infinity,
                     height: 50,
@@ -160,6 +169,7 @@ class ConfirmationPage extends StatelessWidget {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 10),
                 ],
               ),
             ),

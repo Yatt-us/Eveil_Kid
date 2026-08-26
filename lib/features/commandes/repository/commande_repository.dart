@@ -40,10 +40,18 @@ class CommandeRepository {
     }
   }
 
-  // 3. Créer une nouvelle commande
+  // 3. Créer une nouvelle commande (Corrigé pour éviter l'erreur d'ID vide)
   Future<void> creerCommande(CommandeModel commande) async {
     try {
-      await _collectionCommandes.doc(commande.id).set(commande.toMap());
+      if (commande.id.isEmpty) {
+        // Si l'ID est vide, Firestore génère un ID unique automatiquement
+        DocumentReference docRef = await _collectionCommandes.add(commande.toMap());
+        // On met à jour le champ 'id' dans le document avec l'ID généré par Firestore
+        await docRef.update({'id': docRef.id});
+      } else {
+        // Si un ID est déjà présent, on l'utilise directement
+        await _collectionCommandes.doc(commande.id).set(commande.toMap());
+      }
     } catch (e) {
       throw Exception('Erreur lors de la création de la commande : $e');
     }
