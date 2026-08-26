@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/AppTextStyles.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
@@ -91,9 +90,16 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
+    final titleColor = colorScheme.onSurface;
+    final subtitleColor = colorScheme.onSurfaceVariant;
+    final primaryColor = colorScheme.primary;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -112,22 +118,28 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     const SizedBox(height: 16),
 
                     // EN-TÊTE CENTRÉ & ÉPURÉ
-                    const Text(
+                    Text(
                       'Créer un compte',
                       textAlign: TextAlign.center,
-                      style: AppTextStyles.headingLarge,
+                      style: AppTextStyles.headingLarge.copyWith(
+                        color: titleColor,
+                      ),
                     ),
 
                     const SizedBox(height: 6),
 
-                    const Text(
+                    Text(
                       'Remplissez les informations ci-dessous pour créer votre compte.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: AppColors.textSecondary,
-                        height: 1.35,
-                      ),
+                      style: textTheme.bodyMedium?.copyWith(
+                            color: subtitleColor,
+                            height: 1.35,
+                          ) ??
+                          TextStyle(
+                            fontSize: 13,
+                            color: subtitleColor,
+                            height: 1.35,
+                          ),
                     ),
 
                     const SizedBox(height: 24),
@@ -230,21 +242,27 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     // SÉPARATEUR
                     Row(
                       children: [
-                        const Expanded(
-                          child: Divider(color: AppColors.border, thickness: 1),
+                        Expanded(
+                          child: Divider(
+                            color: theme.dividerColor,
+                            thickness: 1,
+                          ),
                         ),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                           child: Text(
                             'OU',
                             style: AppTextStyles.bodySmall.copyWith(
-                              color: AppColors.textSecondary,
+                              color: subtitleColor,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
-                        const Expanded(
-                          child: Divider(color: AppColors.border, thickness: 1),
+                        Expanded(
+                          child: Divider(
+                            color: theme.dividerColor,
+                            thickness: 1,
+                          ),
                         ),
                       ],
                     ),
@@ -264,22 +282,22 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
+                        Text(
                           'Déjà un compte ?',
                           style: TextStyle(
                             fontSize: 13,
-                            color: AppColors.textSecondary,
+                            color: subtitleColor,
                           ),
                         ),
                         const SizedBox(width: 4),
                         GestureDetector(
                           onTap: () => context.go(AppRoutes.login),
-                          child: const Text(
+                          child: Text(
                             'Se connecter',
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.primary,
+                              color: primaryColor,
                             ),
                           ),
                         ),
@@ -295,7 +313,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         icon: const Icon(Icons.home_outlined, size: 18),
                         label: const Text('Continuer sans se connecter'),
                         style: TextButton.styleFrom(
-                          foregroundColor: AppColors.textSecondary,
+                          foregroundColor: subtitleColor,
                           textStyle: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,

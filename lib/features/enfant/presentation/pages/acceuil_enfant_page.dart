@@ -10,7 +10,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class AccueilEnfantPage extends ConsumerStatefulWidget {
-  const AccueilEnfantPage({super.key});
+  final String? initialEnfantId;
+
+  const AccueilEnfantPage({super.key, this.initialEnfantId});
 
   @override
   ConsumerState<AccueilEnfantPage> createState() => _AccueilEnfantPageState();
@@ -22,6 +24,24 @@ class _AccueilEnfantPageState extends ConsumerState<AccueilEnfantPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final parentId = FirebaseAuth.instance.currentUser?.uid;
+      final state = ref.read(enfantNotifierProvider);
+      final targetEnfantId = widget.initialEnfantId;
+
+      if (targetEnfantId != null && targetEnfantId.isNotEmpty) {
+        EnfantModel? matched;
+        for (final enfant in state.enfants) {
+          if (enfant.enfantId == targetEnfantId) {
+            matched = enfant;
+            break;
+          }
+        }
+
+        if (matched != null) {
+          ref.read(enfantNotifierProvider.notifier).selectionnerEnfant(matched);
+          return;
+        }
+      }
+
       if (parentId != null && parentId.isNotEmpty) {
         ref.read(enfantNotifierProvider.notifier).chargerEnfants(parentId);
       }

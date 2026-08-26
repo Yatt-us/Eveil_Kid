@@ -55,34 +55,36 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
   @override
   Widget build(BuildContext context) {
     final parentAsync = ref.watch(parentNotifierProvider);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: AppColors.textPrimary,
+            color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
             size: 22,
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Mes Enfants',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+            color: theme.textTheme.titleLarge?.color ?? theme.colorScheme.onSurface,
           ),
         ),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.person_add_alt_1_rounded,
-              color: AppColors.primary,
+              color: theme.colorScheme.primary,
             ),
             tooltip: 'Ajouter un enfant',
             onPressed: () {
@@ -143,18 +145,18 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
                               ),
                               decoration: BoxDecoration(
                                 color: isSelected
-                                    ? AppColors.primary
-                                    : AppColors.surface,
+                                    ? theme.colorScheme.primary
+                                    : theme.colorScheme.surface,
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
                                   color: isSelected
-                                      ? AppColors.primary
-                                      : AppColors.border,
+                                      ? theme.colorScheme.primary
+                                      : theme.dividerColor.withValues(alpha: 0.25),
                                 ),
                                 boxShadow: isSelected
                                     ? [
                                         BoxShadow(
-                                          color: AppColors.primary
+                                          color: theme.colorScheme.primary
                                               .withValues(alpha: 0.25),
                                           blurRadius: 6,
                                           offset: const Offset(0, 2),
@@ -170,8 +172,10 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
                                       ? FontWeight.w700
                                       : FontWeight.w600,
                                   color: isSelected
-                                      ? AppColors.white
-                                      : AppColors.textSecondary,
+                                      ? theme.colorScheme.onPrimary
+                                      : (theme.textTheme.bodyMedium?.color
+                                              ?.withValues(alpha: 0.7) ??
+                                          theme.colorScheme.onSurfaceVariant),
                                 ),
                               ),
                             ),
@@ -189,7 +193,9 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
                               ? '${allEnfants.length} enfant${allEnfants.length > 1 ? 's' : ''} enregistré${allEnfants.length > 1 ? 's' : ''}'
                               : '${filteredEnfants.length} sur ${allEnfants.length} enfant${allEnfants.length > 1 ? 's' : ''}',
                           style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.textSecondary,
+                            color: theme.textTheme.bodySmall?.color
+                                    ?.withValues(alpha: 0.7) ??
+                                theme.colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -201,12 +207,12 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
                                 _searchQuery = '';
                               });
                             },
-                            child: const Text(
+                            child: Text(
                               'Réinitialiser',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.primary,
+                                color: theme.colorScheme.primary,
                               ),
                             ),
                           ),
@@ -228,7 +234,7 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
                               Container(
                                 padding: const EdgeInsets.all(24),
                                 decoration: BoxDecoration(
-                                  color: AppColors.primary.withValues(alpha: 0.08),
+                                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(
@@ -236,7 +242,7 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
                                       ? Icons.search_off_rounded
                                       : Icons.child_care_rounded,
                                   size: 56,
-                                  color: AppColors.primary,
+                                  color: theme.colorScheme.primary,
                                 ),
                               ),
                               AppSpacing.verticalMd,
@@ -244,10 +250,11 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
                                 _searchQuery.isNotEmpty || _selectedFilter != 'Tous'
                                     ? 'Aucun résultat trouvé'
                                     : 'Aucun enfant enregistré',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
+                                  color: theme.textTheme.titleMedium?.color ??
+                                      theme.colorScheme.onSurface,
                                 ),
                               ),
                               AppSpacing.verticalXs,
@@ -256,7 +263,9 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
                                     ? 'Modifiez votre recherche ou sélectionnez un autre filtre.'
                                     : 'Utilisez le bouton ci-dessous pour ajouter votre premier enfant et personnaliser son apprentissage.',
                                 style: AppTextStyles.bodyMedium.copyWith(
-                                  color: AppColors.textSecondary,
+                                  color: theme.textTheme.bodyMedium?.color
+                                          ?.withValues(alpha: 0.7) ??
+                                      theme.colorScheme.onSurfaceVariant,
                                 ),
                                 textAlign: TextAlign.center,
                               ),
@@ -270,22 +279,22 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
                         separatorBuilder: (context, index) => AppSpacing.verticalMd,
                         itemBuilder: (context, index) {
                           final enfant = filteredEnfants[index];
-                          return _buildChildCard(context, enfant);
+                          return _buildChildCard(context, enfant, theme, isDark);
                         },
                       ),
               ),
             ],
           );
         },
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
+        loading: () => Center(
+          child: CircularProgressIndicator(color: theme.colorScheme.primary),
         ),
         error: (err, stack) => Center(
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Text(
               'Erreur : $err',
-              style: const TextStyle(color: AppColors.danger),
+              style: TextStyle(color: theme.colorScheme.error),
               textAlign: TextAlign.center,
             ),
           ),
@@ -298,13 +307,13 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
             MaterialPageRoute(builder: (_) => const AjouterEnfantPage()),
           );
         },
-        backgroundColor: AppColors.primary,
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
         elevation: 4,
-        icon: const Icon(Icons.add_rounded, color: AppColors.white),
+        icon: const Icon(Icons.add_rounded),
         label: const Text(
           'Ajouter un enfant',
           style: TextStyle(
-            color: AppColors.white,
             fontWeight: FontWeight.bold,
             fontSize: 15,
           ),
@@ -313,23 +322,35 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
     );
   }
 
-  Widget _buildChildCard(BuildContext context, EnfantModel enfant) {
+  Widget _buildChildCard(
+    BuildContext context,
+    EnfantModel enfant,
+    ThemeData theme,
+    bool isDark,
+  ) {
     final isGirl = enfant.genre.trim().toLowerCase() == 'fille';
-    final badgeBg = isGirl ? const Color(0xFFFDE8F3) : const Color(0xFFEBF3FE);
-    final badgeText = isGirl ? const Color(0xFFD81B60) : const Color(0xFF1E88E5);
-    final avatarBg = isGirl ? const Color(0xFFFFEEF6) : const Color(0xFFEEF5FD);
+    final badgeBg = isGirl
+        ? (isDark ? const Color(0xFF4A154B) : const Color(0xFFFDE8F3))
+        : (isDark ? const Color(0xFF1E293B) : const Color(0xFFEBF3FE));
+    final badgeText = isGirl
+        ? (isDark ? const Color(0xFFF472B6) : const Color(0xFFD81B60))
+        : (isDark ? const Color(0xFF60A5FA) : const Color(0xFF1E88E5));
+    final avatarBg = isGirl
+        ? (isDark ? const Color(0xFF3B123C) : const Color(0xFFFFEEF6))
+        : (isDark ? const Color(0xFF172554) : const Color(0xFFEEF5FD));
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: AppColors.border.withValues(alpha: 0.8),
+          color: theme.dividerColor.withValues(alpha: 0.2),
           width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: (isDark ? Colors.black : AppColors.textPrimary)
+                .withValues(alpha: isDark ? 0.25 : 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -358,8 +379,8 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: isGirl
-                        ? const Color(0xFFF8BBD0)
-                        : const Color(0xFFBBDEFB),
+                        ? (isDark ? const Color(0xFF831843) : const Color(0xFFF8BBD0))
+                        : (isDark ? const Color(0xFF1E3A8A) : const Color(0xFFBBDEFB)),
                     width: 1.5,
                   ),
                 ),
@@ -392,10 +413,11 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
                   children: [
                     Text(
                       enfant.nom,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
+                        color: theme.textTheme.titleMedium?.color ??
+                            theme.colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -404,7 +426,9 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
                         Text(
                           '${enfant.age} an${enfant.age > 1 ? 's' : ''}',
                           style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.textSecondary,
+                            color: theme.textTheme.bodySmall?.color
+                                    ?.withValues(alpha: 0.7) ??
+                                theme.colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -434,7 +458,7 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
               ),
               // Bouton Modifier
               IconButton(
-                icon: const Icon(Icons.edit_outlined, color: AppColors.primary),
+                icon: Icon(Icons.edit_outlined, color: theme.colorScheme.primary),
                 tooltip: 'Modifier',
                 onPressed: () {
                   Navigator.push(
@@ -447,8 +471,8 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
               ),
               // Bouton Supprimer
               IconButton(
-                icon: const Icon(Icons.delete_outline_rounded,
-                    color: AppColors.danger),
+                icon: Icon(Icons.delete_outline_rounded,
+                    color: theme.colorScheme.error),
                 tooltip: 'Supprimer',
                 onPressed: () async {
                   final confirmed = await AppDialogs.showConfirmDialog(

@@ -30,22 +30,23 @@ class AppAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     Widget avatarWidget;
 
     if (imageUrl != null && imageUrl!.isNotEmpty) {
       avatarWidget = CircleAvatar(
         radius: radius,
         backgroundImage: NetworkImage(imageUrl!),
-        backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+        backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
       );
     } else if (_initials.isNotEmpty) {
       avatarWidget = CircleAvatar(
         radius: radius,
-        backgroundColor: AppColors.primary,
+        backgroundColor: theme.colorScheme.primary,
         child: Text(
           _initials,
           style: TextStyle(
-            color: AppColors.white,
+            color: theme.colorScheme.onPrimary,
             fontWeight: FontWeight.bold,
             fontSize: radius * 0.7,
           ),
@@ -54,8 +55,8 @@ class AppAvatar extends StatelessWidget {
     } else {
       avatarWidget = CircleAvatar(
         radius: radius,
-        backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-        child: Icon(defaultIcon, size: radius * 1.1, color: AppColors.primary),
+        backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+        child: Icon(defaultIcon, size: radius * 1.1, color: theme.colorScheme.primary),
       );
     }
 
@@ -81,7 +82,10 @@ class AppAvatar extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.success,
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.white, width: 2),
+                border: Border.all(
+                  color: theme.colorScheme.surface,
+                  width: 2,
+                ),
               ),
             ),
           ),

@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import '../../../../shared/widgets/app_bottom_nav_bar.dart';
 import '../../../jouets/presentation/pages/jouets_catalog_page.dart';
-import '../../../tutoriels/presentation/pages/tutorielPage.dart';
 import 'accueil_parent.dart';
 import 'profil_parent.dart';
 
@@ -36,7 +35,6 @@ class _ParentMainScaffoldState extends State<ParentMainScaffold> {
     final List<Widget> pages = [
       AccueilParentPage(onNavigateTab: _navigateToTab),
       const JouetsCatalogPage(),
-      const TutorielPage(),
       const ProfilParentPage(),
     ];
 
