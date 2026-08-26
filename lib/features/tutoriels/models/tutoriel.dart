@@ -40,8 +40,10 @@ class Tutoriel {
   ) {
     final data = doc.data() ?? const {};
 
+    final normalizedTutorielId = (data['tutorielId']?.toString() ?? '').trim();
+
     return Tutoriel(
-      tutorielId: data['tutorielId']?.toString() ?? doc.id,
+      tutorielId: normalizedTutorielId.isNotEmpty ? normalizedTutorielId : doc.id,
       categorieId: data['categorieId']?.toString() ?? '',
       jouetLieId: data['jouetLieId']?.toString() ?? '',
       createurId: data['createurId']?.toString() ?? '',
@@ -62,8 +64,10 @@ class Tutoriel {
   }
 
   factory Tutoriel.fromMap(Map<String, dynamic> map, {String? id}) {
+    final normalizedTutorielId = (id ?? map['tutorielId']?.toString() ?? '').trim();
+
     return Tutoriel(
-      tutorielId: id ?? map['tutorielId']?.toString() ?? '',
+      tutorielId: normalizedTutorielId.isNotEmpty ? normalizedTutorielId : (id ?? ''),
       categorieId: map['categorieId']?.toString() ?? '',
       jouetLieId: map['jouetLieId']?.toString() ?? '',
       createurId: map['createurId']?.toString() ?? '',
