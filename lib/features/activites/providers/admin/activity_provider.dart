@@ -132,9 +132,6 @@ Future<void> deleteActivity(String id) async {
       ref.invalidate(adminActivitesProvider);
       ref.invalidate(activitesProvider);
       
-      // ✅ Forcer un rebuild manuel
-      ref.refresh(adminActivitesProvider);
-      
     } catch (e, stack) {
       state = AsyncValue.error(e, stack);
       rethrow;

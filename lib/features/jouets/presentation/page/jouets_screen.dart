@@ -326,7 +326,7 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
         height: 40,
         child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
       ),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (categories) {
         return SizedBox(
           height: 40,
@@ -334,7 +334,7 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             scrollDirection: Axis.horizontal,
             itemCount: categories.length + 1, // +1 pour l'option "Tous"
-            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            separatorBuilder: (_, _) => const SizedBox(width: 8),
             itemBuilder: (context, index) {
               final isTous = index == 0;
               final selected = isTous

@@ -6,29 +6,31 @@ class AdresseLivraisonWidget extends StatelessWidget {
   final VoidCallback? surModification;
 
   const AdresseLivraisonWidget({
-    Key? key,
+    super.key,
     required this.adresse,
     required this.telephone,
     this.surModification,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: const EdgeInsets.all(12.0),
+        padding: const EdgeInsets.all(14.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Row(
+                Row(
                   children: [
-                    Icon(Icons.location_on, color: Colors.blueAccent),
-                    SizedBox(width: 8),
-                    Text(
+                    Icon(Icons.location_on_rounded, color: theme.colorScheme.primary),
+                    const SizedBox(width: 8),
+                    const Text(
                       'Adresse de livraison',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),

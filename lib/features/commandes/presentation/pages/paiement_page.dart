@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/AppSpacing.dart';
+import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_dialogs.dart';
 import '../../models/commande_model.dart';
 import '../../providers/commande_provider.dart';
 import '../widgets/checkout_stepper.dart';
@@ -15,26 +19,46 @@ class PaiementPage extends ConsumerStatefulWidget {
 }
 
 class _PaiementPageState extends ConsumerState<PaiementPage> {
-  static const Color primaryColor = Color(0xFF7E3DBE);
   String modePaiementSelectionne = 'Mobile Money';
+
+  String _formatPrice(double price) {
+    final formatted = price.toStringAsFixed(0).replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]} ',
+        );
+    return '$formatted FCFA';
+  }
 
   @override
   Widget build(BuildContext context) {
-    // On écoute l'état global du provider Riverpod
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final dividerColor = theme.dividerColor.withValues(alpha: 0.2);
+    final textSecondary = theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+        (isDark ? Colors.white70 : AppColors.textSecondary);
+
     final commandeState = ref.watch(commandeProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Paiement',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: theme.textTheme.titleLarge?.color ?? theme.colorScheme.onSurface,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -42,125 +66,158 @@ class _PaiementPageState extends ConsumerState<PaiementPage> {
         children: [
           const CheckoutStepper(stepActuel: 2),
           Expanded(
-            child: Padding(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.all(20.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Méthode de paiement',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildPaymentOption('Mobile Money', Icons.phone_android),
-                  _buildPaymentOption('Carte bancaire', Icons.credit_card),
-                  _buildPaymentOption('Paiement à la livraison', Icons.local_shipping),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Résumé de la commande',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Sous-total', style: TextStyle(color: Colors.grey)),
-                      Text(
-                        '${(widget.brouillonCommande.montantTotal - widget.brouillonCommande.fraisLivraison).toStringAsFixed(2)} XOF',
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Livraison', style: TextStyle(color: Colors.grey)),
-                      Text(
-                        widget.brouillonCommande.fraisLivraison == 0
-                            ? 'Gratuite'
-                            : '${widget.brouillonCommande.fraisLivraison} XOF',
-                        style: const TextStyle(color: Color(0xFF289F51)),
-                      ),
-                    ],
-                  ),
-                  const Divider(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Total',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                      Text(
-                        '${widget.brouillonCommande.montantTotal.toStringAsFixed(2)} XOF',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: primaryColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(25),
-                        ),
-                      ),
-                      onPressed: commandeState.estEnChargement
-                          ? null
-                          : () async {
-                              final commandeFinale = widget.brouillonCommande.copyWith(
-                                modePaiement: modePaiementSelectionne,
-                                dateCreation: DateTime.now(),
-                              );
-
-                              // Appel de la méthode du Notifier via ref.read
-                              bool succes = await ref
-                                  .read(commandeProvider.notifier)
-                                  .passerCommande(commandeFinale);
-
-                              if (succes && context.mounted) {
-                                Navigator.pushAndRemoveUntil(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => ConfirmationPage(commande: commandeFinale),
-                                  ),
-                                  (route) => route.isFirst,
-                                );
-                              } else if (commandeState.messageErreur != null && context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(commandeState.messageErreur!),
-                                    backgroundColor: Colors.red,
-                                  ),
-                                );
-                              }
-                            },
-                      child: commandeState.estEnChargement
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : Text(
-                              'Payer ${widget.brouillonCommande.montantTotal.toStringAsFixed(2)} XOF',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                  Text(
+                    'MÉTHODE DE PAIEMENT',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                      color: textSecondary,
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  _buildPaymentOption(
+                    'Mobile Money',
+                    Icons.phone_android_rounded,
+                    'Wave, Orange Money, MTN, Moov',
+                    theme,
+                    isDark,
+                  ),
+                  _buildPaymentOption(
+                    'Carte bancaire',
+                    Icons.credit_card_rounded,
+                    'Visa, Mastercard sécurisé',
+                    theme,
+                    isDark,
+                  ),
+                  _buildPaymentOption(
+                    'Paiement à la livraison',
+                    Icons.local_shipping_outlined,
+                    'Payez en espèces ou par Wave à la réception',
+                    theme,
+                    isDark,
+                  ),
+                  const SizedBox(height: 24),
+
+                  Text(
+                    'RÉSUMÉ DU MONTANT',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                      color: textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: dividerColor),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Sous-total articles', style: TextStyle(color: textSecondary, fontSize: 13.5)),
+                            Text(
+                              _formatPrice(widget.brouillonCommande.montantTotal - widget.brouillonCommande.fraisLivraison),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13.5,
+                                color: theme.textTheme.bodyLarge?.color ?? theme.colorScheme.onSurface,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Frais de livraison', style: TextStyle(color: textSecondary, fontSize: 13.5)),
+                            Text(
+                              widget.brouillonCommande.fraisLivraison == 0
+                                  ? 'Gratuite'
+                                  : _formatPrice(widget.brouillonCommande.fraisLivraison),
+                              style: const TextStyle(
+                                color: Color(0xFF10B981),
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: Divider(height: 1, color: dividerColor),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Total à payer',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 15.5,
+                                color: theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface,
+                              ),
+                            ),
+                            Text(
+                              _formatPrice(widget.brouillonCommande.montantTotal),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 18,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  AppButton(
+                    text: 'Payer ${_formatPrice(widget.brouillonCommande.montantTotal)}',
+                    icon: Icons.lock_outline_rounded,
+                    isLoading: commandeState.estEnChargement,
+                    onPressed: commandeState.estEnChargement
+                        ? null
+                        : () async {
+                            final commandeFinale = widget.brouillonCommande.copyWith(
+                              modePaiement: modePaiementSelectionne,
+                              dateCreation: DateTime.now(),
+                            );
+
+                            bool succes = await ref
+                                .read(commandeProvider.notifier)
+                                .passerCommande(commandeFinale);
+
+                            if (succes && context.mounted) {
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ConfirmationPage(commande: commandeFinale),
+                                ),
+                                (route) => route.isFirst,
+                              );
+                            } else if (commandeState.messageErreur != null && context.mounted) {
+                              AppDialogs.showSnackBar(
+                                context: context,
+                                message: commandeState.messageErreur!,
+                                isError: true,
+                              );
+                            }
+                          },
+                  ),
+                  AppSpacing.verticalLg,
                 ],
               ),
             ),
@@ -170,29 +227,89 @@ class _PaiementPageState extends ConsumerState<PaiementPage> {
     );
   }
 
-  Widget _buildPaymentOption(String title, IconData icon) {
-    bool isSelected = modePaiementSelectionne == title;
+  Widget _buildPaymentOption(
+    String title,
+    IconData icon,
+    String subtitle,
+    ThemeData theme,
+    bool isDark,
+  ) {
+    final bool isSelected = modePaiementSelectionne == title;
+    final primaryColor = theme.colorScheme.primary;
+
     return GestureDetector(
       onTap: () => setState(() => modePaiementSelectionne = title),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
           border: Border.all(
-            color: isSelected ? primaryColor : Colors.grey.shade300,
-            width: isSelected ? 1.5 : 1,
+            color: isSelected ? primaryColor : theme.dividerColor.withValues(alpha: 0.2),
+            width: isSelected ? 1.8 : 1.0,
           ),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : [],
         ),
         child: Row(
           children: [
-            Icon(icon, color: isSelected ? primaryColor : Colors.grey),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? primaryColor.withValues(alpha: isDark ? 0.25 : 0.1)
+                    : (isDark
+                        ? theme.colorScheme.surfaceContainerHighest
+                        : AppColors.surfaceVariant.withValues(alpha: 0.5)),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                icon,
+                color: isSelected
+                    ? primaryColor
+                    : (theme.iconTheme.color ?? theme.colorScheme.onSurfaceVariant),
+                size: 22,
+              ),
+            ),
             const SizedBox(width: 12),
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
-            const Spacer(),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                      fontSize: 14,
+                      color: isSelected
+                          ? primaryColor
+                          : (theme.textTheme.bodyLarge?.color ?? theme.colorScheme.onSurface),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+                          (isDark ? Colors.white60 : AppColors.textSecondary),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             Icon(
-              isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
-              color: isSelected ? primaryColor : Colors.grey.shade400,
+              isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+              color: isSelected ? primaryColor : (isDark ? Colors.white30 : Colors.grey.shade400),
+              size: 20,
             ),
           ],
         ),

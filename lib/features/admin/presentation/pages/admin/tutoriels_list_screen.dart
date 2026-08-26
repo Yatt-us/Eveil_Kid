@@ -83,7 +83,7 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: () {
-                          ref.refresh(adminTutorielsProvider);
+                          ref.invalidate(adminTutorielsProvider);
                         },
                         child: const Text('Réessayer'),
                       ),
@@ -146,7 +146,7 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
                 selected: isSelected,
                 onSelected: (_) {
                   setState(() {
-                    _selectedStatus = isSelected ? null : status['value'] as String?;
+                    _selectedStatus = isSelected ? null : status['value'];
                     _isFiltered = _selectedStatus != null;
                   });
                 },
@@ -235,21 +235,21 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
   void _confirmDelete(Tutoriel tutoriel) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Supprimer le tutoriel'),
         content: Text('Supprimer "${tutoriel.titre}" ?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Annuler'),
           ),
           TextButton(
             onPressed: () async {
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
               try {
                 final repository = ref.read(tutorielRepositoryProvider);
                 await repository.deleteTutoriel(tutoriel.tutorielId!);
-                ref.refresh(adminTutorielsProvider);
+                ref.invalidate(adminTutorielsProvider);
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -278,7 +278,7 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
     try {
       final repository = ref.read(tutorielRepositoryProvider);
       await repository.publierTutoriel(tutoriel.tutorielId!);
-      ref.refresh(adminTutorielsProvider);
+      ref.invalidate(adminTutorielsProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -300,7 +300,7 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
     try {
       final repository = ref.read(tutorielRepositoryProvider);
       await repository.depublierTutoriel(tutoriel.tutorielId!);
-      ref.refresh(adminTutorielsProvider);
+      ref.invalidate(adminTutorielsProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

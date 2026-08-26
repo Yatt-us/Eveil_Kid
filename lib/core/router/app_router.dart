@@ -24,12 +24,15 @@ import 'package:eveilkid/core/constants/AppTextStyles.dart';
 import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/core/router/app_routes.dart';
 
+import 'package:eveilkid/features/admin/presentation/pages/admin_profile_page.dart';
 import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_catalog_page.dart';
 import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_category_detail_page.dart';
 import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_category_list_page.dart';
 import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_product_form_page.dart';
 import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_product_list_page.dart';
 import 'package:eveilkid/features/admin/presentation/pages/dashboard_page.dart';
+import 'package:eveilkid/features/admin/users/presentation/pages/admin_manager_form_page.dart';
+import 'package:eveilkid/features/admin/users/presentation/pages/admin_staff_list_page.dart';
 import 'package:eveilkid/features/admin/users/presentation/pages/admin_user_list_page.dart';
 import 'package:eveilkid/features/auth/models/utilisateur.dart';
 import 'package:eveilkid/features/auth/presentation/pages/auth_action_page.dart';
@@ -145,9 +148,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       // 3. Utilisateur Administrateur / Manager -> dirigé par défaut vers l'espace Admin
       if (isAdminOrManager) {
-        // Un Manager n'a pas accès à la gestion des utilisateurs -> redirection vers /admin
+        // Un Manager n'a pas accès à la gestion des utilisateurs / staff -> redirection vers /admin
         if (role == UserRole.manager &&
-            state.matchedLocation.startsWith(AppRoutes.adminUsers)) {
+            (state.matchedLocation.startsWith(AppRoutes.adminUsers) ||
+             state.matchedLocation.startsWith(AppRoutes.adminStaff))) {
           return AppRoutes.admin;
         }
 
@@ -291,7 +295,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          // 3. Utilisateurs
+          // 3. Parents (Clients)
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -300,12 +304,30 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          // 4. Catalogue global
+          // 4. Équipe & Staff
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.adminStaff,
+                builder: (context, state) => const AdminStaffListPage(),
+              ),
+            ],
+          ),
+          // 5. Catalogue global
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: AppRoutes.adminCatalog,
                 builder: (context, state) => const AdminCatalogPage(),
+              ),
+            ],
+          ),
+          // 5. Profil Administrateur
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.adminProfile,
+                builder: (context, state) => const AdminProfilePage(),
               ),
             ],
           ),
@@ -400,6 +422,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final cat = state.extra as Categorie?;
           return AdminCategoryDetailPage(categorieToEdit: cat);
         },
+      ),
+      GoRoute(
+        path: AppRoutes.adminManagerForm,
+        builder: (context, state) => const AdminManagerFormPage(),
       ),
 
       // ── Espace Jouets ──

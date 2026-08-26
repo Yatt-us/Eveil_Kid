@@ -37,7 +37,7 @@ class _QuestionDetailScreenState extends ConsumerState<QuestionDetailScreen> {
       appBar: AppBar(
         title: activityAsync.when(
           loading: () => const Text('Chargement...'),
-          error: (_, __) => const Text('Détail question'),
+          error: (_, _) => const Text('Détail question'),
           data: (activity) => Text(activity?.titre ?? 'Détail question'),
         ),
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -70,11 +70,10 @@ class _QuestionDetailScreenState extends ConsumerState<QuestionDetailScreen> {
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
-                 
-                  ref.refresh(
+                  ref.invalidate(
                     questionByIdProvider(
-                      (activityId: widget.activityId, questionId: widget.questionId) as ({String activiteId, String questionId})
-                    )
+                      (activiteId: widget.activityId, questionId: widget.questionId),
+                    ),
                   );
                 },
                 child: const Text('Réessayer'),
@@ -145,7 +144,7 @@ class _QuestionDetailScreenState extends ConsumerState<QuestionDetailScreen> {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withOpacity(0.20),
+                color: AppColors.primary.withValues(alpha: 0.20),
                 blurRadius: 15,
                 offset: const Offset(0, 7),
               ),
@@ -244,7 +243,7 @@ class _QuestionDetailScreenState extends ConsumerState<QuestionDetailScreen> {
               borderRadius: BorderRadius.circular(18),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
+                  color: Colors.black.withValues(alpha: 0.08),
                   blurRadius: 12,
                   offset: const Offset(0, 5),
                 ),
@@ -257,7 +256,7 @@ class _QuestionDetailScreenState extends ConsumerState<QuestionDetailScreen> {
                 height: 220,
                 width: double.infinity,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) {
+                errorBuilder: (_, _, _) {
                   return Container(
                     height: 220,
                     color: Colors.grey.shade100,
@@ -337,7 +336,7 @@ class _QuestionDetailScreenState extends ConsumerState<QuestionDetailScreen> {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.primary,
                   side: BorderSide(
-                    color: AppColors.primary.withOpacity(0.6),
+                    color: AppColors.primary.withValues(alpha: 0.6),
                   ),
                   padding: const EdgeInsets.symmetric(
                     vertical: 14,
@@ -353,10 +352,7 @@ class _QuestionDetailScreenState extends ConsumerState<QuestionDetailScreen> {
 
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: () => _confirmDelete(
-                  context,
-                  question,
-                ),
+                onPressed: () => _confirmDelete(question),
                 icon: const Icon(
                   Icons.delete_outline,
                   size: 19,
@@ -370,7 +366,7 @@ class _QuestionDetailScreenState extends ConsumerState<QuestionDetailScreen> {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.danger,
                   side: BorderSide(
-                    color: AppColors.danger.withOpacity(0.6),
+                    color: AppColors.danger.withValues(alpha: 0.6),
                   ),
                   padding: const EdgeInsets.symmetric(
                     vertical: 14,
@@ -404,7 +400,7 @@ Widget _buildInfoCard({
       ),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(0.04),
+          color: Colors.black.withValues(alpha: 0.04),
           blurRadius: 10,
           offset: const Offset(0, 4),
         ),
@@ -416,7 +412,7 @@ Widget _buildInfoCard({
           width: 42,
           height: 42,
           decoration: BoxDecoration(
-            color: iconColor.withOpacity(0.10),
+            color: iconColor.withValues(alpha: 0.10),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
@@ -470,7 +466,7 @@ Widget _buildSectionTitle({
         width: 34,
         height: 34,
         decoration: BoxDecoration(
-          color: AppColors.primary.withOpacity(0.10),
+          color: AppColors.primary.withValues(alpha: 0.10),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(
@@ -604,41 +600,39 @@ Widget _buildSectionTitle({
   );
 }
 
-  void _confirmDelete(BuildContext context, Question question) {
+  void _confirmDelete(Question question) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Supprimer la question'),
         content: Text('Supprimer : "${question.enonce}" ?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Annuler'),
           ),
           TextButton(
             onPressed: () async {
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
               try {
                 final notifier = ref.read(questionNotifierProvider.notifier);
                 await notifier.archiveQuestion(question.id!);
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Question supprimée avec succès'),
-                      backgroundColor: AppColors.childPrimary,
-                    ),
-                  );
-                  Navigator.pop(context, true);
-                }
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Question supprimée avec succès'),
+                    backgroundColor: AppColors.childPrimary,
+                  ),
+                );
+                Navigator.pop(context, true);
               } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Erreur: $e'),
-                      backgroundColor: AppColors.danger,
-                    ),
-                  );
-                }
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Erreur: $e'),
+                    backgroundColor: AppColors.danger,
+                  ),
+                );
               }
             },
             style: TextButton.styleFrom(foregroundColor: AppColors.danger),

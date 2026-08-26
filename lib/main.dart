@@ -9,11 +9,15 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // Indispensable pour ProviderScope et ConsumerWidget
+import 'package:intl/date_symbol_data_local.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Initialise les symboles de localisation pour intl (DateFormat en français)
+  await initializeDateFormatting('fr_FR', null);
 
   // Initialise Google Sign-In v7+ une seule fois avant runApp.
   await GoogleSignInService.initialize();

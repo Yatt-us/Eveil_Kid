@@ -39,6 +39,6 @@ final categoriesMapProvider = FutureProvider<Map<String, String>>((ref) {
       return map;
     },
     loading: () => <String, String>{},
-    error: (_, __) => <String, String>{},
+    error: (_, _) => <String, String>{},
   );
 });

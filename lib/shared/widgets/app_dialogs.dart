@@ -139,15 +139,18 @@ class AppDialogs {
     required BuildContext context,
     required String message,
     bool isError = false,
+    bool isWarning = false,
   }) {
     final theme = Theme.of(context);
 
+    final Color bgColor = isError
+        ? theme.colorScheme.error
+        : (isWarning ? const Color(0xFFF59E0B) : theme.colorScheme.primary);
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
-        backgroundColor: isError
-            ? theme.colorScheme.error
-            : theme.colorScheme.primary,
+        content: Text(message, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+        backgroundColor: bgColor,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),

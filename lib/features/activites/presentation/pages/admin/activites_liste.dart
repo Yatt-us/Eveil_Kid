@@ -82,7 +82,7 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen> {
 
             categoriesAsync.when(
               loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
               data: (categories) => _buildCategoryFilters(categories),
             ),
             const SizedBox(height: 10),
@@ -106,7 +106,7 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen> {
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: () {
-                          ref.refresh(adminActivitesProvider);
+                          ref.invalidate(adminActivitesProvider);
                         },
                         child: const Text('Réessayer'),
                       ),
@@ -321,7 +321,7 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen> {
                                         style: TextStyle(fontSize: 12),
                                       ),
                                       DropdownButtonFormField<int>(
-                                        value: _selectedAgeMin,
+                                        initialValue: _selectedAgeMin,
                                         decoration: const InputDecoration(
                                           border: OutlineInputBorder(),
                                           contentPadding: EdgeInsets.symmetric(horizontal: 12),
@@ -356,7 +356,7 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen> {
                                         style: TextStyle(fontSize: 12),
                                       ),
                                       DropdownButtonFormField<int>(
-                                        value: _selectedAgeMax,
+                                        initialValue: _selectedAgeMax,
                                         decoration: const InputDecoration(
                                           border: OutlineInputBorder(),
                                           contentPadding: EdgeInsets.symmetric(horizontal: 12),
@@ -781,7 +781,7 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen> {
     try {
       final repository = ref.read(activityRepositoryProvider);
       await repository.publierActivite(activity.id!);
-      ref.refresh(adminActivitesProvider);
+      ref.invalidate(adminActivitesProvider);
       if (mounted) {
         _scaffoldMessengerKey.currentState?.showSnackBar(
           const SnackBar(
@@ -806,7 +806,7 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen> {
     try {
       final repository = ref.read(activityRepositoryProvider);
       await repository.depublierActivite(activity.id!);
-      ref.refresh(adminActivitesProvider);
+      ref.invalidate(adminActivitesProvider);
       if (mounted) {
         _scaffoldMessengerKey.currentState?.showSnackBar(
           const SnackBar(

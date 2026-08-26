@@ -87,7 +87,7 @@ class _AddTutorielScreenState extends ConsumerState<AddTutorielScreen> {
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
-              value: _controller.selectedCategorieId.isNotEmpty
+              initialValue: _controller.selectedCategorieId.isNotEmpty
                   ? _controller.selectedCategorieId
                   : null,
               hint: const Text('Sélectionnez une catégorie'),

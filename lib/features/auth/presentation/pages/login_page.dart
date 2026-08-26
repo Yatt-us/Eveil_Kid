@@ -9,7 +9,6 @@ import '../../../../core/router/app_routes.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
 import '../../../../shared/widgets/app_google_button.dart';
-import '../../../../shared/widgets/app_icon_button.dart';
 import '../../../../shared/widgets/app_logo.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../models/utilisateur.dart';
@@ -154,17 +153,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // BOUTON RETOUR VERS ACCUEIL
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: AppIconButton(
-                        icon: Icons.arrow_back_rounded,
-                        size: 36,
-                        onPressed: () => context.go(AppRoutes.home),
-                      ),
-                    ),
-                    AppSpacing.verticalSm,
-
                     // LOGO BRANDING
                     const Center(child: AppLogo(size: 90)),
 
