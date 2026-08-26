@@ -19,7 +19,8 @@ class AppChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = _getChipColors();
+    final theme = Theme.of(context);
+    final colors = _getChipColors(theme);
 
     Widget chipContent = Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -58,13 +59,13 @@ class AppChip extends StatelessWidget {
     return chipContent;
   }
 
-  _ChipColors _getChipColors() {
+  _ChipColors _getChipColors(ThemeData theme) {
     switch (variant) {
       case AppChipVariant.primary:
         return _ChipColors(
-          bgColor: AppColors.primary.withValues(alpha: 0.1),
-          borderColor: AppColors.primary.withValues(alpha: 0.3),
-          textColor: AppColors.primary,
+          bgColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+          borderColor: theme.colorScheme.primary.withValues(alpha: 0.3),
+          textColor: theme.colorScheme.primary,
         );
       case AppChipVariant.success:
         return _ChipColors(
@@ -80,15 +81,16 @@ class AppChip extends StatelessWidget {
         );
       case AppChipVariant.danger:
         return _ChipColors(
-          bgColor: AppColors.danger.withValues(alpha: 0.1),
-          borderColor: AppColors.danger.withValues(alpha: 0.3),
-          textColor: AppColors.danger,
+          bgColor: theme.colorScheme.error.withValues(alpha: 0.1),
+          borderColor: theme.colorScheme.error.withValues(alpha: 0.3),
+          textColor: theme.colorScheme.error,
         );
       case AppChipVariant.neutral:
-        return const _ChipColors(
-          bgColor: AppColors.background,
-          borderColor: AppColors.border,
-          textColor: AppColors.textSecondary,
+        return _ChipColors(
+          bgColor: theme.colorScheme.surface,
+          borderColor: theme.dividerColor.withValues(alpha: 0.2),
+          textColor: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7) ??
+              theme.colorScheme.onSurfaceVariant,
         );
     }
   }

@@ -2,12 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/core/constants/AppSpacing.dart';
 import 'package:eveilkid/features/categories/models/categorie.dart';
 import 'package:eveilkid/features/categories/providers/categorie_provider.dart';
 import 'package:eveilkid/shared/widgets/app_button.dart';
-import 'package:eveilkid/shared/widgets/app_dropdown.dart';
 import 'package:eveilkid/shared/widgets/app_switch_tile.dart';
 import 'package:eveilkid/shared/widgets/app_text_field.dart';
 
@@ -30,7 +28,6 @@ class _AdminCategoryFormDialogState
   late TextEditingController _nomController;
   late TextEditingController _iconeUrlController;
   late TextEditingController _imageUrlController;
-  String? _selectedParentId;
   bool _estActive = true;
   bool _isLoading = false;
 
@@ -43,7 +40,6 @@ class _AdminCategoryFormDialogState
     _nomController = TextEditingController(text: cat?.nom ?? '');
     _iconeUrlController = TextEditingController(text: cat?.iconeUrl ?? '');
     _imageUrlController = TextEditingController(text: cat?.imageUrl ?? '');
-    _selectedParentId = cat?.parentId;
     _estActive = cat?.estActive ?? true;
   }
 
@@ -66,7 +62,6 @@ class _AdminCategoryFormDialogState
 
       final updatedCategory = Categorie(
         categorieId: id,
-        parentId: _selectedParentId,
         nom: _nomController.text.trim(),
         iconeUrl: _iconeUrlController.text.trim().isNotEmpty
             ? _iconeUrlController.text.trim()
@@ -92,7 +87,7 @@ class _AdminCategoryFormDialogState
         context.pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            backgroundColor: AppColors.success,
+            backgroundColor: const Color(0xFF10B981),
             content: Text(_isEditing
                 ? "Catégorie modifiée avec succès !"
                 : "Nouvelle catégorie créée avec succès !"),
@@ -104,7 +99,7 @@ class _AdminCategoryFormDialogState
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            backgroundColor: AppColors.danger,
+            backgroundColor: Theme.of(context).colorScheme.error,
             content: Text("Erreur : $e"),
           ),
         );
@@ -114,16 +109,11 @@ class _AdminCategoryFormDialogState
 
   @override
   Widget build(BuildContext context) {
-    final allCategories =
-        ref.watch(categoriesAdminStreamProvider).value ?? [];
-    // Filtrer pour ne pas permettre de choisir la catégorie elle-même comme parent
-    final potentialParents = allCategories
-        .where((c) =>
-            c.parentId == null &&
-            (!_isEditing || c.categorieId != widget.categorieToEdit!.categorieId))
-        .toList();
+    final theme = Theme.of(context);
+    final dividerColor = theme.dividerColor.withValues(alpha: 0.2);
 
     return Dialog(
+      backgroundColor: theme.colorScheme.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
@@ -139,7 +129,7 @@ class _AdminCategoryFormDialogState
                   children: [
                     Icon(
                       _isEditing ? Icons.edit : Icons.add_circle_outline,
-                      color: AppColors.primary,
+                      color: theme.colorScheme.primary,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -147,26 +137,30 @@ class _AdminCategoryFormDialogState
                         _isEditing
                             ? "Modifier la catégorie"
                             : "Nouvelle catégorie",
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
+                          color: theme.textTheme.titleMedium?.color ??
+                              theme.colorScheme.onSurface,
                         ),
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close, size: 20),
+                      icon: Icon(
+                        Icons.close,
+                        size: 20,
+                        color: theme.iconTheme.color?.withValues(alpha: 0.6),
+                      ),
                       onPressed: () => context.pop(),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                     ),
                   ],
                 ),
-                const Divider(height: 20, color: AppColors.border),
-                // Nom de la catégorie
+                Divider(height: 20, color: dividerColor),
                 AppTextField(
                   controller: _nomController,
-                  label: "Nom de la catégorie *",
+                  labelText: "Nom de la catégorie *",
                   hintText: "ex: Puzzles & Éveil logique",
                   prefixIcon: Icons.label_outline,
                   validator: (val) {
@@ -177,35 +171,13 @@ class _AdminCategoryFormDialogState
                   },
                 ),
                 AppSpacing.verticalMd,
-                // Catégorie parente optionnelle
-                AppDropdown<String?>(
-                  label: "Catégorie parente (Optionnelle)",
-                  hintText: "Aucune (Catégorie principale)",
-                  value: _selectedParentId,
-                  items: [
-                    const AppDropdownItem(
-                      value: null,
-                      label: "Aucune (Catégorie principale)",
-                    ),
-                    ...potentialParents.map(
-                      (cat) => AppDropdownItem(
-                        value: cat.categorieId,
-                        label: cat.nom,
-                      ),
-                    ),
-                  ],
-                  onChanged: (val) => setState(() => _selectedParentId = val),
-                ),
-                AppSpacing.verticalMd,
-                // URL de l'icône
                 AppTextField(
                   controller: _iconeUrlController,
-                  label: "URL de l'icône (Optionnel)",
+                  labelText: "URL de l'icône (Optionnel)",
                   hintText: "https://...",
                   prefixIcon: Icons.image_outlined,
                 ),
                 AppSpacing.verticalMd,
-                // Statut Actif
                 AppSwitchTile(
                   title: "Catégorie active",
                   subtitle: "Visible par les utilisateurs dans l'application",
@@ -213,7 +185,6 @@ class _AdminCategoryFormDialogState
                   onChanged: (val) => setState(() => _estActive = val),
                 ),
                 AppSpacing.verticalLg,
-                // Boutons d'action
                 Row(
                   children: [
                     Expanded(

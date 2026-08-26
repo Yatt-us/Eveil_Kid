@@ -5,10 +5,9 @@ import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/core/router/app_routes.dart';
 import 'package:eveilkid/features/admin/core/models/admin_role.dart';
 import 'package:eveilkid/features/admin/core/providers/admin_role_provider.dart';
-import 'package:eveilkid/features/admin/providers/admin_catalog_controller.dart';
-import 'package:eveilkid/features/admin/users/providers/admin_user_provider.dart';
 import 'package:eveilkid/features/auth/providers/auth_provider.dart';
 import 'package:eveilkid/shared/widgets/app_dialogs.dart';
+import 'package:eveilkid/shared/widgets/app_logo.dart';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Routes du menu d'administration
@@ -20,7 +19,10 @@ enum AdminNavRoute {
   categories,
   commandes,
   tutoriels,
+  activites,
   utilisateurs,
+  staff,
+  profile,
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -58,8 +60,6 @@ class _AdminNavItemData {
   final IconData icon;
   final IconData activeIcon;
   final String label;
-  final String? badge;
-  final bool locked;
   final VoidCallback onTap;
 
   const _AdminNavItemData({
@@ -67,8 +67,6 @@ class _AdminNavItemData {
     required this.icon,
     required this.activeIcon,
     required this.label,
-    this.badge,
-    this.locked = false,
     required this.onTap,
   });
 }
@@ -87,10 +85,14 @@ class AdminDrawer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final drawerWidth = (screenWidth * 0.82).clamp(260.0, 300.0);
+    final theme = Theme.of(context);
+
     return Drawer(
-      width: 285,
-      backgroundColor: AppColors.surface,
-      elevation: 1,
+      width: drawerWidth,
+      backgroundColor: theme.colorScheme.surface,
+      elevation: 2,
       child: _AdminNavigationContent(
         currentRoute: currentRoute,
         isCollapsed: false,
@@ -117,20 +119,27 @@ class AdminSidebar extends ConsumerWidget {
     final isTablet = AdminBreakpoints.isTablet(context);
 
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
+      duration: const Duration(milliseconds: 200),
       curve: Curves.easeInOut,
       width: isTablet ? 72 : 260,
-      child: _AdminNavigationContent(
-        currentRoute: currentRoute,
-        isCollapsed: isTablet,
-        isDrawer: false,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isCollapsed = constraints.maxWidth < 140;
+          return ClipRect(
+            child: _AdminNavigationContent(
+              currentRoute: currentRoute,
+              isCollapsed: isCollapsed,
+              isDrawer: false,
+            ),
+          );
+        },
       ),
     );
   }
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Contenu interne unifié (Fond Blanc & Design Épuré)
+// Contenu interne unifié
 // ──────────────────────────────────────────────────────────────────────────────
 
 class _AdminNavigationContent extends ConsumerWidget {
@@ -147,8 +156,8 @@ class _AdminNavigationContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final role = ref.watch(adminRoleProvider);
-    final catalogStats = ref.watch(adminCatalogStatsProvider);
-    final userStats = ref.watch(adminUserStatsProvider);
+    final theme = Theme.of(context);
+    final dividerColor = theme.dividerColor.withValues(alpha: 0.2);
 
     final operationalItems = <_AdminNavItemData>[
       _AdminNavItemData(
@@ -163,7 +172,6 @@ class _AdminNavigationContent extends ConsumerWidget {
         icon: Icons.toys_outlined,
         activeIcon: Icons.toys_rounded,
         label: 'Produits',
-        badge: '${catalogStats.totalProducts}',
         onTap: () => _navigate(context, AdminNavRoute.products),
       ),
       _AdminNavItemData(
@@ -171,7 +179,6 @@ class _AdminNavigationContent extends ConsumerWidget {
         icon: Icons.category_outlined,
         activeIcon: Icons.category_rounded,
         label: 'Catégories',
-        badge: '${catalogStats.totalCategories}',
         onTap: () => _navigate(context, AdminNavRoute.categories),
       ),
       _AdminNavItemData(
@@ -179,7 +186,6 @@ class _AdminNavigationContent extends ConsumerWidget {
         icon: Icons.shopping_bag_outlined,
         activeIcon: Icons.shopping_bag_rounded,
         label: 'Commandes',
-        badge: 'Bientôt',
         onTap: () => _showComingSoon(context, 'Commandes'),
       ),
       _AdminNavItemData(
@@ -187,34 +193,41 @@ class _AdminNavigationContent extends ConsumerWidget {
         icon: Icons.video_library_outlined,
         activeIcon: Icons.video_library_rounded,
         label: 'Tutoriels',
-        badge: 'Bientôt',
-        onTap: () => _showComingSoon(context, 'Tutoriels'),
+        onTap: () => _navigate(context, AdminNavRoute.tutoriels),
+      ),
+      _AdminNavItemData(
+        route: AdminNavRoute.activites,
+        icon: Icons.local_activity,
+        activeIcon: Icons.local_activity_outlined,
+        label: 'Activités',
+        onTap: () => _navigate(context, AdminNavRoute.activites),
       ),
     ];
 
     final adminItems = <_AdminNavItemData>[
-      _AdminNavItemData(
-        route: AdminNavRoute.utilisateurs,
-        icon: role.canManageUsers ? Icons.people_outline : Icons.lock_outline,
-        activeIcon: role.canManageUsers ? Icons.people_rounded : Icons.lock_outline,
-        label: role.canManageUsers ? 'Utilisateurs' : 'Utilisateurs (Admin)',
-        badge: role.canManageUsers ? '${userStats.totalUsers}' : null,
-        locked: !role.canManageUsers,
-        onTap: () {
-          if (!role.canManageUsers) {
-            _showAccessDenied(context);
-            return;
-          }
-          _navigate(context, AdminNavRoute.utilisateurs);
-        },
-      ),
+      if (role.canManageUsers) ...[
+        _AdminNavItemData(
+          route: AdminNavRoute.utilisateurs,
+          icon: Icons.family_restroom_outlined,
+          activeIcon: Icons.family_restroom_rounded,
+          label: 'Parents',
+          onTap: () => _navigate(context, AdminNavRoute.utilisateurs),
+        ),
+        _AdminNavItemData(
+          route: AdminNavRoute.staff,
+          icon: Icons.shield_outlined,
+          activeIcon: Icons.shield_rounded,
+          label: 'Équipe & Staff',
+          onTap: () => _navigate(context, AdminNavRoute.staff),
+        ),
+      ],
     ];
 
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
         border: Border(
-          right: BorderSide(color: AppColors.border, width: 1),
+          right: BorderSide(color: dividerColor, width: 1),
         ),
       ),
       child: SafeArea(
@@ -239,9 +252,9 @@ class _AdminNavigationContent extends ConsumerWidget {
                   if (!isCollapsed)
                     const _AdminSectionLabel(label: 'ESPACE OPÉRATIONNEL')
                   else
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 4),
-                      child: Divider(color: AppColors.border, thickness: 1),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Divider(color: dividerColor, thickness: 1),
                     ),
                   ...operationalItems.map(
                     (item) => _AdminNavTile(
@@ -250,20 +263,42 @@ class _AdminNavigationContent extends ConsumerWidget {
                       isCollapsed: isCollapsed,
                     ),
                   ),
+                  if (role.canManageUsers && adminItems.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    if (!isCollapsed)
+                      const _AdminSectionLabel(label: 'ADMINISTRATION GLOBALE')
+                    else
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Divider(color: dividerColor, thickness: 1),
+                      ),
+                    ...adminItems.map(
+                      (item) => _AdminNavTile(
+                        item: item,
+                        isSelected: currentRoute == item.route,
+                        isCollapsed: isCollapsed,
+                      ),
+                    ),
+                  ],
+
                   const SizedBox(height: 10),
                   if (!isCollapsed)
-                    const _AdminSectionLabel(label: 'ADMINISTRATION GLOBALE')
+                    const _AdminSectionLabel(label: 'MON COMPTE')
                   else
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 4),
-                      child: Divider(color: AppColors.border, thickness: 1),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Divider(color: dividerColor, thickness: 1),
                     ),
-                  ...adminItems.map(
-                    (item) => _AdminNavTile(
-                      item: item,
-                      isSelected: currentRoute == item.route,
-                      isCollapsed: isCollapsed,
+                  _AdminNavTile(
+                    item: _AdminNavItemData(
+                      route: AdminNavRoute.profile,
+                      icon: Icons.person_outline_rounded,
+                      activeIcon: Icons.person_rounded,
+                      label: 'Profil',
+                      onTap: () => _navigate(context, AdminNavRoute.profile),
                     ),
+                    isSelected: currentRoute == AdminNavRoute.profile,
+                    isCollapsed: isCollapsed,
                   ),
                 ],
               ),
@@ -273,6 +308,7 @@ class _AdminNavigationContent extends ConsumerWidget {
             _AdminNavFooter(
               role: role,
               isCollapsed: isCollapsed,
+              isDrawer: isDrawer,
             ),
           ],
         ),
@@ -297,8 +333,20 @@ class _AdminNavigationContent extends ConsumerWidget {
       case AdminNavRoute.categories:
         context.go(AppRoutes.adminCategories);
         break;
+      case AdminNavRoute.tutoriels:
+        context.go(AppRoutes.adminTutoriels);
+        break;
+      case AdminNavRoute.activites:
+        context.go(AppRoutes.adminActivites);
+        break;
       case AdminNavRoute.utilisateurs:
         context.go(AppRoutes.adminUsers);
+        break;
+      case AdminNavRoute.staff:
+        context.go(AppRoutes.adminStaff);
+        break;
+      case AdminNavRoute.profile:
+        context.go(AppRoutes.adminProfile);
         break;
       default:
         return;
@@ -307,38 +355,15 @@ class _AdminNavigationContent extends ConsumerWidget {
 
   void _showComingSoon(BuildContext context, String module) {
     if (isDrawer && context.canPop()) context.pop();
+    final theme = Theme.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.textPrimary,
+        backgroundColor: theme.colorScheme.inverseSurface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         content: Text(
           '$module — Module bientôt disponible',
-          style: const TextStyle(color: AppColors.white, fontSize: 13),
-        ),
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
-
-  void _showAccessDenied(BuildContext context) {
-    if (isDrawer && context.canPop()) context.pop();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.danger,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        content: const Row(
-          children: [
-            Icon(Icons.lock_outline, color: AppColors.white, size: 16),
-            SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                "Accès restreint : réservé au Super Administrateur.",
-                style: TextStyle(color: AppColors.white, fontSize: 13),
-              ),
-            ),
-          ],
+          style: TextStyle(color: theme.colorScheme.onInverseSurface, fontSize: 13),
         ),
         duration: const Duration(seconds: 2),
       ),
@@ -365,51 +390,53 @@ class _AdminNavHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final isAdmin = role == AdminRole.admin;
-    final roleColor = isAdmin ? AppColors.danger : AppColors.primary;
-    final roleIcon = isAdmin ? Icons.admin_panel_settings_rounded : Icons.storefront_rounded;
+    final roleColor = isAdmin ? theme.colorScheme.error : theme.colorScheme.primary;
+    final roleIcon =
+        isAdmin ? Icons.admin_panel_settings_rounded : Icons.storefront_rounded;
+    final dividerColor = theme.dividerColor.withValues(alpha: 0.2);
 
     if (isCollapsed) {
-      // Tablette (Contracté)
       return Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: AppColors.border)),
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: dividerColor)),
         ),
         child: Column(
           children: [
-            // Logo épuré
             Tooltip(
-              message: "Éveil Kid Administration",
+              message: "Éveil Kid — Administration",
               child: Container(
-                width: 38,
-                height: 38,
+                width: 42,
+                height: 42,
+                padding: const EdgeInsets.all(5),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
+                  color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.2 : 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
                 ),
-                child: const Icon(Icons.child_care_rounded, color: AppColors.primary, size: 22),
+                child: const AppLogo(size: 28, fit: BoxFit.contain),
               ),
             ),
-            const SizedBox(height: 12),
-            // Switcher rôle compact
+            const SizedBox(height: 10),
             Tooltip(
-              message: "Rôle actif : ${role.label}\nCliquez pour basculer",
-              child: InkWell(
-                onTap: () => ref.read(adminRoleProvider.notifier).toggleRole(),
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: roleColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: roleColor.withValues(alpha: 0.25),
-                      width: 1,
-                    ),
+              message: "Compte : ${role.label}",
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: roleColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: roleColor.withValues(alpha: 0.3),
+                    width: 1,
                   ),
-                  child: Icon(roleIcon, size: 16, color: roleColor),
                 ),
+                child: Icon(roleIcon, size: 16, color: roleColor),
               ),
             ),
           ],
@@ -417,46 +444,59 @@ class _AdminNavHeader extends StatelessWidget {
       );
     }
 
-    // Desktop & Mobile Drawer (Ouvert)
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.border)),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: dividerColor)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
               Container(
-                width: 38,
-                height: 38,
+                width: 42,
+                height: 42,
+                padding: const EdgeInsets.all(5),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
+                  color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.2 : 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
                 ),
-                child: const Icon(Icons.child_care_rounded, color: AppColors.primary, size: 22),
+                child: const AppLogo(size: 28, fit: BoxFit.contain),
               ),
               const SizedBox(width: 10),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       'Éveil Kid',
                       style: TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                        letterSpacing: -0.2,
+                        fontWeight: FontWeight.w800,
+                        color: theme.textTheme.titleMedium?.color ??
+                            theme.colorScheme.onSurface,
+                        letterSpacing: -0.3,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     Text(
                       'Administration',
                       style: TextStyle(
                         fontSize: 11,
-                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w500,
+                        color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+                            AppColors.textSecondary,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -466,20 +506,25 @@ class _AdminNavHeader extends StatelessWidget {
                   onPressed: () {
                     if (context.canPop()) context.pop();
                   },
-                  icon: const Icon(Icons.close_rounded, size: 20, color: AppColors.icon),
+                  icon: Icon(
+                    Icons.close_rounded,
+                    size: 20,
+                    color: theme.iconTheme.color?.withValues(alpha: 0.6) ??
+                        AppColors.icon,
+                  ),
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                  constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
+                  tooltip: 'Fermer',
                 ),
             ],
           ),
-          const SizedBox(height: 12),
-          // Badge Rôle & Switcher épuré
+          const SizedBox(height: 10),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: AppColors.background,
+              color: roleColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: roleColor.withValues(alpha: 0.25)),
             ),
             child: Row(
               children: [
@@ -493,37 +538,8 @@ class _AdminNavHeader extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                       color: roleColor,
                     ),
-                  ),
-                ),
-                InkWell(
-                  onTap: () => ref.read(adminRoleProvider.notifier).toggleRole(),
-                  borderRadius: BorderRadius.circular(6),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.swap_horiz_rounded,
-                          size: 13,
-                          color: AppColors.textSecondary,
-                        ),
-                        SizedBox(width: 3),
-                        Text(
-                          'Changer',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
@@ -546,14 +562,17 @@ class _AdminSectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 12, 10, 6),
       child: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 9.5,
           fontWeight: FontWeight.w700,
-          color: AppColors.textSecondary,
+          color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6) ??
+              AppColors.textSecondary,
           letterSpacing: 0.8,
         ),
       ),
@@ -562,7 +581,7 @@ class _AdminSectionLabel extends StatelessWidget {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Tuile de Navigation Épurée
+// Tuile de Navigation
 // ──────────────────────────────────────────────────────────────────────────────
 
 class _AdminNavTile extends StatefulWidget {
@@ -607,8 +626,9 @@ class _AdminNavTileState extends State<_AdminNavTile> with SingleTickerProviderS
   Widget build(BuildContext context) {
     final item = widget.item;
     final selected = widget.isSelected;
-    final locked = item.locked;
     final isCollapsed = widget.isCollapsed;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     Widget content = Padding(
       padding: const EdgeInsets.only(bottom: 2),
@@ -632,21 +652,23 @@ class _AdminNavTileState extends State<_AdminNavTile> with SingleTickerProviderS
                   : const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
               decoration: BoxDecoration(
                 color: selected
-                    ? AppColors.primary.withValues(alpha: 0.08)
+                    ? theme.colorScheme.primary.withValues(alpha: isDark ? 0.2 : 0.1)
                     : _hovered
-                        ? AppColors.background
+                        ? (isDark
+                            ? theme.colorScheme.surfaceContainerHighest
+                            : AppColors.background)
                         : Colors.transparent,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: selected
-                      ? AppColors.primary.withValues(alpha: 0.15)
+                      ? theme.colorScheme.primary.withValues(alpha: 0.3)
                       : Colors.transparent,
                   width: 1,
                 ),
               ),
               child: isCollapsed
-                  ? _buildCollapsedContent(item, selected, locked)
-                  : _buildExpandedContent(item, selected, locked),
+                  ? _buildCollapsedContent(context, item, selected)
+                  : _buildExpandedContent(context, item, selected),
             ),
           ),
         ),
@@ -655,9 +677,7 @@ class _AdminNavTileState extends State<_AdminNavTile> with SingleTickerProviderS
 
     if (isCollapsed) {
       return Tooltip(
-        message: item.badge != null && !locked
-            ? "${item.label} (${item.badge})"
-            : item.label,
+        message: item.label,
         waitDuration: const Duration(milliseconds: 200),
         child: content,
       );
@@ -666,65 +686,31 @@ class _AdminNavTileState extends State<_AdminNavTile> with SingleTickerProviderS
     return content;
   }
 
-  Widget _buildCollapsedContent(_AdminNavItemData item, bool selected, bool locked) {
+  Widget _buildCollapsedContent(BuildContext context, _AdminNavItemData item, bool selected) {
+    final theme = Theme.of(context);
+
     return Center(
-      child: Stack(
-        clipBehavior: Clip.none,
-        alignment: Alignment.center,
-        children: [
-          Opacity(
-            opacity: locked ? 0.4 : 1.0,
-            child: Icon(
-              selected ? item.activeIcon : item.icon,
-              size: 20,
-              color: selected ? AppColors.primary : AppColors.icon,
-            ),
-          ),
-          if (item.badge != null && !locked)
-            Positioned(
-              top: -4,
-              right: -8,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                decoration: BoxDecoration(
-                  color: selected ? AppColors.primary : AppColors.surfaceVariant,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  item.badge!,
-                  style: TextStyle(
-                    fontSize: 8.5,
-                    fontWeight: FontWeight.w700,
-                    color: selected ? AppColors.white : AppColors.textSecondary,
-                  ),
-                ),
-              ),
-            ),
-          if (locked)
-            const Positioned(
-              bottom: -4,
-              right: -6,
-              child: Icon(
-                Icons.lock_rounded,
-                size: 11,
-                color: AppColors.disabled,
-              ),
-            ),
-        ],
+      child: Icon(
+        selected ? item.activeIcon : item.icon,
+        size: 20,
+        color: selected
+            ? theme.colorScheme.primary
+            : (theme.iconTheme.color?.withValues(alpha: 0.6) ?? AppColors.icon),
       ),
     );
   }
 
-  Widget _buildExpandedContent(_AdminNavItemData item, bool selected, bool locked) {
+  Widget _buildExpandedContent(BuildContext context, _AdminNavItemData item, bool selected) {
+    final theme = Theme.of(context);
+
     return Row(
       children: [
-        // Indicateur actif à gauche
         AnimatedContainer(
           duration: const Duration(milliseconds: 160),
           width: 3,
           height: selected ? 16 : 0,
           decoration: BoxDecoration(
-            color: AppColors.primary,
+            color: theme.colorScheme.primary,
             borderRadius: BorderRadius.circular(2),
           ),
         ),
@@ -732,102 +718,45 @@ class _AdminNavTileState extends State<_AdminNavTile> with SingleTickerProviderS
           duration: const Duration(milliseconds: 160),
           width: selected ? 8 : 0,
         ),
-
-        // Icône
-        Opacity(
-          opacity: locked ? 0.4 : 1.0,
-          child: Icon(
-            selected ? item.activeIcon : item.icon,
-            size: 19,
-            color: selected ? AppColors.primary : AppColors.icon,
-          ),
+        Icon(
+          selected ? item.activeIcon : item.icon,
+          size: 19,
+          color: selected
+              ? theme.colorScheme.primary
+              : (theme.iconTheme.color?.withValues(alpha: 0.6) ?? AppColors.icon),
         ),
         const SizedBox(width: 10),
-
-        // Label
         Expanded(
-          child: Opacity(
-            opacity: locked ? 0.4 : 1.0,
-            child: Text(
-              item.label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                color: selected ? AppColors.primary : AppColors.textPrimary,
-              ),
+          child: Text(
+            item.label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+              color: selected
+                  ? theme.colorScheme.primary
+                  : (theme.textTheme.bodyMedium?.color ??
+                      theme.colorScheme.onSurface),
             ),
           ),
         ),
-
-        // Badge épuré
-        if (item.badge != null && !locked) ...[
-          const SizedBox(width: 6),
-          _AdminBadge(
-            label: item.badge!,
-            isSelected: selected,
-          ),
-        ],
-
-        // Cadenas
-        if (locked) ...[
-          const SizedBox(width: 6),
-          const Icon(
-            Icons.lock_rounded,
-            size: 13,
-            color: AppColors.disabled,
-          ),
-        ],
       ],
     );
   }
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Badge Compteur Épuré
-// ──────────────────────────────────────────────────────────────────────────────
-
-class _AdminBadge extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-
-  const _AdminBadge({
-    required this.label,
-    required this.isSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? AppColors.primary.withValues(alpha: 0.12)
-            : AppColors.surfaceVariant,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          color: isSelected ? AppColors.primary : AppColors.textSecondary,
-        ),
-      ),
-    );
-  }
-}
-
-// ──────────────────────────────────────────────────────────────────────────────
-// Footer Épuré
+// Footer
 // ──────────────────────────────────────────────────────────────────────────────
 
 class _AdminNavFooter extends ConsumerWidget {
   final AdminRole role;
   final bool isCollapsed;
+  final bool isDrawer;
 
   const _AdminNavFooter({
     required this.role,
     required this.isCollapsed,
+    this.isDrawer = false,
   });
 
   Future<void> _logout(BuildContext context, WidgetRef ref) async {
@@ -848,8 +777,11 @@ class _AdminNavFooter extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authUser = ref.watch(authProvider).utilisateur;
+    final theme = Theme.of(context);
     final isAdmin = role == AdminRole.admin;
-    final roleColor = isAdmin ? AppColors.danger : AppColors.primary;
+    final roleColor = isAdmin ? theme.colorScheme.error : theme.colorScheme.primary;
+    final dividerColor = theme.dividerColor.withValues(alpha: 0.2);
+
     final name = authUser?.nom.isNotEmpty == true
         ? authUser!.nom
         : (isAdmin ? 'Super Administrateur' : 'Manager Opérationnel');
@@ -858,23 +790,25 @@ class _AdminNavFooter extends ConsumerWidget {
         : (isAdmin ? 'Accès complet' : 'Catalogue & Commandes');
 
     if (isCollapsed) {
-      // Tablette (Contracté)
       return Container(
         padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: AppColors.border)),
+        decoration: BoxDecoration(
+          border: Border(top: BorderSide(color: dividerColor)),
         ),
         child: Tooltip(
-          message: "$name\n$sub\n(Cliquer pour déconnecter)",
+          message: "$name\n$sub\n(Cliquer pour voir le profil)",
           child: InkWell(
-            onTap: () => _logout(context, ref),
+            onTap: () {
+              if (isDrawer && context.canPop()) context.pop();
+              context.go(AppRoutes.adminProfile);
+            },
             borderRadius: BorderRadius.circular(20),
             child: Center(
               child: Container(
                 width: 34,
                 height: 34,
                 decoration: BoxDecoration(
-                  color: roleColor.withValues(alpha: 0.1),
+                  color: roleColor.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: roleColor.withValues(alpha: 0.25),
@@ -891,62 +825,81 @@ class _AdminNavFooter extends ConsumerWidget {
       );
     }
 
-    // Desktop & Mobile Drawer (Ouvert)
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.border)),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: dividerColor)),
       ),
       child: Row(
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: roleColor.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: roleColor.withValues(alpha: 0.2),
-                width: 1,
-              ),
-            ),
-            child: Center(
-              child: Icon(Icons.person_rounded, size: 18, color: roleColor),
-            ),
-          ),
-          const SizedBox(width: 10),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+            child: InkWell(
+              onTap: () {
+                if (isDrawer && context.canPop()) context.pop();
+                context.go(AppRoutes.adminProfile);
+              },
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: roleColor.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: roleColor.withValues(alpha: 0.25),
+                          width: 1,
+                        ),
+                      ),
+                      child: Center(
+                        child: Icon(Icons.person_rounded, size: 18, color: roleColor),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            name,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: theme.textTheme.bodyMedium?.color ??
+                                  theme.colorScheme.onSurface,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 1),
+                          Text(
+                            'Profil • $sub',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.primary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  sub,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: AppColors.textSecondary,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+              ),
             ),
           ),
           IconButton(
             tooltip: 'Déconnexion',
-            icon: const Icon(
+            icon: Icon(
               Icons.logout_rounded,
               size: 18,
-              color: AppColors.danger,
+              color: theme.colorScheme.error,
             ),
             onPressed: () => _logout(context, ref),
           ),
@@ -957,7 +910,65 @@ class _AdminNavFooter extends ConsumerWidget {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// AdminScaffold — Wrapper Responsive Global
+// AdminShellScaffold — Wrapper Persistant StatefulShellRoute
+// ──────────────────────────────────────────────────────────────────────────────
+
+class AdminShellScaffold extends StatelessWidget {
+  final StatefulNavigationShell navigationShell;
+
+  const AdminShellScaffold({
+    super.key,
+    required this.navigationShell,
+  });
+
+  AdminNavRoute _getCurrentRoute(BuildContext context) {
+    final location = GoRouterState.of(context).matchedLocation;
+    if (location.startsWith(AppRoutes.adminProfile)) {
+      return AdminNavRoute.profile;
+    } else if (location.startsWith(AppRoutes.adminProducts)) {
+      return AdminNavRoute.products;
+    } else if (location.startsWith(AppRoutes.adminCategories)) {
+      return AdminNavRoute.categories;
+    } else if (location.startsWith(AppRoutes.adminActivites)) {
+      return AdminNavRoute.activites;
+    } else if (location.startsWith(AppRoutes.adminTutoriels)) {
+      return AdminNavRoute.tutoriels;
+    } else if (location.startsWith(AppRoutes.adminUsers)) {
+      return AdminNavRoute.utilisateurs;
+    } else if (location.startsWith(AppRoutes.adminStaff)) {
+      return AdminNavRoute.staff;
+    } else if (location.startsWith(AppRoutes.adminCatalog)) {
+      return AdminNavRoute.products;
+    }
+    return AdminNavRoute.dashboard;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isMobile = AdminBreakpoints.isMobile(context);
+    final currentRoute = _getCurrentRoute(context);
+    final theme = Theme.of(context);
+
+    if (isMobile) {
+      return navigationShell;
+    }
+
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      body: Row(
+        children: [
+          AdminSidebar(currentRoute: currentRoute),
+          Expanded(
+            child: navigationShell,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// AdminScaffold — Wrapper Responsive Global pour les pages
 // ──────────────────────────────────────────────────────────────────────────────
 
 class AdminScaffold extends StatelessWidget {
@@ -981,11 +992,11 @@ class AdminScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isMobile = AdminBreakpoints.isMobile(context);
+    final theme = Theme.of(context);
 
     if (isMobile) {
-      // Mobile : Drawer classique
       return Scaffold(
-        backgroundColor: backgroundColor ?? AppColors.background,
+        backgroundColor: backgroundColor ?? theme.scaffoldBackgroundColor,
         appBar: appBar,
         drawer: AdminDrawer(currentRoute: currentRoute),
         floatingActionButton: floatingActionButton,
@@ -994,34 +1005,27 @@ class AdminScaffold extends StatelessWidget {
       );
     }
 
-    // Tablette & Desktop : Sidebar persistant (contracté 72px ou ouvert 260px)
     return Scaffold(
-      backgroundColor: backgroundColor ?? AppColors.background,
+      backgroundColor: backgroundColor ?? Colors.transparent,
+      appBar: appBar != null ? _sanitizeDesktopAppBar(context, appBar!) : null,
       floatingActionButton: floatingActionButton,
       floatingActionButtonLocation: floatingActionButtonLocation,
-      body: Row(
-        children: [
-          AdminSidebar(currentRoute: currentRoute),
-          Expanded(
-            child: Scaffold(
-              backgroundColor: Colors.transparent,
-              appBar: appBar != null ? _sanitizeDesktopAppBar(appBar!) : null,
-              body: body,
-            ),
-          ),
-        ],
-      ),
+      body: body,
     );
   }
 
-  /// Retire le bouton hamburger d'ouverture de drawer quand la sidebar est déjà affichée
-  PreferredSizeWidget _sanitizeDesktopAppBar(PreferredSizeWidget originalAppBar) {
+  PreferredSizeWidget _sanitizeDesktopAppBar(
+    BuildContext context,
+    PreferredSizeWidget originalAppBar,
+  ) {
+    final theme = Theme.of(context);
+
     if (originalAppBar is AppBar) {
       return AppBar(
         title: originalAppBar.title,
         actions: originalAppBar.actions,
         bottom: originalAppBar.bottom,
-        backgroundColor: originalAppBar.backgroundColor ?? AppColors.surface,
+        backgroundColor: originalAppBar.backgroundColor ?? theme.colorScheme.surface,
         elevation: originalAppBar.elevation ?? 0,
         automaticallyImplyLeading: false,
         leading: null,

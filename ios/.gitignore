@@ -35,3 +35,4 @@ Runner/GeneratedPluginRegistrant.*
 
 Podfile
 Podfile.lock
+Runner.xcscheme

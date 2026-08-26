@@ -2,23 +2,57 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:eveilkid/core/constants/app_colors.dart';
-import 'package:eveilkid/core/constants/AppSpacing.dart';
 import 'package:eveilkid/core/router/app_routes.dart';
 import 'package:eveilkid/features/admin/presentation/widgets/admin_drawer.dart';
 import 'package:eveilkid/features/admin/presentation/widgets/admin_product_card.dart';
 import 'package:eveilkid/features/admin/providers/admin_catalog_controller.dart';
 import 'package:eveilkid/features/categories/models/categorie.dart';
 import 'package:eveilkid/features/categories/providers/categorie_provider.dart';
+import 'package:eveilkid/features/jouets/models/jouet.dart';
 import 'package:eveilkid/features/jouets/providers/jouet_provider.dart';
-import 'package:eveilkid/shared/widgets/app_chip.dart';
 import 'package:eveilkid/shared/widgets/app_search_bar.dart';
 import 'package:eveilkid/shared/widgets/app_states.dart';
 
-class AdminProductListPage extends ConsumerWidget {
+/// Page d'administration du catalogue de produits avec recherche, onglets et filtres.
+class AdminProductListPage extends ConsumerStatefulWidget {
   const AdminProductListPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AdminProductListPage> createState() =>
+      _AdminProductListPageState();
+}
+
+class _AdminProductListPageState extends ConsumerState<AdminProductListPage>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(_onTabChanged);
+  }
+
+  @override
+  void dispose() {
+    _tabController.removeListener(_onTabChanged);
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  void _onTabChanged() {
+    if (_tabController.indexIsChanging) return;
+    setState(() {});
+    final notifier = ref.read(adminProductFilterProvider.notifier);
+    if (_tabController.index == 0) {
+      notifier.setActiveFilter(AdminActiveFilter.activeOnly);
+    } else {
+      notifier.setActiveFilter(AdminActiveFilter.inactiveOnly);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final filteredProductsAsync = ref.watch(adminFilteredProductsProvider);
     final filterState = ref.watch(adminProductFilterProvider);
     final filterNotifier = ref.read(adminProductFilterProvider.notifier);
@@ -26,68 +60,141 @@ class AdminProductListPage extends ConsumerWidget {
     final List<Categorie> categories = categoriesAsync.value ?? [];
     final stats = ref.watch(adminCatalogStatsProvider);
 
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final dividerColor = theme.dividerColor.withValues(alpha: 0.2);
+    final titleColor = theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface;
+    final textSecondary = theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+        (isDark ? Colors.white70 : AppColors.textSecondary);
+
+    final int inactiveCount = stats.totalProducts - stats.activeProducts;
+
     return AdminScaffold(
       currentRoute: AdminNavRoute.products,
       appBar: AppBar(
-        title: const Text(
-          "Gestion des Produits",
+        title: Text(
+          "Catalogue Produits",
           style: TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.bold,
+            color: titleColor,
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+            letterSpacing: -0.3,
           ),
         ),
-        backgroundColor: AppColors.surface,
+        backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         leading: Builder(
           builder: (context) => IconButton(
-            icon: const Icon(Icons.menu, color: AppColors.textPrimary),
+            icon: Icon(
+              Icons.menu_rounded,
+              color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
+            ),
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: AppColors.textPrimary),
-            tooltip: "Actualiser",
-            onPressed: () {
-              ref.invalidate(jouetsAdminStreamProvider);
-              ref.invalidate(categoriesAdminStreamProvider);
-            },
-          ),
-        ],
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
+          preferredSize: const Size.fromHeight(46),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            decoration: const BoxDecoration(
-              color: AppColors.surface,
-              border: Border(bottom: BorderSide(color: AppColors.border)),
+            margin: const EdgeInsets.fromLTRB(14, 0, 14, 6),
+            padding: const EdgeInsets.all(3),
+            height: 38,
+            decoration: BoxDecoration(
+              color: isDark
+                  ? theme.colorScheme.surfaceContainerHighest
+                  : AppColors.surfaceVariant.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: dividerColor,
+                width: 1,
+              ),
             ),
-            child: Row(
-              children: [
-                _buildKpiBadge(
-                  label: "Total",
-                  value: "${stats.totalProducts}",
-                  color: AppColors.primary,
+            child: TabBar(
+              controller: _tabController,
+              indicatorSize: TabBarIndicatorSize.tab,
+              dividerColor: Colors.transparent,
+              indicator: BoxDecoration(
+                color: theme.colorScheme.surface,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: dividerColor,
+                  width: 0.8,
                 ),
-                const SizedBox(width: 8),
-                _buildKpiBadge(
-                  label: "Actifs",
-                  value: "${stats.activeProducts}",
-                  color: AppColors.success,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                    blurRadius: 3,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+              labelColor: theme.colorScheme.primary,
+              unselectedLabelColor: textSecondary,
+              labelStyle: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+              splashFactory: NoSplash.splashFactory,
+              overlayColor: WidgetStateProperty.all(Colors.transparent),
+              tabs: [
+                Tab(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text("Actifs"),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: _tabController.index == 0
+                              ? theme.colorScheme.primary.withValues(alpha: isDark ? 0.25 : 0.12)
+                              : (isDark ? theme.colorScheme.surface : AppColors.surfaceVariant),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          "${stats.activeProducts}",
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: _tabController.index == 0
+                                ? theme.colorScheme.primary
+                                : textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(width: 8),
-                _buildKpiBadge(
-                  label: "Rupture",
-                  value: "${stats.outOfStockProducts}",
-                  color: stats.outOfStockProducts > 0
-                      ? AppColors.danger
-                      : AppColors.textSecondary,
-                ),
-                const SizedBox(width: 8),
-                _buildKpiBadge(
-                  label: "Populaires",
-                  value: "${stats.popularProducts}",
-                  color: AppColors.accent,
+                Tab(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text("Inactifs"),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: _tabController.index == 1
+                              ? theme.colorScheme.primary.withValues(alpha: isDark ? 0.25 : 0.12)
+                              : (isDark ? theme.colorScheme.surface : AppColors.surfaceVariant),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          "$inactiveCount",
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: _tabController.index == 1
+                                ? theme.colorScheme.primary
+                                : textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -96,106 +203,61 @@ class AdminProductListPage extends ConsumerWidget {
       ),
       body: Column(
         children: [
-          // Barre de recherche
+          // Barre de Recherche + Bouton Filtres
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            child: AppSearchBar(
-              hintText: "Rechercher un produit (nom, description)...",
-              onChanged: (query) => filterNotifier.setSearchQuery(query),
-            ),
-          ),
-
-          // Filtres par Chips horizontaux
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
             child: Row(
               children: [
-                // Filtre Tous
-                AppChip(
-                  label: "Tous",
-                  variant: !filterState.hasActiveFilters
-                      ? AppChipVariant.primary
-                      : AppChipVariant.neutral,
-                  onTap: () => filterNotifier.resetFilters(),
+                Expanded(
+                  child: AppSearchBar(
+                    hintText: "Rechercher par nom, catégorie...",
+                    onChanged: (query) => filterNotifier.setSearchQuery(query),
+                  ),
                 ),
                 const SizedBox(width: 8),
-
-                // Filtre Populaires ⭐
-                AppChip(
-                  label: "⭐ Populaires",
-                  variant: filterState.popularOnly
-                      ? AppChipVariant.warning
-                      : AppChipVariant.neutral,
-                  onTap: () =>
-                      filterNotifier.setPopularOnly(!filterState.popularOnly),
-                ),
-                const SizedBox(width: 8),
-
-                // Filtre Ruptures
-                AppChip(
-                  label: "Rupture de stock",
-                  variant: filterState.stockFilter == AdminStockFilter.outOfStock
-                      ? AppChipVariant.danger
-                      : AppChipVariant.neutral,
-                  onTap: () {
-                    filterNotifier.setStockFilter(
-                      filterState.stockFilter == AdminStockFilter.outOfStock
-                          ? AdminStockFilter.all
-                          : AdminStockFilter.outOfStock,
-                    );
-                  },
-                ),
-                const SizedBox(width: 8),
-
-                // Filtre Stock Bas
-                AppChip(
-                  label: "Stock faible (≤ 5)",
-                  variant: filterState.stockFilter == AdminStockFilter.lowStock
-                      ? AppChipVariant.warning
-                      : AppChipVariant.neutral,
-                  onTap: () {
-                    filterNotifier.setStockFilter(
-                      filterState.stockFilter == AdminStockFilter.lowStock
-                          ? AdminStockFilter.all
-                          : AdminStockFilter.lowStock,
-                    );
-                  },
-                ),
-                const SizedBox(width: 8),
-
-                // Filtre Inactifs
-                AppChip(
-                  label: "Inactifs",
-                  variant: filterState.activeFilter == AdminActiveFilter.inactiveOnly
-                      ? AppChipVariant.primary
-                      : AppChipVariant.neutral,
-                  onTap: () {
-                    filterNotifier.setActiveFilter(
-                      filterState.activeFilter == AdminActiveFilter.inactiveOnly
-                          ? AdminActiveFilter.all
-                          : AdminActiveFilter.inactiveOnly,
-                    );
-                  },
-                ),
-                const SizedBox(width: 8),
-
-                // Filtres par catégorie
-                ...categories.map(
-                  (cat) => Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: AppChip(
-                      label: cat.nom,
-                      variant: filterState.selectedCategoryId == cat.categorieId
-                          ? AppChipVariant.primary
-                          : AppChipVariant.neutral,
-                      onTap: () {
-                        filterNotifier.setCategory(
-                          filterState.selectedCategoryId == cat.categorieId
-                              ? null
-                              : cat.categorieId,
-                        );
-                      },
+                InkWell(
+                  onTap: () => _showFilterBottomSheet(context, ref, categories, stats),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    height: 42,
+                    width: 42,
+                    decoration: BoxDecoration(
+                      color: filterState.hasActiveFilters
+                          ? theme.colorScheme.primary.withValues(alpha: isDark ? 0.2 : 0.1)
+                          : theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: filterState.hasActiveFilters
+                            ? theme.colorScheme.primary
+                            : dividerColor,
+                        width: filterState.hasActiveFilters ? 1.2 : 1.0,
+                      ),
+                    ),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Icon(
+                          Icons.tune_rounded,
+                          size: 19,
+                          color: filterState.hasActiveFilters
+                              ? theme.colorScheme.primary
+                              : (theme.iconTheme.color?.withValues(alpha: 0.7) ??
+                                  AppColors.icon),
+                        ),
+                        if (filterState.hasActiveFilters)
+                          Positioned(
+                            top: 9,
+                            right: 9,
+                            child: Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ),
@@ -203,13 +265,60 @@ class AdminProductListPage extends ConsumerWidget {
             ),
           ),
 
-          AppSpacing.verticalSm,
+          // Ligne d'information discrète et compacte
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 3),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                filteredProductsAsync.maybeWhen(
+                  data: (list) => Text(
+                    "${list.length} ${list.length <= 1 ? 'produit' : 'produits'}${_tabController.index == 1 ? ' inactifs' : ''}",
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: textSecondary,
+                    ),
+                  ),
+                  orElse: () => const SizedBox.shrink(),
+                ),
+                if (filterState.hasActiveFilters)
+                  InkWell(
+                    onTap: () => filterNotifier.resetFilters(),
+                    borderRadius: BorderRadius.circular(4),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.close_rounded, size: 13, color: theme.colorScheme.primary),
+                          const SizedBox(width: 2),
+                          Text(
+                            "Effacer filtres",
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 2),
 
           // Liste des produits
           Expanded(
             child: filteredProductsAsync.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(),
+              loading: () => Center(
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+                ),
               ),
               error: (err, stack) => AppErrorState(
                 title: "Erreur de chargement",
@@ -218,38 +327,88 @@ class AdminProductListPage extends ConsumerWidget {
               ),
               data: (products) {
                 if (products.isEmpty) {
-                  return AppEmptyState(
-                    icon: Icons.search_off,
-                    title: filterState.hasActiveFilters
-                        ? "Aucun résultat trouvé"
-                        : "Catalogue vide",
-                    description: filterState.hasActiveFilters
-                        ? "Aucun produit ne correspond à vos critères de recherche."
-                        : "Vous n'avez pas encore ajouté de produit.",
-                    actionText: filterState.hasActiveFilters
-                        ? "Réinitialiser les filtres"
-                        : "Ajouter un produit",
-                    onActionPressed: filterState.hasActiveFilters
-                        ? () => filterNotifier.resetFilters()
-                        : () => context.push(AppRoutes.adminProductForm),
+                  return LayoutBuilder(
+                    builder: (context, constraints) {
+                      return RefreshIndicator(
+                        color: theme.colorScheme.primary,
+                        onRefresh: () async {
+                          ref.invalidate(jouetsAdminStreamProvider);
+                        },
+                        child: SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: constraints.maxHeight,
+                            ),
+                            child: AppEmptyState(
+                              icon: _tabController.index == 1
+                                  ? Icons.inventory_2_outlined
+                                  : Icons.search_off_rounded,
+                              title: _tabController.index == 1
+                                  ? "Aucun produit inactif"
+                                  : (filterState.hasActiveFilters
+                                      ? "Aucun produit correspondant"
+                                      : "Catalogue vide"),
+                              description: _tabController.index == 1
+                                  ? "Tous vos produits sont actuellement actifs et visibles."
+                                  : (filterState.hasActiveFilters
+                                      ? "Modifiez vos filtres pour voir plus de résultats."
+                                      : "Commencez par ajouter un produit."),
+                              actionText: _tabController.index == 1
+                                  ? null
+                                  : (filterState.hasActiveFilters
+                                      ? "Réinitialiser les filtres"
+                                      : "Ajouter un produit"),
+                              onActionPressed: filterState.hasActiveFilters
+                                  ? () => filterNotifier.resetFilters()
+                                  : () => context.push(AppRoutes.adminProductForm),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   );
                 }
 
                 return RefreshIndicator(
+                  color: theme.colorScheme.primary,
                   onRefresh: () async {
                     ref.invalidate(jouetsAdminStreamProvider);
                   },
-                  child: ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
-                    itemCount: products.length,
-                    itemBuilder: (context, index) {
-                      final jouet = products[index];
-                      return AdminProductCard(
-                        jouet: jouet,
-                        onEdit: () => context.push(
-                          AppRoutes.adminProductForm,
-                          extra: jouet,
-                        ),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isTabletOrDesktop = constraints.maxWidth >= 720;
+
+                      if (isTabletOrDesktop) {
+                        return GridView.builder(
+                          padding: const EdgeInsets.fromLTRB(14, 6, 14, 90),
+                          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 620,
+                            crossAxisSpacing: 10,
+                            mainAxisSpacing: 10,
+                            mainAxisExtent: 150,
+                          ),
+                          itemCount: products.length,
+                          itemBuilder: (context, index) {
+                            final jouet = products[index];
+                            return AdminProductCard(
+                              jouet: jouet,
+                              onEdit: () => _navigateToEdit(context, jouet),
+                            );
+                          },
+                        );
+                      }
+
+                      return ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(12, 4, 12, 90),
+                        itemCount: products.length,
+                        itemBuilder: (context, index) {
+                          final jouet = products[index];
+                          return AdminProductCard(
+                            jouet: jouet,
+                            onEdit: () => _navigateToEdit(context, jouet),
+                          );
+                        },
                       );
                     },
                   ),
@@ -260,49 +419,373 @@ class AdminProductListPage extends ConsumerWidget {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.white,
-        icon: const Icon(Icons.add),
-        label: const Text("Nouveau Produit"),
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
+        elevation: 3,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        icon: const Icon(Icons.add_rounded, size: 20),
+        label: const Text(
+          "Nouveau Produit",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+        ),
         onPressed: () => context.push(AppRoutes.adminProductForm),
       ),
     );
   }
 
-  Widget _buildKpiBadge({
-    required String label,
-    required String value,
-    required Color color,
-  }) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              "$label: ",
-              style: TextStyle(
-                fontSize: 11,
-                color: color.withValues(alpha: 0.85),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-          ],
-        ),
+  void _navigateToEdit(BuildContext context, Jouet jouet) {
+    context.push(
+      AppRoutes.adminProductForm,
+      extra: jouet,
+    );
+  }
+
+  /// Tiroir Bottom Sheet de filtres propre, adaptatif au thème clair et sombre
+  void _showFilterBottomSheet(
+    BuildContext context,
+    WidgetRef ref,
+    List<Categorie> categories,
+    dynamic stats,
+  ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final dividerColor = theme.dividerColor.withValues(alpha: 0.2);
+    final titleColor = theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: theme.colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
+      builder: (ctx) {
+        return Consumer(
+          builder: (context, ref, _) {
+            final filterState = ref.watch(adminProductFilterProvider);
+            final filterNotifier = ref.read(adminProductFilterProvider.notifier);
+
+            return SafeArea(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.85,
+                ),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(18, 12, 18, 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 38,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: dividerColor,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Filtres du catalogue",
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                              color: titleColor,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                          if (filterState.hasActiveFilters)
+                            TextButton(
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.zero,
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              onPressed: () => filterNotifier.resetFilters(),
+                              child: Text(
+                                "Réinitialiser",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      Divider(height: 20, color: dividerColor),
+
+                      // 1. Popularité
+                      Text(
+                        "Popularité & Mise en avant",
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: titleColor,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        children: [
+                          ChoiceChip(
+                            label: const Text("⭐ Produits Populaires"),
+                            selected: filterState.popularOnly,
+                            selectedColor: const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.25 : 0.15),
+                            labelStyle: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: filterState.popularOnly
+                                  ? FontWeight.bold
+                                  : FontWeight.w500,
+                              color: filterState.popularOnly
+                                  ? const Color(0xFFD97706)
+                                  : titleColor,
+                            ),
+                            backgroundColor: theme.colorScheme.surface,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              side: BorderSide(
+                                color: filterState.popularOnly
+                                    ? const Color(0xFFF59E0B)
+                                    : dividerColor,
+                                width: filterState.popularOnly ? 1.2 : 1.0,
+                              ),
+                            ),
+                            onSelected: (val) {
+                              filterNotifier.setPopularOnly(val);
+                            },
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 18),
+
+                      // 2. Disponibilité Stock
+                      Text(
+                        "Disponibilité Stock",
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: titleColor,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          ChoiceChip(
+                            label: const Text("Tous les stocks"),
+                            selected: filterState.stockFilter == AdminStockFilter.all,
+                            selectedColor: theme.colorScheme.primary.withValues(alpha: isDark ? 0.25 : 0.1),
+                            labelStyle: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: filterState.stockFilter == AdminStockFilter.all
+                                  ? FontWeight.bold
+                                  : FontWeight.w500,
+                              color: filterState.stockFilter == AdminStockFilter.all
+                                  ? theme.colorScheme.primary
+                                  : titleColor,
+                            ),
+                            backgroundColor: theme.colorScheme.surface,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              side: BorderSide(
+                                color: filterState.stockFilter == AdminStockFilter.all
+                                    ? theme.colorScheme.primary
+                                    : dividerColor,
+                                width: filterState.stockFilter == AdminStockFilter.all
+                                    ? 1.2
+                                    : 1.0,
+                              ),
+                            ),
+                            onSelected: (_) =>
+                                filterNotifier.setStockFilter(AdminStockFilter.all),
+                          ),
+                          ChoiceChip(
+                            label: Text("Rupture de stock (${stats.outOfStockProducts})"),
+                            selected: filterState.stockFilter == AdminStockFilter.outOfStock,
+                            selectedColor: theme.colorScheme.error.withValues(alpha: isDark ? 0.25 : 0.1),
+                            labelStyle: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: filterState.stockFilter == AdminStockFilter.outOfStock
+                                  ? FontWeight.bold
+                                  : FontWeight.w500,
+                              color: filterState.stockFilter == AdminStockFilter.outOfStock
+                                  ? theme.colorScheme.error
+                                  : titleColor,
+                            ),
+                            backgroundColor: theme.colorScheme.surface,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              side: BorderSide(
+                                color: filterState.stockFilter == AdminStockFilter.outOfStock
+                                    ? theme.colorScheme.error
+                                    : dividerColor,
+                                width: filterState.stockFilter == AdminStockFilter.outOfStock
+                                    ? 1.2
+                                    : 1.0,
+                              ),
+                            ),
+                            onSelected: (_) => filterNotifier.setStockFilter(
+                              filterState.stockFilter == AdminStockFilter.outOfStock
+                                  ? AdminStockFilter.all
+                                  : AdminStockFilter.outOfStock,
+                            ),
+                          ),
+                          ChoiceChip(
+                            label: const Text("Stock faible (≤ 5)"),
+                            selected: filterState.stockFilter == AdminStockFilter.lowStock,
+                            selectedColor: const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.25 : 0.1),
+                            labelStyle: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: filterState.stockFilter == AdminStockFilter.lowStock
+                                  ? FontWeight.bold
+                                  : FontWeight.w500,
+                              color: filterState.stockFilter == AdminStockFilter.lowStock
+                                  ? const Color(0xFFD97706)
+                                  : titleColor,
+                            ),
+                            backgroundColor: theme.colorScheme.surface,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              side: BorderSide(
+                                color: filterState.stockFilter == AdminStockFilter.lowStock
+                                    ? const Color(0xFFF59E0B)
+                                    : dividerColor,
+                                width: filterState.stockFilter == AdminStockFilter.lowStock
+                                    ? 1.2
+                                    : 1.0,
+                              ),
+                            ),
+                            onSelected: (_) => filterNotifier.setStockFilter(
+                              filterState.stockFilter == AdminStockFilter.lowStock
+                                  ? AdminStockFilter.all
+                                  : AdminStockFilter.lowStock,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 18),
+
+                      // 3. Catégories
+                      Text(
+                        "Catégories",
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: titleColor,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          ChoiceChip(
+                            label: const Text("Toutes"),
+                            selected: filterState.selectedCategoryId == null,
+                            selectedColor: theme.colorScheme.primary.withValues(alpha: isDark ? 0.25 : 0.1),
+                            labelStyle: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: filterState.selectedCategoryId == null
+                                  ? FontWeight.bold
+                                  : FontWeight.w500,
+                              color: filterState.selectedCategoryId == null
+                                  ? theme.colorScheme.primary
+                                  : titleColor,
+                            ),
+                            backgroundColor: theme.colorScheme.surface,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              side: BorderSide(
+                                color: filterState.selectedCategoryId == null
+                                    ? theme.colorScheme.primary
+                                    : dividerColor,
+                                width: filterState.selectedCategoryId == null
+                                    ? 1.2
+                                    : 1.0,
+                              ),
+                            ),
+                            onSelected: (_) => filterNotifier.setCategory(null),
+                          ),
+                          ...categories.map(
+                            (cat) {
+                              final isSelected =
+                                  filterState.selectedCategoryId == cat.categorieId;
+                              return ChoiceChip(
+                                label: Text(cat.nom),
+                                selected: isSelected,
+                                selectedColor: theme.colorScheme.primary.withValues(alpha: isDark ? 0.25 : 0.1),
+                                labelStyle: TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight:
+                                      isSelected ? FontWeight.bold : FontWeight.w500,
+                                  color: isSelected
+                                      ? theme.colorScheme.primary
+                                      : titleColor,
+                                ),
+                                backgroundColor: theme.colorScheme.surface,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  side: BorderSide(
+                                    color: isSelected
+                                        ? theme.colorScheme.primary
+                                        : dividerColor,
+                                    width: isSelected ? 1.2 : 1.0,
+                                  ),
+                                ),
+                                onSelected: (_) {
+                                  filterNotifier.setCategory(
+                                    isSelected ? null : cat.categorieId,
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Bouton d'application
+                      SizedBox(
+                        width: double.infinity,
+                        height: 44,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.colorScheme.primary,
+                            foregroundColor: theme.colorScheme.onPrimary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 0,
+                          ),
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text(
+                            "Appliquer les filtres",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

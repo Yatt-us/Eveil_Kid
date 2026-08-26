@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 
 class AppDialogs {
   AppDialogs._();
@@ -12,6 +11,8 @@ class AppDialogs {
     String cancelText = 'Annuler',
     bool isDanger = false,
   }) {
+    final theme = Theme.of(context);
+
     return showDialog<bool>(
       context: context,
       builder: (context) {
@@ -19,19 +20,20 @@ class AppDialogs {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          backgroundColor: AppColors.surface,
+          backgroundColor: theme.dialogTheme.backgroundColor ?? theme.colorScheme.surface,
           title: Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+              color: theme.textTheme.titleLarge?.color ?? theme.colorScheme.onSurface,
               fontSize: 18,
             ),
           ),
           content: Text(
             message,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
+            style: TextStyle(
+              color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8) ??
+                  theme.colorScheme.onSurfaceVariant,
               fontSize: 15,
             ),
           ),
@@ -39,7 +41,8 @@ class AppDialogs {
             TextButton(
               onPressed: () => Navigator.pop(context, false),
               style: TextButton.styleFrom(
-                foregroundColor: AppColors.textSecondary,
+                foregroundColor: theme.textTheme.bodyMedium?.color ??
+                    theme.colorScheme.onSurfaceVariant,
               ),
               child: Text(cancelText),
             ),
@@ -47,9 +50,11 @@ class AppDialogs {
               onPressed: () => Navigator.pop(context, true),
               style: ElevatedButton.styleFrom(
                 backgroundColor: isDanger
-                    ? AppColors.danger
-                    : AppColors.primary,
-                foregroundColor: AppColors.white,
+                    ? theme.colorScheme.error
+                    : theme.colorScheme.primary,
+                foregroundColor: isDanger
+                    ? theme.colorScheme.onError
+                    : theme.colorScheme.onPrimary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -67,15 +72,17 @@ class AppDialogs {
     required String title,
     required Widget child,
   }) {
+    final theme = Theme.of(context);
+
     return showModalBottomSheet<T>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
         return Container(
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           padding: EdgeInsets.only(
             left: 20,
@@ -90,7 +97,7 @@ class AppDialogs {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.border,
+                  color: theme.dividerColor.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -100,19 +107,26 @@ class AppDialogs {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                      color: theme.textTheme.titleLarge?.color ??
+                          theme.colorScheme.onSurface,
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: AppColors.icon),
+                    icon: Icon(
+                      Icons.close,
+                      color: theme.iconTheme.color ?? theme.colorScheme.onSurfaceVariant,
+                    ),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
               ),
-              const Divider(height: 20, color: AppColors.border),
+              Divider(
+                height: 20,
+                color: theme.dividerColor.withValues(alpha: 0.2),
+              ),
               Flexible(child: child),
             ],
           ),
@@ -125,11 +139,18 @@ class AppDialogs {
     required BuildContext context,
     required String message,
     bool isError = false,
+    bool isWarning = false,
   }) {
+    final theme = Theme.of(context);
+
+    final Color bgColor = isError
+        ? theme.colorScheme.error
+        : (isWarning ? const Color(0xFFF59E0B) : theme.colorScheme.primary);
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? AppColors.danger : AppColors.primary,
+        content: Text(message, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+        backgroundColor: bgColor,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),

@@ -67,25 +67,29 @@ class SecuritePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: AppColors.textPrimary,
+            color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
             size: 22,
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Sécurité',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+            color: theme.textTheme.titleMedium?.color ??
+                theme.colorScheme.onSurface,
           ),
         ),
         centerTitle: true,
@@ -99,22 +103,35 @@ class SecuritePage extends ConsumerWidget {
             // --- CARTE D'ACTIONS DE SÉCURITÉ ---
             Container(
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: AppColors.border.withValues(alpha: 0.8),
+                  color: theme.dividerColor.withValues(alpha: 0.2),
                   width: 1.2,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: (isDark ? Colors.black : AppColors.textPrimary)
+                        .withValues(alpha: isDark ? 0.25 : 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Column(
                 children: [
                   _buildSecurityTile(
+                    theme: theme,
                     icon: Icons.lock_outline_rounded,
                     title: 'Changer le mot de passe',
                     onTap: () => _showChangePasswordDialog(context, ref),
                   ),
-                  const Divider(height: 1, color: AppColors.border),
+                  Divider(
+                    height: 1,
+                    color: theme.dividerColor.withValues(alpha: 0.2),
+                  ),
                   _buildSecurityTile(
+                    theme: theme,
                     icon: Icons.login_rounded,
                     title: 'Session actives',
                     onTap: () {
@@ -124,8 +141,12 @@ class SecuritePage extends ConsumerWidget {
                       );
                     },
                   ),
-                  const Divider(height: 1, color: AppColors.border),
+                  Divider(
+                    height: 1,
+                    color: theme.dividerColor.withValues(alpha: 0.2),
+                  ),
                   _buildSecurityTile(
+                    theme: theme,
                     icon: Icons.stay_current_portrait_rounded,
                     title: 'Appareils connectés',
                     onTap: () {
@@ -135,8 +156,12 @@ class SecuritePage extends ConsumerWidget {
                       );
                     },
                   ),
-                  const Divider(height: 1, color: AppColors.border),
+                  Divider(
+                    height: 1,
+                    color: theme.dividerColor.withValues(alpha: 0.2),
+                  ),
                   _buildSecurityTile(
+                    theme: theme,
                     icon: Icons.delete_outline_rounded,
                     title: 'Supprimer le compte',
                     isDanger: true,
@@ -152,11 +177,18 @@ class SecuritePage extends ConsumerWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
               decoration: BoxDecoration(
-                color: const Color(0xFFF1F3F8),
+                color: isDark
+                    ? theme.colorScheme.surfaceContainerHighest
+                    : const Color(0xFFF1F3F8),
                 borderRadius: BorderRadius.circular(22),
+                border: Border.all(
+                  color: theme.dividerColor.withValues(alpha: 0.2),
+                  width: 1.2,
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.textPrimary.withValues(alpha: 0.04),
+                    color: (isDark ? Colors.black : AppColors.textPrimary)
+                        .withValues(alpha: isDark ? 0.25 : 0.04),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -170,20 +202,23 @@ class SecuritePage extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Votre compte est sécurisé',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary,
+                            color: theme.textTheme.titleMedium?.color ??
+                                theme.colorScheme.onSurface,
                           ),
                         ),
                         AppSpacing.verticalXs,
-                        const Text(
+                        Text(
                           'Dernière activité\nAujourd\'hui à 08:45',
                           style: TextStyle(
                             fontSize: 13,
-                            color: AppColors.textSecondary,
+                            color: theme.textTheme.bodyMedium?.color
+                                    ?.withValues(alpha: 0.7) ??
+                                theme.colorScheme.onSurfaceVariant,
                             height: 1.3,
                           ),
                         ),
@@ -201,12 +236,15 @@ class SecuritePage extends ConsumerWidget {
   }
 
   Widget _buildSecurityTile({
+    required ThemeData theme,
     required IconData icon,
     required String title,
     required VoidCallback onTap,
     bool isDanger = false,
   }) {
-    final color = isDanger ? const Color(0xFFEF4444) : AppColors.textPrimary;
+    final color = isDanger
+        ? theme.colorScheme.error
+        : (theme.textTheme.bodyLarge?.color ?? theme.colorScheme.onSurface);
 
     return InkWell(
       onTap: onTap,
@@ -229,7 +267,8 @@ class SecuritePage extends ConsumerWidget {
             ),
             Icon(
               Icons.chevron_right_rounded,
-              color: AppColors.textSecondary.withValues(alpha: 0.7),
+              color: theme.iconTheme.color?.withValues(alpha: 0.5) ??
+                  theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
               size: 22,
             ),
           ],

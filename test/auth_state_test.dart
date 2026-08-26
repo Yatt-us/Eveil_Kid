@@ -65,5 +65,13 @@ void main() {
       expect(cleared.utilisateur, isNull);
       expect(cleared.isAuthenticated, isFalse);
     });
+
+    test('isEmailVerified est correctement géré dans copyWith', () {
+      const state = AuthState(isEmailVerified: false);
+      expect(state.isEmailVerified, isFalse);
+
+      final verified = state.copyWith(isEmailVerified: true);
+      expect(verified.isEmailVerified, isTrue);
+    });
   });
 }

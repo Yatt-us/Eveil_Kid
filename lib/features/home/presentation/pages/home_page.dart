@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:eveilkid/core/constants/AppPadding.dart';
 import 'package:eveilkid/core/constants/AppRadius.dart';
 import 'package:eveilkid/core/constants/AppSpacing.dart';
-import 'package:eveilkid/core/constants/AppTextStyles.dart';
 import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/core/router/app_routes.dart';
 import 'package:eveilkid/features/auth/models/utilisateur.dart';
@@ -36,36 +35,37 @@ class HomePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
     final user = authState.utilisateur;
+    final theme = Theme.of(context);
 
     final isAdminOrManager =
         user?.role == UserRole.admin || user?.role == UserRole.manager;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         title: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.child_care_rounded,
-                color: AppColors.primary,
+                color: theme.colorScheme.primary,
                 size: 22,
               ),
             ),
             AppSpacing.horizontalSm,
-            const Text(
+            Text(
               'Éveil Kid',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: AppColors.primary,
+                color: theme.colorScheme.primary,
               ),
             ),
           ],
@@ -73,7 +73,7 @@ class HomePage extends ConsumerWidget {
         actions: [
           IconButton(
             tooltip: 'Déconnexion',
-            icon: const Icon(Icons.logout_rounded, color: AppColors.danger),
+            icon: Icon(Icons.logout_rounded, color: theme.colorScheme.error),
             onPressed: () => _logout(context, ref),
           ),
           AppSpacing.horizontalXs,
@@ -95,13 +95,17 @@ class HomePage extends ConsumerWidget {
             ],
 
             // ── Cartes de Statistiques Rapides ─────────────────────────────────
-            _buildQuickStats(user),
+            _buildQuickStats(context, user),
             AppSpacing.verticalXl,
 
             // ── Section Modules & Navigation ───────────────────────────────────
-            const Text(
+            Text(
               'Découvrir & Explorer',
-              style: AppTextStyles.headingMedium,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: theme.textTheme.titleLarge?.color ?? theme.colorScheme.onSurface,
+              ),
             ),
             AppSpacing.verticalSm,
 
@@ -110,12 +114,14 @@ class HomePage extends ConsumerWidget {
           ],
         ),
       ),
-      bottomNavigationBar: AppBottomNavBar(),
+      bottomNavigationBar: const AppBottomNavBar(),
     );
   }
 
   /// En-tête avec message de bienvenue et badge de rôle
   Widget _buildUserHeader(BuildContext context, Utilisateur? user) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final nom = user?.nom.isNotEmpty == true ? user!.nom : 'Parent';
     final email = user?.email ?? 'Compte connecté';
     final roleLabel = _getRoleLabel(user?.role);
@@ -125,12 +131,15 @@ class HomePage extends ConsumerWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: theme.colorScheme.surface,
         borderRadius: AppRadius.card,
-        border: Border.all(color: AppColors.border),
+        border: Border.all(
+          color: theme.dividerColor.withValues(alpha: 0.2),
+        ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.textPrimary.withValues(alpha: 0.04),
+            color: (isDark ? Colors.black : AppColors.textPrimary)
+                .withValues(alpha: isDark ? 0.25 : 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -143,13 +152,13 @@ class HomePage extends ConsumerWidget {
             children: [
               CircleAvatar(
                 radius: 28,
-                backgroundColor: AppColors.primaryLight.withValues(alpha: 0.2),
+                backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.15),
                 child: Text(
                   nom.isNotEmpty ? nom[0].toUpperCase() : 'U',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
+                    color: theme.colorScheme.primary,
                   ),
                 ),
               ),
@@ -160,14 +169,22 @@ class HomePage extends ConsumerWidget {
                   children: [
                     Text(
                       'Bonjour, $nom 👋',
-                      style: AppTextStyles.headingSmall,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: theme.textTheme.titleMedium?.color ??
+                            theme.colorScheme.onSurface,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
                     Text(
                       email,
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textSecondary,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: theme.textTheme.bodySmall?.color
+                                ?.withValues(alpha: 0.7) ??
+                            AppColors.textSecondary,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -177,7 +194,10 @@ class HomePage extends ConsumerWidget {
             ],
           ),
           AppSpacing.verticalMd,
-          const Divider(height: 1, color: AppColors.border),
+          Divider(
+            height: 1,
+            color: theme.dividerColor.withValues(alpha: 0.2),
+          ),
           AppSpacing.verticalSm,
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -218,12 +238,14 @@ class HomePage extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: 6),
-                  const Text(
+                  Text(
                     'Compte Actif',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.textSecondary,
+                      color: theme.textTheme.bodySmall?.color
+                              ?.withValues(alpha: 0.7) ??
+                          AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -315,11 +337,12 @@ class HomePage extends ConsumerWidget {
   }
 
   /// Statistiques rapides du compte
-  Widget _buildQuickStats(Utilisateur? user) {
+  Widget _buildQuickStats(BuildContext context, Utilisateur? user) {
     return Row(
       children: [
         Expanded(
           child: _buildStatCard(
+            context: context,
             icon: Icons.favorite_rounded,
             iconColor: AppColors.danger,
             value: '${user?.nombreFavoris ?? 0}',
@@ -329,6 +352,7 @@ class HomePage extends ConsumerWidget {
         AppSpacing.horizontalMd,
         Expanded(
           child: _buildStatCard(
+            context: context,
             icon: Icons.child_friendly_rounded,
             iconColor: AppColors.secondary,
             value: '${user?.nombreEnfants ?? 0}',
@@ -338,6 +362,7 @@ class HomePage extends ConsumerWidget {
         AppSpacing.horizontalMd,
         Expanded(
           child: _buildStatCard(
+            context: context,
             icon: Icons.inventory_2_rounded,
             iconColor: AppColors.accent,
             value: '0',
@@ -349,17 +374,31 @@ class HomePage extends ConsumerWidget {
   }
 
   Widget _buildStatCard({
+    required BuildContext context,
     required IconData icon,
     required Color iconColor,
     required String value,
     required String label,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: theme.colorScheme.surface,
         borderRadius: AppRadius.card,
-        border: Border.all(color: AppColors.border),
+        border: Border.all(
+          color: theme.dividerColor.withValues(alpha: 0.2),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: (isDark ? Colors.black : Colors.black)
+                .withValues(alpha: isDark ? 0.2 : 0.02),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -367,17 +406,19 @@ class HomePage extends ConsumerWidget {
           const SizedBox(height: 6),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+              color: theme.textTheme.titleMedium?.color ??
+                  theme.colorScheme.onSurface,
             ),
           ),
           Text(
             label,
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textSecondary,
+            style: TextStyle(
               fontSize: 11,
+              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+                  AppColors.textSecondary,
             ),
           ),
         ],
@@ -387,6 +428,9 @@ class HomePage extends ConsumerWidget {
 
   /// Grille des modules de fonctionnalités
   Widget _buildFeatureGrid(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     final modules = [
       _FeatureModule(
         title: 'Activités d\'Éveil & Quiz',
@@ -449,9 +493,19 @@ class HomePage extends ConsumerWidget {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: theme.colorScheme.surface,
               borderRadius: AppRadius.card,
-              border: Border.all(color: AppColors.border),
+              border: Border.all(
+                color: theme.dividerColor.withValues(alpha: 0.2),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: (isDark ? Colors.black : Colors.black)
+                      .withValues(alpha: isDark ? 0.2 : 0.02),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Row(
               children: [
@@ -470,26 +524,31 @@ class HomePage extends ConsumerWidget {
                     children: [
                       Text(
                         item.title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
+                          color: theme.textTheme.titleMedium?.color ??
+                              theme.colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         item.description,
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.textSecondary,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: theme.textTheme.bodySmall?.color
+                                  ?.withValues(alpha: 0.7) ??
+                              AppColors.textSecondary,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const Icon(
+                Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 16,
-                  color: AppColors.icon,
+                  color: theme.iconTheme.color?.withValues(alpha: 0.5) ??
+                      AppColors.icon,
                 ),
               ],
             ),
