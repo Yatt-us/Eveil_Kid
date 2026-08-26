@@ -14,18 +14,29 @@ class CategoryFilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FilterChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (_) => onTap(),
-      selectedColor: const Color(0xFF763CD1).withValues(alpha: 0.12),
-      checkmarkColor: const Color(0xFF763CD1),
-      labelStyle: TextStyle(
-        color: isSelected ? const Color(0xFF763CD1) : const Color(0xFF6C687D),
-        fontWeight: FontWeight.w700,
+    return Theme(
+      data: Theme.of(context).copyWith(
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
       ),
-      side: BorderSide(
-        color: isSelected ? const Color(0xFF763CD1) : const Color(0xFFE6E2F2),
+      child: ChoiceChip(
+        label: Text(
+          label,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: isSelected ? Colors.white : const Color(0xFF1F1F1F),
+          ),
+        ),
+        selected: isSelected,
+        onSelected: (_) => onTap(),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+        selectedColor: const Color(0xFF763CD1),
+        backgroundColor: const Color(0xFFEDEDEE),
+        side: BorderSide.none,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        labelPadding: EdgeInsets.zero,
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
     );
   }

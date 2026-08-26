@@ -27,9 +27,21 @@ class TutorielRepository {
  }
 
  Future<Tutoriel?> getTutorielById(String tutorielId) async {
-   final doc = await _tutorielsCollection.doc(tutorielId).get();
-   if (!doc.exists || doc.data() == null) return null;
-   return Tutoriel.fromFirestore(doc);
+   final cleanedId = tutorielId.trim();
+   if (cleanedId.isEmpty) return null;
+
+   final doc = await _tutorielsCollection.doc(cleanedId).get();
+   if (doc.exists && doc.data() != null) {
+     return Tutoriel.fromFirestore(doc);
+   }
+
+   final snapshot = await _tutorielsCollection
+       .where('tutorielId', isEqualTo: cleanedId)
+       .limit(1)
+       .get();
+
+   if (snapshot.docs.isEmpty) return null;
+   return Tutoriel.fromFirestore(snapshot.docs.first);
  }
 
  Future<List<Tutoriel>> searchTutoriels(String query) async {
