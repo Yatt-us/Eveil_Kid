@@ -18,13 +18,16 @@ class AppBottomNavBar extends ConsumerWidget {
     try {
       final location = GoRouterState.of(context).matchedLocation;
       if (location.startsWith(AppRoutes.jouetscreen) ||
-          location.startsWith(AppRoutes.jouetdetail)) {
+          location.startsWith(AppRoutes.jouetdetail) ||
+          location.startsWith(AppRoutes.jouets)) {
         return 1;
       }
       if (location.startsWith(AppRoutes.tutoriels)) {
         return 2;
       }
-      if (location.startsWith(AppRoutes.profile)) {
+      if (location.startsWith(AppRoutes.profile) ||
+          location.startsWith(AppRoutes.favoris) ||
+          location.startsWith('/favoris')) {
         return 3;
       }
       return 0;

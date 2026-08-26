@@ -460,11 +460,7 @@ class ProfilParentPage extends ConsumerWidget {
                           icon: Icons.favorite_border_rounded,
                           title: 'Mes favoris',
                           onTap: () {
-                            AppDialogs.showSnackBar(
-                              context: context,
-                              message:
-                                  '${parent.nombreFavoris ?? 0} favori(s) enregistré(s).',
-                            );
+                            context.push(AppRoutes.favoris);
                           },
                         ),
                         Divider(

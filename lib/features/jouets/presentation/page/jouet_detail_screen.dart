@@ -7,6 +7,8 @@ import '../../../../shared/widgets/app_dialogs.dart';
 import '../../../panier/models/panier.dart';
 import '../../../panier/presentation/widgets/panier_app_bar_action.dart';
 import '../../../panier/providers/panier_provider.dart';
+import '../../../favoris/models/favoris.dart';
+import '../../../favoris/providers/favoris_providers.dart';
 import '../../models/jouet.dart';
 
 class JouetDetailScreen extends ConsumerStatefulWidget {
@@ -26,7 +28,6 @@ class JouetDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _JouetDetailScreenState extends ConsumerState<JouetDetailScreen> {
-  bool _isFavorite = false;
   bool _isLoading = false;
 
   int _quantite = 1;
@@ -148,12 +149,27 @@ class _JouetDetailScreenState extends ConsumerState<JouetDetailScreen> {
         ),
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: Icon(
-              _isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-              color: _isFavorite ? Colors.redAccent : (theme.iconTheme.color ?? textPrimary),
-            ),
-            onPressed: () => setState(() => _isFavorite = !_isFavorite),
+          Consumer(
+            builder: (context, ref, _) {
+              final isFav = ref.watch(isElementFavoriProvider(widget.jouet.jouetId));
+              return IconButton(
+                icon: Icon(
+                  isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                  color: isFav ? Colors.redAccent : (theme.iconTheme.color ?? textPrimary),
+                ),
+                tooltip: isFav ? 'Retirer des favoris' : 'Ajouter aux favoris',
+                onPressed: () {
+                  ref.read(favoriServiceProvider).toggleFavori(
+                        utilisateurId: widget.utilisateurId,
+                        elementId: widget.jouet.jouetId,
+                        typeElement: TypeElement.jouet,
+                        titre: widget.jouet.nom,
+                        miniatureUrl: widget.jouet.imagePrincipaleUrl,
+                        prix: widget.jouet.prix,
+                      );
+                },
+              );
+            },
           ),
           const PanierAppBarAction(),
         ],

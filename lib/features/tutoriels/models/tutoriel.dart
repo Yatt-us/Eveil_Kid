@@ -19,9 +19,9 @@ class Tutoriel {
   final DateTime dateModification;
 
   const Tutoriel({
-    required this.tutorielId,
+    this.tutorielId,
     required this.categorieId,
-    required this.jouetLieId,
+    this.jouetLieId,
     required this.createurId,
     required this.titre,
     required this.description,
