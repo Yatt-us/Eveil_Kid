@@ -19,8 +19,10 @@ enum AdminNavRoute {
   categories,
   commandes,
   tutoriels,
+  activites,
   utilisateurs,
-  activites
+  staff,
+  profile,
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -120,12 +122,17 @@ class AdminSidebar extends ConsumerWidget {
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeInOut,
       width: isTablet ? 72 : 260,
-      child: ClipRect(
-        child: _AdminNavigationContent(
-          currentRoute: currentRoute,
-          isCollapsed: isTablet,
-          isDrawer: false,
-        ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isCollapsed = constraints.maxWidth < 140;
+          return ClipRect(
+            child: _AdminNavigationContent(
+              currentRoute: currentRoute,
+              isCollapsed: isCollapsed,
+              isDrawer: false,
+            ),
+          );
+        },
       ),
     );
   }
@@ -192,21 +199,28 @@ class _AdminNavigationContent extends ConsumerWidget {
         route: AdminNavRoute.activites,
         icon: Icons.local_activity,
         activeIcon: Icons.local_activity_outlined,
-        label: 'activites',
-        
+        label: 'Activités',
         onTap: () => _navigate(context, AdminNavRoute.activites),
       ),
     ];
 
     final adminItems = <_AdminNavItemData>[
-      if (role.canManageUsers)
+      if (role.canManageUsers) ...[
         _AdminNavItemData(
           route: AdminNavRoute.utilisateurs,
-          icon: Icons.people_outline,
-          activeIcon: Icons.people_rounded,
-          label: 'Utilisateurs',
+          icon: Icons.family_restroom_outlined,
+          activeIcon: Icons.family_restroom_rounded,
+          label: 'Parents',
           onTap: () => _navigate(context, AdminNavRoute.utilisateurs),
         ),
+        _AdminNavItemData(
+          route: AdminNavRoute.staff,
+          icon: Icons.shield_outlined,
+          activeIcon: Icons.shield_rounded,
+          label: 'Équipe & Staff',
+          onTap: () => _navigate(context, AdminNavRoute.staff),
+        ),
+      ],
     ];
 
     return Container(
@@ -266,6 +280,26 @@ class _AdminNavigationContent extends ConsumerWidget {
                       ),
                     ),
                   ],
+
+                  const SizedBox(height: 10),
+                  if (!isCollapsed)
+                    const _AdminSectionLabel(label: 'MON COMPTE')
+                  else
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Divider(color: dividerColor, thickness: 1),
+                    ),
+                  _AdminNavTile(
+                    item: _AdminNavItemData(
+                      route: AdminNavRoute.profile,
+                      icon: Icons.person_outline_rounded,
+                      activeIcon: Icons.person_rounded,
+                      label: 'Profil',
+                      onTap: () => _navigate(context, AdminNavRoute.profile),
+                    ),
+                    isSelected: currentRoute == AdminNavRoute.profile,
+                    isCollapsed: isCollapsed,
+                  ),
                 ],
               ),
             ),
@@ -274,6 +308,7 @@ class _AdminNavigationContent extends ConsumerWidget {
             _AdminNavFooter(
               role: role,
               isCollapsed: isCollapsed,
+              isDrawer: isDrawer,
             ),
           ],
         ),
@@ -298,15 +333,21 @@ class _AdminNavigationContent extends ConsumerWidget {
       case AdminNavRoute.categories:
         context.go(AppRoutes.adminCategories);
         break;
-      case AdminNavRoute.utilisateurs:
-        context.go(AppRoutes.adminUsers);
+      case AdminNavRoute.tutoriels:
+        context.go(AppRoutes.adminTutoriels);
         break;
       case AdminNavRoute.activites:
         context.go(AppRoutes.adminActivites);
         break;
-      case AdminNavRoute.tutoriels:
-      context.go(AppRoutes.adminTutoriels);
-      break;
+      case AdminNavRoute.utilisateurs:
+        context.go(AppRoutes.adminUsers);
+        break;
+      case AdminNavRoute.staff:
+        context.go(AppRoutes.adminStaff);
+        break;
+      case AdminNavRoute.profile:
+        context.go(AppRoutes.adminProfile);
+        break;
       default:
         return;
     }
@@ -710,10 +751,12 @@ class _AdminNavTileState extends State<_AdminNavTile> with SingleTickerProviderS
 class _AdminNavFooter extends ConsumerWidget {
   final AdminRole role;
   final bool isCollapsed;
+  final bool isDrawer;
 
   const _AdminNavFooter({
     required this.role,
     required this.isCollapsed,
+    this.isDrawer = false,
   });
 
   Future<void> _logout(BuildContext context, WidgetRef ref) async {
@@ -753,9 +796,12 @@ class _AdminNavFooter extends ConsumerWidget {
           border: Border(top: BorderSide(color: dividerColor)),
         ),
         child: Tooltip(
-          message: "$name\n$sub\n(Cliquer pour déconnecter)",
+          message: "$name\n$sub\n(Cliquer pour voir le profil)",
           child: InkWell(
-            onTap: () => _logout(context, ref),
+            onTap: () {
+              if (isDrawer && context.canPop()) context.pop();
+              context.go(AppRoutes.adminProfile);
+            },
             borderRadius: BorderRadius.circular(20),
             child: Center(
               child: Container(
@@ -786,49 +832,66 @@ class _AdminNavFooter extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: roleColor.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: roleColor.withValues(alpha: 0.25),
-                width: 1,
-              ),
-            ),
-            child: Center(
-              child: Icon(Icons.person_rounded, size: 18, color: roleColor),
-            ),
-          ),
-          const SizedBox(width: 10),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: theme.textTheme.bodyMedium?.color ??
-                        theme.colorScheme.onSurface,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+            child: InkWell(
+              onTap: () {
+                if (isDrawer && context.canPop()) context.pop();
+                context.go(AppRoutes.adminProfile);
+              },
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: roleColor.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: roleColor.withValues(alpha: 0.25),
+                          width: 1,
+                        ),
+                      ),
+                      child: Center(
+                        child: Icon(Icons.person_rounded, size: 18, color: roleColor),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            name,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: theme.textTheme.bodyMedium?.color ??
+                                  theme.colorScheme.onSurface,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 1),
+                          Text(
+                            'Profil • $sub',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.primary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  sub,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: theme.textTheme.bodySmall?.color
-                            ?.withValues(alpha: 0.7) ??
-                        AppColors.textSecondary,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+              ),
             ),
           ),
           IconButton(
@@ -860,12 +923,20 @@ class AdminShellScaffold extends StatelessWidget {
 
   AdminNavRoute _getCurrentRoute(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
-    if (location.startsWith(AppRoutes.adminProducts)) {
+    if (location.startsWith(AppRoutes.adminProfile)) {
+      return AdminNavRoute.profile;
+    } else if (location.startsWith(AppRoutes.adminProducts)) {
       return AdminNavRoute.products;
     } else if (location.startsWith(AppRoutes.adminCategories)) {
       return AdminNavRoute.categories;
+    } else if (location.startsWith(AppRoutes.adminActivites)) {
+      return AdminNavRoute.activites;
+    } else if (location.startsWith(AppRoutes.adminTutoriels)) {
+      return AdminNavRoute.tutoriels;
     } else if (location.startsWith(AppRoutes.adminUsers)) {
       return AdminNavRoute.utilisateurs;
+    } else if (location.startsWith(AppRoutes.adminStaff)) {
+      return AdminNavRoute.staff;
     } else if (location.startsWith(AppRoutes.adminCatalog)) {
       return AdminNavRoute.products;
     }

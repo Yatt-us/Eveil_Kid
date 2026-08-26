@@ -26,23 +26,31 @@ class Favori {
     required this.dateCreation,
   });
 
+  static DateTime _parseDate(dynamic val) {
+    if (val is Timestamp) return val.toDate();
+    if (val is DateTime) return val;
+    if (val is String) return DateTime.tryParse(val) ?? DateTime.now();
+    if (val is int) return DateTime.fromMillisecondsSinceEpoch(val);
+    return DateTime.now();
+  }
+
   factory Favori.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
-    final data = doc.data()!;
+    final data = doc.data() ?? {};
 
     return Favori(
       favoriId: doc.id,
-      utilisateurId: data['utilisateurId'] as String,
-      elementId: data['elementId'] as String,
+      utilisateurId: data['utilisateurId'] as String? ?? '',
+      elementId: data['elementId'] as String? ?? '',
 
       typeElement: data['typeElement'] == 'JOUET'
           ? TypeElement.jouet
           : TypeElement.tutoriel,
 
-      titre: data['titre'] as String,
-      miniatureUrl: data['miniatureUrl'] as String,
-      prix: (data['prix'] as num).toDouble(),
+      titre: data['titre'] as String? ?? '',
+      miniatureUrl: data['miniatureUrl'] as String? ?? '',
+      prix: (data['prix'] as num?)?.toDouble() ?? 0.0,
 
-      dateCreation: (data['dateCreation'] as Timestamp).toDate(),
+      dateCreation: _parseDate(data['dateCreation']),
     );
   }
 

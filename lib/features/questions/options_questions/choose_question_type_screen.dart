@@ -100,7 +100,7 @@ class ChooseQuestionTypeScreen extends StatelessWidget {
               width: 70,
               height: 70,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.12),
+                color: AppColors.primary.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(50),
               ),
               child: Icon(

@@ -93,7 +93,7 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: () {
-                          ref.refresh(adminTutorielsProvider);
+                          ref.invalidate(adminTutorielsProvider);
                         },
                         child: const Text('Réessayer'),
                       ),
@@ -618,7 +618,7 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
     try {
       final repository = ref.read(tutorielRepositoryProvider);
       await repository.publierTutoriel(tutoriel.tutorielId!);
-      ref.refresh(adminTutorielsProvider);
+      ref.invalidate(adminTutorielsProvider);
       if (mounted) {
         _scaffoldMessengerKey.currentState?.showSnackBar(
           const SnackBar(
@@ -643,7 +643,7 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
     try {
       final repository = ref.read(tutorielRepositoryProvider);
       await repository.depublierTutoriel(tutoriel.tutorielId!);
-      ref.refresh(adminTutorielsProvider);
+      ref.invalidate(adminTutorielsProvider);
       if (mounted) {
         _scaffoldMessengerKey.currentState?.showSnackBar(
           const SnackBar(

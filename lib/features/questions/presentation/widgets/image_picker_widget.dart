@@ -74,7 +74,7 @@ class ImagePickerWidget extends StatelessWidget {
           child: Image.network(
             imageUrl!,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
+            errorBuilder: (_, _, _) => Container(
               color: Colors.grey.shade200,
               child: const Center(
                 child: Icon(Icons.broken_image, color: Colors.grey),
@@ -92,7 +92,7 @@ class ImagePickerWidget extends StatelessWidget {
       top: 8,
       right: 8,
       child: CircleAvatar(
-        backgroundColor: Colors.black.withOpacity(0.6),
+        backgroundColor: Colors.black.withValues(alpha: 0.6),
         radius: 16,
         child: IconButton(
           icon: const Icon(Icons.close, color: Colors.white, size: 16),

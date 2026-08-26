@@ -54,7 +54,7 @@ class ActivityCard extends ConsumerWidget {
                     ? Image.network(
                         activity.imageUrl!,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _buildPlaceholder(),
+                        errorBuilder: (_, _, _) => _buildPlaceholder(),
                         loadingBuilder: (_, child, loadingProgress) {
                           if (loadingProgress == null) return child;
                           return Center(
@@ -110,7 +110,7 @@ class ActivityCard extends ConsumerWidget {
                                 ),
                               ),
                             ),
-                            error: (_, __) => Text(
+                            error: (_, _) => Text(
                               '⚠️ Erreur',
                               style: TextStyle(
                                 color: AppColors.danger,
@@ -265,11 +265,11 @@ class ActivityCard extends ConsumerWidget {
 
   Widget _buildPlaceholder() {
     return Container(
-      color: AppColors.primary.withOpacity(0.1),
+      color: AppColors.primary.withValues(alpha: 0.1),
       child: Center(
         child: Icon(
           Icons.image_not_supported,
-          color: AppColors.primary.withOpacity(0.4),
+          color: AppColors.primary.withValues(alpha: 0.4),
           size: 30,
         ),
       ),

@@ -8,6 +8,7 @@ class AdminUserModel {
   final String? telephone;
   final String role; // 'PARENT' | 'MANAGER' | 'ADMIN'
   final bool estActif;
+  final String? motifBlocage;
   final int nombreEnfants;
   final int nombreFavoris;
   final Timestamp dateCreation;
@@ -21,6 +22,7 @@ class AdminUserModel {
     this.telephone,
     this.role = 'PARENT',
     this.estActif = true,
+    this.motifBlocage,
     this.nombreEnfants = 0,
     this.nombreFavoris = 0,
     required this.dateCreation,
@@ -39,6 +41,7 @@ class AdminUserModel {
     String? telephone,
     String? role,
     bool? estActif,
+    String? motifBlocage,
     int? nombreEnfants,
     int? nombreFavoris,
     Timestamp? dateCreation,
@@ -52,6 +55,7 @@ class AdminUserModel {
       telephone: telephone ?? this.telephone,
       role: role ?? this.role,
       estActif: estActif ?? this.estActif,
+      motifBlocage: motifBlocage ?? this.motifBlocage,
       nombreEnfants: nombreEnfants ?? this.nombreEnfants,
       nombreFavoris: nombreFavoris ?? this.nombreFavoris,
       dateCreation: dateCreation ?? this.dateCreation,
@@ -71,6 +75,7 @@ class AdminUserModel {
       telephone: data['telephone'],
       role: data['role'] ?? 'PARENT',
       estActif: data['estActif'] ?? true,
+      motifBlocage: data['motifBlocage'],
       nombreEnfants: (data['nombreEnfants'] as num?)?.toInt() ?? 0,
       nombreFavoris: (data['nombreFavoris'] as num?)?.toInt() ?? 0,
       dateCreation: data['dateCreation'] ?? Timestamp.now(),
@@ -87,6 +92,7 @@ class AdminUserModel {
       'telephone': telephone,
       'role': role,
       'estActif': estActif,
+      if (motifBlocage != null) 'motifBlocage': motifBlocage,
       'nombreEnfants': nombreEnfants,
       'nombreFavoris': nombreFavoris,
       'dateCreation': dateCreation,

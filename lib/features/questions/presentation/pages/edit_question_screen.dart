@@ -110,18 +110,18 @@ class _EditQuestionScreenState extends ConsumerState<EditQuestionScreen> {
   Future<void> _updateQuestion() async {
     final success = await _controller.update();
     if (success && mounted) {
-
       ref.invalidate(questionsByActiviteProvider(widget.activityId));
       ref.invalidate(
         questionByIdProvider(
-          (activiteId: widget.activityId, questionId: widget.questionId)
-        )
+          (activiteId: widget.activityId, questionId: widget.questionId),
+        ),
       );
-      
-      
+
       final notifier = ref.read(questionNotifierProvider.notifier);
       await notifier.loadQuestions(widget.activityId);
-      
+
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Question mise à jour avec succès !'),

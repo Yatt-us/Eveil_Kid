@@ -7,20 +7,24 @@ class ResumeCommandeWidget extends StatelessWidget {
   final double total;
 
   const ResumeCommandeWidget({
-    Key? key,
+    super.key,
     required this.sousTotal,
     required this.fraisLivraison,
     required this.total,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textSecondary = theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+        theme.colorScheme.onSurfaceVariant;
+
     return Column(
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Sous-total'),
+            Text('Sous-total', style: TextStyle(color: textSecondary)),
             Text('${sousTotal.toStringAsFixed(0)} FCFA'),
           ],
         ),
@@ -28,24 +32,31 @@ class ResumeCommandeWidget extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Livraison'),
-            Text('${fraisLivraison.toStringAsFixed(0)} FCFA'),
+            Text('Livraison', style: TextStyle(color: textSecondary)),
+            Text(
+              fraisLivraison == 0 ? 'Gratuite' : '${fraisLivraison.toStringAsFixed(0)} FCFA',
+              style: const TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.bold),
+            ),
           ],
         ),
         const Divider(height: 20),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               'Total',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface,
+              ),
             ),
             Text(
               '${total.toStringAsFixed(0)} FCFA',
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
-                color: AppColors.primary,
+                color: theme.colorScheme.primary,
               ),
             ),
           ],
