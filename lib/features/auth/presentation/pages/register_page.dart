@@ -3,12 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/AppTextStyles.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
 import '../../../../shared/widgets/app_google_button.dart';
-import '../../../../shared/widgets/app_icon_button.dart';
 import '../../../../shared/widgets/app_logo.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../providers/auth_provider.dart';
@@ -37,14 +35,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     super.dispose();
   }
 
-  void _popOrGoLogin() {
-    if (context.canPop()) {
-      context.pop();
-    } else {
-      context.go(AppRoutes.login);
-    }
-  }
-
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -63,9 +53,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     if (success) {
       AppDialogs.showSnackBar(
         context: context,
-        message: 'Votre compte a été créé avec succès.',
+        message:
+            'Compte créé avec succès ! Un email de confirmation vous a été envoyé.',
       );
-      _popOrGoLogin();
+      context.go(AppRoutes.home);
     } else {
       final error = ref.read(authProvider).errorMessage;
       AppDialogs.showSnackBar(
@@ -85,6 +76,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         context: context,
         message: 'Connexion Google réussie !',
       );
+      context.go(AppRoutes.home);
     } else {
       final error = ref.read(authProvider).errorMessage;
       AppDialogs.showSnackBar(
@@ -98,9 +90,16 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
+    final titleColor = colorScheme.onSurface;
+    final subtitleColor = colorScheme.onSurfaceVariant;
+    final primaryColor = colorScheme.primary;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -113,42 +112,34 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // BOUTON RETOUR MINIMALISTE
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: AppIconButton(
-                        icon: Icons.arrow_back_rounded,
-                        size: 36,
-                        onPressed: _popOrGoLogin,
-                      ),
-                    ),
-
-                    const SizedBox(height: 8),
-
                     // LOGO OFFICIEL
-                    const Center(
-                      child: AppLogo(size: 76),
-                    ),
+                    const Center(child: AppLogo(size: 76)),
 
                     const SizedBox(height: 16),
 
                     // EN-TÊTE CENTRÉ & ÉPURÉ
-                    const Text(
+                    Text(
                       'Créer un compte',
                       textAlign: TextAlign.center,
-                      style: AppTextStyles.headingLarge,
+                      style: AppTextStyles.headingLarge.copyWith(
+                        color: titleColor,
+                      ),
                     ),
 
                     const SizedBox(height: 6),
 
-                    const Text(
+                    Text(
                       'Remplissez les informations ci-dessous pour créer votre compte.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: AppColors.textSecondary,
-                        height: 1.35,
-                      ),
+                      style: textTheme.bodyMedium?.copyWith(
+                            color: subtitleColor,
+                            height: 1.35,
+                          ) ??
+                          TextStyle(
+                            fontSize: 13,
+                            color: subtitleColor,
+                            height: 1.35,
+                          ),
                     ),
 
                     const SizedBox(height: 24),
@@ -251,21 +242,27 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     // SÉPARATEUR
                     Row(
                       children: [
-                        const Expanded(
-                          child: Divider(color: AppColors.border, thickness: 1),
+                        Expanded(
+                          child: Divider(
+                            color: theme.dividerColor,
+                            thickness: 1,
+                          ),
                         ),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                           child: Text(
                             'OU',
                             style: AppTextStyles.bodySmall.copyWith(
-                              color: AppColors.textSecondary,
+                              color: subtitleColor,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
-                        const Expanded(
-                          child: Divider(color: AppColors.border, thickness: 1),
+                        Expanded(
+                          child: Divider(
+                            color: theme.dividerColor,
+                            thickness: 1,
+                          ),
                         ),
                       ],
                     ),
@@ -285,26 +282,44 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
+                        Text(
                           'Déjà un compte ?',
                           style: TextStyle(
                             fontSize: 13,
-                            color: AppColors.textSecondary,
+                            color: subtitleColor,
                           ),
                         ),
                         const SizedBox(width: 4),
                         GestureDetector(
-                          onTap: _popOrGoLogin,
-                          child: const Text(
+                          onTap: () => context.go(AppRoutes.login),
+                          child: Text(
                             'Se connecter',
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.primary,
+                              color: primaryColor,
                             ),
                           ),
                         ),
                       ],
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // LIEN RETOUR ACCUEIL
+                    Center(
+                      child: TextButton.icon(
+                        onPressed: () => context.go(AppRoutes.home),
+                        icon: const Icon(Icons.home_outlined, size: 18),
+                        label: const Text('Continuer sans se connecter'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: subtitleColor,
+                          textStyle: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
                     ),
 
                     const SizedBox(height: 12),

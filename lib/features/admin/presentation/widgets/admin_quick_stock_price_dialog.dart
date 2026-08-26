@@ -64,7 +64,7 @@ class _AdminQuickStockPriceDialogState
         context.pop();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            backgroundColor: AppColors.success,
+            backgroundColor: Color(0xFF10B981),
             content: Text("Prix et stock mis à jour avec succès !"),
           ),
         );
@@ -74,7 +74,7 @@ class _AdminQuickStockPriceDialogState
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            backgroundColor: AppColors.danger,
+            backgroundColor: Theme.of(context).colorScheme.error,
             content: Text("Erreur lors de la mise à jour: $e"),
           ),
         );
@@ -84,7 +84,12 @@ class _AdminQuickStockPriceDialogState
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final dividerColor = theme.dividerColor.withValues(alpha: 0.2);
+
     return Dialog(
+      backgroundColor: theme.colorScheme.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -94,20 +99,26 @@ class _AdminQuickStockPriceDialogState
           children: [
             Row(
               children: [
-                const Icon(Icons.tune, color: AppColors.primary),
+                Icon(Icons.tune, color: theme.colorScheme.primary),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     "Ajustement express",
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                      color: theme.textTheme.titleMedium?.color ??
+                          theme.colorScheme.onSurface,
                     ),
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close, size: 20),
+                  icon: Icon(
+                    Icons.close,
+                    size: 20,
+                    color: theme.iconTheme.color?.withValues(alpha: 0.6) ??
+                        AppColors.icon,
+                  ),
                   onPressed: () => context.pop(),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -117,59 +128,65 @@ class _AdminQuickStockPriceDialogState
             const SizedBox(height: 4),
             Text(
               widget.jouet.nom,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
-                color: AppColors.textSecondary,
+                color: theme.textTheme.bodySmall?.color
+                        ?.withValues(alpha: 0.7) ??
+                    AppColors.textSecondary,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            const Divider(height: 24, color: AppColors.border),
+            Divider(height: 24, color: dividerColor),
             // Modification du Prix
             AppTextField(
               controller: _prixController,
-              label: "Prix (${widget.jouet.devise})",
+              labelText: "Prix (${widget.jouet.devise})",
               hintText: "ex: 15000",
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               prefixIcon: Icons.payments_outlined,
             ),
             AppSpacing.verticalMd,
             // Modification du Stock avec Stepper
-            const Text(
+            Text(
               "Stock disponible",
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: theme.textTheme.bodyMedium?.color ??
+                    theme.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: dividerColor),
                 borderRadius: BorderRadius.circular(12),
-                color: AppColors.surfaceVariant.withValues(alpha: 0.3),
+                color: isDark
+                    ? theme.colorScheme.surfaceContainerHighest
+                    : AppColors.surfaceVariant.withValues(alpha: 0.3),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.remove_circle_outline, color: AppColors.primary),
+                    icon: Icon(Icons.remove_circle_outline, color: theme.colorScheme.primary),
                     onPressed: _stock > 0
                         ? () => setState(() => _stock--)
                         : null,
                   ),
                   Text(
                     "$_stock unités",
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                      color: theme.textTheme.titleMedium?.color ??
+                          theme.colorScheme.onSurface,
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.add_circle_outline, color: AppColors.primary),
+                    icon: Icon(Icons.add_circle_outline, color: theme.colorScheme.primary),
                     onPressed: () => setState(() => _stock++),
                   ),
                 ],
