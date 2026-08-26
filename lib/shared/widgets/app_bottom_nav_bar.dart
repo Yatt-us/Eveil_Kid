@@ -1,4 +1,3 @@
-import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/core/provider/bottom_nav_bar_provider.dart';
 import 'package:eveilkid/core/router/app_routes.dart';
 import 'package:flutter/material.dart';
@@ -6,20 +5,51 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 class AppBottomNavBar extends ConsumerWidget {
-  const AppBottomNavBar({super.key});
+  final int? currentIndex;
+  final ValueChanged<int>? onTap;
+
+  const AppBottomNavBar({
+    super.key,
+    this.currentIndex,
+    this.onTap,
+  });
+
+  int _calculateSelectedIndex(BuildContext context) {
+    try {
+      final location = GoRouterState.of(context).matchedLocation;
+      if (location.startsWith(AppRoutes.jouetscreen) ||
+          location.startsWith(AppRoutes.jouetdetail)) {
+        return 1;
+      }
+      if (location.startsWith(AppRoutes.tutoriels)) {
+        return 2;
+      }
+      if (location.startsWith(AppRoutes.profile)) {
+        return 3;
+      }
+      return 0;
+    } catch (_) {
+      return 0;
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentIndex = ref.watch(bottomIndexProvider);
+    final int effectiveIndex = currentIndex ?? _calculateSelectedIndex(context);
+    final theme = Theme.of(context);
 
     return BottomNavigationBar(
-      currentIndex: currentIndex,
+      currentIndex: effectiveIndex,
 
       // Apparence
       type: BottomNavigationBarType.fixed,
-      backgroundColor: AppColors.surface,
-      selectedItemColor: AppColors.primary,
-      unselectedItemColor: AppColors.textSecondary,
+      backgroundColor: theme.bottomNavigationBarTheme.backgroundColor ??
+          theme.colorScheme.surface,
+      selectedItemColor: theme.bottomNavigationBarTheme.selectedItemColor ??
+          theme.colorScheme.primary,
+      unselectedItemColor: theme.bottomNavigationBarTheme.unselectedItemColor ??
+          (theme.iconTheme.color?.withValues(alpha: 0.6) ??
+              theme.colorScheme.onSurfaceVariant),
 
       selectedFontSize: 12,
       unselectedFontSize: 12,
@@ -28,21 +58,25 @@ class AppBottomNavBar extends ConsumerWidget {
 
       // Navigation
       onTap: (index) {
-        ref.read(bottomIndexProvider.notifier).setIndex(index);
+        if (onTap != null) {
+          onTap!(index);
+        } else {
+          ref.read(bottomIndexProvider.notifier).setIndex(index);
 
-        switch (index) {
-          case 0:
-            context.go(AppRoutes.home);
-            break;
-          case 1:
-            context.go(AppRoutes.jouetscreen);
-            break;
-          case 2:
-            context.go(AppRoutes.tutoriels);
-            break;
-          case 3:
-            context.go(AppRoutes.profile);
-            break;
+          switch (index) {
+            case 0:
+              context.go(AppRoutes.home);
+              break;
+            case 1:
+              context.go(AppRoutes.jouetscreen);
+              break;
+            case 2:
+              context.go(AppRoutes.tutoriels);
+              break;
+            case 3:
+              context.go(AppRoutes.profile);
+              break;
+          }
         }
       },
 

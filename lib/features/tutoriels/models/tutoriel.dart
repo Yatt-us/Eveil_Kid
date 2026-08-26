@@ -4,7 +4,7 @@ import '../enums/tutoriel_status.enum.dart';
 class Tutoriel {
   final String? tutorielId;
   final String categorieId;
-  final String? jouetLieId;
+  final String jouetLieId;
   final String createurId;
   final String titre;
   final String description;
@@ -18,10 +18,10 @@ class Tutoriel {
   final DateTime dateCreation;
   final DateTime dateModification;
 
-  Tutoriel({
-    this.tutorielId,
+  const Tutoriel({
+    required this.tutorielId,
     required this.categorieId,
-    this.jouetLieId,
+    required this.jouetLieId,
     required this.createurId,
     required this.titre,
     required this.description,

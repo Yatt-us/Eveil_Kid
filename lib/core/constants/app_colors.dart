@@ -74,13 +74,13 @@ class AppColors {
   // ============================================================
 
   /// Fond principal sombre
-  static const Color darkBackground = Color(0xFF12101A);
+  static const Color darkBackground = Color(0xFF121214);
 
-  /// Surface sombre
-  static const Color darkSurface = Color(0xFF1D1928);
+  /// Surface sombre (variante gris sombre)
+  static const Color darkSurface = Color(0xFF1E1E22);
 
-  /// Surface sombre secondaire
-  static const Color darkSurfaceVariant = Color(0xFF292336);
+  /// Surface sombre secondaire (variante de surface gris sombre)
+  static const Color darkSurfaceVariant = Color(0xFF2A2A30);
 
   /// Texte principal sombre
   static const Color darkTextPrimary = Color(0xFFF8F7FC);
@@ -89,13 +89,13 @@ class AppColors {
   static const Color darkTextSecondary = Color(0xFFB8B3C7);
 
   /// Bordure sombre
-  static const Color darkBorder = Color(0xFF3A3348);
+  static const Color darkBorder = Color(0xFF33333C);
 
   /// Icône sombre
   static const Color darkIcon = Color(0xFFB8B3C7);
 
   /// Élément désactivé sombre
-  static const Color darkDisabled = Color(0xFF5C5668);
+  static const Color darkDisabled = Color(0xFF555562);
 
   // ============================================================
   // THÈME ENFANT — VERT

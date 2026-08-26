@@ -13,7 +13,10 @@ import 'package:eveilkid/features/categories/providers/categorie_provider.dart';
 import 'package:eveilkid/features/jouets/models/jouet.dart';
 import 'package:eveilkid/features/jouets/providers/jouet_provider.dart';
 import 'package:eveilkid/features/jouets/presentation/page/jouet_card.dart';
-import 'package:eveilkid/features/panier/providers/panier_provider.dart';
+import 'package:eveilkid/features/panier/presentation/widgets/panier_app_bar_action.dart';
+import 'package:eveilkid/features/panier/presentation/widgets/panier_floating_button.dart';
+
+import 'package:eveilkid/core/provider/bottom_nav_bar_provider.dart';
 
 class JouetsScreen extends ConsumerStatefulWidget {
   final String utilisateurId;
@@ -27,9 +30,7 @@ class JouetsScreen extends ConsumerStatefulWidget {
 class _JouetsScreenState extends ConsumerState<JouetsScreen> {
   final TextEditingController _searchController = TextEditingController();
 
-  int _currentIndex = 1;
   String _recherche = '';
-  String? _categorieIdSelectionnee; // null pour "Tous"
 
   @override
   void dispose() {
@@ -37,7 +38,7 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
     super.dispose();
   }
 
-  List<Jouet> _filtrerJouets(List<Jouet> jouets) {
+  List<Jouet> _filtrerJouets(List<Jouet> jouets, String? selectedCategory) {
     return jouets.where((jouet) {
       final rechercheLower = _recherche.trim().toLowerCase();
 
@@ -47,8 +48,7 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
           jouet.description.toLowerCase().contains(rechercheLower);
 
       final correspondCategorie =
-          _categorieIdSelectionnee == null ||
-          jouet.categorieId == _categorieIdSelectionnee;
+          selectedCategory == null || jouet.categorieId == selectedCategory;
 
       return correspondRecherche && correspondCategorie;
     }).toList();
@@ -57,137 +57,118 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
   @override
   Widget build(BuildContext context) {
     final jouetsAsync = ref.watch(jouetsProvider);
+    final selectedCategory = ref.watch(selectedCategoryFilterProvider);
+    final theme = Theme.of(context);
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: CustomScrollView(
-                slivers: [
-                  // HEADER
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                    sliver: SliverToBoxAdapter(child: _buildHeader()),
-                  ),
-
-                  // RECHERCHE
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                    sliver: SliverToBoxAdapter(child: _buildSearchBar()),
-                  ),
-
-                  // HERO
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                    sliver: SliverToBoxAdapter(child: _buildHero()),
-                  ),
-
-                  // CATEGORIES
-                  SliverPadding(
-                    padding: const EdgeInsets.only(top: 16, bottom: 8),
-                    sliver: SliverToBoxAdapter(child: _buildCategoriesBar()),
-                  ),
-
-                  // JOUETS
-                  jouetsAsync.when(
-                    loading: () => const SliverFillRemaining(
-                      hasScrollBody: false,
-                      child: Center(child: CircularProgressIndicator()),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          ref.read(bottomIndexProvider.notifier).setIndex(0);
+          context.go(AppRoutes.home);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: CustomScrollView(
+                  slivers: [
+                    // HEADER
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                      sliver: SliverToBoxAdapter(child: _buildHeader()),
                     ),
-                    error: (error, stack) => SliverFillRemaining(
-                      hasScrollBody: false,
-                      child: _buildError(error),
-                    ),
-                    data: (jouets) {
-                      final jouetsFiltres = _filtrerJouets(jouets);
 
-                      if (jouetsFiltres.isEmpty) {
-                        return SliverFillRemaining(
-                          hasScrollBody: false,
-                          child: _buildEmpty(),
+                    // RECHERCHE
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                      sliver: SliverToBoxAdapter(child: _buildSearchBar()),
+                    ),
+
+                    // HERO
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                      sliver: SliverToBoxAdapter(child: _buildHero()),
+                    ),
+
+                    // CATEGORIES
+                    SliverPadding(
+                      padding: const EdgeInsets.only(top: 16, bottom: 8),
+                      sliver: SliverToBoxAdapter(child: _buildCategoriesBar()),
+                    ),
+
+                    // JOUETS
+                    jouetsAsync.when(
+                      loading: () => const SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                      error: (error, stack) => SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: _buildError(error),
+                      ),
+                      data: (jouets) {
+                        final jouetsFiltres = _filtrerJouets(
+                          jouets,
+                          selectedCategory,
                         );
-                      }
 
-                      return SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-                        sliver: SliverGrid(
-                          delegate: SliverChildBuilderDelegate((
-                            context,
-                            index,
-                          ) {
-                            final jouet = jouetsFiltres[index];
-                            return JouetCard(
-                              jouet: jouet,
-                              onTap: () {
-                                // Utilisation de context.push pour ajouter l'écran au-dessus
-                                // et conserver la flèche Retour (back) native dans JouetDetailScreen.
-                                context.push(
-                                  AppRoutes.jouetdetail,
-                                  extra: jouet,
-                                );
-                              },
-                            );
-                          }, childCount: jouetsFiltres.length),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                crossAxisSpacing: 12,
-                                mainAxisSpacing: 12,
-                                childAspectRatio: 0.75,
-                              ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
+                        if (jouetsFiltres.isEmpty) {
+                          return SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: _buildEmpty(),
+                          );
+                        }
+
+                        return SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+                          sliver: SliverGrid(
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
+                              final jouet = jouetsFiltres[index];
+                              return JouetCard(
+                                jouet: jouet,
+                                onTap: () {
+                                  // Utilisation de context.push pour ajouter l'écran au-dessus
+                                  // et conserver la flèche Retour (back) native dans JouetDetailScreen.
+                                  context.push(
+                                    AppRoutes.jouetdetail,
+                                    extra: jouet,
+                                  );
+                                },
+                              );
+                            }, childCount: jouetsFiltres.length),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 12,
+                                  mainAxisSpacing: 12,
+                                  childAspectRatio: 0.75,
+                                ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
-            ),
-
-            // NAVIGATION BAS DE PAGE
-          ],
+            ],
+          ),
         ),
+        floatingActionButton: const PanierFloatingButton(),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+        bottomNavigationBar: const AppBottomNavBar(),
       ),
-      bottomNavigationBar: AppBottomNavBar(),
     );
   }
 
-  void _onNavigationTap(int index) {
-    if (index == _currentIndex) return;
-
-    setState(() {
-      _currentIndex = index;
-    });
-
-    // Exemple de routage bas de page selon l'onglet cliqué :
-    switch (index) {
-      case 0:
-        context.go(AppRoutes.home);
-        break;
-      case 1:
-        // Déjà sur le catalogue (JouetsScreen)
-        break;
-      case 2:
-        context.go(AppRoutes.activites);
-        break;
-      case 3:
-        context.go(AppRoutes.tutoriels);
-        break;
-    }
-  }
-
-  // HEADER DYNAMIQUE (Compteur du panier via Riverpod)
+  // HEADER DYNAMIQUE
   Widget _buildHeader() {
-    final panierAsync = ref.watch(panierProvider(widget.utilisateurId));
-
-    final totalArticles = panierAsync.when(
-      data: (articles) =>
-          articles.fold<int>(0, (sum, item) => sum + item.quantite),
-      loading: () => 0,
-      error: (_, __) => 0,
-    );
-
     return Row(
       children: [
         Text(
@@ -198,43 +179,7 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
           ),
         ),
         const Spacer(),
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            IconButton(
-              onPressed: () {
-                // Naviguer vers la page Panier si elle existe
-              },
-              icon: const Icon(Icons.shopping_cart_outlined, size: 26),
-              color: AppColors.textPrimary,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-            ),
-            if (totalArticles > 0)
-              Positioned(
-                right: -4,
-                top: -4,
-                child: Container(
-                  width: 18,
-                  height: 18,
-                  decoration: const BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      '$totalArticles',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
+        const PanierAppBarAction(),
       ],
     );
   }
@@ -372,7 +317,9 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
 
   // CATEGORIES DYNAMIQUES
   Widget _buildCategoriesBar() {
-    final categoriesAsync = ref.watch(categoriesPrincipalesProvider);
+    final categoriesAsync = ref.watch(categoriesStreamProvider);
+    final selectedCategoryId = ref.watch(selectedCategoryFilterProvider);
+    final theme = Theme.of(context);
 
     return categoriesAsync.when(
       loading: () => const SizedBox(
@@ -391,36 +338,42 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
             itemBuilder: (context, index) {
               final isTous = index == 0;
               final selected = isTous
-                  ? _categorieIdSelectionnee == null
-                  : _categorieIdSelectionnee ==
-                        categories[index - 1].categorieId;
+                  ? selectedCategoryId == null
+                  : selectedCategoryId == categories[index - 1].categorieId;
 
               final nomCategorie = isTous ? 'Tous' : categories[index - 1].nom;
 
               return GestureDetector(
                 onTap: () {
-                  setState(() {
-                    _categorieIdSelectionnee = isTous
-                        ? null
-                        : categories[index - 1].categorieId;
-                  });
+                  ref
+                      .read(selectedCategoryFilterProvider.notifier)
+                      .selectCategory(
+                        isTous ? null : categories[index - 1].categorieId,
+                      );
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: selected ? AppColors.primary : AppColors.surface,
+                    color: selected
+                        ? AppColors.primary
+                        : theme.colorScheme.surface,
                     borderRadius: AppRadius.circularRadius,
                     border: selected
                         ? null
-                        : Border.all(color: AppColors.border),
+                        : Border.all(
+                            color: theme.dividerColor.withValues(alpha: 0.8),
+                          ),
                   ),
                   child: Text(
                     nomCategorie,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                      color: selected ? Colors.white : AppColors.textPrimary,
+                      color: selected
+                          ? Colors.white
+                          : (theme.textTheme.bodyMedium?.color ??
+                                AppColors.textPrimary),
                     ),
                   ),
                 ),

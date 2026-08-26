@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 
 class AppIconButton extends StatelessWidget {
   final IconData icon;
@@ -25,9 +24,10 @@ class AppIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final effectiveBgColor =
-        backgroundColor ?? AppColors.primary.withValues(alpha: 0.1);
-    final effectiveIconColor = color ?? AppColors.primary;
+        backgroundColor ?? theme.colorScheme.primary.withValues(alpha: 0.1);
+    final effectiveIconColor = color ?? theme.colorScheme.primary;
 
     Widget button = InkWell(
       onTap: onPressed,
@@ -59,16 +59,16 @@ class AppIconButton extends StatelessWidget {
             top: -2,
             child: Container(
               padding: EdgeInsets.all(badgeText != null ? 4 : 5),
-              decoration: const BoxDecoration(
-                color: AppColors.danger,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.error,
                 shape: BoxShape.circle,
               ),
               constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
               child: badgeText != null
                   ? Text(
                       badgeText!,
-                      style: const TextStyle(
-                        color: AppColors.white,
+                      style: TextStyle(
+                        color: theme.colorScheme.onError,
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                       ),

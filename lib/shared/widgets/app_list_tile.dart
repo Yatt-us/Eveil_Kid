@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 
 class AppListTile extends StatelessWidget {
   final String title;
@@ -21,6 +20,8 @@ class AppListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Column(
       children: [
         InkWell(
@@ -37,19 +38,22 @@ class AppListTile extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
+                          color: theme.textTheme.titleMedium?.color ??
+                              theme.colorScheme.onSurface,
                         ),
                       ),
                       if (subtitle != null) ...[
                         const SizedBox(height: 2),
                         Text(
                           subtitle!,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
-                            color: AppColors.textSecondary,
+                            color: theme.textTheme.bodyMedium?.color
+                                    ?.withValues(alpha: 0.7) ??
+                                theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -60,9 +64,10 @@ class AppListTile extends StatelessWidget {
                   const SizedBox(width: 8),
                   trailing!,
                 ] else if (onTap != null)
-                  const Icon(
+                  Icon(
                     Icons.chevron_right,
-                    color: AppColors.icon,
+                    color: theme.iconTheme.color?.withValues(alpha: 0.6) ??
+                        theme.colorScheme.onSurfaceVariant,
                     size: 20,
                   ),
               ],
@@ -70,9 +75,9 @@ class AppListTile extends StatelessWidget {
           ),
         ),
         if (showDivider)
-          const Divider(
+          Divider(
             height: 1,
-            color: AppColors.border,
+            color: theme.dividerColor.withValues(alpha: 0.2),
             indent: 12,
             endIndent: 12,
           ),
