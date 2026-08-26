@@ -22,3 +22,39 @@ final tutorielByIdProvider =
 
   return repository.getTutorielById(tutorielId);
 });
+
+
+
+final adminTutorielsProvider = FutureProvider<List<Tutoriel>>((ref) async {
+  final repository = ref.read(tutorielRepositoryProvider);
+  return repository.getAllTutorielsForAdmin();
+});
+
+
+
+class TutorielNotifier extends AsyncNotifier<Tutoriel?> {
+  late final TutorielRepository _repository;
+
+  @override
+  Future<Tutoriel?> build() async {
+    _repository = ref.read(tutorielRepositoryProvider);
+    return null;
+  }
+
+  Future<void> deleteTutoriel(String id) async {
+    state = const AsyncValue.loading();
+    try {
+      await _repository.deleteTutoriel(id);
+      state = const AsyncValue.data(null);
+      ref.invalidate(adminTutorielsProvider);
+      ref.invalidate(tutorielsProvider);
+    } catch (e, stack) {
+      state = AsyncValue.error(e, stack);
+      rethrow;
+    }
+  }
+}
+
+final tutorielNotifierProvider = AsyncNotifierProvider<TutorielNotifier, Tutoriel?>(() {
+  return TutorielNotifier();
+});

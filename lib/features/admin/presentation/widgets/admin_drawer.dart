@@ -189,7 +189,7 @@ class _AdminNavigationContent extends ConsumerWidget {
         activeIcon: Icons.video_library_rounded,
         label: 'Tutoriels',
         badge: 'Bientôt',
-        onTap: () => _showComingSoon(context, 'Tutoriels'),
+        onTap: () => () => _navigate(context, AdminNavRoute.tutoriels),
       ),
       _AdminNavItemData(
         route: AdminNavRoute.activites,
@@ -312,6 +312,9 @@ class _AdminNavigationContent extends ConsumerWidget {
       case AdminNavRoute.activites:
         context.go(AppRoutes.adminActivites);
         break;
+      case AdminNavRoute.tutoriels:
+      context.go(AppRoutes.adminTutoriels);
+      break;
       default:
         return;
     }

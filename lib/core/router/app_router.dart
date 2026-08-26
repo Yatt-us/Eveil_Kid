@@ -1,5 +1,6 @@
 import 'package:eveilkid/features/activites/presentation/pages/admin/activites_liste.dart';
 import 'package:eveilkid/features/activites/presentation/pages/admin/add_activity_screen.dart';
+import 'package:eveilkid/features/activites/presentation/pages/admin/edit_activity_screen.dart';
 import 'package:eveilkid/features/questions/enums/question_type.enum.dart';
 import 'package:eveilkid/features/questions/options_questions/choose_question_type_screen.dart';
 import 'package:eveilkid/features/questions/presentation/pages/add_question_screen.dart';
@@ -8,6 +9,7 @@ import 'package:eveilkid/features/questions/presentation/pages/question_detail_s
 import 'package:eveilkid/features/questions/presentation/pages/questions_list_screen.dart';
 import 'package:eveilkid/features/parents/presentation/pages/accueil_parent.dart';
 import 'package:eveilkid/features/parents/presentation/pages/profil_parent.dart';
+import 'package:eveilkid/features/tutoriels/presentations/pages/admin/tutoriels_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -64,7 +66,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           state.matchedLocation == AppRoutes.register;
       final isSplash = state.matchedLocation == AppRoutes.splash;
 
-      // 2. Utilisateur non authentifié
+     
       if (!isAuthenticated) {
         // Autoriser l'accès aux pages d'authentification ou pages publiques autorisées
         if (isGoingToAuth || state.matchedLocation == AppRoutes.tutoriels) {
@@ -183,6 +185,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.adminAddActivity,
         builder: (context, state) => const AddActivityScreen(),
       ),
+      GoRoute(
+  path: AppRoutes.adminEditActivity,
+
+  builder: (context, state) {
+    final activityId =
+        state.pathParameters['activityId']!;
+
+    return EditActivityLoader(
+      activityId: activityId,
+    );
+  },
+),
 
       GoRoute(
       path: AppRoutes.adminActivityQuestions,
@@ -235,6 +249,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         );
       },
     ),
+    GoRoute(
+        path: AppRoutes.adminTutoriels,
+        builder: (context, state) => const TutorielsListScreen(),
+      ),
       
 
       // ── Espace Jouets ──

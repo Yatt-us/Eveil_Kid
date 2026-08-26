@@ -28,11 +28,14 @@ class AppRoutes {
   static const String adminProductForm = '/admin/product-form';
   static const String adminActivites= '/admin/activites';
   static const String adminAddActivity= '/admin/activites/add';
+  static const String adminEditActivity = '/admin/activites/edit/:activityId';
   static const String adminActivityQuestions = '/admin/activites/:activityId/questions';
   static const String adminActivityTypeQuestions = '/admin/activites/:activityId/questions/choose-type';
   static const String adminActivityAddQuestions = '/admin/activites/:activityId/questions/add';
   static const String adminActivityEditQuestions = '/admin/activites/:activityId/questions/edit/:questionId';
   static const String adminActivityDetailQuestions = '/admin/activites/:activityId/questions/detail/:questionId';
+  static const String adminTutoriels = '/admin/tutoriels';
+
   
 
   // Espace Jouets

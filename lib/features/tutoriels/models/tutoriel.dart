@@ -1,7 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../enums/tutoriel_status.enum.dart';
 
 class Tutoriel {
-  final String tutorielId;
+  final String? tutorielId;
   final String categorieId;
   final String? jouetLieId;
   final String createurId;
@@ -10,60 +11,53 @@ class Tutoriel {
   final List<String> jouetsSuggeres;
   final String videoUrl;
   final String miniatureUrl;
-  final num duree;
-  final num ageMinimum;
-  final num ageMaximum;
-  final bool estPublie;
+  final int duree; 
+  final int ageMinimum;
+  final int ageMaximum;
+  final TutorielStatus statut;
   final DateTime dateCreation;
   final DateTime dateModification;
-  
 
   Tutoriel({
-    required this.tutorielId,
+    this.tutorielId,
     required this.categorieId,
     this.jouetLieId,
     required this.createurId,
     required this.titre,
     required this.description,
-    required this.jouetsSuggeres,
+    this.jouetsSuggeres = const [],
     required this.videoUrl,
     required this.miniatureUrl,
     required this.duree,
     required this.ageMinimum,
     required this.ageMaximum,
-    required this.estPublie,
+    this.statut = TutorielStatus.brouillon,
     required this.dateCreation,
     required this.dateModification,
   });
 
-  /// Firestore -> Model
-  factory Tutoriel.fromFirestore(
-    DocumentSnapshot<Map<String, dynamic>> doc,
-  ) {
-    final data = doc.data()!;
-
+  factory Tutoriel.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    
     return Tutoriel(
       tutorielId: doc.id,
-      categorieId: data['categorieId'] as String,
-      jouetLieId: data['jouetLieId'] as String?,
-      createurId: data['createurId'] as String,
-      titre: data['titre'] as String,
-      description: data['description'] as String,
-      jouetsSuggeres: List<String>.from(
-        data['jouetsSuggeres'] ?? [],
-      ),
-      videoUrl: data['videoUrl'] as String,
-      miniatureUrl: data['miniatureUrl'] as String,
-      duree: data['duree'] as num,
-      ageMinimum: data['ageMinimum'] as num,
-      ageMaximum: data['ageMaximum'] as num,
-      estPublie: data['estPublie'] as bool,
+      categorieId: data['categorieId'] ?? '',
+      jouetLieId: data['jouetLieId'],
+      createurId: data['createurId'] ?? '',
+      titre: data['titre'] ?? '',
+      description: data['description'] ?? '',
+      jouetsSuggeres: List<String>.from(data['jouetsSuggeres'] ?? []),
+      videoUrl: data['videoUrl'] ?? '',
+      miniatureUrl: data['miniatureUrl'] ?? '',
+      duree: data['duree'] ?? 0,
+      ageMinimum: data['ageMinimum'] ?? 0,
+      ageMaximum: data['ageMaximum'] ?? 0,
+      statut: TutorielStatusExtension.fromString(data['statut'] ?? 'brouillon'),
       dateCreation: (data['dateCreation'] as Timestamp).toDate(),
       dateModification: (data['dateModification'] as Timestamp).toDate(),
     );
   }
 
-  /// Model -> Firestore
   Map<String, dynamic> toFirestore() {
     return {
       'categorieId': categorieId,
@@ -77,7 +71,7 @@ class Tutoriel {
       'duree': duree,
       'ageMinimum': ageMinimum,
       'ageMaximum': ageMaximum,
-      'estPublie': estPublie,
+      'statut': statut.value,
       'dateCreation': Timestamp.fromDate(dateCreation),
       'dateModification': Timestamp.fromDate(dateModification),
     };
@@ -93,10 +87,10 @@ class Tutoriel {
     List<String>? jouetsSuggeres,
     String? videoUrl,
     String? miniatureUrl,
-    num? duree,
-    num? ageMinimum,
-    num? ageMaximum,
-    bool? estPublie,
+    int? duree,
+    int? ageMinimum,
+    int? ageMaximum,
+    TutorielStatus? statut,
     DateTime? dateCreation,
     DateTime? dateModification,
   }) {
@@ -113,10 +107,17 @@ class Tutoriel {
       duree: duree ?? this.duree,
       ageMinimum: ageMinimum ?? this.ageMinimum,
       ageMaximum: ageMaximum ?? this.ageMaximum,
-      estPublie: estPublie ?? this.estPublie,
+      statut: statut ?? this.statut,
       dateCreation: dateCreation ?? this.dateCreation,
       dateModification: dateModification ?? this.dateModification,
     );
   }
 
+  String get dureeFormatee {
+    final minutes = duree ~/ 60;
+    final secondes = duree % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${secondes.toString().padLeft(2, '0')}';
+  }
+
+  String get statutLabel => statut.label;
 }

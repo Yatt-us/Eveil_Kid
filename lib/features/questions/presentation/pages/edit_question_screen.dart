@@ -51,7 +51,6 @@ class _EditQuestionScreenState extends ConsumerState<EditQuestionScreen> {
       if (!mounted) return;
 
       if (questionAsync != null) {
-        // Créer le controller avec les données existantes
         _controller = AddQuestionController(
           ref: ref,
           activityId: widget.activityId,
@@ -64,7 +63,7 @@ class _EditQuestionScreenState extends ConsumerState<EditQuestionScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Question non trouvée'),
-              backgroundColor: Colors.red,
+              backgroundColor: AppColors.danger
             ),
           );
           Navigator.pop(context);
@@ -76,7 +75,7 @@ class _EditQuestionScreenState extends ConsumerState<EditQuestionScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Erreur: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.danger
           ),
         );
         Navigator.pop(context);
@@ -101,7 +100,7 @@ class _EditQuestionScreenState extends ConsumerState<EditQuestionScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Erreur: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.danger
           ),
         );
       }
@@ -111,6 +110,18 @@ class _EditQuestionScreenState extends ConsumerState<EditQuestionScreen> {
   Future<void> _updateQuestion() async {
     final success = await _controller.update();
     if (success && mounted) {
+
+      ref.invalidate(questionsByActiviteProvider(widget.activityId));
+      ref.invalidate(
+        questionByIdProvider(
+          (activiteId: widget.activityId, questionId: widget.questionId)
+        )
+      );
+      
+      
+      final notifier = ref.read(questionNotifierProvider.notifier);
+      await notifier.loadQuestions(widget.activityId);
+      
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Question mise à jour avec succès !'),
@@ -157,10 +168,11 @@ class _EditQuestionScreenState extends ConsumerState<EditQuestionScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Question
+                    // Question avec erreur
                     QuestionFormWidget(
                       controller: _controller.questionController,
                       hintText: 'Modifiez votre question...',
+                      errorText: _controller.questionError,
                     ),
                     const SizedBox(height: 20),
 
@@ -177,8 +189,11 @@ class _EditQuestionScreenState extends ConsumerState<EditQuestionScreen> {
                     _buildOptionsSection(),
                     const SizedBox(height: 24),
 
-                    // Points
-                    PointsWidget(controller: _controller.pointsController),
+                    // Points avec erreur
+                    PointsWidget(
+                      controller: _controller.pointsController,
+                      errorText: _controller.pointsError,
+                    ),
                     const SizedBox(height: 24),
 
                     // Erreur
@@ -191,20 +206,34 @@ class _EditQuestionScreenState extends ConsumerState<EditQuestionScreen> {
                     ),
                     const SizedBox(height: 8),
 
-                    // Bouton Annuler
                     SizedBox(
                       width: double.infinity,
                       height: 40,
+                     
                       child: TextButton(
                         onPressed: () => Navigator.pop(context),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.danger,
+                          side: const BorderSide(
+                            color: AppColors.danger,
+                            width: 1.5,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                        ),
                         child: const Text(
                           'Annuler',
                           style: TextStyle(
-                            color: Colors.grey,
                             fontSize: 16,
                           ),
                         ),
-                      ),
+                    ),
+
                     ),
                   ],
                 ),
@@ -224,12 +253,15 @@ class _EditQuestionScreenState extends ConsumerState<EditQuestionScreen> {
           onCorrectAnswerChanged: _controller.updateCorrectAnswer,
           onAddOption: _controller.addOption,
           onRemoveOption: _controller.removeOption,
+          optionsError: _controller.optionsError,
+          correctAnswerError: _controller.correctAnswerError,
         );
 
       case QuestionType.vraiFaux:
         return TrueFalseOptions(
           selectedTrueFalse: _controller.selectedTrueFalse,
           onChanged: _controller.updateTrueFalse,
+          errorText: _controller.correctAnswerError,
         );
 
       case QuestionType.association:
@@ -239,6 +271,7 @@ class _EditQuestionScreenState extends ConsumerState<EditQuestionScreen> {
           onOptionChanged: _controller.updateOptionText,
           onAddOption: _controller.addOption,
           onRemoveOption: _controller.removeOption,
+          optionsError: _controller.optionsError,
         );
 
       case QuestionType.classement:
@@ -248,6 +281,7 @@ class _EditQuestionScreenState extends ConsumerState<EditQuestionScreen> {
           onOptionChanged: _controller.updateOptionText,
           onAddOption: _controller.addOption,
           onRemoveOption: _controller.removeOption,
+          optionsError: _controller.optionsError,
         );
     }
   }

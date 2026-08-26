@@ -32,6 +32,7 @@ class _QuestionsListScreenState extends ConsumerState<QuestionsListScreen> {
   Widget build(BuildContext context) {
     final activityAsync = ref.watch(activiteByIdProvider(widget.activityId));
     final questionsAsync = ref.watch(questionNotifierProvider);
+    
 
     return Scaffold(
       appBar: AppBar(
@@ -153,7 +154,7 @@ class _QuestionsListScreenState extends ConsumerState<QuestionsListScreen> {
             ),
           ),
         ),
-        // ✅ Bouton "Ajouter une question" en bas
+       
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(

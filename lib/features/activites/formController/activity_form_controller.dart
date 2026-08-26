@@ -13,7 +13,7 @@ import 'package:eveilkid/features/activites/providers/admin/activity_provider.da
 
 
 class ActivityFormController extends ChangeNotifier {
-    String? titreError;
+String? titreError;
 String? descriptionError;
 String? categorieError;
 String? dureeError;

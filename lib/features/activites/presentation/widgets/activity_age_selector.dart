@@ -1,3 +1,4 @@
+import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class ActivityAgeSelector extends StatelessWidget {
@@ -47,7 +48,21 @@ class ActivityAgeSelector extends StatelessWidget {
                             ))
                         .toList(),
                     onChanged: (value) {
-                      if (value != null) onMinAgeChanged(value);
+                      if (value != null) {
+                       
+                        if (value <= maxAge) {
+                          onMinAgeChanged(value);
+                        } else {
+                          // Afficher un message si l'utilisateur essaie de dépasser
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('L\'âge minimum ne peut pas dépasser l\'âge maximum ($maxAge ans)'),
+                              backgroundColor: AppColors.danger,
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                      }
                     },
                   ),
                 ),
@@ -85,7 +100,20 @@ class ActivityAgeSelector extends StatelessWidget {
                             ))
                         .toList(),
                     onChanged: (value) {
-                      if (value != null) onMaxAgeChanged(value);
+                      if (value != null) {
+               
+                        if (value >= minAge) {
+                          onMaxAgeChanged(value);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('L\'âge maximum ne peut pas être inférieur à l\'âge minimum ($minAge ans)'),
+                              backgroundColor: AppColors.danger,
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                      }
                     },
                   ),
                 ),
