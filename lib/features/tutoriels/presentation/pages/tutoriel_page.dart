@@ -283,3 +283,4 @@ class _TutorielPageState extends ConsumerState<TutorielPage> {
     return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 }
+
