@@ -1,16 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:eveilkid/core/constants/app_colors.dart';
+import 'package:eveilkid/core/constants/AppTextStyles.dart';
 import 'package:eveilkid/core/provider/bottom_nav_bar_provider.dart';
 import 'package:eveilkid/core/router/app_routes.dart';
+import 'package:eveilkid/features/categories/models/categorie.dart';
 import 'package:eveilkid/features/categories/providers/categorie_provider.dart';
+import 'package:eveilkid/features/panier/presentation/widgets/panier_app_bar_action.dart';
+import 'package:eveilkid/features/panier/presentation/widgets/panier_floating_button.dart';
 import 'package:eveilkid/features/tutoriels/models/tutoriel.dart';
 import 'package:eveilkid/features/tutoriels/presentation/pages/tutoriel_detail_page.dart';
-import 'package:eveilkid/features/tutoriels/presentation/widgets/category_filter.dart';
 import 'package:eveilkid/features/tutoriels/presentation/widgets/tutoriel_card.dart';
-import 'package:eveilkid/features/tutoriels/presentation/widgets/tutoriel_search.dart';
 import 'package:eveilkid/features/tutoriels/providers/tutoriel_provider.dart';
 import 'package:eveilkid/shared/widgets/app_bottom_nav_bar.dart';
+import 'package:eveilkid/shared/widgets/app_search_bar.dart';
+import 'package:eveilkid/shared/widgets/app_states.dart';
+
+enum TutorielSortOption {
+  newest,
+  shortest,
+  longest,
+  nameAsc,
+}
 
 class TutorielPage extends ConsumerStatefulWidget {
   const TutorielPage({super.key});
@@ -23,6 +35,8 @@ class _TutorielPageState extends ConsumerState<TutorielPage> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedCategoryId = 'all';
   String _searchQuery = '';
+  TutorielSortOption _sortOption = TutorielSortOption.newest;
+  int? _selectedAgeFilter; // null = all, 2 = 0-2 ans, 5 = 3-5 ans, 8 = 6+ ans
 
   @override
   void dispose() {
@@ -30,10 +44,15 @@ class _TutorielPageState extends ConsumerState<TutorielPage> {
     super.dispose();
   }
 
-  List<Tutoriel> _filterTutoriels(List<Tutoriel> tutoriels) {
+  bool get _hasActiveFilters =>
+      _selectedCategoryId != 'all' ||
+      _sortOption != TutorielSortOption.newest ||
+      _selectedAgeFilter != null;
+
+  List<Tutoriel> _filterAndSortTutoriels(List<Tutoriel> tutoriels) {
     final query = _searchQuery.trim().toLowerCase();
 
-    return tutoriels.where((tutoriel) {
+    final filtered = tutoriels.where((tutoriel) {
       final matchesQuery = query.isEmpty ||
           tutoriel.titre.toLowerCase().contains(query) ||
           tutoriel.description.toLowerCase().contains(query);
@@ -41,8 +60,30 @@ class _TutorielPageState extends ConsumerState<TutorielPage> {
       final matchesCategory = _selectedCategoryId == 'all' ||
           tutoriel.categorieId == _selectedCategoryId;
 
-      return matchesQuery && matchesCategory;
+      bool matchesAge = true;
+      if (_selectedAgeFilter == 2) {
+        matchesAge = tutoriel.ageMinimum <= 2;
+      } else if (_selectedAgeFilter == 5) {
+        matchesAge = tutoriel.ageMinimum <= 5 && tutoriel.ageMaximum >= 3;
+      } else if (_selectedAgeFilter == 8) {
+        matchesAge = tutoriel.ageMaximum >= 6;
+      }
+
+      return matchesQuery && matchesCategory && matchesAge;
     }).toList();
+
+    switch (_sortOption) {
+      case TutorielSortOption.newest:
+        filtered.sort((a, b) => b.dateCreation.compareTo(a.dateCreation));
+      case TutorielSortOption.shortest:
+        filtered.sort((a, b) => a.duree.compareTo(b.duree));
+      case TutorielSortOption.longest:
+        filtered.sort((a, b) => b.duree.compareTo(a.duree));
+      case TutorielSortOption.nameAsc:
+        filtered.sort((a, b) => a.titre.toLowerCase().compareTo(b.titre.toLowerCase()));
+    }
+
+    return filtered;
   }
 
   @override
@@ -50,6 +91,8 @@ class _TutorielPageState extends ConsumerState<TutorielPage> {
     final tutorielsAsync = ref.watch(tutorielsProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final dividerColor = theme.dividerColor.withValues(alpha: 0.2);
 
     // Mapping ID Catégorie -> Nom
     final categoriesMap = <String, String>{};
@@ -59,19 +102,37 @@ class _TutorielPageState extends ConsumerState<TutorielPage> {
       }
     });
 
-    final totalCount = tutorielsAsync.asData?.value.length ?? 0;
-    final allTutoriels = tutorielsAsync.asData?.value ?? [];
-
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) {
-          ref.read(bottomIndexProvider.notifier).setIndex(0);
-          context.go(AppRoutes.home);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) {
+              ref.read(bottomIndexProvider.notifier).setIndex(0);
+              context.go(AppRoutes.home);
+            }
+          });
         }
       },
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          titleSpacing: 16,
+          title: Text(
+            'Tutoriels',
+            style: AppTextStyles.headingSmall.copyWith(
+              color: theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface,
+              fontWeight: FontWeight.w700,
+              fontSize: 20,
+            ),
+          ),
+          actions: const [
+            PanierAppBarAction(),
+            SizedBox(width: 8),
+          ],
+        ),
         body: SafeArea(
           child: RefreshIndicator(
             color: theme.colorScheme.primary,
@@ -82,45 +143,105 @@ class _TutorielPageState extends ConsumerState<TutorielPage> {
             child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
-                // ── EN-TÊTE ──
+                // ── BARRE DE RECHERCHE + BOUTON FILTRE (STYLE ADMIN) ──
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(18, 14, 18, 0),
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
                   sliver: SliverToBoxAdapter(
-                    child: _buildHeader(context, totalCount),
-                  ),
-                ),
-
-                // ── BARRE DE RECHERCHE ──
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(18, 16, 18, 0),
-                  sliver: SliverToBoxAdapter(
-                    child: TutorielSearchField(
-                      controller: _searchController,
-                      onChanged: (value) => setState(() => _searchQuery = value),
-                      onClear: () => setState(() => _searchQuery = ''),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: AppSearchBar(
+                            controller: _searchController,
+                            hintText: 'Rechercher un tutoriel...',
+                            onChanged: (value) => setState(() => _searchQuery = value),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        InkWell(
+                          onTap: () => _showFilterBottomSheet(context, categoriesAsync),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            height: 42,
+                            width: 42,
+                            decoration: BoxDecoration(
+                              color: _hasActiveFilters
+                                  ? theme.colorScheme.primary
+                                      .withValues(alpha: isDark ? 0.25 : 0.12)
+                                  : theme.colorScheme.surface,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: _hasActiveFilters
+                                    ? theme.colorScheme.primary
+                                    : dividerColor,
+                                width: _hasActiveFilters ? 1.2 : 1.0,
+                              ),
+                            ),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Icon(
+                                  Icons.tune_rounded,
+                                  size: 19,
+                                  color: _hasActiveFilters
+                                      ? theme.colorScheme.primary
+                                      : (theme.iconTheme.color?.withValues(alpha: 0.7) ??
+                                          AppColors.icon),
+                                ),
+                                if (_hasActiveFilters)
+                                  Positioned(
+                                    top: 9,
+                                    right: 9,
+                                    child: Container(
+                                      width: 6,
+                                      height: 6,
+                                      decoration: BoxDecoration(
+                                        color: theme.colorScheme.primary,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
 
-                // ── FILTRES CATÉGORIES ──
+                // ── LISTE DES VIDÉOS ÉPURÉES ──
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  sliver: SliverToBoxAdapter(
-                    child: _buildCategoryFilters(context, categoriesAsync, allTutoriels),
-                  ),
-                ),
-
-                // ── LISTE DES TUTORIELS ──
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(18, 0, 18, 24),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
                   sliver: tutorielsAsync.when(
                     data: (tutoriels) {
-                      final filtered = _filterTutoriels(tutoriels);
+                      final filtered = _filterAndSortTutoriels(tutoriels);
 
                       if (filtered.isEmpty) {
                         return SliverFillRemaining(
                           hasScrollBody: false,
-                          child: _buildEmptyState(context),
+                          child: AppEmptyState(
+                            title: _hasActiveFilters || _searchQuery.isNotEmpty
+                                ? 'Aucun tutoriel correspondant'
+                                : 'Aucun tutoriel disponible',
+                            description: _hasActiveFilters || _searchQuery.isNotEmpty
+                                ? 'Essayez de modifier votre recherche ou vos filtres.'
+                                : 'De nouveaux tutoriels vidéo seront bientôt ajoutés.',
+                            icon: Icons.video_library_outlined,
+                            actionText: _hasActiveFilters || _searchQuery.isNotEmpty
+                                ? 'Réinitialiser les filtres'
+                                : null,
+                            onActionPressed: _hasActiveFilters || _searchQuery.isNotEmpty
+                                ? () {
+                                    setState(() {
+                                      _selectedCategoryId = 'all';
+                                      _searchQuery = '';
+                                      _sortOption = TutorielSortOption.newest;
+                                      _selectedAgeFilter = null;
+                                      _searchController.clear();
+                                    });
+                                  }
+                                : null,
+                          ),
                         );
                       }
 
@@ -131,7 +252,7 @@ class _TutorielPageState extends ConsumerState<TutorielPage> {
                             final catName = categoriesMap[item.categorieId];
 
                             return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.only(bottom: 16),
                               child: TutorielCard(
                                 tutoriel: item,
                                 categoryName: catName,
@@ -145,16 +266,19 @@ class _TutorielPageState extends ConsumerState<TutorielPage> {
                     },
                     loading: () => SliverList(
                       delegate: SliverChildBuilderDelegate(
-                        (context, index) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: _buildSkeletonCard(context),
+                        (context, index) => const Padding(
+                          padding: EdgeInsets.only(bottom: 16),
+                          child: AppSkeletonLoader(height: 220, borderRadius: 18),
                         ),
-                        childCount: 4,
+                        childCount: 3,
                       ),
                     ),
                     error: (error, _) => SliverFillRemaining(
                       hasScrollBody: false,
-                      child: _buildErrorState(context, error.toString()),
+                      child: AppErrorState(
+                        message: error.toString(),
+                        onRetry: () => ref.invalidate(tutorielsProvider),
+                      ),
                     ),
                   ),
                 ),
@@ -162,306 +286,331 @@ class _TutorielPageState extends ConsumerState<TutorielPage> {
             ),
           ),
         ),
+        floatingActionButton: const PanierFloatingButton(),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
         bottomNavigationBar: const AppBottomNavBar(),
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context, int totalCount) {
+  void _showFilterBottomSheet(
+    BuildContext context,
+    AsyncValue<List<Categorie>> categoriesAsync,
+  ) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final dividerColor = theme.dividerColor.withValues(alpha: 0.2);
+    final titleColor = theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface;
 
-    return Row(
-      children: [
-        IconButton(
-          onPressed: () {
-            ref.read(bottomIndexProvider.notifier).setIndex(0);
-            context.go(AppRoutes.home);
-          },
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          color: theme.colorScheme.onSurface,
-          tooltip: 'Retour',
-        ),
-        const SizedBox(width: 4),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    'Tutoriels',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
-                      color: theme.colorScheme.onSurface,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  if (totalCount > 0) ...[
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12),
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: theme.colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (modalCtx, setModalState) {
+            final activeCategories = categoriesAsync.maybeWhen(
+              data: (cats) => cats.where((c) => c.estActive == true).toList(),
+              orElse: () => <Categorie>[],
+            );
+
+            return SafeArea(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.85,
+                ),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(18, 12, 18, 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Poignée centrale
+                      Center(
+                        child: Container(
+                          width: 38,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: dividerColor,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
                       ),
-                      child: Text(
-                        '$totalCount vidéos',
+                      const SizedBox(height: 14),
+
+                      // Titre & Bouton Reset
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Filtres des tutoriels',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                              color: titleColor,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                          if (_hasActiveFilters)
+                            TextButton(
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.zero,
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              onPressed: () {
+                                setModalState(() {
+                                  _selectedCategoryId = 'all';
+                                  _sortOption = TutorielSortOption.newest;
+                                  _selectedAgeFilter = null;
+                                });
+                                setState(() {});
+                              },
+                              child: Text(
+                                'Réinitialiser',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      Divider(height: 20, color: dividerColor),
+
+                      // 1. Catégories
+                      Text(
+                        'CATÉGORIES',
                         style: TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w700,
-                          color: theme.colorScheme.primary,
+                          letterSpacing: 0.5,
+                          color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+                              AppColors.textSecondary,
                         ),
                       ),
-                    ),
-                  ],
-                ],
-              ),
-              const SizedBox(height: 2),
-              Text(
-                'Guides et vidéos pour accompagner vos enfants',
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w400,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _buildChoiceChip(
+                            label: 'Toutes les catégories',
+                            isSelected: _selectedCategoryId == 'all',
+                            theme: theme,
+                            isDark: isDark,
+                            onTap: () {
+                              setModalState(() => _selectedCategoryId = 'all');
+                              setState(() {});
+                            },
+                          ),
+                          ...activeCategories.map(
+                            (cat) => _buildChoiceChip(
+                              label: cat.nom,
+                              isSelected: _selectedCategoryId == cat.categorieId,
+                              theme: theme,
+                              isDark: isDark,
+                              onTap: () {
+                                setModalState(() => _selectedCategoryId = cat.categorieId);
+                                setState(() {});
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
 
-  Widget _buildCategoryFilters(
-    BuildContext context,
-    AsyncValue<List<dynamic>> categoriesAsync,
-    List<Tutoriel> tutoriels,
-  ) {
-    final chips = <Widget>[];
+                      // 2. Tranche d'âge
+                      Text(
+                        'TRANCHE D\'ÂGE',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                          color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+                              AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _buildChoiceChip(
+                            label: 'Tous les âges',
+                            isSelected: _selectedAgeFilter == null,
+                            theme: theme,
+                            isDark: isDark,
+                            onTap: () {
+                              setModalState(() => _selectedAgeFilter = null);
+                              setState(() {});
+                            },
+                          ),
+                          _buildChoiceChip(
+                            label: '0 - 2 ans',
+                            isSelected: _selectedAgeFilter == 2,
+                            theme: theme,
+                            isDark: isDark,
+                            onTap: () {
+                              setModalState(() => _selectedAgeFilter = 2);
+                              setState(() {});
+                            },
+                          ),
+                          _buildChoiceChip(
+                            label: '3 - 5 ans',
+                            isSelected: _selectedAgeFilter == 5,
+                            theme: theme,
+                            isDark: isDark,
+                            onTap: () {
+                              setModalState(() => _selectedAgeFilter = 5);
+                              setState(() {});
+                            },
+                          ),
+                          _buildChoiceChip(
+                            label: '6 ans et plus',
+                            isSelected: _selectedAgeFilter == 8,
+                            theme: theme,
+                            isDark: isDark,
+                            onTap: () {
+                              setModalState(() => _selectedAgeFilter = 8);
+                              setState(() {});
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
 
-    // Chip "Tous"
-    chips.add(
-      CategoryFilterChip(
-        label: 'Tous',
-        count: tutoriels.length,
-        isSelected: _selectedCategoryId == 'all',
-        onTap: () => setState(() => _selectedCategoryId = 'all'),
-      ),
-    );
+                      // 3. Tri
+                      Text(
+                        'TRIER PAR',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                          color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+                              AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _buildChoiceChip(
+                            label: 'Plus récents',
+                            isSelected: _sortOption == TutorielSortOption.newest,
+                            theme: theme,
+                            isDark: isDark,
+                            onTap: () {
+                              setModalState(() => _sortOption = TutorielSortOption.newest);
+                              setState(() {});
+                            },
+                          ),
+                          _buildChoiceChip(
+                            label: 'Plus courts',
+                            isSelected: _sortOption == TutorielSortOption.shortest,
+                            theme: theme,
+                            isDark: isDark,
+                            onTap: () {
+                              setModalState(() => _sortOption = TutorielSortOption.shortest);
+                              setState(() {});
+                            },
+                          ),
+                          _buildChoiceChip(
+                            label: 'Plus longs',
+                            isSelected: _sortOption == TutorielSortOption.longest,
+                            theme: theme,
+                            isDark: isDark,
+                            onTap: () {
+                              setModalState(() => _sortOption = TutorielSortOption.longest);
+                              setState(() {});
+                            },
+                          ),
+                          _buildChoiceChip(
+                            label: 'Titre (A - Z)',
+                            isSelected: _sortOption == TutorielSortOption.nameAsc,
+                            theme: theme,
+                            isDark: isDark,
+                            onTap: () {
+                              setModalState(() => _sortOption = TutorielSortOption.nameAsc);
+                              setState(() {});
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
 
-    categoriesAsync.whenData((categories) {
-      for (final cat in categories) {
-        if (cat.estActive == true) {
-          final count = tutoriels.where((t) => t.categorieId == cat.categorieId).length;
-          chips.add(
-            CategoryFilterChip(
-              label: cat.nom,
-              count: count,
-              isSelected: _selectedCategoryId == cat.categorieId,
-              onTap: () => setState(() => _selectedCategoryId = cat.categorieId),
-            ),
-          );
-        }
-      }
-    });
-
-    return SizedBox(
-      height: 42,
-      child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 18),
-        scrollDirection: Axis.horizontal,
-        itemCount: chips.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 8),
-        itemBuilder: (_, index) => chips[index],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(BuildContext context) {
-    final theme = Theme.of(context);
-    final hasFilter = _selectedCategoryId != 'all' || _searchQuery.isNotEmpty;
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.video_library_outlined,
-                size: 48,
-                color: theme.colorScheme.primary,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              hasFilter ? 'Aucun tutoriel correspondant' : 'Aucun tutoriel disponible',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              hasFilter
-                  ? 'Essayez de modifier votre recherche ou de sélectionner une autre catégorie.'
-                  : 'De nouveaux tutoriels vidéo seront bientôt ajoutés.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            if (hasFilter) ...[
-              const SizedBox(height: 16),
-              OutlinedButton.icon(
-                onPressed: () {
-                  setState(() {
-                    _selectedCategoryId = 'all';
-                    _searchQuery = '';
-                    _searchController.clear();
-                  });
-                },
-                icon: const Icon(Icons.refresh_rounded, size: 16),
-                label: const Text('Réinitialiser les filtres'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildErrorState(BuildContext context, String error) {
-    final theme = Theme.of(context);
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.error.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.error_outline_rounded,
-                size: 40,
-                color: theme.colorScheme.error,
-              ),
-            ),
-            const SizedBox(height: 14),
-            Text(
-              'Impossible de charger les tutoriels',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              error,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () => ref.invalidate(tutorielsProvider),
-              icon: const Icon(Icons.refresh_rounded, size: 16),
-              label: const Text('Réessayer'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSkeletonCard(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Container(
-      height: 115,
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: isDark
-            ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4)
-            : theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.1),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 130,
-            height: 95,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 60,
-                  height: 16,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(4),
+                      // Bouton Appliquer
+                      SizedBox(
+                        width: double.infinity,
+                        height: 44,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.colorScheme.primary,
+                            foregroundColor: theme.colorScheme.onPrimary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          child: const Text(
+                            'Appliquer',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 8),
-                Container(
-                  width: double.infinity,
-                  height: 18,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Container(
-                  width: 100,
-                  height: 14,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildChoiceChip({
+    required String label,
+    required bool isSelected,
+    required ThemeData theme,
+    required bool isDark,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? theme.colorScheme.primary.withValues(alpha: isDark ? 0.25 : 0.12)
+              : (isDark
+                  ? theme.colorScheme.surfaceContainerHighest
+                  : AppColors.surfaceVariant.withValues(alpha: 0.5)),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected
+                ? theme.colorScheme.primary
+                : theme.dividerColor.withValues(alpha: 0.2),
+            width: isSelected ? 1.2 : 1.0,
           ),
-        ],
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12.5,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            color: isSelected
+                ? theme.colorScheme.primary
+                : (theme.textTheme.bodyMedium?.color ?? theme.colorScheme.onSurface),
+          ),
+        ),
       ),
     );
   }

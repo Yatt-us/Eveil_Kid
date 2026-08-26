@@ -11,6 +11,9 @@ import 'package:eveilkid/features/tutoriels/models/tutoriel.dart';
 import 'package:eveilkid/features/tutoriels/presentation/widgets/jouets_suggestion_card.dart';
 import 'package:eveilkid/features/tutoriels/providers/progression_provider.dart';
 import 'package:eveilkid/features/tutoriels/providers/suggestion_provider.dart';
+import 'package:eveilkid/shared/widgets/app_button.dart';
+import 'package:eveilkid/shared/widgets/app_card.dart';
+import 'package:eveilkid/shared/widgets/app_states.dart';
 
 /// Page de lecture vidéo moderne et immersive pour les tutoriels
 class VideoPlayerPage extends ConsumerStatefulWidget {
@@ -228,7 +231,6 @@ class _VideoPlayerPageState extends ConsumerState<VideoPlayerPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     if (_hasError) {
       return Scaffold(
@@ -237,46 +239,23 @@ class _VideoPlayerPageState extends ConsumerState<VideoPlayerPage> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            icon: Icon(
+              Icons.arrow_back_rounded,
+              color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
+            ),
             onPressed: () => Navigator.of(context).maybePop(),
           ),
         ),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.error_outline_rounded, size: 56, color: theme.colorScheme.error),
-                const SizedBox(height: 16),
-                Text(
-                  'Impossible de lire la vidéo',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  _errorMessage,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurfaceVariant),
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _hasError = false;
-                      _isInitialized = false;
-                    });
-                    _initializeVideo();
-                  },
-                  child: const Text('Réessayer'),
-                ),
-              ],
-            ),
-          ),
+        body: AppErrorState(
+          title: 'Impossible de lire la vidéo',
+          message: _errorMessage,
+          onRetry: () {
+            setState(() {
+              _hasError = false;
+              _isInitialized = false;
+            });
+            _initializeVideo();
+          },
         ),
       );
     }
@@ -375,104 +354,77 @@ class _VideoPlayerPageState extends ConsumerState<VideoPlayerPage> {
 
             // ── BANNIÈRE REPRENDRE LA LECTURE (SI POSITION SAUVEGARDÉE) ──
             if (_hasSavedPosition && !_videoController.value.isPlaying)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                child: Row(
-                  children: [
-                    Icon(Icons.history_rounded, size: 18, color: theme.colorScheme.primary),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Reprendre à ${_formatDuration(_savedPositionSeconds)}',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: theme.colorScheme.primary,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: AppCard(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  child: Row(
+                    children: [
+                      Icon(Icons.history_rounded, size: 20, color: theme.colorScheme.primary),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Reprendre à ${_formatDuration(_savedPositionSeconds)}',
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w600,
+                            color: theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface,
+                          ),
                         ),
                       ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        _videoController.play();
-                        setState(() => _hasSavedPosition = false);
-                      },
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      AppButton(
+                        text: 'Reprendre',
+                        isFullWidth: false,
+                        size: AppButtonSize.small,
+                        onPressed: () {
+                          _videoController.play();
+                          setState(() => _hasSavedPosition = false);
+                        },
                       ),
-                      child: const Text('Reprendre'),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
 
             // ── CONTENU SOUS LA VIDÉO (DÉTAILS & MATÉRIEL) ──
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(18),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Titre & Badges
+                    // Titre & Informations épurées
                     Text(
                       widget.tutoriel.titre,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
-                        color: theme.colorScheme.onSurface,
+                        color: theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface,
                         letterSpacing: -0.3,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 6,
+                    const SizedBox(height: 6),
+                    Row(
                       children: [
-                        if (categoryName != null)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              categoryName,
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w700,
-                                color: theme.colorScheme.primary,
-                              ),
-                            ),
-                          ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.secondary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            widget.tutoriel.ageRangeLabel,
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w700,
-                              color: theme.colorScheme.secondary,
-                            ),
-                          ),
+                        Icon(
+                          Icons.play_circle_outline_rounded,
+                          size: 14,
+                          color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.65) ??
+                              theme.colorScheme.onSurfaceVariant,
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? theme.colorScheme.surfaceContainerHighest
-                                : Colors.black.withValues(alpha: 0.06),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
+                        const SizedBox(width: 5),
+                        Expanded(
                           child: Text(
-                            widget.tutoriel.dureeFormatee,
+                            [
+                              if (categoryName != null && categoryName.isNotEmpty) categoryName,
+                              widget.tutoriel.ageRangeLabel,
+                              widget.tutoriel.dureeFormatee,
+                            ].join(' • '),
                             style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w600,
-                              color: theme.colorScheme.onSurfaceVariant,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w500,
+                              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.65) ??
+                                  theme.colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ),
@@ -482,24 +434,20 @@ class _VideoPlayerPageState extends ConsumerState<VideoPlayerPage> {
 
                     // Description
                     if (widget.tutoriel.description.isNotEmpty) ...[
-                      Text(
-                        'Description',
-                        style: TextStyle(
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w700,
-                          color: theme.colorScheme.onSurface,
+                      AppCard(
+                        title: 'Description',
+                        padding: const EdgeInsets.all(14),
+                        child: Text(
+                          widget.tutoriel.description,
+                          style: TextStyle(
+                            fontSize: 13,
+                            height: 1.45,
+                            color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8) ??
+                                theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        widget.tutoriel.description,
-                        style: TextStyle(
-                          fontSize: 13,
-                          height: 1.45,
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 16),
                     ],
 
                     // Matériel & Jouets utilisés
@@ -507,9 +455,9 @@ class _VideoPlayerPageState extends ConsumerState<VideoPlayerPage> {
                       Text(
                         'Matériel & Jouets recommandés',
                         style: TextStyle(
-                          fontSize: 14.5,
+                          fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: theme.colorScheme.onSurface,
+                          color: theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -557,7 +505,7 @@ class _VideoPlayerPageState extends ConsumerState<VideoPlayerPage> {
             child: Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+                  icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 22),
                   onPressed: () => Navigator.of(context).maybePop(),
                   tooltip: 'Fermer',
                 ),
@@ -613,8 +561,8 @@ class _VideoPlayerPageState extends ConsumerState<VideoPlayerPage> {
                   _startControlsTimer();
                 },
                 child: Container(
-                  width: 58,
-                  height: 58,
+                  width: 56,
+                  height: 56,
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primary,
                     shape: BoxShape.circle,
