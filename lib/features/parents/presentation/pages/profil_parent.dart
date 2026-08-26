@@ -19,7 +19,6 @@ import 'liste_enfants.dart';
 import 'modifier_profil.dart';
 import 'notification_settings_page.dart';
 import 'parametre_page.dart';
-import 'securite_page.dart';
 
 import '../../../../core/provider/bottom_nav_bar_provider.dart';
 
@@ -490,41 +489,6 @@ class ProfilParentPage extends ConsumerWidget {
                         ),
                         _buildMenuItem(
                           context: context,
-                          icon: Icons.notifications_none_rounded,
-                          title: 'Notifications',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    const NotificationSettingsPage(),
-                              ),
-                            );
-                          },
-                        ),
-                        Divider(
-                          height: 1,
-                          color: theme.dividerColor.withValues(alpha: 0.2),
-                        ),
-                        _buildMenuItem(
-                          context: context,
-                          icon: Icons.security_rounded,
-                          title: 'Sécurité du compte',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const SecuritePage(),
-                              ),
-                            );
-                          },
-                        ),
-                        Divider(
-                          height: 1,
-                          color: theme.dividerColor.withValues(alpha: 0.2),
-                        ),
-                        _buildMenuItem(
-                          context: context,
                           icon: Icons.settings_outlined,
                           title: 'Paramètres',
                           onTap: () {
@@ -533,39 +497,6 @@ class ProfilParentPage extends ConsumerWidget {
                               MaterialPageRoute(
                                 builder: (_) => const ParametresPage(),
                               ),
-                            );
-                          },
-                        ),
-                        Divider(
-                          height: 1,
-                          color: theme.dividerColor.withValues(alpha: 0.2),
-                        ),
-                        _buildMenuItem(
-                          context: context,
-                          icon: Icons.help_outline_rounded,
-                          title: 'Aide et support',
-                          onTap: () {
-                            AppDialogs.showSnackBar(
-                              context: context,
-                              message: 'Support client : support@eveilkid.com',
-                            );
-                          },
-                        ),
-                        Divider(
-                          height: 1,
-                          color: theme.dividerColor.withValues(alpha: 0.2),
-                        ),
-                        _buildMenuItem(
-                          context: context,
-                          icon: Icons.info_outline_rounded,
-                          title: 'À propos',
-                          onTap: () {
-                            showAboutDialog(
-                              context: context,
-                              applicationName: 'Éveil Kid',
-                              applicationVersion: '1.0.0',
-                              applicationLegalese:
-                                  '© 2026 Éveil Kid. Tous droits réservés.',
                             );
                           },
                         ),

@@ -28,6 +28,8 @@ import 'ajouter_enfant.dart';
 import 'detail_enfant.dart';
 import 'liste_enfants.dart';
 import 'notification_settings_page.dart';
+import '../../../panier/presentation/widgets/panier_app_bar_action.dart';
+import '../../../panier/presentation/widgets/panier_floating_button.dart';
 
 class AccueilParentPage extends ConsumerWidget {
   final ValueChanged<int>? onNavigateTab;
@@ -172,6 +174,8 @@ class AccueilParentPage extends ConsumerWidget {
           ),
         ),
       ),
+      floatingActionButton: const PanierFloatingButton(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       bottomNavigationBar: const AppBottomNavBar(),
     );
   }
@@ -219,7 +223,8 @@ class AccueilParentPage extends ConsumerWidget {
         ],
       ),
       actions: [
-        if (isFullyVerified)
+        if (isFullyVerified) ...[
+          const PanierAppBarAction(),
           IconButton(
             icon: Icon(
               Icons.notifications_none_rounded,
@@ -234,8 +239,9 @@ class AccueilParentPage extends ConsumerWidget {
                 ),
               );
             },
-          )
-        else if (isAuthenticated)
+          ),
+        ] else if (isAuthenticated) ...[
+          const PanierAppBarAction(),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: TextButton.icon(
@@ -271,8 +277,9 @@ class AccueilParentPage extends ConsumerWidget {
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
               ),
             ),
-          )
-        else
+          ),
+        ] else ...[
+          const PanierAppBarAction(),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: TextButton.icon(
@@ -295,6 +302,7 @@ class AccueilParentPage extends ConsumerWidget {
               ),
             ),
           ),
+        ],
         AppSpacing.horizontalSm,
       ],
     );

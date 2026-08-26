@@ -13,7 +13,8 @@ import 'package:eveilkid/features/categories/providers/categorie_provider.dart';
 import 'package:eveilkid/features/jouets/models/jouet.dart';
 import 'package:eveilkid/features/jouets/providers/jouet_provider.dart';
 import 'package:eveilkid/features/jouets/presentation/page/jouet_card.dart';
-import 'package:eveilkid/features/panier/providers/panier_provider.dart';
+import 'package:eveilkid/features/panier/presentation/widgets/panier_app_bar_action.dart';
+import 'package:eveilkid/features/panier/presentation/widgets/panier_floating_button.dart';
 
 import 'package:eveilkid/core/provider/bottom_nav_bar_provider.dart';
 
@@ -156,27 +157,18 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
                   ],
                 ),
               ),
-
-              // NAVIGATION BAS DE PAGE
             ],
           ),
         ),
+        floatingActionButton: const PanierFloatingButton(),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
         bottomNavigationBar: const AppBottomNavBar(),
       ),
     );
   }
 
-  // HEADER DYNAMIQUE (Compteur du panier via Riverpod)
+  // HEADER DYNAMIQUE
   Widget _buildHeader() {
-    final panierAsync = ref.watch(panierProvider(widget.utilisateurId));
-
-    final totalArticles = panierAsync.when(
-      data: (articles) =>
-          articles.fold<int>(0, (sum, item) => sum + item.quantite),
-      loading: () => 0,
-      error: (_, __) => 0,
-    );
-
     return Row(
       children: [
         Text(
@@ -187,43 +179,7 @@ class _JouetsScreenState extends ConsumerState<JouetsScreen> {
           ),
         ),
         const Spacer(),
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            IconButton(
-              onPressed: () {
-                // Naviguer vers la page Panier si elle existe
-              },
-              icon: const Icon(Icons.shopping_cart_outlined, size: 26),
-              color: AppColors.textPrimary,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-            ),
-            if (totalArticles > 0)
-              Positioned(
-                right: -4,
-                top: -4,
-                child: Container(
-                  width: 18,
-                  height: 18,
-                  decoration: const BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      '$totalArticles',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
+        const PanierAppBarAction(),
       ],
     );
   }

@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/core/router/app_router.dart';
 import 'package:eveilkid/core/provider/theme_provider.dart';
 import 'package:eveilkid/core/services/google_sign_in_service.dart';
@@ -6,6 +7,7 @@ import 'package:eveilkid/core/themes/AppTheme.dart';
 import 'package:eveilkid/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // Indispensable pour ProviderScope et ConsumerWidget
 
 Future<void> main() async {
@@ -38,10 +40,24 @@ class MonApp extends ConsumerWidget {
       themeMode: themeMode,
       routerConfig: router,
       builder: (context, child) {
-        return GestureDetector(
-          onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-          behavior: HitTestBehavior.translucent,
-          child: child,
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final overlayStyle = SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+          statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+          systemNavigationBarColor:
+              isDark ? AppColors.darkBackground : AppColors.background,
+          systemNavigationBarIconBrightness:
+              isDark ? Brightness.light : Brightness.dark,
+        );
+
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: overlayStyle,
+          child: GestureDetector(
+            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+            behavior: HitTestBehavior.translucent,
+            child: child ?? const SizedBox.shrink(),
+          ),
         );
       },
       scrollBehavior: const MaterialScrollBehavior().copyWith(

@@ -6,6 +6,7 @@ import 'package:eveilkid/features/parents/presentation/pages/accueil_parent.dart
 import 'package:eveilkid/features/parents/presentation/pages/aide_support_page.dart';
 import 'package:eveilkid/features/parents/presentation/pages/detail_enfant.dart';
 import 'package:eveilkid/features/parents/presentation/pages/profil_parent.dart';
+import 'package:eveilkid/features/panier/presentation/pages/panier_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -242,6 +243,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return const NoTransitionPage(child: TutorielPage());
         },
       ),
+      GoRoute(
+        path: AppRoutes.panier,
+        builder: (context, state) => const PanierPage(),
+      ),
 
       // ── Espace Administration (StatefulShellRoute avec sidebar persistant) ──
       StatefulShellRoute.indexedStack(
@@ -313,15 +318,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       // ── Espace Jouets ──
       GoRoute(
+        path: AppRoutes.jouets,
+        redirect: (context, state) => AppRoutes.jouetscreen,
+      ),
+      GoRoute(
         path: AppRoutes.jouetscreen,
         pageBuilder: (context, state) {
           final authState = ref.watch(authProvider);
 
           final utilisateurId =
-              authState.utilisateur?.uid ?? '0FCX2CD3IlcC2tPxiOujc0b0N9v1';
+              authState.utilisateur?.utilisateurId ?? '';
 
           return NoTransitionPage(
-            child: JouetsScreen(utilisateurId: utilisateurId.toString()),
+            child: JouetsScreen(utilisateurId: utilisateurId),
           );
         },
       ),
@@ -329,12 +338,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.jouetdetail,
         builder: (context, state) {
           final jouet = state.extra as Jouet;
-
-          // final userId = authState.utilisateur?.uid ?? '0FCX2CD3IlcC2tPxiOujc0b0N9v1';
+          final authState = ref.watch(authProvider);
+          final utilisateurId =
+              authState.utilisateur?.utilisateurId ?? '';
 
           return JouetDetailScreen(
             jouet: jouet,
-            utilisateurId: '0FCX2CD3IlcC2tPxiOujc0b0N9v1',
+            utilisateurId: utilisateurId,
           );
         },
       ),

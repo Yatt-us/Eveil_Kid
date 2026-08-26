@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/AppPadding.dart';
 import '../../../../core/constants/AppSpacing.dart';
 import '../../../../shared/widgets/app_button.dart';
@@ -128,7 +127,7 @@ class _ModifierProfilPageState extends ConsumerState<ModifierProfilPage> {
                         shape: BoxShape.circle,
                         color: isDark
                             ? theme.colorScheme.surfaceContainerHighest
-                            : AppColors.surfaceVariant,
+                            : theme.colorScheme.primary.withValues(alpha: 0.1),
                         border: Border.all(
                           color: theme.dividerColor.withValues(alpha: 0.2),
                           width: 2,
@@ -206,7 +205,7 @@ class _ModifierProfilPageState extends ConsumerState<ModifierProfilPage> {
                     hintStyle: TextStyle(
                       color: theme.textTheme.bodyMedium?.color
                               ?.withValues(alpha: 0.4) ??
-                          AppColors.textSecondary,
+                          theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                     ),
                   ),
                   validator: (v) =>
@@ -236,7 +235,7 @@ class _ModifierProfilPageState extends ConsumerState<ModifierProfilPage> {
                     hintStyle: TextStyle(
                       color: theme.textTheme.bodyMedium?.color
                               ?.withValues(alpha: 0.4) ??
-                          AppColors.textSecondary,
+                          theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                     ),
                   ),
                   validator: (v) {
@@ -269,7 +268,7 @@ class _ModifierProfilPageState extends ConsumerState<ModifierProfilPage> {
                     hintStyle: TextStyle(
                       color: theme.textTheme.bodyMedium?.color
                               ?.withValues(alpha: 0.4) ??
-                          AppColors.textSecondary,
+                          theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                     ),
                   ),
                 ),
@@ -324,7 +323,7 @@ class _ModifierProfilPageState extends ConsumerState<ModifierProfilPage> {
                     fontSize: 12,
                     color: theme.textTheme.bodySmall?.color
                             ?.withValues(alpha: 0.8) ??
-                        AppColors.textSecondary,
+                        theme.colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
