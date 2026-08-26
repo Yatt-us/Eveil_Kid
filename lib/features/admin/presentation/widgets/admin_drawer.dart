@@ -19,6 +19,7 @@ enum AdminNavRoute {
   categories,
   commandes,
   tutoriels,
+  activites,
   utilisateurs,
   staff,
   profile,
@@ -192,7 +193,14 @@ class _AdminNavigationContent extends ConsumerWidget {
         icon: Icons.video_library_outlined,
         activeIcon: Icons.video_library_rounded,
         label: 'Tutoriels',
-        onTap: () => _showComingSoon(context, 'Tutoriels'),
+        onTap: () => _navigate(context, AdminNavRoute.tutoriels),
+      ),
+      _AdminNavItemData(
+        route: AdminNavRoute.activites,
+        icon: Icons.local_activity,
+        activeIcon: Icons.local_activity_outlined,
+        label: 'Activités',
+        onTap: () => _navigate(context, AdminNavRoute.activites),
       ),
     ];
 
@@ -324,6 +332,12 @@ class _AdminNavigationContent extends ConsumerWidget {
         break;
       case AdminNavRoute.categories:
         context.go(AppRoutes.adminCategories);
+        break;
+      case AdminNavRoute.tutoriels:
+        context.go(AppRoutes.adminTutoriels);
+        break;
+      case AdminNavRoute.activites:
+        context.go(AppRoutes.adminActivites);
         break;
       case AdminNavRoute.utilisateurs:
         context.go(AppRoutes.adminUsers);
@@ -915,6 +929,10 @@ class AdminShellScaffold extends StatelessWidget {
       return AdminNavRoute.products;
     } else if (location.startsWith(AppRoutes.adminCategories)) {
       return AdminNavRoute.categories;
+    } else if (location.startsWith(AppRoutes.adminActivites)) {
+      return AdminNavRoute.activites;
+    } else if (location.startsWith(AppRoutes.adminTutoriels)) {
+      return AdminNavRoute.tutoriels;
     } else if (location.startsWith(AppRoutes.adminUsers)) {
       return AdminNavRoute.utilisateurs;
     } else if (location.startsWith(AppRoutes.adminStaff)) {
