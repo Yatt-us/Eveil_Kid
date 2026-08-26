@@ -2,8 +2,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/AppSpacing.dart';
+import '../../../../core/router/app_routes.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
 import 'package:eveilkid/features/enfant/model/enfant_model.dart';
 import '../../providers/parent_provider.dart';
@@ -32,6 +34,8 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
   @override
   Widget build(BuildContext context) {
     final parentAsync = ref.watch(parentNotifierProvider);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     // Obtenir la version la plus à jour de l'enfant depuis le provider si disponible
     final currentEnfant = parentAsync.maybeWhen(
@@ -44,23 +48,23 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
     final niveau = _calculateLevel(currentEnfant.age);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: AppColors.textPrimary,
+            color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
             size: 22,
           ),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.edit_outlined,
-              color: AppColors.textPrimary,
+              color: theme.colorScheme.primary,
               size: 24,
             ),
             tooltip: 'Modifier l\'enfant',
@@ -95,10 +99,11 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
                           height: 120,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: const Color(0xFFE8DEFA),
+                            color: theme.colorScheme.primary.withValues(alpha: 0.12),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.primary.withValues(alpha: 0.15),
+                                color: (isDark ? Colors.black : theme.colorScheme.primary)
+                                    .withValues(alpha: isDark ? 0.3 : 0.15),
                                 blurRadius: 16,
                                 offset: const Offset(0, 6),
                               ),
@@ -110,10 +115,10 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
                                 ? Image.network(
                                     currentEnfant.avatarUrl!,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) =>
-                                        _buildDefaultAvatar(currentEnfant),
+                                    errorBuilder: (_, _, _) =>
+                                        _buildDefaultAvatar(currentEnfant, theme),
                                   )
-                                : _buildDefaultAvatar(currentEnfant),
+                                : _buildDefaultAvatar(currentEnfant, theme),
                           ),
                         ),
                         Positioned(
@@ -122,10 +127,10 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
                           child: Container(
                             padding: const EdgeInsets.all(7),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF763CD1),
+                              color: theme.colorScheme.primary,
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: AppColors.white,
+                                color: theme.scaffoldBackgroundColor,
                                 width: 2.5,
                               ),
                               boxShadow: [
@@ -136,10 +141,10 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
                                 ),
                               ],
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.camera_alt_rounded,
                               size: 16,
-                              color: AppColors.white,
+                              color: theme.colorScheme.onPrimary,
                             ),
                           ),
                         ),
@@ -152,10 +157,11 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
                   // ── NOM DE L'ENFANT ──
                   Text(
                     currentEnfant.nom,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
+                      color: theme.textTheme.titleLarge?.color ??
+                          theme.colorScheme.onSurface,
                       letterSpacing: -0.3,
                     ),
                     textAlign: TextAlign.center,
@@ -166,27 +172,28 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
                   // ── ÂGE ET NIVEAU ──
                   Text(
                     '${currentEnfant.age} ans   -   Niveau $niveau',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8) ??
+                          theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
 
                   AppSpacing.verticalLg,
 
                   // ── BARRE D'ONGLETS ──
-                  _buildCustomTabBar(),
+                  _buildCustomTabBar(theme),
 
                   AppSpacing.verticalLg,
 
                   // ── CONTENU DE L'ONGLET SÉLECTIONNÉ ──
                   if (_selectedTabIndex == 0)
-                    _buildProgressionTab(currentEnfant)
+                    _buildProgressionTab(currentEnfant, theme, isDark)
                   else if (_selectedTabIndex == 1)
-                    _buildActivitesTab(currentEnfant)
+                    _buildActivitesTab(currentEnfant, theme, isDark)
                   else
-                    _buildResultatsTab(currentEnfant),
+                    _buildResultatsTab(currentEnfant, theme, isDark),
 
                   AppSpacing.verticalXl,
                 ],
@@ -202,6 +209,7 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
               height: 54,
               child: ElevatedButton(
                 onPressed: () {
+                  context.go(AppRoutes.espaceEnfantFor(currentEnfant.enfantId));
                   AppDialogs.showSnackBar(
                     context: context,
                     message:
@@ -209,10 +217,10 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF5E2BA8),
-                  foregroundColor: AppColors.white,
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
                   elevation: 4,
-                  shadowColor: const Color(0xFF5E2BA8).withValues(alpha: 0.4),
+                  shadowColor: theme.colorScheme.primary.withValues(alpha: 0.4),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -233,38 +241,44 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
     );
   }
 
-  Widget _buildDefaultAvatar(EnfantModel enfant) {
+  Widget _buildDefaultAvatar(EnfantModel enfant, ThemeData theme) {
     return Center(
       child: Icon(
         enfant.genre.toLowerCase() == 'fille'
             ? Icons.face_3_rounded
             : Icons.face_rounded,
         size: 70,
-        color: const Color(0xFF763CD1),
+        color: theme.colorScheme.primary,
       ),
     );
   }
 
-  Widget _buildCustomTabBar() {
+  Widget _buildCustomTabBar(ThemeData theme) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1.5),
+          bottom: BorderSide(
+            color: theme.dividerColor.withValues(alpha: 0.2),
+            width: 1.5,
+          ),
         ),
       ),
       child: Row(
         children: [
           _buildTabItem(
+            theme: theme,
             index: 0,
             title: 'Progression',
             icon: Icons.trending_up_rounded,
           ),
           _buildTabItem(
+            theme: theme,
             index: 1,
             title: 'Activités',
             icon: Icons.assignment_outlined,
           ),
           _buildTabItem(
+            theme: theme,
             index: 2,
             title: 'Résultats',
             icon: Icons.notifications_none_rounded,
@@ -275,13 +289,15 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
   }
 
   Widget _buildTabItem({
+    required ThemeData theme,
     required int index,
     required String title,
     required IconData icon,
   }) {
     final isSelected = _selectedTabIndex == index;
-    const activeColor = Color(0xFF763CD1);
-    const inactiveColor = Color(0xFF4B5563);
+    final activeColor = theme.colorScheme.primary;
+    final inactiveColor = theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6) ??
+        theme.colorScheme.onSurfaceVariant;
 
     return Expanded(
       child: InkWell(
@@ -316,17 +332,21 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
     );
   }
 
-  Widget _buildProgressionTab(EnfantModel enfant) {
+  Widget _buildProgressionTab(EnfantModel enfant, ThemeData theme, bool isDark) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFF1F2F6), width: 1.5),
+        border: Border.all(
+          color: theme.dividerColor.withValues(alpha: 0.2),
+          width: 1.2,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: (isDark ? Colors.black : AppColors.textPrimary)
+                .withValues(alpha: isDark ? 0.25 : 0.04),
             blurRadius: 14,
             offset: const Offset(0, 4),
           ),
@@ -335,12 +355,13 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Progression global',
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
+              color: theme.textTheme.titleMedium?.color ??
+                  theme.colorScheme.onSurface,
             ),
           ),
           AppSpacing.verticalLg,
@@ -361,18 +382,19 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
                         value: 0.75,
                         strokeWidth: 8,
                         strokeCap: StrokeCap.round,
-                        backgroundColor: const Color(0xFFEDE9FE),
-                        valueColor: const AlwaysStoppedAnimation<Color>(
-                          Color(0xFF6C4AB6),
+                        backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.12),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          theme.colorScheme.primary,
                         ),
                       ),
                     ),
-                    const Text(
+                    Text(
                       '75%',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
+                        color: theme.textTheme.titleMedium?.color ??
+                            theme.colorScheme.onSurface,
                       ),
                     ),
                   ],
@@ -383,21 +405,23 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Très bien !',
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
+                        color: theme.textTheme.titleMedium?.color ??
+                            theme.colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '${enfant.nom} progresse bien.',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: Color(0xFF6B7280),
+                        color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7) ??
+                            theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -407,11 +431,15 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
           ),
 
           AppSpacing.verticalLg,
-          const Divider(color: Color(0xFFF1F2F6), thickness: 1.2),
+          Divider(
+            color: theme.dividerColor.withValues(alpha: 0.2),
+            thickness: 1.2,
+          ),
           AppSpacing.verticalMd,
 
           // ── BARRE 1 : ACTIVITÉS COMPLÉTÉES ──
           _buildStatProgressBar(
+            theme: theme,
             label: 'Activités complétées',
             score: '28/40',
             progress: 28 / 40,
@@ -421,6 +449,7 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
 
           // ── BARRE 2 : DÉFIS RÉUSSIS ──
           _buildStatProgressBar(
+            theme: theme,
             label: 'Défis réussis',
             score: '12/40',
             progress: 12 / 40,
@@ -430,6 +459,7 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
 
           // ── BARRE 3 : TEMPS D'APPRENTISSAGE ──
           _buildStatProgressBar(
+            theme: theme,
             label: 'Temps d’apprentissage',
             score: '3h 45min',
             progress: 0.55,
@@ -441,6 +471,7 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
   }
 
   Widget _buildStatProgressBar({
+    required ThemeData theme,
     required String label,
     required String score,
     required double progress,
@@ -454,18 +485,20 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
           children: [
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+                color: theme.textTheme.bodyLarge?.color ??
+                    theme.colorScheme.onSurface,
               ),
             ),
             Text(
               score,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+                color: theme.textTheme.bodyLarge?.color ??
+                    theme.colorScheme.onSurface,
               ),
             ),
           ],
@@ -476,7 +509,7 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
           child: LinearProgressIndicator(
             value: progress,
             minHeight: 8,
-            backgroundColor: const Color(0xFFE5E7EB),
+            backgroundColor: theme.dividerColor.withValues(alpha: 0.2),
             valueColor: AlwaysStoppedAnimation<Color>(progressColor),
           ),
         ),
@@ -484,7 +517,7 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
     );
   }
 
-  Widget _buildActivitesTab(EnfantModel enfant) {
+  Widget _buildActivitesTab(EnfantModel enfant, ThemeData theme, bool isDark) {
     final activites = [
       {
         'title': 'Comptage et chiffres',
@@ -516,12 +549,15 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFF1F2F6)),
+            border: Border.all(
+              color: theme.dividerColor.withValues(alpha: 0.2),
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
+                color: (isDark ? Colors.black : AppColors.textPrimary)
+                    .withValues(alpha: isDark ? 0.25 : 0.02),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -548,18 +584,21 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
                   children: [
                     Text(
                       act['title'] as String,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                        color: theme.textTheme.bodyLarge?.color ??
+                            theme.colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       act['category'] as String,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.textSecondary,
+                        color: theme.textTheme.bodySmall?.color
+                                ?.withValues(alpha: 0.7) ??
+                            theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -590,7 +629,7 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
     );
   }
 
-  Widget _buildResultatsTab(EnfantModel enfant) {
+  Widget _buildResultatsTab(EnfantModel enfant, ThemeData theme, bool isDark) {
     final badges = [
       {
         'title': 'Petit Explorateur',
@@ -615,12 +654,15 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFF1F2F6)),
+            border: Border.all(
+              color: theme.dividerColor.withValues(alpha: 0.2),
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
+                color: (isDark ? Colors.black : AppColors.textPrimary)
+                    .withValues(alpha: isDark ? 0.25 : 0.02),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -639,18 +681,21 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
                   children: [
                     Text(
                       badge['title'] as String,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                        color: theme.textTheme.bodyLarge?.color ??
+                            theme.colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       badge['desc'] as String,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.textSecondary,
+                        color: theme.textTheme.bodySmall?.color
+                                ?.withValues(alpha: 0.7) ??
+                            theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],

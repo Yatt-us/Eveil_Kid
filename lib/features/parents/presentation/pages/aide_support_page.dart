@@ -42,12 +42,15 @@ class _AideSupportPageState extends State<AideSupportPage> {
   ];
 
   void _showContactModal() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      backgroundColor: AppColors.surface,
+      backgroundColor: theme.colorScheme.surface,
       builder: (context) {
         return SafeArea(
           child: Padding(
@@ -59,12 +62,19 @@ class _AideSupportPageState extends State<AideSupportPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'Contactez notre support',
-                      style: AppTextStyles.headingSmall,
+                      style: AppTextStyles.headingSmall.copyWith(
+                        color: theme.textTheme.titleLarge?.color ??
+                            theme.colorScheme.onSurface,
+                      ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close_rounded, color: AppColors.icon),
+                      icon: Icon(
+                        Icons.close_rounded,
+                        color: theme.iconTheme.color ??
+                            theme.colorScheme.onSurfaceVariant,
+                      ),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
@@ -73,14 +83,16 @@ class _AideSupportPageState extends State<AideSupportPage> {
                 Text(
                   'Notre équipe est disponible 7j/7 pour vous accompagner.',
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
+                    color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+                        theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
                 AppSpacing.verticalMd,
                 _buildContactOption(
+                  theme: theme,
                   icon: Icons.email_outlined,
-                  iconBg: const Color(0xFFEBF3FF),
-                  iconColor: const Color(0xFF358CED),
+                  iconBg: isDark ? const Color(0xFF1E3A8A) : const Color(0xFFEBF3FF),
+                  iconColor: isDark ? const Color(0xFF60A5FA) : const Color(0xFF358CED),
                   title: 'Par E-mail',
                   subtitle: 'support@eveilkid.com',
                   onTap: () {
@@ -93,9 +105,10 @@ class _AideSupportPageState extends State<AideSupportPage> {
                 ),
                 AppSpacing.verticalSm,
                 _buildContactOption(
+                  theme: theme,
                   icon: Icons.phone_in_talk_outlined,
-                  iconBg: const Color(0xFFE8F8F5),
-                  iconColor: const Color(0xFF39C0AD),
+                  iconBg: isDark ? const Color(0xFF064E3B) : const Color(0xFFE8F8F5),
+                  iconColor: isDark ? const Color(0xFF34D399) : const Color(0xFF39C0AD),
                   title: 'Par Téléphone',
                   subtitle: '+223 70 00 00 00 / 60 00 00 00',
                   onTap: () {
@@ -108,9 +121,12 @@ class _AideSupportPageState extends State<AideSupportPage> {
                 ),
                 AppSpacing.verticalSm,
                 _buildContactOption(
+                  theme: theme,
                   icon: Icons.chat_bubble_outline_rounded,
-                  iconBg: const Color(0xFFF1EEFA),
-                  iconColor: AppColors.primary,
+                  iconBg: isDark
+                      ? theme.colorScheme.surfaceContainerHighest
+                      : theme.colorScheme.primary.withValues(alpha: 0.1),
+                  iconColor: theme.colorScheme.primary,
                   title: 'Discussion WhatsApp',
                   subtitle: 'Réponse rapide en moins de 15 min',
                   onTap: () {
@@ -131,6 +147,7 @@ class _AideSupportPageState extends State<AideSupportPage> {
   }
 
   Widget _buildContactOption({
+    required ThemeData theme,
     required IconData icon,
     required Color iconBg,
     required Color iconColor,
@@ -144,9 +161,11 @@ class _AideSupportPageState extends State<AideSupportPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(
+            color: theme.dividerColor.withValues(alpha: 0.2),
+          ),
         ),
         child: Row(
           children: [
@@ -165,27 +184,30 @@ class _AideSupportPageState extends State<AideSupportPage> {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
+                      color: theme.textTheme.bodyLarge?.color ??
+                          theme.colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
-                      color: AppColors.textSecondary,
+                      color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+                          theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(
+            Icon(
               Icons.arrow_forward_ios_rounded,
               size: 16,
-              color: AppColors.icon,
+              color: theme.iconTheme.color?.withValues(alpha: 0.5) ??
+                  theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
             ),
           ],
         ),
@@ -194,12 +216,14 @@ class _AideSupportPageState extends State<AideSupportPage> {
   }
 
   void _showFaqDetailModal(String question, String answer) {
+    final theme = Theme.of(context);
+
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      backgroundColor: AppColors.surface,
+      backgroundColor: theme.colorScheme.surface,
       builder: (context) {
         return SafeArea(
           child: Padding(
@@ -213,7 +237,7 @@ class _AideSupportPageState extends State<AideSupportPage> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: AppColors.border,
+                      color: theme.dividerColor.withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -224,12 +248,12 @@ class _AideSupportPageState extends State<AideSupportPage> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.help_outline_rounded,
-                        color: AppColors.primary,
+                        color: theme.colorScheme.primary,
                         size: 20,
                       ),
                     ),
@@ -237,7 +261,10 @@ class _AideSupportPageState extends State<AideSupportPage> {
                     Expanded(
                       child: Text(
                         question,
-                        style: AppTextStyles.headingSmall,
+                        style: AppTextStyles.headingSmall.copyWith(
+                          color: theme.textTheme.titleLarge?.color ??
+                              theme.colorScheme.onSurface,
+                        ),
                       ),
                     ),
                   ],
@@ -246,7 +273,8 @@ class _AideSupportPageState extends State<AideSupportPage> {
                 Text(
                   answer,
                   style: AppTextStyles.bodyLarge.copyWith(
-                    color: AppColors.textSecondary,
+                    color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8) ??
+                        theme.colorScheme.onSurfaceVariant,
                     height: 1.5,
                   ),
                 ),
@@ -256,8 +284,8 @@ class _AideSupportPageState extends State<AideSupportPage> {
                   child: ElevatedButton(
                     onPressed: () => Navigator.pop(context),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.white,
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: AppRadius.button,
@@ -279,15 +307,18 @@ class _AideSupportPageState extends State<AideSupportPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: AppColors.textPrimary,
+            color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
             size: 22,
           ),
           onPressed: () {
@@ -298,12 +329,13 @@ class _AideSupportPageState extends State<AideSupportPage> {
             }
           },
         ),
-        title: const Text(
-          'Aide et support?',
+        title: Text(
+          'Aide et support',
           style: TextStyle(
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+            color: theme.textTheme.titleMedium?.color ??
+                theme.colorScheme.onSurface,
           ),
         ),
         centerTitle: true,
@@ -316,22 +348,28 @@ class _AideSupportPageState extends State<AideSupportPage> {
             // ── Hero / Support Card ──
             Container(
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [
-                    Color(0xFFF3F5FC),
-                    Color(0xFFF8F9FE),
-                  ],
+                gradient: LinearGradient(
+                  colors: isDark
+                      ? [
+                          theme.colorScheme.surface,
+                          theme.colorScheme.surfaceContainerHighest,
+                        ]
+                      : const [
+                          Color(0xFFF3F5FC),
+                          Color(0xFFF8F9FE),
+                        ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(22),
                 border: Border.all(
-                  color: const Color(0xFFE2E8F4),
+                  color: theme.dividerColor.withValues(alpha: 0.2),
                   width: 1.2,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF763CD1).withValues(alpha: 0.05),
+                    color: (isDark ? Colors.black : theme.colorScheme.primary)
+                        .withValues(alpha: isDark ? 0.25 : 0.05),
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),
@@ -341,27 +379,30 @@ class _AideSupportPageState extends State<AideSupportPage> {
               child: Row(
                 children: [
                   // Illustration Avatar
-                  _buildSupportIllustration(),
+                  _buildSupportIllustration(theme, isDark),
                   AppSpacing.horizontalMd,
                   // Text & Button
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Besoin d’aide?',
+                        Text(
+                          'Besoin d’aide ?',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary,
+                            color: theme.textTheme.titleMedium?.color ??
+                                theme.colorScheme.onSurface,
                           ),
                         ),
                         const SizedBox(height: 4),
-                        const Text(
-                          'Nous sommes la pour vous aider',
+                        Text(
+                          'Nous sommes là pour vous aider',
                           style: TextStyle(
                             fontSize: 13,
-                            color: Color(0xFF6B7280),
+                            color: theme.textTheme.bodySmall?.color
+                                    ?.withValues(alpha: 0.7) ??
+                                theme.colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -369,10 +410,11 @@ class _AideSupportPageState extends State<AideSupportPage> {
                         ElevatedButton(
                           onPressed: _showContactModal,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF5B36D6),
-                            foregroundColor: AppColors.white,
+                            backgroundColor: theme.colorScheme.primary,
+                            foregroundColor: theme.colorScheme.onPrimary,
                             elevation: 2,
-                            shadowColor: const Color(0xFF5B36D6).withValues(alpha: 0.4),
+                            shadowColor: theme.colorScheme.primary
+                                .withValues(alpha: 0.4),
                             padding: const EdgeInsets.symmetric(
                               horizontal: 22,
                               vertical: 10,
@@ -386,7 +428,6 @@ class _AideSupportPageState extends State<AideSupportPage> {
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.white,
                             ),
                           ),
                         ),
@@ -399,12 +440,13 @@ class _AideSupportPageState extends State<AideSupportPage> {
             AppSpacing.verticalXl,
 
             // ── Section Title ──
-            const Text(
-              'Questions frequentes',
+            Text(
+              'Questions fréquentes',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
+                color: theme.textTheme.titleMedium?.color ??
+                    theme.colorScheme.onSurface,
               ),
             ),
             AppSpacing.verticalMd,
@@ -412,15 +454,16 @@ class _AideSupportPageState extends State<AideSupportPage> {
             // ── FAQ Card Container ──
             Container(
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: AppColors.border,
+                  color: theme.dividerColor.withValues(alpha: 0.2),
                   width: 1.2,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.02),
+                    color: (isDark ? Colors.black : AppColors.textPrimary)
+                        .withValues(alpha: isDark ? 0.25 : 0.02),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -455,19 +498,23 @@ class _AideSupportPageState extends State<AideSupportPage> {
                                 Expanded(
                                   child: Text(
                                     item['question']!,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w700,
-                                      color: AppColors.textPrimary,
+                                      color: theme.textTheme.bodyLarge?.color ??
+                                          theme.colorScheme.onSurface,
                                     ),
                                   ),
                                 ),
                                 AnimatedRotation(
                                   turns: isExpanded ? 0.25 : 0.0,
                                   duration: const Duration(milliseconds: 200),
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.chevron_right_rounded,
-                                    color: Color(0xFF6B7280),
+                                    color: theme.iconTheme.color
+                                            ?.withValues(alpha: 0.5) ??
+                                        theme.colorScheme.onSurfaceVariant
+                                            .withValues(alpha: 0.5),
                                     size: 22,
                                   ),
                                 ),
@@ -487,16 +534,18 @@ class _AideSupportPageState extends State<AideSupportPage> {
                               item['answer']!,
                               style: TextStyle(
                                 fontSize: 13.5,
-                                color: AppColors.textSecondary.withValues(alpha: 0.9),
+                                color: theme.textTheme.bodyMedium?.color
+                                        ?.withValues(alpha: 0.8) ??
+                                    theme.colorScheme.onSurfaceVariant,
                                 height: 1.45,
                               ),
                             ),
                           ),
                         if (!isLast)
-                          const Divider(
+                          Divider(
                             height: 1,
                             thickness: 1,
-                            color: Color(0xFFF0EDF7),
+                            color: theme.dividerColor.withValues(alpha: 0.2),
                           ),
                       ],
                     );
@@ -511,12 +560,14 @@ class _AideSupportPageState extends State<AideSupportPage> {
     );
   }
 
-  Widget _buildSupportIllustration() {
+  Widget _buildSupportIllustration(ThemeData theme, bool isDark) {
     return Container(
       width: 105,
       height: 115,
       decoration: BoxDecoration(
-        color: const Color(0xFFEDE7F6),
+        color: isDark
+            ? theme.colorScheme.surfaceContainerHighest
+            : theme.colorScheme.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(18),
       ),
       child: Stack(
@@ -529,7 +580,7 @@ class _AideSupportPageState extends State<AideSupportPage> {
               width: 80,
               height: 40,
               decoration: BoxDecoration(
-                color: const Color(0xFF5B36D6).withValues(alpha: 0.15),
+                color: theme.colorScheme.primary.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(20),
               ),
             ),
@@ -548,7 +599,7 @@ class _AideSupportPageState extends State<AideSupportPage> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: const Color(0xFF3F51B5),
+                        color: theme.colorScheme.primary,
                         width: 3.5,
                       ),
                     ),
@@ -570,7 +621,7 @@ class _AideSupportPageState extends State<AideSupportPage> {
                       width: 8,
                       height: 14,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF3F51B5),
+                        color: theme.colorScheme.primary,
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
@@ -581,7 +632,7 @@ class _AideSupportPageState extends State<AideSupportPage> {
                       width: 8,
                       height: 14,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF3F51B5),
+                        color: theme.colorScheme.primary,
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
@@ -595,7 +646,7 @@ class _AideSupportPageState extends State<AideSupportPage> {
                 height: 24,
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF374151),
+                  color: isDark ? const Color(0xFF1F2937) : const Color(0xFF374151),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Row(

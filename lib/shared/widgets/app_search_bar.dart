@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 import '../../core/constants/AppRadius.dart';
 
 /// Barre de recherche épurée, flat et professionnelle :
 /// Fond plat (surface), bordure fine (1.0px / bordure active minime 1.2px),
-/// taille optimisée et icônes discrètes.
+/// taille optimisée et icônes discrètes, adaptée dynamiquement au thème.
 class AppSearchBar extends StatefulWidget {
   final String hintText;
   final ValueChanged<String>? onChanged;
@@ -64,14 +63,18 @@ class _AppSearchBarState extends State<AppSearchBar> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 150),
       height: 42,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: theme.inputDecorationTheme.fillColor ?? theme.colorScheme.surface,
         borderRadius: AppRadius.input,
         border: Border.all(
-          color: _isFocused ? AppColors.primary : AppColors.border,
+          color: _isFocused
+              ? theme.colorScheme.primary
+              : theme.dividerColor.withValues(alpha: 0.2),
           width: _isFocused ? 1.2 : 1.0,
         ),
       ),
@@ -82,10 +85,10 @@ class _AppSearchBarState extends State<AppSearchBar> {
           onTapOutside: (event) => _focusNode.unfocus(),
           onChanged: widget.onChanged,
           onSubmitted: widget.onSubmitted,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13.5,
             fontWeight: FontWeight.w500,
-            color: AppColors.textPrimary,
+            color: theme.textTheme.bodyMedium?.color ?? theme.colorScheme.onSurface,
             letterSpacing: 0.1,
           ),
           textAlignVertical: TextAlignVertical.center,
@@ -93,13 +96,16 @@ class _AppSearchBarState extends State<AppSearchBar> {
             isDense: true,
             hintText: widget.hintText,
             hintStyle: TextStyle(
-              color: AppColors.textSecondary.withValues(alpha: 0.65),
+              color: theme.hintColor,
               fontSize: 13.5,
               fontWeight: FontWeight.normal,
             ),
             prefixIcon: Icon(
               Icons.search_rounded,
-              color: _isFocused ? AppColors.primary : AppColors.icon,
+              color: _isFocused
+                  ? theme.colorScheme.primary
+                  : (theme.iconTheme.color?.withValues(alpha: 0.6) ??
+                      theme.colorScheme.onSurfaceVariant),
               size: 19,
             ),
             suffixIcon: Row(
@@ -107,9 +113,10 @@ class _AppSearchBarState extends State<AppSearchBar> {
               children: [
                 if (_hasText)
                   IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.close_rounded,
-                      color: AppColors.icon,
+                      color: theme.iconTheme.color?.withValues(alpha: 0.6) ??
+                          theme.colorScheme.onSurfaceVariant,
                       size: 17,
                     ),
                     tooltip: 'Effacer',
@@ -122,9 +129,9 @@ class _AppSearchBarState extends State<AppSearchBar> {
                   ),
                 if (widget.onFilterTap != null)
                   IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.tune_rounded,
-                      color: AppColors.primary,
+                      color: theme.colorScheme.primary,
                       size: 18,
                     ),
                     tooltip: 'Filtres',

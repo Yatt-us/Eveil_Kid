@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 
 /// Tuile de commutation Switch élégante et sans conflit de `shape`/`borderRadius`.
 ///
@@ -25,37 +24,44 @@ class AppSwitchTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final shape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(12),
       side: isOutlined
-          ? const BorderSide(color: AppColors.border, width: 1.0)
+          ? BorderSide(
+              color: theme.dividerColor.withValues(alpha: 0.2),
+              width: 1.0,
+            )
           : BorderSide.none,
     );
 
     return Material(
-      color: isOutlined ? AppColors.surface : Colors.transparent,
+      color: isOutlined ? theme.colorScheme.surface : Colors.transparent,
       shape: shape,
       clipBehavior: Clip.antiAlias,
       child: SwitchListTile(
         value: value,
         onChanged: onChanged,
-        activeTrackColor: AppColors.primaryLight,
-        activeThumbColor: AppColors.primary,
+        activeTrackColor: theme.colorScheme.primary.withValues(alpha: 0.4),
+        activeThumbColor: theme.colorScheme.primary,
         dense: true,
         title: Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14.5,
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+            color: theme.textTheme.titleMedium?.color ??
+                theme.colorScheme.onSurface,
           ),
         ),
         subtitle: subtitle != null
             ? Text(
                 subtitle!,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12.5,
-                  color: AppColors.textSecondary,
+                  color: theme.textTheme.bodyMedium?.color
+                          ?.withValues(alpha: 0.7) ??
+                      theme.colorScheme.onSurfaceVariant,
                 ),
               )
             : null,
@@ -63,13 +69,19 @@ class AppSwitchTile extends StatelessWidget {
             ? Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: (value ? AppColors.primary : AppColors.icon)
+                  color: (value
+                          ? theme.colorScheme.primary
+                          : (theme.iconTheme.color ??
+                              theme.colorScheme.onSurfaceVariant))
                       .withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   icon,
-                  color: value ? AppColors.primary : AppColors.icon,
+                  color: value
+                      ? theme.colorScheme.primary
+                      : (theme.iconTheme.color ??
+                          theme.colorScheme.onSurfaceVariant),
                   size: 20,
                 ),
               )
@@ -102,36 +114,43 @@ class AppCheckboxTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final shape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(12),
       side: isOutlined
-          ? const BorderSide(color: AppColors.border, width: 1.0)
+          ? BorderSide(
+              color: theme.dividerColor.withValues(alpha: 0.2),
+              width: 1.0,
+            )
           : BorderSide.none,
     );
 
     return Material(
-      color: isOutlined ? AppColors.surface : Colors.transparent,
+      color: isOutlined ? theme.colorScheme.surface : Colors.transparent,
       shape: shape,
       clipBehavior: Clip.antiAlias,
       child: CheckboxListTile(
         value: value,
         onChanged: onChanged,
-        activeColor: AppColors.primary,
+        activeColor: theme.colorScheme.primary,
         dense: true,
         title: Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14.5,
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+            color: theme.textTheme.titleMedium?.color ??
+                theme.colorScheme.onSurface,
           ),
         ),
         subtitle: subtitle != null
             ? Text(
                 subtitle!,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12.5,
-                  color: AppColors.textSecondary,
+                  color: theme.textTheme.bodyMedium?.color
+                          ?.withValues(alpha: 0.7) ??
+                      theme.colorScheme.onSurfaceVariant,
                 ),
               )
             : null,

@@ -6,14 +6,17 @@ class AppRoutes {
   static const String splash = '/splash';
   static const String home = '/';
 
-  // Authentification
+  // Authentification & Deep Links
   static const String login = '/login';
   static const String register = '/register';
+  static const String authAction = '/auth/action';
+  static const String resetPassword = '/reset-password';
 
   // Fonctionnalités Générales
   static const String tutoriels = '/tutoriels';
   static const String activites = '/activites';
   static const String jouets = '/jouets';
+  static const String panier = '/panier';
   static const String profile = '/profile';
   static const String activitesPlay = '/activites/play';
   static const String activitesResultat = '/activites/resultat';
@@ -34,5 +37,7 @@ class AppRoutes {
 
   // Espace Enfant & Parents
   static const String enfantDetail = '/enfant-detail';
+  static const String espaceEnfant = '/espace-enfant';
+  static String espaceEnfantFor(String enfantId) => '$espaceEnfant/$enfantId';
   static const String aideSupport = '/aide-support';
 }
