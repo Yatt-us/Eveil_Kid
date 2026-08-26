@@ -217,7 +217,7 @@ class _VideoPlayerPageState
     await ref.read(
       progressionControllerProvider,
     ).saveProgression(
-      tutorielId: widget.tutoriel.tutorielId,
+      tutorielId: widget.tutoriel.tutorielId!,
       position: position,
       duree: duree,
     );

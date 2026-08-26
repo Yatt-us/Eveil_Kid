@@ -361,7 +361,7 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
                       final item = relatedTutoriels[index];
 
                       return GestureDetector(
-                        onTap: () => _openDetail(context, item.tutorielId),
+                        onTap: () => _openDetail(context, item.tutorielId!),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [

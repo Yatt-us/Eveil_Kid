@@ -156,7 +156,7 @@ class _TutorielPageState extends ConsumerState<TutorielPage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => TutorielDetailPage(tutorielId: item.tutorielId),
+                                  builder: (_) => TutorielDetailPage(tutorielId: item.tutorielId!),
                                 ),
                               );
                             },
