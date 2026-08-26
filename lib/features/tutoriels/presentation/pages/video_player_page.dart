@@ -134,7 +134,7 @@ class _VideoPlayerPageState
     _suggestions = await ref
         .read(
           suggestionsProvider(
-            widget.tutoriel.tutorielId,
+            widget.tutoriel.tutorielId!,
           ).future,
         );
 
@@ -227,7 +227,7 @@ class _VideoPlayerPageState
     try {
       final progression = await ref
           .read(
-            progressionProvider(widget.tutoriel.tutorielId).future,
+            progressionProvider(widget.tutoriel.tutorielId!).future,
           );
 
       if (progression == null) return;
