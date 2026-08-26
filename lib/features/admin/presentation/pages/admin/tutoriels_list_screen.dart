@@ -3,8 +3,8 @@ import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/features/admin/presentation/widgets/admin_drawer.dart';
 import 'package:eveilkid/features/tutoriels/enums/tutoriel_status.enum.dart';
 import 'package:eveilkid/features/tutoriels/models/tutoriel.dart';
-import 'package:eveilkid/features/tutoriels/presentations/widgets/tutoriel_card.dart';
-import 'package:eveilkid/features/tutoriels/providers/tutorielProvider.dart';
+import 'package:eveilkid/features/admin/presentation/widgets/tutoriel_card.dart';
+import 'package:eveilkid/features/tutoriels/providers/tutoriel_provider.dart';
 
 import 'package:eveilkid/shared/widgets/app_search_bar.dart';
 import 'package:flutter/material.dart';

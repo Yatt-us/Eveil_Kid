@@ -1,6 +1,6 @@
 import 'package:eveilkid/core/constants/app_colors.dart';
-import 'package:eveilkid/features/tutoriels/formcontroller/tutoriel_form_controller.dart';
-import 'package:eveilkid/features/tutoriels/presentations/widgets/tutoriel_image_picker.dart';
+import 'package:eveilkid/features/admin/formcontroller/tutoriel_form_controller.dart';
+import 'package:eveilkid/features/admin/presentation/widgets/tutoriel_image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

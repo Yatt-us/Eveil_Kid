@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:eveilkid/features/tutoriels/enums/tutoriel_status.enum.dart';
 import 'package:eveilkid/features/tutoriels/models/tutoriel.dart';
-import 'package:eveilkid/features/tutoriels/providers/tutorielProvider.dart';
+import 'package:eveilkid/features/tutoriels/providers/tutoriel_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:eveilkid/features/ActivityCategorie/models/activity_category_model.dart';

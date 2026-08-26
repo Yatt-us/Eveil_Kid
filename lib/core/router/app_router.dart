@@ -15,7 +15,7 @@ import 'package:eveilkid/features/parents/presentation/pages/accueil_parent.dart
 import 'package:eveilkid/features/parents/presentation/pages/aide_support_page.dart';
 import 'package:eveilkid/features/parents/presentation/pages/detail_enfant.dart';
 import 'package:eveilkid/features/parents/presentation/pages/profil_parent.dart';
-import 'package:eveilkid/features/tutoriels/presentations/pages/admin/tutoriels_list_screen.dart';
+import 'package:eveilkid/features/admin/presentation/pages/admin/tutoriels_list_screen.dart';
 import 'package:eveilkid/features/panier/presentation/pages/panier_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

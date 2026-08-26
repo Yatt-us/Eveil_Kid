@@ -4,7 +4,7 @@ import '../enums/tutoriel_status.enum.dart';
 class Tutoriel {
   final String? tutorielId;
   final String categorieId;
-  final String jouetLieId;
+  final String? jouetLieId;
   final String createurId;
   final String titre;
   final String description;
@@ -120,4 +120,9 @@ class Tutoriel {
   }
 
   String get statutLabel => statut.label;
+
+   String get ageRangeLabel =>
+      ageMinimum == ageMaximum ? '$ageMinimum ans' : '$ageMinimum-$ageMaximum ans';
+
+  String get durationLabel => '${duree.toString()} sec';
 }

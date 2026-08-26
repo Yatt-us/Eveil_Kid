@@ -1,5 +1,7 @@
-import 'package:eveilkid/core/constants/app_colors.dart';
+import 'package:eveilkid/features/categories/providers/categorie_provider.dart';
 import 'package:eveilkid/features/tutoriels/models/tutoriel.dart';
+import 'package:eveilkid/features/tutoriels/presentation/pages/tutoriel_detail_page.dart';
+import 'package:eveilkid/features/tutoriels/presentation/widgets/category_filter.dart';
 import 'package:eveilkid/features/tutoriels/presentation/widgets/tutoriel_search.dart';
 import 'package:eveilkid/features/tutoriels/providers/tutoriel_provider.dart';
 import 'package:eveilkid/shared/widgets/app_bottom_nav_bar.dart';
@@ -15,14 +17,7 @@ class TutorielPage extends ConsumerStatefulWidget {
 
 class _TutorielPageState extends ConsumerState<TutorielPage> {
   final TextEditingController _searchController = TextEditingController();
-  String _selectedAge = 'Tous';
-
-  static const List<String> _ageFilters = [
-    'Tous',
-    'Age 4-6',
-    'Age 7-9',
-    'Age 10-12',
-  ];
+  String _selectedCategoryId = 'all';
 
   List<Tutoriel> _filteredTutoriels(List<Tutoriel> tutoriels) {
     final query = _searchController.text.trim().toLowerCase();
@@ -32,28 +27,11 @@ class _TutorielPageState extends ConsumerState<TutorielPage> {
           tutoriel.titre.toLowerCase().contains(query) ||
           tutoriel.description.toLowerCase().contains(query);
 
-      final matchesAge = _selectedAge == 'Tous' ||
-          _matchesAgeFilter(tutoriel.ageMinimum, tutoriel.ageMaximum, _selectedAge);
+      final matchesCategory = _selectedCategoryId == 'all' ||
+          tutoriel.categorieId == _selectedCategoryId;
 
-      return matchesQuery && matchesAge;
+      return matchesQuery && matchesCategory;
     }).toList();
-  }
-
-  bool _matchesAgeFilter(num minAge, num maxAge, String filter) {
-    switch (filter) {
-      case 'Age 4-6':
-        return _rangesOverlap(minAge, maxAge, 4, 6);
-      case 'Age 7-9':
-        return _rangesOverlap(minAge, maxAge, 7, 9);
-      case 'Age 10-12':
-        return _rangesOverlap(minAge, maxAge, 10, 12);
-      default:
-        return true;
-    }
-  }
-
-  bool _rangesOverlap(num aMin, num aMax, int bMin, int bMax) {
-    return aMin <= bMax && aMax >= bMin;
   }
 
   @override
@@ -65,6 +43,34 @@ class _TutorielPageState extends ConsumerState<TutorielPage> {
   @override
   Widget build(BuildContext context) {
     final tutorielsAsync = ref.watch(tutorielsProvider);
+    final categoriesAsync = ref.watch(categoriesProvider);
+
+    final categoryChips = <Widget>[];
+    categoryChips.add(
+      CategoryFilterChip(
+        label: 'Tous',
+        isSelected: _selectedCategoryId == 'all',
+        onTap: () => setState(() => _selectedCategoryId = 'all'),
+      ),
+    );
+
+    categoryChips.addAll(
+      categoriesAsync.maybeWhen(
+        data: (categories) {
+          return categories
+              .where((category) => category.estActive)
+              .map(
+                (category) => CategoryFilterChip(
+                  label: category.nom,
+                  isSelected: _selectedCategoryId == category.categorieId,
+                  onTap: () => setState(() => _selectedCategoryId = category.categorieId),
+                ),
+              )
+              .toList();
+        },
+        orElse: () => <Widget>[],
+      ),
+    );
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F4F4),
@@ -111,32 +117,9 @@ class _TutorielPageState extends ConsumerState<TutorielPage> {
                 height: 52,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  itemCount: _ageFilters.length,
+                  itemCount: categoryChips.length,
                   separatorBuilder: (context, index) => const SizedBox(width: 12),
-                  itemBuilder: (context, index) {
-                    final label = _ageFilters[index];
-                    final isSelected = _selectedAge == label;
-
-                    return GestureDetector(
-                      onTap: () => setState(() => _selectedAge = label),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 18),
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: isSelected ? AppColors.primary : const Color(0xFFEDEDEE),
-                          borderRadius: BorderRadius.circular(28),
-                        ),
-                        child: Text(
-                          label,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: isSelected ? Colors.white : const Color(0xFF1F1F1F),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
+                  itemBuilder: (context, index) => categoryChips[index],
                 ),
               ),
               const SizedBox(height: 18),
@@ -168,98 +151,109 @@ class _TutorielPageState extends ConsumerState<TutorielPage> {
 
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 18),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Stack(
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(26),
-                                    child: SizedBox(
-                                      width: 160,
-                                      height: 120,
-                                      child: Image.network(
-                                        imageUrl,
-                                        fit: BoxFit.cover,
-                                        loadingBuilder: (context, child, loadingProgress) {
-                                          if (loadingProgress == null) return child;
-                                          return Container(
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => TutorielDetailPage(tutorielId: item.tutorielId!),
+                                ),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(26),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Stack(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(26),
+                                      child: SizedBox(
+                                        width: 160,
+                                        height: 120,
+                                        child: Image.network(
+                                          imageUrl,
+                                          fit: BoxFit.cover,
+                                          loadingBuilder: (context, child, loadingProgress) {
+                                            if (loadingProgress == null) return child;
+                                            return Container(
+                                              width: 160,
+                                              height: 120,
+                                              color: const Color(0xFFEBE6E6),
+                                              child: const Center(
+                                                child: CircularProgressIndicator(strokeWidth: 2),
+                                              ),
+                                            );
+                                          },
+                                          errorBuilder: (context, error, stackTrace) => Container(
                                             width: 160,
                                             height: 120,
                                             color: const Color(0xFFEBE6E6),
-                                            child: const Center(
-                                              child: CircularProgressIndicator(strokeWidth: 2),
+                                            child: const Icon(
+                                              Icons.image_not_supported_rounded,
+                                              size: 40,
+                                              color: Color(0xFF8A8A8A),
                                             ),
-                                          );
-                                        },
-                                        errorBuilder: (context, error, stackTrace) => Container(
-                                          width: 160,
-                                          height: 120,
-                                          color: const Color(0xFFEBE6E6),
-                                          child: const Icon(
-                                            Icons.image_not_supported_rounded,
-                                            size: 40,
-                                            color: Color(0xFF8A8A8A),
                                           ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                  Positioned(
-                                    left: 12,
-                                    bottom: 10,
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                      decoration: BoxDecoration(
-                                        color: Colors.black.withValues(alpha: 0.78),
-                                        borderRadius: BorderRadius.circular(18),
-                                      ),
-                                      child: Text(
-                                        _formatDuration(item.duree),
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w700,
+                                    Positioned(
+                                      left: 12,
+                                      bottom: 10,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withValues(alpha: 0.78),
+                                          borderRadius: BorderRadius.circular(18),
                                         ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(width: 18),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      item.titre,
-                                      style: const TextStyle(
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.w700,
-                                        color: Color(0xFF141414),
-                                        height: 1.15,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFEDEDEE),
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      child: Text(
-                                        item.ageRangeLabel,
-                                        style: const TextStyle(
-                                          color: Color(0xFF4A4A4A),
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500,
+                                        child: Text(
+                                          _formatDuration(item.duree),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w700,
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ],
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 18),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item.titre,
+                                        style: const TextStyle(
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFF141414),
+                                          height: 1.15,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFEDEDEE),
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        child: Text(
+                                          item.ageRangeLabel,
+                                          style: const TextStyle(
+                                            color: Color(0xFF4A4A4A),
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       },
