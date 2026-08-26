@@ -1,3 +1,4 @@
+import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/features/activites/formController/activity_form_controller.dart';
 import 'package:eveilkid/features/activites/presentation/widgets/activity_age_selector.dart';
 import 'package:eveilkid/features/activites/presentation/widgets/activity_category_selector.dart';
@@ -197,11 +198,11 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                 width: double.infinity,
                 child: TextButton.icon(
                   onPressed: () {},
-                  icon: const Icon(Icons.add, color: Colors.blue, size: 20),
+                  icon: const Icon(Icons.add, color: AppColors.primary, size: 20),
                   label: const Text(
                     '+ Ajouter des questions',
                     style: TextStyle(
-                      color: Colors.blue,
+                      color: AppColors.primary,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
@@ -221,7 +222,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
               child: ElevatedButton(
                 onPressed: _saveActivity,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),

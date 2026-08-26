@@ -172,7 +172,7 @@ class TutorielCard extends StatelessWidget {
                         value: 'edit',
                         child: Row(
                           children: [
-                            Icon(Icons.edit, size: 18, color: Colors.blue),
+                            Icon(Icons.edit, size: 18, color: AppColors.primary),
                             SizedBox(width: 8),
                             Text('Modifier'),
                           ],

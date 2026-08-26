@@ -1,3 +1,4 @@
+import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class StatutCommandeWidget extends StatelessWidget {
@@ -7,7 +8,7 @@ class StatutCommandeWidget extends StatelessWidget {
 
   static const Map<String, Map<String, dynamic>> _infoStatut = {
     'en_attente': {'libelle': 'En attente', 'couleur': Colors.orange},
-    'confirmee': {'libelle': 'Confirmée', 'couleur': Colors.blue},
+    'confirmee': {'libelle': 'Confirmée', 'couleur': AppColors.primary},
     'en_preparation': {'libelle': 'En préparation', 'couleur': Colors.purple},
     'expediee': {'libelle': 'Expédiée', 'couleur': Colors.indigo},
     'livree': {'libelle': 'Livrée', 'couleur': Colors.green},

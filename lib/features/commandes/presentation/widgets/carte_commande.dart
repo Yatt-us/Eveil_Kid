@@ -1,3 +1,4 @@
+import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/commande_model.dart';
@@ -45,7 +46,7 @@ class CarteCommande extends StatelessWidget {
                 'Total : ${commande.montantTotal.toStringAsFixed(0)} FCFA',
                 style: const TextStyle(
                   fontWeight: FontWeight.w600,
-                  color: Colors.blueAccent,
+                  color: AppColors.primary,
                 ),
               ),
             ],

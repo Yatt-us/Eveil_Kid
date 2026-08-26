@@ -1,3 +1,4 @@
+import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class ResumeCommandeWidget extends StatelessWidget {
@@ -44,7 +45,7 @@ class ResumeCommandeWidget extends StatelessWidget {
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
-                color: Colors.blueAccent,
+                color: AppColors.primary,
               ),
             ),
           ],

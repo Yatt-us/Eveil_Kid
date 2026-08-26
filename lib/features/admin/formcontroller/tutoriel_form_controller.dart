@@ -4,13 +4,12 @@ import 'package:eveilkid/features/tutoriels/models/tutoriel.dart';
 import 'package:eveilkid/features/tutoriels/providers/tutoriel_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:eveilkid/features/ActivityCategorie/models/activity_category_model.dart';
-import 'package:eveilkid/features/ActivityCategorie/providers/activity_category_provider.dart';
+import 'package:eveilkid/features/categories/models/categorie.dart';
+import 'package:eveilkid/features/categories/providers/categorie_provider.dart';
 
 class TutorielFormController extends ChangeNotifier {
   final Ref ref;
   final Tutoriel? initialTutoriel;
-
 
   final TextEditingController titreController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
@@ -34,7 +33,7 @@ class TutorielFormController extends ChangeNotifier {
   String? videoUrlError;
   String? imageError;
 
-  List<ActiviteCategorie> categories = [];
+  List<Categorie> categories = [];
 
   TutorielFormController(
     this.ref, {
@@ -46,23 +45,22 @@ class TutorielFormController extends ChangeNotifier {
     _loadCategories();
   }
 
-
   Future<void> _loadCategories() async {
     try {
       isLoadingCategories = true;
       notifyListeners();
 
-      final result = await ref.read(categoriesActivesProvider.future);
+      final result = await ref.read(categoriesProvider.future);
       categories = result;
 
       isLoadingCategories = false;
       errorMessage = null;
-      notifyListeners();
-
+      
       if (selectedCategorieId.isEmpty && categories.isNotEmpty) {
-        selectedCategorieId = categories.first.id!;
-        notifyListeners();
+        selectedCategorieId = categories.first.categorieId;
       }
+      
+      notifyListeners();
     } catch (e) {
       isLoadingCategories = false;
       errorMessage = 'Erreur lors du chargement des catégories : $e';
@@ -97,7 +95,6 @@ class TutorielFormController extends ChangeNotifier {
     return 0;
   }
 
-
   void updateCategorie(String categorieId) {
     selectedCategorieId = categorieId;
     categorieError = null;
@@ -124,8 +121,6 @@ class TutorielFormController extends ChangeNotifier {
     imageUrl = null;
     notifyListeners();
   }
-
-  
 
   void _clearErrors() {
     titreError = null;
@@ -193,7 +188,6 @@ class TutorielFormController extends ChangeNotifier {
     return uri != null && (uri.isAbsolute);
   }
 
-  
   Tutoriel buildTutoriel() {
     final dureeEnSecondes = _parseDuree(dureeController.text.trim());
 
@@ -272,7 +266,7 @@ class TutorielFormController extends ChangeNotifier {
     descriptionController.clear();
     dureeController.clear();
     videoUrlController.clear();
-    selectedCategorieId = categories.isNotEmpty ? categories.first.id! : '';
+    selectedCategorieId = categories.isNotEmpty ? categories.first.categorieId : '';
     selectedJouetsIds = [];
     selectedImage = null;
     imageUrl = null;
@@ -289,7 +283,6 @@ class TutorielFormController extends ChangeNotifier {
     super.dispose();
   }
 }
-
 
 final tutorielFormControllerProvider = Provider.family<TutorielFormController, Tutoriel?>(
   (ref, initialTutoriel) {

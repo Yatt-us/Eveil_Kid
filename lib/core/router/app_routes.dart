@@ -38,6 +38,7 @@ class AppRoutes {
   static const String adminActivityEditQuestions = '/admin/activites/:activityId/questions/edit/:questionId';
   static const String adminActivityDetailQuestions = '/admin/activites/:activityId/questions/detail/:questionId';
   static const String adminTutoriels = '/admin/tutoriels';
+  static const String adminAddTutoriels = '/admin/tutoriels/add';
 
   
   static const String adminCategoryForm = '/admin/category-form';
