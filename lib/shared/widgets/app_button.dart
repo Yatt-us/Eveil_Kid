@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 
 enum AppButtonVariant { primary, outlined, text, danger }
 
@@ -7,7 +6,7 @@ enum AppButtonSize { small, medium, large }
 
 /// Bouton réutilisable avec le même langage visuel que [AppGoogleButton] :
 /// Container décoré + Material + InkWell pour un rendu premium et des ripples
-/// parfaitement clippés.
+/// parfaitement clippés, adapté automatiquement au thème.
 class AppButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
@@ -60,62 +59,67 @@ class AppButton extends StatelessWidget {
         AppButtonSize.large => 22,
       };
 
-  // ── Couleurs selon la variante ─────────────────────────────────────────────
+  // ── Couleurs selon la variante et le thème ─────────────────────────────────
 
-  Color get _backgroundColor => switch (variant) {
-        AppButtonVariant.primary => AppColors.primary,
-        AppButtonVariant.danger => AppColors.danger,
-        AppButtonVariant.outlined || AppButtonVariant.text => AppColors.surface,
+  Color _getBackgroundColor(ThemeData theme) => switch (variant) {
+        AppButtonVariant.primary => theme.colorScheme.primary,
+        AppButtonVariant.danger => theme.colorScheme.error,
+        AppButtonVariant.outlined => theme.colorScheme.surface,
+        AppButtonVariant.text => Colors.transparent,
       };
 
-  Color get _foregroundColor => switch (variant) {
-        AppButtonVariant.primary || AppButtonVariant.danger => AppColors.white,
-        AppButtonVariant.outlined || AppButtonVariant.text => AppColors.primary,
+  Color _getForegroundColor(ThemeData theme) => switch (variant) {
+        AppButtonVariant.primary => theme.colorScheme.onPrimary,
+        AppButtonVariant.danger => theme.colorScheme.onError,
+        AppButtonVariant.outlined || AppButtonVariant.text => theme.colorScheme.primary,
       };
 
-  Color get _spinnerColor => switch (variant) {
-        AppButtonVariant.primary || AppButtonVariant.danger => AppColors.white,
-        AppButtonVariant.outlined || AppButtonVariant.text => AppColors.primary,
+  Color _getSpinnerColor(ThemeData theme) => switch (variant) {
+        AppButtonVariant.primary => theme.colorScheme.onPrimary,
+        AppButtonVariant.danger => theme.colorScheme.onError,
+        AppButtonVariant.outlined || AppButtonVariant.text => theme.colorScheme.primary,
       };
 
-  // Couleur de fond quand disabled (isLoading)
-  Color get _disabledBgColor => switch (variant) {
+  Color _getDisabledBgColor(ThemeData theme) => switch (variant) {
         AppButtonVariant.primary =>
-          AppColors.primary.withValues(alpha: 0.55),
+          theme.colorScheme.primary.withValues(alpha: 0.55),
         AppButtonVariant.danger =>
-          AppColors.danger.withValues(alpha: 0.55),
-        AppButtonVariant.outlined || AppButtonVariant.text => AppColors.surface,
+          theme.colorScheme.error.withValues(alpha: 0.55),
+        AppButtonVariant.outlined => theme.colorScheme.surface,
+        AppButtonVariant.text => Colors.transparent,
       };
 
-  Color get _disabledFgColor => switch (variant) {
-        AppButtonVariant.primary || AppButtonVariant.danger =>
-          AppColors.white.withValues(alpha: 0.7),
+  Color _getDisabledFgColor(ThemeData theme) => switch (variant) {
+        AppButtonVariant.primary =>
+          theme.colorScheme.onPrimary.withValues(alpha: 0.7),
+        AppButtonVariant.danger =>
+          theme.colorScheme.onError.withValues(alpha: 0.7),
         AppButtonVariant.outlined || AppButtonVariant.text =>
-          AppColors.primary.withValues(alpha: 0.45),
+          theme.colorScheme.primary.withValues(alpha: 0.45),
       };
 
-  Border? get _border => switch (variant) {
+  Border? _getBorder(ThemeData theme) => switch (variant) {
         AppButtonVariant.outlined => Border.all(
             color: onPressed != null && !isLoading
-                ? AppColors.primary
-                : AppColors.primary.withValues(alpha: 0.35),
+                ? theme.colorScheme.primary
+                : theme.colorScheme.primary.withValues(alpha: 0.35),
             width: 1.5,
           ),
         AppButtonVariant.text => null,
         AppButtonVariant.primary || AppButtonVariant.danger => null,
       };
 
-  List<BoxShadow> get _shadow => switch (variant) {
+  List<BoxShadow> _getShadow(ThemeData theme) => switch (variant) {
         AppButtonVariant.primary => [
             BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.25),
+              color: theme.colorScheme.primary.withValues(alpha: 0.25),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
           ],
         AppButtonVariant.danger => [
             BoxShadow(
-              color: AppColors.danger.withValues(alpha: 0.22),
+              color: theme.colorScheme.error.withValues(alpha: 0.22),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -134,9 +138,10 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final bool disabled = isLoading || onPressed == null;
-    final Color bgColor = disabled ? _disabledBgColor : _backgroundColor;
-    final Color fgColor = disabled ? _disabledFgColor : _foregroundColor;
+    final Color bgColor = disabled ? _getDisabledBgColor(theme) : _getBackgroundColor(theme);
+    final Color fgColor = disabled ? _getDisabledFgColor(theme) : _getForegroundColor(theme);
 
     Widget content = isLoading
         ? SizedBox(
@@ -144,7 +149,7 @@ class AppButton extends StatelessWidget {
             height: _spinnerSize,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(_spinnerColor),
+              valueColor: AlwaysStoppedAnimation<Color>(_getSpinnerColor(theme)),
             ),
           )
         : Row(
@@ -155,13 +160,17 @@ class AppButton extends StatelessWidget {
                 Icon(icon, size: _iconSize, color: fgColor),
                 const SizedBox(width: 8),
               ],
-              Text(
-                text,
-                style: TextStyle(
-                  fontSize: _fontSize,
-                  fontWeight: FontWeight.w600,
-                  color: fgColor,
-                  letterSpacing: 0.1,
+              Flexible(
+                child: Text(
+                  text,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: _fontSize,
+                    fontWeight: FontWeight.w600,
+                    color: fgColor,
+                    letterSpacing: 0.1,
+                  ),
                 ),
               ),
             ],
@@ -174,8 +183,8 @@ class AppButton extends StatelessWidget {
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(14),
-        border: _border,
-        boxShadow: disabled ? [] : _shadow,
+        border: _getBorder(theme),
+        boxShadow: disabled ? [] : _getShadow(theme),
       ),
       child: Material(
         color: Colors.transparent,

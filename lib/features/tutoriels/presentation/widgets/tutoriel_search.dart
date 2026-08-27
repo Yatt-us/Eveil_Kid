@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:eveilkid/shared/widgets/app_search_bar.dart';
 
 class TutorielSearchField extends StatelessWidget {
   const TutorielSearchField({
@@ -6,30 +7,23 @@ class TutorielSearchField extends StatelessWidget {
     required this.controller,
     required this.onChanged,
     this.hintText = 'Rechercher un tutoriel...',
+    this.onClear,
+    this.onFilterTap,
   });
 
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
   final String hintText;
+  final VoidCallback? onClear;
+  final VoidCallback? onFilterTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE6E2F2)),
-      ),
-      child: TextField(
-        controller: controller,
-        onChanged: onChanged,
-        decoration: InputDecoration(
-          hintText: hintText,
-          border: InputBorder.none,
-          prefixIcon: const Icon(Icons.search_rounded),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        ),
-      ),
+    return AppSearchBar(
+      controller: controller,
+      hintText: hintText,
+      onChanged: onChanged,
+      onFilterTap: onFilterTap,
     );
   }
 }

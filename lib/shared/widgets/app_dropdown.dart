@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 
 class AppDropdownItem<T> {
   final T value;
@@ -48,6 +47,7 @@ class AppDropdown<T> extends StatelessWidget {
   void _openSelectionSheet(BuildContext context) {
     if (!enabled || onChanged == null) return;
     FocusScope.of(context).unfocus();
+    final theme = Theme.of(context);
 
     showModalBottomSheet<void>(
       context: context,
@@ -58,9 +58,9 @@ class AppDropdown<T> extends StatelessWidget {
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.65,
           ),
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -71,7 +71,7 @@ class AppDropdown<T> extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.border,
+                  color: theme.dividerColor.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -85,25 +85,30 @@ class AppDropdown<T> extends StatelessWidget {
                     Expanded(
                       child: Text(
                         label ?? 'Sélectionner',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
+                          color: theme.textTheme.titleMedium?.color ??
+                              theme.colorScheme.onSurface,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.close_rounded,
-                        color: AppColors.icon,
+                        color: theme.iconTheme.color ??
+                            theme.colorScheme.onSurfaceVariant,
                       ),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
                 ),
               ),
-              const Divider(height: 1, color: AppColors.border),
+              Divider(
+                height: 1,
+                color: theme.dividerColor.withValues(alpha: 0.2),
+              ),
               // Scrollable Items List
               Flexible(
                 child: ListView.separated(
@@ -113,19 +118,19 @@ class AppDropdown<T> extends StatelessWidget {
                     horizontal: 12,
                   ),
                   itemCount: items.length,
-                  separatorBuilder: (context, index) => const Divider(
+                  separatorBuilder: (context, index) => Divider(
                     height: 1,
-                    color: AppColors.border,
+                    color: theme.dividerColor.withValues(alpha: 0.2),
                     indent: 52,
                   ),
                   itemBuilder: (context, index) {
                     final item = items[index];
                     final isSelected = item.value == value;
-                    final iconColor = item.iconColor ?? AppColors.primary;
+                    final iconColor = item.iconColor ?? theme.colorScheme.primary;
 
                     return Material(
                       color: isSelected
-                          ? AppColors.primary.withValues(alpha: 0.06)
+                          ? theme.colorScheme.primary.withValues(alpha: 0.1)
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(12),
                       child: InkWell(
@@ -173,8 +178,9 @@ class AppDropdown<T> extends StatelessWidget {
                                             ? FontWeight.bold
                                             : FontWeight.w500,
                                         color: isSelected
-                                            ? AppColors.primary
-                                            : AppColors.textPrimary,
+                                            ? theme.colorScheme.primary
+                                            : (theme.textTheme.bodyLarge?.color ??
+                                                theme.colorScheme.onSurface),
                                       ),
                                     ),
                                     if (item.subtitle != null) ...[
@@ -183,9 +189,11 @@ class AppDropdown<T> extends StatelessWidget {
                                         item.subtitle!,
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 13,
-                                          color: AppColors.textSecondary,
+                                          color: theme.textTheme.bodyMedium?.color
+                                                  ?.withValues(alpha: 0.7) ??
+                                              theme.colorScheme.onSurfaceVariant,
                                         ),
                                       ),
                                     ],
@@ -194,10 +202,10 @@ class AppDropdown<T> extends StatelessWidget {
                               ),
                               if (isSelected) ...[
                                 const SizedBox(width: 8),
-                                const Icon(
+                                Icon(
                                   Icons.check_circle_rounded,
                                   size: 22,
-                                  color: AppColors.primary,
+                                  color: theme.colorScheme.primary,
                                 ),
                               ],
                             ],
@@ -218,6 +226,7 @@ class AppDropdown<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final selected = _selectedItem;
 
     return Column(
@@ -227,10 +236,10 @@ class AppDropdown<T> extends StatelessWidget {
         if (label != null) ...[
           Text(
             label!,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: theme.textTheme.titleSmall?.color ?? theme.colorScheme.onSurface,
               letterSpacing: -0.1,
             ),
           ),
@@ -243,25 +252,30 @@ class AppDropdown<T> extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
               color: enabled
-                  ? AppColors.surface
-                  : AppColors.disabled.withValues(alpha: 0.15),
+                  ? (theme.inputDecorationTheme.fillColor ?? theme.colorScheme.surface)
+                  : theme.disabledColor.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: AppColors.border,
+                color: theme.dividerColor.withValues(alpha: 0.2),
                 width: 1.0,
               ),
             ),
             child: Row(
               children: [
                 if (prefixIcon != null) ...[
-                  Icon(prefixIcon, color: AppColors.icon, size: 19),
+                  Icon(
+                    prefixIcon,
+                    color: theme.iconTheme.color?.withValues(alpha: 0.6) ??
+                        theme.colorScheme.onSurfaceVariant,
+                    size: 19,
+                  ),
                   const SizedBox(width: 10),
                 ],
                 if (selected?.icon != null) ...[
                   Icon(
                     selected!.icon,
                     size: 19,
-                    color: selected.iconColor ?? AppColors.primary,
+                    color: selected.iconColor ?? theme.colorScheme.primary,
                   ),
                   const SizedBox(width: 10),
                 ],
@@ -276,16 +290,18 @@ class AppDropdown<T> extends StatelessWidget {
                           ? FontWeight.w500
                           : FontWeight.normal,
                       color: selected != null
-                          ? AppColors.textPrimary
-                          : AppColors.textSecondary.withValues(alpha: 0.65),
+                          ? (theme.textTheme.bodyMedium?.color ??
+                              theme.colorScheme.onSurface)
+                          : theme.hintColor,
                       letterSpacing: 0.1,
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
-                const Icon(
+                Icon(
                   Icons.keyboard_arrow_down_rounded,
-                  color: AppColors.icon,
+                  color: theme.iconTheme.color?.withValues(alpha: 0.6) ??
+                      theme.colorScheme.onSurfaceVariant,
                   size: 20,
                 ),
               ],

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:eveilkid/core/constants/app_assets.dart';
-import 'package:eveilkid/core/constants/app_colors.dart';
 
-/// Bouton stylisé pour l'authentification avec Google.
+/// Bouton stylisé pour l'authentification avec Google, respectant le thème actuel.
 class AppGoogleButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
@@ -18,13 +17,15 @@ class AppGoogleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       height: 48,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: AppColors.border,
+          color: theme.dividerColor.withValues(alpha: 0.2),
           width: 1.2,
         ),
         boxShadow: [
@@ -46,12 +47,12 @@ class AppGoogleButton extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (isLoading)
-                  const SizedBox(
+                  SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                      valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
                     ),
                   )
                 else ...[
@@ -63,10 +64,11 @@ class AppGoogleButton extends StatelessWidget {
                   const SizedBox(width: 12),
                   Text(
                     text,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: theme.textTheme.bodyMedium?.color ??
+                          theme.colorScheme.onSurface,
                       letterSpacing: 0.1,
                     ),
                   ),

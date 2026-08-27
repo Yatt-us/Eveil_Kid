@@ -1,4 +1,4 @@
-// lib/features/parent/presentation/pages/controle_parental_page.dart
+// lib/features/parents/presentation/pages/controle_parental_page.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -92,26 +92,29 @@ class _ControleParentalPageState extends ConsumerState<ControleParentalPage> {
   @override
   Widget build(BuildContext context) {
     final parentAsync = ref.watch(parentNotifierProvider);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: AppColors.textPrimary,
+            color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
             size: 22,
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Contrôle parental',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+            color: theme.textTheme.titleMedium?.color ??
+                theme.colorScheme.onSurface,
           ),
         ),
         centerTitle: true,
@@ -127,12 +130,16 @@ class _ControleParentalPageState extends ConsumerState<ControleParentalPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: theme.colorScheme.surface,
                 borderRadius: AppRadius.card,
-                border: Border.all(color: AppColors.border),
+                border: Border.all(
+                  color: theme.dividerColor.withValues(alpha: 0.2),
+                  width: 1.2,
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.textPrimary.withValues(alpha: 0.03),
+                    color: (isDark ? Colors.black : AppColors.textPrimary)
+                        .withValues(alpha: isDark ? 0.25 : 0.03),
                     blurRadius: 10,
                     offset: const Offset(0, 2),
                   ),
@@ -144,12 +151,13 @@ class _ControleParentalPageState extends ConsumerState<ControleParentalPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Activer le contrôle parental',
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
+                            color: theme.textTheme.titleMedium?.color ??
+                                theme.colorScheme.onSurface,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -160,8 +168,10 @@ class _ControleParentalPageState extends ConsumerState<ControleParentalPage> {
                           style: TextStyle(
                             fontSize: 12,
                             color: _isParentalControlEnabled
-                                ? AppColors.success
-                                : AppColors.textSecondary,
+                                ? const Color(0xFF10B981)
+                                : (theme.textTheme.bodySmall?.color
+                                        ?.withValues(alpha: 0.7) ??
+                                    theme.colorScheme.onSurfaceVariant),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -171,9 +181,9 @@ class _ControleParentalPageState extends ConsumerState<ControleParentalPage> {
                   AppSpacing.horizontalSm,
                   Switch(
                     value: _isParentalControlEnabled,
-                    activeThumbColor: AppColors.primary,
-                    activeTrackColor: AppColors.primaryLight.withValues(
-                      alpha: 0.5,
+                    activeThumbColor: theme.colorScheme.primary,
+                    activeTrackColor: theme.colorScheme.primary.withValues(
+                      alpha: 0.4,
                     ),
                     onChanged: (val) {
                       setState(() => _isParentalControlEnabled = val);
@@ -200,42 +210,47 @@ class _ControleParentalPageState extends ConsumerState<ControleParentalPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // ── 2. ENFANTS CONCERNÉS (DYNAMIQUE) ──
-                    _buildSectionTitle('Enfants concernés'),
+                    _buildSectionTitle('Enfants concernés', theme),
                     AppSpacing.verticalSm,
                     parentAsync.when(
                       data: (parent) =>
-                          _buildChildrenSection(context, parent.enfants),
+                          _buildChildrenSection(context, parent.enfants, theme, isDark),
                       loading: () => Container(
                         height: 80,
                         decoration: BoxDecoration(
-                          color: AppColors.surfaceVariant,
+                          color: theme.colorScheme.surface,
                           borderRadius: AppRadius.card,
+                          border: Border.all(
+                            color: theme.dividerColor.withValues(alpha: 0.2),
+                          ),
                         ),
-                        child: const Center(
+                        child: Center(
                           child: CircularProgressIndicator(
-                            color: AppColors.primary,
+                            color: theme.colorScheme.primary,
                             strokeWidth: 2,
                           ),
                         ),
                       ),
-                      error: (_, __) => _buildEmptyChildrenCard(context),
+                      error: (err, stack) => _buildEmptyChildrenCard(context, theme),
                     ),
                     AppSpacing.verticalLg,
 
                     // ── 3. LIMITES DE TEMPS INTERACTIVES ──
-                    _buildSectionTitle('Limites de temps'),
+                    _buildSectionTitle('Limites de temps', theme),
                     AppSpacing.verticalSm,
                     Container(
                       padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
+                        color: theme.colorScheme.surface,
                         borderRadius: AppRadius.card,
-                        border: Border.all(color: AppColors.border),
+                        border: Border.all(
+                          color: theme.dividerColor.withValues(alpha: 0.2),
+                          width: 1.2,
+                        ),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.textPrimary.withValues(
-                              alpha: 0.03,
-                            ),
+                            color: (isDark ? Colors.black : AppColors.textPrimary)
+                                .withValues(alpha: isDark ? 0.25 : 0.03),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -248,12 +263,13 @@ class _ControleParentalPageState extends ConsumerState<ControleParentalPage> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
+                              Text(
                                 'Temps quotidien maximum',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
+                                  color: theme.textTheme.titleSmall?.color ??
+                                      theme.colorScheme.onSurface,
                                 ),
                               ),
                               Container(
@@ -262,17 +278,17 @@ class _ControleParentalPageState extends ConsumerState<ControleParentalPage> {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.primary.withValues(
-                                    alpha: 0.1,
+                                  color: theme.colorScheme.primary.withValues(
+                                    alpha: 0.12,
                                   ),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
                                   _formatMinutes(_dailyLimitMinutes),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w800,
-                                    color: AppColors.primary,
+                                    color: theme.colorScheme.primary,
                                   ),
                                 ),
                               ),
@@ -283,8 +299,8 @@ class _ControleParentalPageState extends ConsumerState<ControleParentalPage> {
                             min: 15,
                             max: 240,
                             divisions: 15, // tranches de 15 min
-                            activeColor: AppColors.primary,
-                            inactiveColor: AppColors.surfaceVariant,
+                            activeColor: theme.colorScheme.primary,
+                            inactiveColor: theme.dividerColor.withValues(alpha: 0.2),
                             label: _formatMinutes(_dailyLimitMinutes),
                             onChanged: (val) {
                               setState(() => _dailyLimitMinutes = val.toInt());
@@ -299,53 +315,61 @@ class _ControleParentalPageState extends ConsumerState<ControleParentalPage> {
                               return ChoiceChip(
                                 label: Text(_formatMinutes(mins)),
                                 selected: isSelected,
-                                selectedColor: AppColors.primary,
+                                selectedColor: theme.colorScheme.primary,
                                 labelStyle: TextStyle(
                                   color: isSelected
-                                      ? AppColors.white
-                                      : AppColors.textPrimary,
+                                      ? theme.colorScheme.onPrimary
+                                      : (theme.textTheme.bodyMedium?.color ??
+                                          theme.colorScheme.onSurface),
                                   fontSize: 11,
                                   fontWeight: isSelected
                                       ? FontWeight.bold
                                       : FontWeight.w500,
                                 ),
-                                backgroundColor: AppColors.surfaceVariant,
+                                backgroundColor: theme.colorScheme.surface,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
                                   side: BorderSide(
                                     color: isSelected
-                                        ? AppColors.primary
-                                        : AppColors.border,
+                                        ? theme.colorScheme.primary
+                                        : theme.dividerColor.withValues(alpha: 0.2),
                                   ),
                                 ),
                                 onSelected: (sel) {
-                                  if (sel)
+                                  if (sel) {
                                     setState(() => _dailyLimitMinutes = mins);
+                                  }
                                 },
                               );
                             }).toList(),
                           ),
 
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 14),
-                            child: Divider(height: 1, color: AppColors.border),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            child: Divider(
+                              height: 1,
+                              color: theme.dividerColor.withValues(alpha: 0.2),
+                            ),
                           ),
 
                           // Heures autorisées avec TimePicker interactif
-                          const Text(
+                          Text(
                             'Plage horaire autorisée',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
+                              color: theme.textTheme.titleSmall?.color ??
+                                  theme.colorScheme.onSurface,
                             ),
                           ),
                           const SizedBox(height: 4),
-                          const Text(
+                          Text(
                             'L\'enfant peut utiliser l\'application uniquement entre ces deux heures',
                             style: TextStyle(
                               fontSize: 12,
-                              color: AppColors.textSecondary,
+                              color: theme.textTheme.bodySmall?.color
+                                      ?.withValues(alpha: 0.7) ??
+                                  theme.colorScheme.onSurfaceVariant,
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -361,35 +385,40 @@ class _ControleParentalPageState extends ConsumerState<ControleParentalPage> {
                                       vertical: 10,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: AppColors.surfaceVariant,
+                                      color: isDark
+                                          ? theme.colorScheme.surfaceContainerHighest
+                                          : theme.colorScheme.primary.withValues(alpha: 0.06),
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: AppColors.border,
+                                        color: theme.dividerColor.withValues(alpha: 0.2),
                                       ),
                                     ),
                                     child: Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceBetween,
                                       children: [
-                                        const Text(
+                                        Text(
                                           'De :',
                                           style: TextStyle(
                                             fontSize: 12,
-                                            color: AppColors.textSecondary,
+                                            color: theme.textTheme.bodySmall?.color
+                                                    ?.withValues(alpha: 0.7) ??
+                                                theme.colorScheme.onSurfaceVariant,
                                           ),
                                         ),
                                         Text(
                                           _formatTimeOfDay(_startTime),
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.bold,
-                                            color: AppColors.textPrimary,
+                                            color: theme.textTheme.bodyLarge?.color ??
+                                                theme.colorScheme.onSurface,
                                           ),
                                         ),
-                                        const Icon(
+                                        Icon(
                                           Icons.access_time_rounded,
                                           size: 18,
-                                          color: AppColors.primary,
+                                          color: theme.colorScheme.primary,
                                         ),
                                       ],
                                     ),
@@ -407,35 +436,40 @@ class _ControleParentalPageState extends ConsumerState<ControleParentalPage> {
                                       vertical: 10,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: AppColors.surfaceVariant,
+                                      color: isDark
+                                          ? theme.colorScheme.surfaceContainerHighest
+                                          : theme.colorScheme.primary.withValues(alpha: 0.06),
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: AppColors.border,
+                                        color: theme.dividerColor.withValues(alpha: 0.2),
                                       ),
                                     ),
                                     child: Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceBetween,
                                       children: [
-                                        const Text(
+                                        Text(
                                           'À :',
                                           style: TextStyle(
                                             fontSize: 12,
-                                            color: AppColors.textSecondary,
+                                            color: theme.textTheme.bodySmall?.color
+                                                    ?.withValues(alpha: 0.7) ??
+                                                theme.colorScheme.onSurfaceVariant,
                                           ),
                                         ),
                                         Text(
                                           _formatTimeOfDay(_endTime),
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.bold,
-                                            color: AppColors.textPrimary,
+                                            color: theme.textTheme.bodyLarge?.color ??
+                                                theme.colorScheme.onSurface,
                                           ),
                                         ),
-                                        const Icon(
+                                        Icon(
                                           Icons.access_time_rounded,
                                           size: 18,
-                                          color: AppColors.primary,
+                                          color: theme.colorScheme.primary,
                                         ),
                                       ],
                                     ),
@@ -450,19 +484,21 @@ class _ControleParentalPageState extends ConsumerState<ControleParentalPage> {
                     AppSpacing.verticalLg,
 
                     // ── 4. CONTENU AUTORISÉ INTERACTIF ──
-                    _buildSectionTitle('Contenu autorisé'),
+                    _buildSectionTitle('Contenu autorisé', theme),
                     AppSpacing.verticalSm,
                     Container(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
+                        color: theme.colorScheme.surface,
                         borderRadius: AppRadius.card,
-                        border: Border.all(color: AppColors.border),
+                        border: Border.all(
+                          color: theme.dividerColor.withValues(alpha: 0.2),
+                          width: 1.2,
+                        ),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.textPrimary.withValues(
-                              alpha: 0.03,
-                            ),
+                            color: (isDark ? Colors.black : AppColors.textPrimary)
+                                .withValues(alpha: isDark ? 0.25 : 0.03),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -471,6 +507,7 @@ class _ControleParentalPageState extends ConsumerState<ControleParentalPage> {
                       child: Column(
                         children: [
                           _buildCheckItem(
+                            theme: theme,
                             icon: Icons.school_outlined,
                             title: 'Activités éducatives',
                             subtitle: 'Quiz, calculs, leçons interactives',
@@ -479,8 +516,12 @@ class _ControleParentalPageState extends ConsumerState<ControleParentalPage> {
                               () => _autoriseActivites = !_autoriseActivites,
                             ),
                           ),
-                          const Divider(height: 1, color: AppColors.border),
+                          Divider(
+                            height: 1,
+                            color: theme.dividerColor.withValues(alpha: 0.2),
+                          ),
                           _buildCheckItem(
+                            theme: theme,
                             icon: Icons.sports_esports_outlined,
                             title: 'Jeux et Défis',
                             subtitle: 'Mini-jeux de mémoire, puzzles, logique',
@@ -489,8 +530,12 @@ class _ControleParentalPageState extends ConsumerState<ControleParentalPage> {
                               () => _autoriseDefis = !_autoriseDefis,
                             ),
                           ),
-                          const Divider(height: 1, color: AppColors.border),
+                          Divider(
+                            height: 1,
+                            color: theme.dividerColor.withValues(alpha: 0.2),
+                          ),
                           _buildCheckItem(
+                            theme: theme,
                             icon: Icons.shopping_bag_outlined,
                             title: 'Catalogue jouets',
                             subtitle:
@@ -527,13 +572,14 @@ class _ControleParentalPageState extends ConsumerState<ControleParentalPage> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(String title, ThemeData theme) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w800,
-        color: AppColors.textPrimary,
+        color: theme.textTheme.titleMedium?.color ??
+            theme.colorScheme.onSurface,
       ),
     );
   }
@@ -541,20 +587,26 @@ class _ControleParentalPageState extends ConsumerState<ControleParentalPage> {
   Widget _buildChildrenSection(
     BuildContext context,
     List<EnfantModel> enfants,
+    ThemeData theme,
+    bool isDark,
   ) {
     if (enfants.isEmpty) {
-      return _buildEmptyChildrenCard(context);
+      return _buildEmptyChildrenCard(context, theme);
     }
 
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: theme.colorScheme.surface,
         borderRadius: AppRadius.card,
-        border: Border.all(color: AppColors.border),
+        border: Border.all(
+          color: theme.dividerColor.withValues(alpha: 0.2),
+          width: 1.2,
+        ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.textPrimary.withValues(alpha: 0.03),
+            color: (isDark ? Colors.black : AppColors.textPrimary)
+                .withValues(alpha: isDark ? 0.25 : 0.03),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -567,15 +619,19 @@ class _ControleParentalPageState extends ConsumerState<ControleParentalPage> {
           final isSelected = _selectedChildrenIds.contains(enfant.enfantId);
 
           final Color iconBg = idx % 2 == 0
-              ? const Color(0xFFEFF6FF)
-              : const Color(0xFFFDF2F8);
+              ? (isDark ? const Color(0xFF1E3A8A) : const Color(0xFFEFF6FF))
+              : (isDark ? const Color(0xFF831843) : const Color(0xFFFDF2F8));
           final Color iconColor = idx % 2 == 0
-              ? const Color(0xFF3B82F6)
-              : const Color(0xFFEC4899);
+              ? (isDark ? const Color(0xFF60A5FA) : const Color(0xFF3B82F6))
+              : (isDark ? const Color(0xFFF472B6) : const Color(0xFFEC4899));
 
           return Column(
             children: [
-              if (idx > 0) const Divider(height: 16, color: AppColors.border),
+              if (idx > 0)
+                Divider(
+                  height: 16,
+                  color: theme.dividerColor.withValues(alpha: 0.2),
+                ),
               InkWell(
                 onTap: () {
                   setState(() {
@@ -607,17 +663,20 @@ class _ControleParentalPageState extends ConsumerState<ControleParentalPage> {
                           children: [
                             Text(
                               enfant.nom,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
+                                color: theme.textTheme.titleSmall?.color ??
+                                    theme.colorScheme.onSurface,
                               ),
                             ),
                             Text(
                               '${enfant.age} ans',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
-                                color: AppColors.textSecondary,
+                                color: theme.textTheme.bodySmall?.color
+                                        ?.withValues(alpha: 0.7) ??
+                                    theme.colorScheme.onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -625,7 +684,7 @@ class _ControleParentalPageState extends ConsumerState<ControleParentalPage> {
                       ),
                       Checkbox(
                         value: isSelected,
-                        activeColor: AppColors.primary,
+                        activeColor: theme.colorScheme.primary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(5),
                         ),
@@ -650,36 +709,45 @@ class _ControleParentalPageState extends ConsumerState<ControleParentalPage> {
     );
   }
 
-  Widget _buildEmptyChildrenCard(BuildContext context) {
+  Widget _buildEmptyChildrenCard(BuildContext context, ThemeData theme) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: theme.colorScheme.surface,
         borderRadius: AppRadius.card,
-        border: Border.all(color: AppColors.border),
+        border: Border.all(
+          color: theme.dividerColor.withValues(alpha: 0.2),
+          width: 1.2,
+        ),
       ),
       child: Column(
         children: [
-          const Icon(
+          Icon(
             Icons.child_care_rounded,
             size: 40,
-            color: AppColors.textSecondary,
+            color: theme.iconTheme.color?.withValues(alpha: 0.5) ??
+                theme.colorScheme.onSurfaceVariant,
           ),
           AppSpacing.verticalSm,
-          const Text(
+          Text(
             'Aucun profil enfant associé',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+              color: theme.textTheme.titleSmall?.color ??
+                  theme.colorScheme.onSurface,
             ),
           ),
           AppSpacing.verticalXs,
-          const Text(
+          Text(
             'Ajoutez votre premier enfant pour configurer des restrictions sur-mesure.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            style: TextStyle(
+              fontSize: 12,
+              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+                  theme.colorScheme.onSurfaceVariant,
+            ),
           ),
           AppSpacing.verticalMd,
           ElevatedButton.icon(
@@ -695,8 +763,8 @@ class _ControleParentalPageState extends ConsumerState<ControleParentalPage> {
               style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: AppColors.white,
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               minimumSize: Size.zero,
               shape: RoundedRectangleBorder(
@@ -710,12 +778,14 @@ class _ControleParentalPageState extends ConsumerState<ControleParentalPage> {
   }
 
   Widget _buildCheckItem({
+    required ThemeData theme,
     required IconData icon,
     required String title,
     required String subtitle,
     required bool checked,
     required VoidCallback onToggle,
   }) {
+    final isDark = theme.brightness == Brightness.dark;
     return InkWell(
       onTap: onToggle,
       child: Padding(
@@ -725,10 +795,12 @@ class _ControleParentalPageState extends ConsumerState<ControleParentalPage> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.surfaceVariant,
+                color: isDark
+                    ? theme.colorScheme.surfaceContainerHighest
+                    : theme.colorScheme.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, size: 22, color: AppColors.primary),
+              child: Icon(icon, size: 22, color: theme.colorScheme.primary),
             ),
             AppSpacing.horizontalMd,
             Expanded(
@@ -737,18 +809,21 @@ class _ControleParentalPageState extends ConsumerState<ControleParentalPage> {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                      color: theme.textTheme.titleSmall?.color ??
+                          theme.colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
-                      color: AppColors.textSecondary,
+                      color: theme.textTheme.bodySmall?.color
+                              ?.withValues(alpha: 0.7) ??
+                          theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -756,7 +831,7 @@ class _ControleParentalPageState extends ConsumerState<ControleParentalPage> {
             ),
             Checkbox(
               value: checked,
-              activeColor: AppColors.primary,
+              activeColor: theme.colorScheme.primary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(5),
               ),

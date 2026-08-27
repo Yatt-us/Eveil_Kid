@@ -13,7 +13,7 @@ import 'package:eveilkid/features/jouets/providers/jouet_provider.dart';
 import 'package:eveilkid/shared/widgets/app_search_bar.dart';
 import 'package:eveilkid/shared/widgets/app_states.dart';
 
-/// Page d'administration du catalogue de produits avec recherche, onglets et tiroir de filtres dédié.
+/// Page d'administration du catalogue de produits avec recherche, onglets et filtres.
 class AdminProductListPage extends ConsumerStatefulWidget {
   const AdminProductListPage({super.key});
 
@@ -60,25 +60,35 @@ class _AdminProductListPageState extends ConsumerState<AdminProductListPage>
     final List<Categorie> categories = categoriesAsync.value ?? [];
     final stats = ref.watch(adminCatalogStatsProvider);
 
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final dividerColor = theme.dividerColor.withValues(alpha: 0.2);
+    final titleColor = theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface;
+    final textSecondary = theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+        (isDark ? Colors.white70 : AppColors.textSecondary);
+
     final int inactiveCount = stats.totalProducts - stats.activeProducts;
 
     return AdminScaffold(
       currentRoute: AdminNavRoute.products,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           "Catalogue Produits",
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: titleColor,
             fontWeight: FontWeight.w800,
             fontSize: 18,
             letterSpacing: -0.3,
           ),
         ),
-        backgroundColor: AppColors.surface,
+        backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         leading: Builder(
           builder: (context) => IconButton(
-            icon: const Icon(Icons.menu_rounded, color: AppColors.textPrimary),
+            icon: Icon(
+              Icons.menu_rounded,
+              color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
+            ),
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
@@ -89,10 +99,12 @@ class _AdminProductListPageState extends ConsumerState<AdminProductListPage>
             padding: const EdgeInsets.all(3),
             height: 38,
             decoration: BoxDecoration(
-              color: AppColors.surfaceVariant.withValues(alpha: 0.6),
+              color: isDark
+                  ? theme.colorScheme.surfaceContainerHighest
+                  : AppColors.surfaceVariant.withValues(alpha: 0.6),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: AppColors.border.withValues(alpha: 0.6),
+                color: dividerColor,
                 width: 1,
               ),
             ),
@@ -101,22 +113,22 @@ class _AdminProductListPageState extends ConsumerState<AdminProductListPage>
               indicatorSize: TabBarIndicatorSize.tab,
               dividerColor: Colors.transparent,
               indicator: BoxDecoration(
-                color: AppColors.surface,
+                color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: AppColors.border.withValues(alpha: 0.5),
+                  color: dividerColor,
                   width: 0.8,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
                     blurRadius: 3,
                     offset: const Offset(0, 1),
                   ),
                 ],
               ),
-              labelColor: AppColors.primary,
-              unselectedLabelColor: AppColors.textSecondary,
+              labelColor: theme.colorScheme.primary,
+              unselectedLabelColor: textSecondary,
               labelStyle: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -138,8 +150,8 @@ class _AdminProductListPageState extends ConsumerState<AdminProductListPage>
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                         decoration: BoxDecoration(
                           color: _tabController.index == 0
-                              ? AppColors.primary.withValues(alpha: 0.12)
-                              : AppColors.surfaceVariant,
+                              ? theme.colorScheme.primary.withValues(alpha: isDark ? 0.25 : 0.12)
+                              : (isDark ? theme.colorScheme.surface : AppColors.surfaceVariant),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -148,8 +160,8 @@ class _AdminProductListPageState extends ConsumerState<AdminProductListPage>
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             color: _tabController.index == 0
-                                ? AppColors.primary
-                                : AppColors.textSecondary,
+                                ? theme.colorScheme.primary
+                                : textSecondary,
                           ),
                         ),
                       ),
@@ -166,8 +178,8 @@ class _AdminProductListPageState extends ConsumerState<AdminProductListPage>
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                         decoration: BoxDecoration(
                           color: _tabController.index == 1
-                              ? AppColors.primary.withValues(alpha: 0.12)
-                              : AppColors.surfaceVariant,
+                              ? theme.colorScheme.primary.withValues(alpha: isDark ? 0.25 : 0.12)
+                              : (isDark ? theme.colorScheme.surface : AppColors.surfaceVariant),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -176,8 +188,8 @@ class _AdminProductListPageState extends ConsumerState<AdminProductListPage>
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             color: _tabController.index == 1
-                                ? AppColors.primary
-                                : AppColors.textSecondary,
+                                ? theme.colorScheme.primary
+                                : textSecondary,
                           ),
                         ),
                       ),
@@ -211,13 +223,13 @@ class _AdminProductListPageState extends ConsumerState<AdminProductListPage>
                     width: 42,
                     decoration: BoxDecoration(
                       color: filterState.hasActiveFilters
-                          ? AppColors.primary.withValues(alpha: 0.1)
-                          : AppColors.surface,
+                          ? theme.colorScheme.primary.withValues(alpha: isDark ? 0.2 : 0.1)
+                          : theme.colorScheme.surface,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: filterState.hasActiveFilters
-                            ? AppColors.primary
-                            : AppColors.border,
+                            ? theme.colorScheme.primary
+                            : dividerColor,
                         width: filterState.hasActiveFilters ? 1.2 : 1.0,
                       ),
                     ),
@@ -228,8 +240,9 @@ class _AdminProductListPageState extends ConsumerState<AdminProductListPage>
                           Icons.tune_rounded,
                           size: 19,
                           color: filterState.hasActiveFilters
-                              ? AppColors.primary
-                              : AppColors.icon,
+                              ? theme.colorScheme.primary
+                              : (theme.iconTheme.color?.withValues(alpha: 0.7) ??
+                                  AppColors.icon),
                         ),
                         if (filterState.hasActiveFilters)
                           Positioned(
@@ -238,8 +251,8 @@ class _AdminProductListPageState extends ConsumerState<AdminProductListPage>
                             child: Container(
                               width: 6,
                               height: 6,
-                              decoration: const BoxDecoration(
-                                color: AppColors.primary,
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -261,10 +274,10 @@ class _AdminProductListPageState extends ConsumerState<AdminProductListPage>
                 filteredProductsAsync.maybeWhen(
                   data: (list) => Text(
                     "${list.length} ${list.length <= 1 ? 'produit' : 'produits'}${_tabController.index == 1 ? ' inactifs' : ''}",
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textSecondary,
+                      color: textSecondary,
                     ),
                   ),
                   orElse: () => const SizedBox.shrink(),
@@ -273,19 +286,19 @@ class _AdminProductListPageState extends ConsumerState<AdminProductListPage>
                   InkWell(
                     onTap: () => filterNotifier.resetFilters(),
                     borderRadius: BorderRadius.circular(4),
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.close_rounded, size: 13, color: AppColors.primary),
-                          SizedBox(width: 2),
+                          Icon(Icons.close_rounded, size: 13, color: theme.colorScheme.primary),
+                          const SizedBox(width: 2),
                           Text(
                             "Effacer filtres",
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.primary,
+                              color: theme.colorScheme.primary,
                             ),
                           ),
                         ],
@@ -298,13 +311,13 @@ class _AdminProductListPageState extends ConsumerState<AdminProductListPage>
 
           const SizedBox(height: 2),
 
-          // Liste dense et minimaliste des produits
+          // Liste des produits
           Expanded(
             child: filteredProductsAsync.when(
-              loading: () => const Center(
+              loading: () => Center(
                 child: CircularProgressIndicator(
                   strokeWidth: 2.5,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                  valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
                 ),
               ),
               error: (err, stack) => AppErrorState(
@@ -317,7 +330,7 @@ class _AdminProductListPageState extends ConsumerState<AdminProductListPage>
                   return LayoutBuilder(
                     builder: (context, constraints) {
                       return RefreshIndicator(
-                        color: AppColors.primary,
+                        color: theme.colorScheme.primary,
                         onRefresh: () async {
                           ref.invalidate(jouetsAdminStreamProvider);
                         },
@@ -358,7 +371,7 @@ class _AdminProductListPageState extends ConsumerState<AdminProductListPage>
                 }
 
                 return RefreshIndicator(
-                  color: AppColors.primary,
+                  color: theme.colorScheme.primary,
                   onRefresh: () async {
                     ref.invalidate(jouetsAdminStreamProvider);
                   },
@@ -406,8 +419,8 @@ class _AdminProductListPageState extends ConsumerState<AdminProductListPage>
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.white,
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
         elevation: 3,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         icon: const Icon(Icons.add_rounded, size: 20),
@@ -427,17 +440,22 @@ class _AdminProductListPageState extends ConsumerState<AdminProductListPage>
     );
   }
 
-  /// Tiroir Bottom Sheet de filtres propre, flat et moderne
+  /// Tiroir Bottom Sheet de filtres propre, adaptatif au thème clair et sombre
   void _showFilterBottomSheet(
     BuildContext context,
     WidgetRef ref,
     List<Categorie> categories,
     dynamic stats,
   ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final dividerColor = theme.dividerColor.withValues(alpha: 0.2);
+    final titleColor = theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: theme.colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -458,29 +476,27 @@ class _AdminProductListPageState extends ConsumerState<AdminProductListPage>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Poignée
                       Center(
                         child: Container(
                           width: 38,
                           height: 4,
                           decoration: BoxDecoration(
-                            color: AppColors.border,
+                            color: dividerColor,
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
                       ),
                       const SizedBox(height: 14),
 
-                      // En-tête avec titre et bouton réinitialiser
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
+                          Text(
                             "Filtres du catalogue",
                             style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
+                              color: titleColor,
                               letterSpacing: -0.2,
                             ),
                           ),
@@ -492,26 +508,26 @@ class _AdminProductListPageState extends ConsumerState<AdminProductListPage>
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
                               onPressed: () => filterNotifier.resetFilters(),
-                              child: const Text(
+                              child: Text(
                                 "Réinitialiser",
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.primary,
+                                  color: theme.colorScheme.primary,
                                 ),
                               ),
                             ),
                         ],
                       ),
-                      const Divider(height: 20, color: AppColors.border),
+                      Divider(height: 20, color: dividerColor),
 
                       // 1. Popularité
-                      const Text(
+                      Text(
                         "Popularité & Mise en avant",
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
+                          color: titleColor,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -521,23 +537,23 @@ class _AdminProductListPageState extends ConsumerState<AdminProductListPage>
                           ChoiceChip(
                             label: const Text("⭐ Produits Populaires"),
                             selected: filterState.popularOnly,
-                            selectedColor: AppColors.warning.withValues(alpha: 0.15),
+                            selectedColor: const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.25 : 0.15),
                             labelStyle: TextStyle(
                               fontSize: 12.5,
                               fontWeight: filterState.popularOnly
                                   ? FontWeight.bold
                                   : FontWeight.w500,
                               color: filterState.popularOnly
-                                  ? AppColors.warning
-                                  : AppColors.textPrimary,
+                                  ? const Color(0xFFD97706)
+                                  : titleColor,
                             ),
-                            backgroundColor: AppColors.surface,
+                            backgroundColor: theme.colorScheme.surface,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                               side: BorderSide(
                                 color: filterState.popularOnly
-                                    ? AppColors.warning
-                                    : AppColors.border,
+                                    ? const Color(0xFFF59E0B)
+                                    : dividerColor,
                                 width: filterState.popularOnly ? 1.2 : 1.0,
                               ),
                             ),
@@ -551,12 +567,12 @@ class _AdminProductListPageState extends ConsumerState<AdminProductListPage>
                       const SizedBox(height: 18),
 
                       // 2. Disponibilité Stock
-                      const Text(
+                      Text(
                         "Disponibilité Stock",
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
+                          color: titleColor,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -567,23 +583,23 @@ class _AdminProductListPageState extends ConsumerState<AdminProductListPage>
                           ChoiceChip(
                             label: const Text("Tous les stocks"),
                             selected: filterState.stockFilter == AdminStockFilter.all,
-                            selectedColor: AppColors.primary.withValues(alpha: 0.1),
+                            selectedColor: theme.colorScheme.primary.withValues(alpha: isDark ? 0.25 : 0.1),
                             labelStyle: TextStyle(
                               fontSize: 12.5,
                               fontWeight: filterState.stockFilter == AdminStockFilter.all
                                   ? FontWeight.bold
                                   : FontWeight.w500,
                               color: filterState.stockFilter == AdminStockFilter.all
-                                  ? AppColors.primary
-                                  : AppColors.textPrimary,
+                                  ? theme.colorScheme.primary
+                                  : titleColor,
                             ),
-                            backgroundColor: AppColors.surface,
+                            backgroundColor: theme.colorScheme.surface,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                               side: BorderSide(
                                 color: filterState.stockFilter == AdminStockFilter.all
-                                    ? AppColors.primary
-                                    : AppColors.border,
+                                    ? theme.colorScheme.primary
+                                    : dividerColor,
                                 width: filterState.stockFilter == AdminStockFilter.all
                                     ? 1.2
                                     : 1.0,
@@ -595,23 +611,23 @@ class _AdminProductListPageState extends ConsumerState<AdminProductListPage>
                           ChoiceChip(
                             label: Text("Rupture de stock (${stats.outOfStockProducts})"),
                             selected: filterState.stockFilter == AdminStockFilter.outOfStock,
-                            selectedColor: AppColors.danger.withValues(alpha: 0.1),
+                            selectedColor: theme.colorScheme.error.withValues(alpha: isDark ? 0.25 : 0.1),
                             labelStyle: TextStyle(
                               fontSize: 12.5,
                               fontWeight: filterState.stockFilter == AdminStockFilter.outOfStock
                                   ? FontWeight.bold
                                   : FontWeight.w500,
                               color: filterState.stockFilter == AdminStockFilter.outOfStock
-                                  ? AppColors.danger
-                                  : AppColors.textPrimary,
+                                  ? theme.colorScheme.error
+                                  : titleColor,
                             ),
-                            backgroundColor: AppColors.surface,
+                            backgroundColor: theme.colorScheme.surface,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                               side: BorderSide(
                                 color: filterState.stockFilter == AdminStockFilter.outOfStock
-                                    ? AppColors.danger
-                                    : AppColors.border,
+                                    ? theme.colorScheme.error
+                                    : dividerColor,
                                 width: filterState.stockFilter == AdminStockFilter.outOfStock
                                     ? 1.2
                                     : 1.0,
@@ -626,23 +642,23 @@ class _AdminProductListPageState extends ConsumerState<AdminProductListPage>
                           ChoiceChip(
                             label: const Text("Stock faible (≤ 5)"),
                             selected: filterState.stockFilter == AdminStockFilter.lowStock,
-                            selectedColor: AppColors.warning.withValues(alpha: 0.1),
+                            selectedColor: const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.25 : 0.1),
                             labelStyle: TextStyle(
                               fontSize: 12.5,
                               fontWeight: filterState.stockFilter == AdminStockFilter.lowStock
                                   ? FontWeight.bold
                                   : FontWeight.w500,
                               color: filterState.stockFilter == AdminStockFilter.lowStock
-                                  ? AppColors.warning
-                                  : AppColors.textPrimary,
+                                  ? const Color(0xFFD97706)
+                                  : titleColor,
                             ),
-                            backgroundColor: AppColors.surface,
+                            backgroundColor: theme.colorScheme.surface,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                               side: BorderSide(
                                 color: filterState.stockFilter == AdminStockFilter.lowStock
-                                    ? AppColors.warning
-                                    : AppColors.border,
+                                    ? const Color(0xFFF59E0B)
+                                    : dividerColor,
                                 width: filterState.stockFilter == AdminStockFilter.lowStock
                                     ? 1.2
                                     : 1.0,
@@ -660,12 +676,12 @@ class _AdminProductListPageState extends ConsumerState<AdminProductListPage>
                       const SizedBox(height: 18),
 
                       // 3. Catégories
-                      const Text(
+                      Text(
                         "Catégories",
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
+                          color: titleColor,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -676,23 +692,23 @@ class _AdminProductListPageState extends ConsumerState<AdminProductListPage>
                           ChoiceChip(
                             label: const Text("Toutes"),
                             selected: filterState.selectedCategoryId == null,
-                            selectedColor: AppColors.primary.withValues(alpha: 0.1),
+                            selectedColor: theme.colorScheme.primary.withValues(alpha: isDark ? 0.25 : 0.1),
                             labelStyle: TextStyle(
                               fontSize: 12.5,
                               fontWeight: filterState.selectedCategoryId == null
                                   ? FontWeight.bold
                                   : FontWeight.w500,
                               color: filterState.selectedCategoryId == null
-                                  ? AppColors.primary
-                                  : AppColors.textPrimary,
+                                  ? theme.colorScheme.primary
+                                  : titleColor,
                             ),
-                            backgroundColor: AppColors.surface,
+                            backgroundColor: theme.colorScheme.surface,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                               side: BorderSide(
                                 color: filterState.selectedCategoryId == null
-                                    ? AppColors.primary
-                                    : AppColors.border,
+                                    ? theme.colorScheme.primary
+                                    : dividerColor,
                                 width: filterState.selectedCategoryId == null
                                     ? 1.2
                                     : 1.0,
@@ -707,22 +723,22 @@ class _AdminProductListPageState extends ConsumerState<AdminProductListPage>
                               return ChoiceChip(
                                 label: Text(cat.nom),
                                 selected: isSelected,
-                                selectedColor: AppColors.primary.withValues(alpha: 0.1),
+                                selectedColor: theme.colorScheme.primary.withValues(alpha: isDark ? 0.25 : 0.1),
                                 labelStyle: TextStyle(
                                   fontSize: 12.5,
                                   fontWeight:
                                       isSelected ? FontWeight.bold : FontWeight.w500,
                                   color: isSelected
-                                      ? AppColors.primary
-                                      : AppColors.textPrimary,
+                                      ? theme.colorScheme.primary
+                                      : titleColor,
                                 ),
-                                backgroundColor: AppColors.surface,
+                                backgroundColor: theme.colorScheme.surface,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                   side: BorderSide(
                                     color: isSelected
-                                        ? AppColors.primary
-                                        : AppColors.border,
+                                        ? theme.colorScheme.primary
+                                        : dividerColor,
                                     width: isSelected ? 1.2 : 1.0,
                                   ),
                                 ),
@@ -745,8 +761,8 @@ class _AdminProductListPageState extends ConsumerState<AdminProductListPage>
                         height: 44,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: AppColors.white,
+                            backgroundColor: theme.colorScheme.primary,
+                            foregroundColor: theme.colorScheme.onPrimary,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),

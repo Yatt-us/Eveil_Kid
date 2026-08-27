@@ -33,28 +33,26 @@ class ParentFirestoreRepository implements ParentRepository {
     final enfants = await fetchEnfants(utilisateurId);
     final data = userDoc.data();
     if (!userDoc.exists || data == null) {
-      final currentUser = FirebaseAuth.instance.currentUser;
-      final initialParent = Utilisateur(
+      final authUser = FirebaseAuth.instance.currentUser;
+      final isCurrentAuthUser =
+          authUser != null && authUser.uid == utilisateurId;
+      return Utilisateur(
         utilisateurId: utilisateurId,
         role: UserRole.parent,
-        nom: currentUser?.displayName ?? 'Parent',
-        email: currentUser?.email ?? '',
+        nom: isCurrentAuthUser ? (authUser.displayName ?? 'Parent') : 'Parent',
+        email: isCurrentAuthUser ? (authUser.email ?? '') : '',
         nombreEnfants: enfants.length,
         enfants: enfants,
       );
-      if (utilisateurId.isNotEmpty && utilisateurId != 'parent_default_id') {
-        await _firestore
-            .collection('utilisateurs')
-            .doc(utilisateurId)
-            .set(initialParent.toFirestore(), SetOptions(merge: true));
-      }
-      return initialParent;
     }
     return Utilisateur.fromFirestore(data, userDoc.id, enfants: enfants);
   }
 
   @override
   Future<Utilisateur> fetchParentProfile(String utilisateurId) async {
+    if (utilisateurId.isEmpty) {
+      return const Utilisateur(utilisateurId: '');
+    }
     final userDoc = await _firestore
         .collection('utilisateurs')
         .doc(utilisateurId)
@@ -64,6 +62,9 @@ class ParentFirestoreRepository implements ParentRepository {
 
   @override
   Stream<Utilisateur> watchParentProfile(String utilisateurId) {
+    if (utilisateurId.isEmpty) {
+      return Stream.value(const Utilisateur(utilisateurId: ''));
+    }
     return _firestore
         .collection('utilisateurs')
         .doc(utilisateurId)
@@ -73,20 +74,38 @@ class ParentFirestoreRepository implements ParentRepository {
 
   @override
   Future<Utilisateur> updateParentProfile(Utilisateur parent) async {
-    await _firestore
+    final docRef = _firestore
         .collection('utilisateurs')
-        .doc(parent.utilisateurId)
-        .set(parent.toFirestore(), SetOptions(merge: true));
+        .doc(parent.utilisateurId);
+
+    // Mettre à jour uniquement les informations personnelles sans écraser le rôle existant dans Firestore
+    await docRef.set({
+      'utilisateurId': parent.utilisateurId,
+      'nom': parent.nom,
+      'email': parent.email,
+      'telephone': parent.telephone,
+      'adresse': parent.adresse,
+      'photoUrl': parent.photoUrl,
+      'dateModification': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    // Recharger le document pour renvoyer le profil complet avec son rôle d'origine préservé
+    final docSnap = await docRef.get();
+    if (docSnap.exists && docSnap.data() != null) {
+      return _profileWithChildren(parent.utilisateurId, docSnap);
+    }
     return parent;
   }
 
   @override
   Future<List<EnfantModel>> fetchEnfants(String utilisateurId) {
+    if (utilisateurId.isEmpty) return Future.value([]);
     return _enfantRepository.recupererEnfantsDuParent(utilisateurId);
   }
 
   @override
   Stream<List<EnfantModel>> watchEnfants(String utilisateurId) {
+    if (utilisateurId.isEmpty) return Stream.value([]);
     return _enfantRepository.suivreEnfantsDuParent(utilisateurId);
   }
 

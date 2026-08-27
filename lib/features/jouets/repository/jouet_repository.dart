@@ -6,17 +6,15 @@ class JouetRepository {
 
   JouetRepository(this._firestore);
 
-  CollectionReference<Map<String, dynamic>> get _jouetsCollection => _firestore.collection('jouets');
-
+  CollectionReference<Map<String, dynamic>> get _jouetsCollection =>
+      _firestore.collection('jouets');
 
   Future<List<Jouet>> getJouets() async {
     final snapshot = await _jouetsCollection
         .where('estActif', isEqualTo: true)
         .get();
 
-    return snapshot.docs
-        .map((doc) => Jouet.fromFirestore(doc))
-        .toList();
+    return snapshot.docs.map((doc) => Jouet.fromFirestore(doc)).toList();
   }
 
   Future<Jouet?> getJouetById(String jouetId) async {
@@ -29,16 +27,13 @@ class JouetRepository {
     return Jouet.fromFirestore(doc);
   }
 
-  Future<List<Jouet>> getJouetsByCategorie(
-    String categorieId,
-  ) async {
+  Future<List<Jouet>> getJouetsByCategorie(String categorieId) async {
     final snapshot = await _jouetsCollection
         .where('categorieId', isEqualTo: categorieId)
         .where('estActif', isEqualTo: true)
         .get();
 
-    return snapshot.docs.map((doc) => Jouet.fromFirestore(doc))
-        .toList();
+    return snapshot.docs.map((doc) => Jouet.fromFirestore(doc)).toList();
   }
 
   Future<List<Jouet>> searchJouets(String recherche) async {
@@ -48,26 +43,24 @@ class JouetRepository {
 
     final rechercheLower = recherche.toLowerCase();
 
-    return snapshot.docs.map((doc) => Jouet.fromFirestore(doc))
-        .where((jouet) => jouet.nom.toLowerCase().contains(rechercheLower),)
+    return snapshot.docs
+        .map((doc) => Jouet.fromFirestore(doc))
+        .where((jouet) => jouet.nom.toLowerCase().contains(rechercheLower))
         .toList();
   }
 
   /// Récupère tous les jouets (actifs et inactifs) pour l'administration
   Future<List<Jouet>> getAllJouetsAdmin() async {
     final snapshot = await _jouetsCollection.get();
-    return snapshot.docs
-        .map((doc) => Jouet.fromFirestore(doc))
-        .toList();
+    return snapshot.docs.map((doc) => Jouet.fromFirestore(doc)).toList();
   }
 
   /// Écoute en temps réel tous les jouets pour l'espace manager
   Stream<List<Jouet>> streamJouetsAdmin() {
     return _jouetsCollection.snapshots().map(
-          (snapshot) => snapshot.docs
-              .map((doc) => Jouet.fromFirestore(doc))
-              .toList(),
-        );
+      (snapshot) =>
+          snapshot.docs.map((doc) => Jouet.fromFirestore(doc)).toList(),
+    );
   }
 
   Future<void> ajouterJouet(Jouet jouet) async {
@@ -90,10 +83,7 @@ class JouetRepository {
     await _jouetsCollection.doc(jouetId).delete();
   }
 
-  Future<void> modifierStock(
-    String jouetId,
-    int nouveauStock,
-  ) async {
+  Future<void> modifierStock(String jouetId, int nouveauStock) async {
     await _jouetsCollection.doc(jouetId).set({
       'stock': nouveauStock,
       'stockDisponible': nouveauStock,

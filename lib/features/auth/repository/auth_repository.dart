@@ -14,11 +14,9 @@ class AuthRepository {
 
   static const String _pendingUserPrefix = 'pending_user_';
 
-  AuthRepository({
-    FirebaseAuth? auth,
-    FirebaseFirestore? firestore,
-  })  : _auth = auth ?? FirebaseAuth.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance;
+  AuthRepository({FirebaseAuth? auth, FirebaseFirestore? firestore})
+    : _auth = auth ?? FirebaseAuth.instance,
+      _firestore = firestore ?? FirebaseFirestore.instance;
 
   // ── GESTION DU STOCKAGE LOCAL DES INSCRIPTIONS EN ATTENTE ──
 
@@ -80,9 +78,7 @@ class AuthRepository {
       final user = credential.user;
 
       if (user == null) {
-        throw Exception(
-          'Impossible de récupérer l’utilisateur créé.',
-        );
+        throw Exception('Impossible de récupérer l’utilisateur créé.');
       }
 
       // 2. Mise à jour du displayName
@@ -110,13 +106,28 @@ class AuthRepository {
 
   Future<Utilisateur> syncPendingUserToFirestoreIfVerified(String uid) async {
     final user = _auth.currentUser;
-    if (user != null) {
+    if (user != null && user.uid == uid) {
       try {
         await user.reload();
       } catch (_) {}
     }
     final refreshedUser = _auth.currentUser ?? user;
-    final isVerified = refreshedUser != null && refreshedUser.uid == uid && refreshedUser.emailVerified;
+
+    // 1. D'abord, vérifier si le document existe DÉJÀ dans Firestore
+    final docRef = _firestore.collection('utilisateurs').doc(uid);
+    final docSnap = await docRef.get();
+
+    if (docSnap.exists && docSnap.data() != null) {
+      // Le document existe déjà dans Firestore (ex: ADMIN, MANAGER, ou compte déjà synchronisé).
+      // Ne JAMAIS écraser les données ni le rôle existant !
+      await _clearPendingRegistrationLocal(uid);
+      return Utilisateur.fromMap(docSnap.data()!);
+    }
+
+    final isVerified =
+        refreshedUser != null &&
+        refreshedUser.uid == uid &&
+        refreshedUser.emailVerified;
 
     if (!isVerified) {
       // Si le compte n'est pas encore vérifié, on lit depuis SharedPreferences
@@ -133,15 +144,14 @@ class AuthRepository {
       );
     }
 
-    // Le compte est vérifié : on prépare les données pour Firestore
+    // Le compte est vérifié et n'existe pas encore dans Firestore : on le crée
     final localData = await _getPendingRegistrationLocal(uid);
-    final docRef = _firestore.collection('utilisateurs').doc(uid);
 
     final email = refreshedUser.email ?? localData?['email'] ?? '';
     final nom = ((localData?['nom'] as String?)?.isNotEmpty == true)
         ? (localData!['nom'] as String)
         : (refreshedUser.displayName ??
-            (email.isNotEmpty ? email.split('@')[0] : 'Parent'));
+              (email.isNotEmpty ? email.split('@')[0] : 'Parent'));
     final telephone = localData?['telephone'];
     final role = localData?['role'] ?? 'PARENT';
 
@@ -159,16 +169,16 @@ class AuthRepository {
       'dateModification': FieldValue.serverTimestamp(),
     };
 
-    // Écriture dans Firestore
-    await docRef.set(firestoreData, SetOptions(merge: true));
+    // Écriture initiale dans Firestore
+    await docRef.set(firestoreData);
 
     // Suppression des données locales dans SharedPreferences après succès
     await _clearPendingRegistrationLocal(uid);
 
     // Lecture du profil créé
-    final docSnap = await docRef.get();
-    if (docSnap.exists && docSnap.data() != null) {
-      return Utilisateur.fromMap(docSnap.data()!);
+    final createdSnap = await docRef.get();
+    if (createdSnap.exists && createdSnap.data() != null) {
+      return Utilisateur.fromMap(createdSnap.data()!);
     }
 
     return Utilisateur(
@@ -199,20 +209,16 @@ class AuthRepository {
     final user = credential.user;
 
     if (user == null) {
-      throw Exception(
-        'Impossible de récupérer l’utilisateur connecté.',
-      );
+      throw Exception('Impossible de récupérer l’utilisateur connecté.');
     }
 
-    // Récupération ou synchronisation du profil
+    // Récupération du profil
     final utilisateur = await getUserProfile(user.uid);
 
     // Vérification de l'état actif du compte
     if (!utilisateur.estActif) {
       await _auth.signOut();
-      throw Exception(
-        'Ce compte est désactivé.',
-      );
+      throw Exception('Ce compte est désactivé.');
     }
 
     return utilisateur;
@@ -229,50 +235,51 @@ class AuthRepository {
     }
     final refreshedUser = _auth.currentUser ?? user;
 
-    // 1. Si l'utilisateur est vérifié, synchroniser Firestore et vider SharedPreferences
-    if (refreshedUser != null && refreshedUser.uid == uid && refreshedUser.emailVerified) {
+    // 1. Toujours vérifier d'abord si le document existe dans Firestore
+    final docRef = _firestore.collection('utilisateurs').doc(uid);
+    final docSnap = await docRef.get();
+
+    if (docSnap.exists && docSnap.data() != null) {
+      // Document Firestore existant -> Nettoyer le pending local s'il existe et retourner le profil officiel
+      await _clearPendingRegistrationLocal(uid);
+      return Utilisateur.fromMap(docSnap.data()!);
+    }
+
+    // 2. Si le document n'existe pas encore dans Firestore :
+    // Si l'utilisateur est vérifié, synchroniser la création vers Firestore
+    if (refreshedUser != null &&
+        refreshedUser.uid == uid &&
+        refreshedUser.emailVerified) {
       return await syncPendingUserToFirestoreIfVerified(uid);
     }
 
-    // 2. Si l'utilisateur est connecté mais non vérifié, on lit depuis SharedPreferences
-    if (refreshedUser != null && refreshedUser.uid == uid && !refreshedUser.emailVerified) {
-      final localData = await _getPendingRegistrationLocal(uid);
-      if (localData != null) {
-        return Utilisateur.fromMap(localData);
-      }
+    // 3. Si l'utilisateur est connecté mais non vérifié, on lit depuis SharedPreferences
+    final localData = await _getPendingRegistrationLocal(uid);
+    if (localData != null) {
+      return Utilisateur.fromMap(localData);
     }
 
-    // 3. Lecture directe dans Firestore
-    final docRef = _firestore.collection('utilisateurs').doc(uid);
-    final document = await docRef.get();
+    // 4. Fallback si l'utilisateur est présent dans Auth
+    if (refreshedUser != null && refreshedUser.uid == uid) {
+      final fallbackEmail = refreshedUser.email ?? '';
+      final fallbackNom =
+          refreshedUser.displayName ??
+          (fallbackEmail.isNotEmpty ? fallbackEmail.split('@')[0] : 'Parent');
 
-    if (!document.exists || document.data() == null) {
-      // Si l'utilisateur est présent dans Auth
-      if (refreshedUser != null && refreshedUser.uid == uid) {
-        final fallbackEmail = refreshedUser.email ?? '';
-        final fallbackNom = refreshedUser.displayName ??
-            (fallbackEmail.isNotEmpty ? fallbackEmail.split('@')[0] : 'Parent');
-
-        return Utilisateur(
-          utilisateurId: uid,
-          role: UserRole.parent,
-          nombreFavoris: 0,
-          nombreEnfants: 0,
-          email: fallbackEmail,
-          nom: fallbackNom,
-          photoUrl: refreshedUser.photoURL,
-          telephone: null,
-          estActif: true,
-        );
-      }
-
-      throw Exception(
-        'Le profil utilisateur est introuvable.',
+      return Utilisateur(
+        utilisateurId: uid,
+        role: UserRole.parent,
+        nombreFavoris: 0,
+        nombreEnfants: 0,
+        email: fallbackEmail,
+        nom: fallbackNom,
+        photoUrl: refreshedUser.photoURL,
+        telephone: null,
+        estActif: true,
       );
     }
 
-    final data = document.data()!;
-    return Utilisateur.fromMap(data);
+    throw Exception('Le profil utilisateur est introuvable.');
   }
 
   // UTILISATEUR FIREBASE ACTUEL
@@ -294,7 +301,6 @@ class AuthRepository {
     final utilisateur = await getUserProfile(user.uid);
 
     // Vérification du compte
-
     if (!utilisateur.estActif) {
       await _auth.signOut();
       return null;
@@ -311,12 +317,8 @@ class AuthRepository {
 
   // MOT DE PASSE OUBLIÉ
 
-  Future<void> resetPassword({
-    required String email,
-  }) async {
-    await _auth.sendPasswordResetEmail(
-      email: email,
-    );
+  Future<void> resetPassword({required String email}) async {
+    await _auth.sendPasswordResetEmail(email: email);
   }
 
   // RENVOI DE L'EMAIL DE VÉRIFICATION
@@ -394,6 +396,101 @@ class AuthRepository {
     }
 
     return utilisateur;
+  }
+
+  // MODIFIER LE MOT DE PASSE DIRECTEMENT
+
+  Future<void> updatePassword({required String newPassword}) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('Aucun utilisateur connecté.');
+    }
+    await user.updatePassword(newPassword);
+  }
+
+  // ARCHIVER / DÉSACTIVER LE COMPTE ET LES DONNÉES
+
+  Future<void> archiverCompte() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('Aucun utilisateur connecté.');
+    }
+    final uid = user.uid;
+
+    try {
+      // 1. Marquer le compte principal comme archivé et inactif
+      await _firestore.collection('utilisateurs').doc(uid).update({
+        'estActif': false,
+        'estArchive': true,
+        'dateArchivage': FieldValue.serverTimestamp(),
+        'dateModification': FieldValue.serverTimestamp(),
+      });
+
+      // 2. Désactiver les profils enfants
+      final enfantsSnap = await _firestore
+          .collection('utilisateurs')
+          .doc(uid)
+          .collection('enfants')
+          .get();
+      for (final doc in enfantsSnap.docs) {
+        await doc.reference.update({
+          'estActif': false,
+          'estArchive': true,
+          'dateArchivage': FieldValue.serverTimestamp(),
+        });
+      }
+    } catch (e) {
+      debugPrint('Erreur lors de l\'archivage Firestore: $e');
+    }
+
+    // 3. Déconnexion de la session Firebase Auth
+    await _auth.signOut();
+    if (!kIsWeb) {
+      await GoogleSignInService.signOut();
+    }
+  }
+
+  // SUPPRIMER LE COMPTE DÉFINITIVEMENT
+
+  Future<void> deleteAccount() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('Aucun utilisateur connecté.');
+    }
+    final uid = user.uid;
+
+    try {
+      // 1. Supprimer la sous-collection d'enfants si elle existe
+      final enfantsSnap = await _firestore
+          .collection('utilisateurs')
+          .doc(uid)
+          .collection('enfants')
+          .get();
+      for (final doc in enfantsSnap.docs) {
+        await doc.reference.delete();
+      }
+
+      // 2. Supprimer les favoris éventuels
+      final favorisSnap = await _firestore
+          .collection('favoris')
+          .where('utilisateurId', isEqualTo: uid)
+          .get();
+      for (final doc in favorisSnap.docs) {
+        await doc.reference.delete();
+      }
+
+      // 3. Supprimer le document utilisateur principal dans Firestore
+      await _firestore.collection('utilisateurs').doc(uid).delete();
+    } catch (_) {
+      // Continuer même si une sous-suppression Firestore échoue
+    }
+
+    // 4. Supprimer le compte Firebase Auth
+    await user.delete();
+
+    if (!kIsWeb) {
+      await GoogleSignInService.signOut();
+    }
   }
 
   // DECONNEXION

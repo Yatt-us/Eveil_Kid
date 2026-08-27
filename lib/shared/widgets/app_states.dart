@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 import 'app_button.dart';
 
 /// État vide réutilisable et résistant aux débordements (clavier ouvert / petits écrans).
@@ -21,6 +20,8 @@ class AppEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Center(
       child: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
@@ -32,19 +33,20 @@ class AppEmptyState extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.08),
+                color: theme.colorScheme.primary.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 40, color: AppColors.primary),
+              child: Icon(icon, size: 40, color: theme.colorScheme.primary),
             ),
             const SizedBox(height: 16),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+                color: theme.textTheme.titleMedium?.color ??
+                    theme.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 6),
@@ -53,9 +55,11 @@ class AppEmptyState extends StatelessWidget {
               child: Text(
                 description,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13.5,
-                  color: AppColors.textSecondary,
+                  color: theme.textTheme.bodyMedium?.color
+                          ?.withValues(alpha: 0.7) ??
+                      theme.colorScheme.onSurfaceVariant,
                   height: 1.35,
                 ),
               ),
@@ -90,6 +94,8 @@ class AppErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Center(
       child: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
@@ -101,23 +107,24 @@ class AppErrorState extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.danger.withValues(alpha: 0.1),
+                color: theme.colorScheme.error.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.error_outline_rounded,
                 size: 40,
-                color: AppColors.danger,
+                color: theme.colorScheme.error,
               ),
             ),
             const SizedBox(height: 16),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+                color: theme.textTheme.titleMedium?.color ??
+                    theme.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 6),
@@ -126,9 +133,11 @@ class AppErrorState extends StatelessWidget {
               child: Text(
                 message,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13.5,
-                  color: AppColors.textSecondary,
+                  color: theme.textTheme.bodyMedium?.color
+                          ?.withValues(alpha: 0.7) ??
+                      theme.colorScheme.onSurfaceVariant,
                   height: 1.35,
                 ),
               ),
@@ -163,11 +172,13 @@ class AppSkeletonLoader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: AppColors.border.withValues(alpha: 0.6),
+        color: theme.dividerColor.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(borderRadius),
       ),
     );

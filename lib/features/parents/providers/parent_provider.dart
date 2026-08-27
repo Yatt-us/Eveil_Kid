@@ -10,7 +10,8 @@ import '../repository/parent_repository.dart';
 
 final currentUserIdProvider = Provider<String>((ref) {
   final authState = ref.watch(authProvider);
-  final userId = authState.utilisateur?.utilisateurId ??
+  final userId =
+      authState.utilisateur?.utilisateurId ??
       FirebaseAuth.instance.currentUser?.uid;
   return userId ?? '';
 });
@@ -23,11 +24,9 @@ final parentProfileStreamProvider = StreamProvider<Utilisateur>((ref) {
   final repository = ref.watch(parentRepositoryProvider);
   final userId = ref.watch(currentUserIdProvider);
   if (userId.isEmpty) {
-    return Stream.value(const Utilisateur(
-      utilisateurId: '',
-      nom: 'Visiteur',
-      email: '',
-    ));
+    return Stream.value(
+      const Utilisateur(utilisateurId: '', nom: 'Visiteur', email: ''),
+    );
   }
   return repository.watchParentProfile(userId);
 });
@@ -61,11 +60,7 @@ class ParentNotifier extends AsyncNotifier<Utilisateur> {
   Future<Utilisateur> build() async {
     final userId = ref.watch(currentUserIdProvider);
     if (userId.isEmpty) {
-      return const Utilisateur(
-        utilisateurId: '',
-        nom: 'Visiteur',
-        email: '',
-      );
+      return const Utilisateur(utilisateurId: '', nom: 'Visiteur', email: '');
     }
 
     final repository = ref.watch(parentRepositoryProvider);
@@ -76,6 +71,7 @@ class ParentNotifier extends AsyncNotifier<Utilisateur> {
 
   Future<void> chargerProfil([String? id]) async {
     final String targetId = id ?? ref.read(currentUserIdProvider);
+    if (targetId.isEmpty) return;
     if (targetId.isEmpty) return;
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
@@ -88,12 +84,14 @@ class ParentNotifier extends AsyncNotifier<Utilisateur> {
     state = await AsyncValue.guard(() async {
       final repository = ref.read(parentRepositoryProvider);
       final saved = await repository.updateParentProfile(updatedParent);
+      ref.read(authProvider.notifier).updateLocalUtilisateur(saved);
       return saved;
     });
   }
 
   Future<void> ajouterEnfant(EnfantModel enfant) async {
     final userId = ref.read(currentUserIdProvider);
+    if (userId.isEmpty) return;
     if (userId.isEmpty) return;
     final toAdd = enfant.copyWith(utilisateurId: userId);
 
@@ -107,6 +105,7 @@ class ParentNotifier extends AsyncNotifier<Utilisateur> {
   Future<void> modifierEnfant(EnfantModel enfant) async {
     final userId = ref.read(currentUserIdProvider);
     if (userId.isEmpty) return;
+    if (userId.isEmpty) return;
 
     state = await AsyncValue.guard(() async {
       final repository = ref.read(parentRepositoryProvider);
@@ -117,6 +116,7 @@ class ParentNotifier extends AsyncNotifier<Utilisateur> {
 
   Future<void> supprimerEnfant(String enfantId) async {
     final userId = ref.read(currentUserIdProvider);
+    if (userId.isEmpty) return;
     if (userId.isEmpty) return;
 
     state = await AsyncValue.guard(() async {
@@ -129,5 +129,5 @@ class ParentNotifier extends AsyncNotifier<Utilisateur> {
 
 final parentNotifierProvider =
     AsyncNotifierProvider<ParentNotifier, Utilisateur>(() {
-  return ParentNotifier();
-});
+      return ParentNotifier();
+    });

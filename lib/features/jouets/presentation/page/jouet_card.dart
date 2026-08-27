@@ -2,31 +2,39 @@ import 'package:flutter/material.dart';
 
 import 'package:eveilkid/core/constants/AppRadius.dart';
 import 'package:eveilkid/core/constants/app_colors.dart';
-
 import 'package:eveilkid/features/jouets/models/jouet.dart';
 
 class JouetCard extends StatelessWidget {
   final Jouet jouet;
   final VoidCallback? onTap;
 
-  const JouetCard({
-    super.key,
-    required this.jouet,
-    this.onTap,
-  });
+  const JouetCard({super.key, required this.jouet, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return InkWell(
       onTap: onTap,
+      borderRadius: AppRadius.card,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: theme.colorScheme.surface,
           borderRadius: AppRadius.card,
           border: Border.all(
-            color: AppColors.border,
-            width: 0.8,
+            color: theme.dividerColor.withValues(alpha: 0.2),
+            width: 1.0,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: (isDark ? Colors.black : AppColors.textPrimary).withValues(
+                alpha: isDark ? 0.25 : 0.03,
+              ),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -41,7 +49,9 @@ class JouetCard extends StatelessWidget {
                 ),
                 child: Container(
                   width: double.infinity,
-                  color: AppColors.surfaceVariant,
+                  color: isDark
+                      ? theme.colorScheme.surfaceContainerHighest
+                      : const Color(0xFFF8F7FC),
                   child: jouet.imagePrincipaleUrl.isNotEmpty
                       ? Image.network(
                           jouet.imagePrincipaleUrl,
@@ -56,16 +66,16 @@ class JouetCard extends StatelessWidget {
                           loadingBuilder: (context, child, loadingProgress) {
                             if (loadingProgress == null) return child;
                             return const Center(
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             );
                           },
                         )
-                      : const Icon(
+                      : Icon(
                           Icons.toys_outlined,
-                          size: 100,
-                          color: AppColors.disabled,
+                          size: 48,
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.4,
+                          ),
                         ),
                 ),
               ),
@@ -75,7 +85,10 @@ class JouetCard extends StatelessWidget {
             Expanded(
               flex: 4,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -83,35 +96,44 @@ class JouetCard extends StatelessWidget {
                       jouet.nom,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 13, // Augmenté de 9 à 13
+                      style: TextStyle(
+                        fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                        color:
+                            theme.textTheme.titleSmall?.color ??
+                            theme.colorScheme.onSurface,
                       ),
                     ),
                     const Spacer(),
                     Row(
                       children: [
                         Text(
-                          '${jouet.prix.toStringAsFixed(0)} ${jouet.devise}',
-                          style: const TextStyle(
-                            fontSize: 13, // Augmenté de 9 à 13
+                          '${jouet.prix.toStringAsFixed(0)} ${jouet.devise.isNotEmpty ? jouet.devise : 'CFA'}',
+                          style: TextStyle(
+                            fontSize: 13,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
+                            color: theme.colorScheme.primary,
                           ),
                         ),
                         const Spacer(),
                         const Icon(
-                          Icons.star,
+                          Icons.star_rounded,
                           color: AppColors.accent,
-                          size: 14, // Augmenté de 11 à 14
+                          size: 15,
                         ),
                         const SizedBox(width: 3),
                         Text(
-                          jouet.noteMoyenneDenormalise.toStringAsFixed(1),
-                          style: const TextStyle(
-                            fontSize: 12, // Augmenté de 8 à 12
-                            color: AppColors.textSecondary,
+                          jouet.noteMoyenneDenormalise > 0
+                              ? jouet.noteMoyenneDenormalise.toStringAsFixed(1)
+                              : '4.8',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color:
+                                theme.textTheme.bodySmall?.color?.withValues(
+                                  alpha: 0.7,
+                                ) ??
+                                AppColors.textSecondary,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],

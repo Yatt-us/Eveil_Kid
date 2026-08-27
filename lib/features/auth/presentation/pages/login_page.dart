@@ -5,14 +5,13 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/AppPadding.dart';
 import '../../../../core/constants/AppSpacing.dart';
 import '../../../../core/constants/AppTextStyles.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
 import '../../../../shared/widgets/app_google_button.dart';
-import '../../../../shared/widgets/app_icon_button.dart';
 import '../../../../shared/widgets/app_logo.dart';
 import '../../../../shared/widgets/app_text_field.dart';
+import '../../models/utilisateur.dart';
 import '../../providers/auth_provider.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -53,7 +52,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     if (success) {
       AppDialogs.showSnackBar(context: context, message: 'Connexion réussie !');
-      context.go(AppRoutes.home);
+      final userRole = ref.read(authProvider).utilisateur?.role;
+      if (userRole == UserRole.admin || userRole == UserRole.manager) {
+        context.go(AppRoutes.admin);
+      } else {
+        context.go(AppRoutes.home);
+      }
     } else {
       final errorMessage = ref.read(authProvider).errorMessage;
       AppDialogs.showSnackBar(
@@ -108,7 +112,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         context: context,
         message: 'Connexion Google réussie !',
       );
-      context.go(AppRoutes.home);
+      final userRole = ref.read(authProvider).utilisateur?.role;
+      if (userRole == UserRole.admin || userRole == UserRole.manager) {
+        context.go(AppRoutes.admin);
+      } else {
+        context.go(AppRoutes.home);
+      }
     } else {
       final errorMessage = ref.read(authProvider).errorMessage;
       AppDialogs.showSnackBar(
@@ -122,9 +131,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
+    final titleColor = colorScheme.onSurface;
+    final subtitleColor = colorScheme.onSurfaceVariant;
+    final primaryColor = colorScheme.primary;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -137,38 +153,32 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // BOUTON RETOUR VERS ACCUEIL
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: AppIconButton(
-                        icon: Icons.arrow_back_rounded,
-                        size: 36,
-                        onPressed: () => context.go(AppRoutes.home),
-                      ),
-                    ),
-                    AppSpacing.verticalSm,
-
                     // LOGO BRANDING
                     const Center(child: AppLogo(size: 90)),
 
                     AppSpacing.verticalLg,
 
                     // TITRE & SOUS-TITRE
-                    const Text(
+                    Text(
                       'Bienvenue !',
                       textAlign: TextAlign.center,
-                      style: AppTextStyles.headingLarge,
+                      style: AppTextStyles.headingLarge.copyWith(
+                        color: titleColor,
+                      ),
                     ),
 
                     AppSpacing.verticalXs,
 
-                    const Text(
+                    Text(
                       'Connectez-vous pour accéder à votre espace',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textSecondary,
-                      ),
+                      style: textTheme.bodyMedium?.copyWith(
+                            color: subtitleColor,
+                          ) ??
+                          TextStyle(
+                            fontSize: 14,
+                            color: subtitleColor,
+                          ),
                     ),
 
                     AppSpacing.verticalXxxl,
@@ -224,7 +234,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         onPressed: authState.isLoading ? null : _forgotPassword,
                         style: TextButton.styleFrom(
                           padding: EdgeInsets.zero,
-                          foregroundColor: AppColors.primary,
+                          foregroundColor: primaryColor,
                           textStyle: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -239,7 +249,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     // BOUTON DE CONNEXION
                     AppButton(
                       text: 'Se connecter',
-                      // icon: Icons.login_rounded,
                       size: AppButtonSize.large,
                       isLoading: authState.isLoading,
                       onPressed: _login,
@@ -250,21 +259,27 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     // SÉPARATEUR
                     Row(
                       children: [
-                        const Expanded(
-                          child: Divider(color: AppColors.border, thickness: 1),
+                        Expanded(
+                          child: Divider(
+                            color: theme.dividerColor,
+                            thickness: 1,
+                          ),
                         ),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Text(
                             'OU',
                             style: AppTextStyles.bodySmall.copyWith(
-                              color: AppColors.textSecondary,
+                              color: subtitleColor,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
-                        const Expanded(
-                          child: Divider(color: AppColors.border, thickness: 1),
+                        Expanded(
+                          child: Divider(
+                            color: theme.dividerColor,
+                            thickness: 1,
+                          ),
                         ),
                       ],
                     ),
@@ -284,11 +299,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
+                        Text(
                           'Pas encore de compte ?',
                           style: TextStyle(
                             fontSize: 14,
-                            color: AppColors.textSecondary,
+                            color: subtitleColor,
                           ),
                         ),
                         TextButton(
@@ -296,7 +311,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               ? null
                               : () => context.go(AppRoutes.register),
                           style: TextButton.styleFrom(
-                            foregroundColor: AppColors.primary,
+                            foregroundColor: primaryColor,
                             padding: const EdgeInsets.symmetric(horizontal: 8),
                             textStyle: const TextStyle(
                               fontSize: 14,
@@ -317,7 +332,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         icon: const Icon(Icons.home_outlined, size: 18),
                         label: const Text('Continuer sans se connecter'),
                         style: TextButton.styleFrom(
-                          foregroundColor: AppColors.textSecondary,
+                          foregroundColor: subtitleColor,
                           textStyle: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,

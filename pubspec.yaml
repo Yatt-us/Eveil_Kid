@@ -43,7 +43,13 @@ dependencies:
   firebase_auth: ^6.5.7
   flutter_svg: ^2.3.0
   google_sign_in: ^7.2.0
+  image_picker: ^1.1.2
+  cloudinary_api: ^1.1.1
+  cloudinary_url_gen: ^1.1.1
+  http: ^1.2.2
   shared_preferences: ^2.5.5
+  youtube_player_flutter: ^10.0.1
+  intl: ^0.20.3
 
 dev_dependencies:
   flutter_test:
@@ -97,3 +103,4 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+  

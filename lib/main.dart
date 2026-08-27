@@ -1,24 +1,5 @@
-// import 'package:eveilkid/firebase_options.dart';
-// import 'package:firebase_core/firebase_core.dart';
-// import 'package:flutter/material.dart';
-
-// Future<void> main() async {
-//   WidgetsFlutterBinding.ensureInitialized();
-//   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-//   runApp(const MyApp());
-// }
-
-// class MyApp extends StatelessWidget {
-//   const MyApp({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Center(child: Text("bonjour"));
-//   }
-// }
-
 import 'dart:ui';
-
+import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/core/router/app_router.dart';
 import 'package:eveilkid/core/provider/theme_provider.dart';
 import 'package:eveilkid/core/services/google_sign_in_service.dart';
@@ -26,23 +7,28 @@ import 'package:eveilkid/core/themes/AppTheme.dart';
 import 'package:eveilkid/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // Indispensable pour ProviderScope et ConsumerWidget
+import 'package:intl/date_symbol_data_local.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
+  // Initialise les symboles de localisation pour intl (DateFormat en français)
+  await initializeDateFormatting('fr_FR', null);
+
   // Initialise Google Sign-In v7+ une seule fois avant runApp.
-  // Tente egalement une re-connexion legere (sans UI) si l'utilisateur
-  // etait deja connecte precedemment.
   await GoogleSignInService.initialize();
 
-  runApp(const ProviderScope(child: MyApp()));
+  // On enveloppe bien l'application avec ProviderScope
+  runApp(const ProviderScope(child: MonApp()));
 }
 
-class MyApp extends ConsumerWidget {
-  const MyApp({super.key});
+// Changement de StatelessWidget vers ConsumerWidget pour pouvoir utiliser WidgetRef ref
+class MonApp extends ConsumerWidget {
+  const MonApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -58,10 +44,24 @@ class MyApp extends ConsumerWidget {
       themeMode: themeMode,
       routerConfig: router,
       builder: (context, child) {
-        return GestureDetector(
-          onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-          behavior: HitTestBehavior.translucent,
-          child: child,
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final overlayStyle = SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+          statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+          systemNavigationBarColor:
+              isDark ? AppColors.darkBackground : AppColors.background,
+          systemNavigationBarIconBrightness:
+              isDark ? Brightness.light : Brightness.dark,
+        );
+
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: overlayStyle,
+          child: GestureDetector(
+            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+            behavior: HitTestBehavior.translucent,
+            child: child ?? const SizedBox.shrink(),
+          ),
         );
       },
       scrollBehavior: const MaterialScrollBehavior().copyWith(

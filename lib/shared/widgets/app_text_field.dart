@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 import '../../core/constants/AppRadius.dart';
 
 /// Champ de saisie réutilisable flat, simple et professionnel :
 /// Fond plat (surface), bordures fines (1.0px / bordure active minime 1.2px),
-/// typographie soignée et transitions nettes.
+/// typographie soignée et adaptabilité totale au thème sombre / clair.
 class AppTextField extends StatefulWidget {
   final String? label;
   final String? labelText;
@@ -83,6 +82,7 @@ class _AppTextFieldState extends State<AppTextField> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     Widget? suffix = widget.suffixIcon;
 
     if (widget.isPassword && suffix == null) {
@@ -91,7 +91,10 @@ class _AppTextFieldState extends State<AppTextField> {
           _obscureText
               ? Icons.visibility_outlined
               : Icons.visibility_off_outlined,
-          color: _isFocused ? AppColors.primary : AppColors.icon,
+          color: _isFocused
+              ? theme.colorScheme.primary
+              : (theme.iconTheme.color?.withValues(alpha: 0.6) ??
+                  theme.colorScheme.onSurfaceVariant),
           size: 19,
         ),
         tooltip: _obscureText ? "Afficher" : "Masquer",
@@ -110,14 +113,15 @@ class _AppTextFieldState extends State<AppTextField> {
         if (widget.label != null) ...[
           Text(
             widget.label!,
-            style: const TextStyle(
-              fontSize: 13,
+            style: TextStyle(
+              fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: theme.textTheme.titleSmall?.color ??
+                  theme.colorScheme.onSurface,
               letterSpacing: -0.1,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
         ],
         TextFormField(
           controller: widget.controller,
@@ -133,86 +137,91 @@ class _AppTextFieldState extends State<AppTextField> {
           validator: widget.validator,
           onChanged: widget.onChanged,
           onFieldSubmitted: widget.onSubmitted,
-          style: const TextStyle(
-            fontSize: 14,
+          style: TextStyle(
+            fontSize: 15,
             fontWeight: FontWeight.w500,
-            color: AppColors.textPrimary,
+            color: theme.textTheme.bodyMedium?.color ??
+                theme.colorScheme.onSurface,
             letterSpacing: 0.1,
           ),
           decoration: InputDecoration(
             labelText: widget.labelText,
-            labelStyle: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 13.5,
+            labelStyle: TextStyle(
+              color: theme.hintColor,
+              fontSize: 14.5,
             ),
-            floatingLabelStyle: const TextStyle(
-              color: AppColors.primary,
-              fontSize: 12.5,
+            floatingLabelStyle: TextStyle(
+              color: theme.colorScheme.primary,
+              fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
             hintText: widget.hintText,
             helperText: widget.helperText,
             errorText: widget.errorText,
             hintStyle: TextStyle(
-              color: AppColors.textSecondary.withValues(alpha: 0.65),
-              fontSize: 13.5,
+              color: theme.hintColor,
+              fontSize: 14.5,
               fontWeight: FontWeight.normal,
             ),
             prefixIcon: widget.prefixIcon != null
                 ? Icon(
                     widget.prefixIcon,
-                    color: _isFocused ? AppColors.primary : AppColors.icon,
-                    size: 19,
+                    color: _isFocused
+                        ? theme.colorScheme.primary
+                        : (theme.iconTheme.color?.withValues(alpha: 0.6) ??
+                            theme.colorScheme.onSurfaceVariant),
+                    size: 21,
                   )
                 : null,
             suffixIcon: suffix,
             filled: true,
             fillColor: widget.enabled
-                ? AppColors.surface
-                : AppColors.surfaceVariant.withValues(alpha: 0.4),
+                ? (theme.inputDecorationTheme.fillColor ??
+                    theme.colorScheme.surface)
+                : theme.disabledColor.withValues(alpha: 0.06),
             contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 12,
+              horizontal: 16,
+              vertical: 15,
             ),
-            border: const OutlineInputBorder(
+            border: OutlineInputBorder(
               borderRadius: AppRadius.input,
               borderSide: BorderSide(
-                color: AppColors.border,
+                color: theme.dividerColor.withValues(alpha: 0.2),
                 width: 1.0,
               ),
             ),
-            enabledBorder: const OutlineInputBorder(
+            enabledBorder: OutlineInputBorder(
               borderRadius: AppRadius.input,
               borderSide: BorderSide(
-                color: AppColors.border,
+                color: theme.dividerColor.withValues(alpha: 0.2),
                 width: 1.0,
               ),
             ),
-            focusedBorder: const OutlineInputBorder(
+            focusedBorder: OutlineInputBorder(
               borderRadius: AppRadius.input,
               borderSide: BorderSide(
-                color: AppColors.primary,
+                color: theme.colorScheme.primary,
                 width: 1.2,
               ),
             ),
-            errorBorder: const OutlineInputBorder(
+            errorBorder: OutlineInputBorder(
               borderRadius: AppRadius.input,
               borderSide: BorderSide(
-                color: AppColors.danger,
+                color: theme.colorScheme.error,
                 width: 1.0,
               ),
             ),
-            focusedErrorBorder: const OutlineInputBorder(
+            focusedErrorBorder: OutlineInputBorder(
               borderRadius: AppRadius.input,
               borderSide: BorderSide(
-                color: AppColors.danger,
+                color: theme.colorScheme.error,
                 width: 1.2,
               ),
             ),
             disabledBorder: OutlineInputBorder(
               borderRadius: AppRadius.input,
               borderSide: BorderSide(
-                color: AppColors.border.withValues(alpha: 0.4),
+                color: theme.dividerColor.withValues(alpha: 0.1),
                 width: 1.0,
               ),
             ),

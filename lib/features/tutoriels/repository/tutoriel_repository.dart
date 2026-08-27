@@ -1,65 +1,201 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:eveilkid/core/cloudinary/cloudinary_service.dart';
 import 'package:eveilkid/features/tutoriels/models/tutoriel.dart';
 
 class TutorielRepository {
- final FirebaseFirestore _firestore;
+  final FirebaseFirestore _firestore;
+  final CloudinaryService _cloudinary;
 
- TutorielRepository({FirebaseFirestore? firestore})
-     : _firestore = firestore ?? FirebaseFirestore.instance;
+  TutorielRepository({
+    FirebaseFirestore? firestore,
+    CloudinaryService? cloudinary,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _cloudinary = cloudinary ?? CloudinaryService();
 
- CollectionReference<Map<String, dynamic>> get _tutorielsCollection =>
-     _firestore.collection('tutoriels');
+  CollectionReference<Map<String, dynamic>> get _tutorielsCollection =>
+      _firestore.collection('tutoriels');
 
- Future<List<Tutoriel>> getTutoriels({bool onlyPublished = true}) async {
-   final query = onlyPublished
-       ? _tutorielsCollection.where('estPublie', isEqualTo: true)
-       : _tutorielsCollection;
+  Future<List<Tutoriel>> getTutoriels({bool onlyPublished = true}) async {
+    final query = onlyPublished
+        ? _tutorielsCollection.where('estPublie', isEqualTo: true)
+        : _tutorielsCollection;
 
-   final snapshot = await query.get();
-   return snapshot.docs
-       .map((doc) => Tutoriel.fromFirestore(doc))
-       .toList();
- }
+    final snapshot = await query.get();
+    return snapshot.docs
+        .map((doc) => Tutoriel.fromFirestore(doc))
+        .toList();
+  }
 
- Future<Tutoriel?> getTutorielById(String tutorielId) async {
-   final doc = await _tutorielsCollection.doc(tutorielId).get();
-   if (!doc.exists || doc.data() == null) return null;
-   return Tutoriel.fromFirestore(doc);
- }
+  Future<Tutoriel?> getTutorielById(String tutorielId) async {
+    final cleanedId = tutorielId.trim();
+    if (cleanedId.isEmpty) return null;
 
- Future<List<Tutoriel>> searchTutoriels(String query) async {
-   final tutoriels = await getTutoriels();
-   final normalized = query.trim().toLowerCase();
-   if (normalized.isEmpty) return tutoriels;
+    final doc = await _tutorielsCollection.doc(cleanedId).get();
+    if (doc.exists && doc.data() != null) {
+      return Tutoriel.fromFirestore(doc);
+    }
 
-   return tutoriels.where((tutoriel) {
-     final title = tutoriel.titre.toLowerCase();
-     final description = tutoriel.description.toLowerCase();
-     return title.contains(normalized) || description.contains(normalized);
-   }).toList();
- }
+    final snapshot = await _tutorielsCollection
+        .where('tutorielId', isEqualTo: cleanedId)
+        .limit(1)
+        .get();
 
- Future<String> createTutoriel(Tutoriel tutoriel) async {
-   final docRef = _tutorielsCollection.doc();
-   final value = tutoriel.copyWith(
-     tutorielId: docRef.id,
-     dateCreation: DateTime.now(),
-     dateModification: DateTime.now(),
-   );
+    if (snapshot.docs.isEmpty) return null;
+    return Tutoriel.fromFirestore(snapshot.docs.first);
+  }
 
-   await docRef.set(value.toFirestore());
-   return docRef.id;
- }
+  Future<List<Tutoriel>> searchTutoriels(String query) async {
+    final tutoriels = await getTutoriels();
+    final normalized = query.trim().toLowerCase();
+    if (normalized.isEmpty) return tutoriels;
 
- Future<void> updateTutoriel(Tutoriel tutoriel) async {
-   await _tutorielsCollection.doc(tutoriel.tutorielId).update(
-     tutoriel.copyWith(
-       dateModification: DateTime.now(),
-     ).toFirestore(),
-   );
- }
+    return tutoriels.where((tutoriel) {
+      final title = tutoriel.titre.toLowerCase();
+      final description = tutoriel.description.toLowerCase();
+      return title.contains(normalized) || description.contains(normalized);
+    }).toList();
+  }
 
- Future<void> deleteTutoriel(String tutorielId) async {
-   await _tutorielsCollection.doc(tutorielId).delete();
- }
+  Future<Tutoriel> createTutoriel(Tutoriel tutoriel) async {
+    try {
+      final docRef = _tutorielsCollection.doc();
+      final newTutoriel = tutoriel.copyWith(
+        tutorielId: docRef.id,
+        dateCreation: DateTime.now(),
+        dateModification: DateTime.now(),
+      );
+      await docRef.set(newTutoriel.toFirestore());
+      return newTutoriel;
+    } catch (e) {
+      throw Exception('Erreur lors de la création: $e');
+    }
+  }
+
+  Future<Tutoriel> updateTutoriel(Tutoriel tutoriel) async {
+    try {
+      if (tutoriel.tutorielId == null) throw Exception('ID manquant');
+      final updatedTutoriel = tutoriel.copyWith(
+        dateModification: DateTime.now(),
+      );
+      await _tutorielsCollection
+          .doc(tutoriel.tutorielId)
+          .update(updatedTutoriel.toFirestore());
+      return updatedTutoriel;
+    } catch (e) {
+      throw Exception('Erreur lors de la mise à jour: $e');
+    }
+  }
+
+  Future<void> deleteTutoriel(String id) async {
+    try {
+      await _tutorielsCollection.doc(id).delete();
+    } catch (e) {
+      throw Exception('Erreur lors de la suppression: $e');
+    }
+  }
+
+  /// Upload direct de miniature vers Cloudinary (sans toucher Firestore)
+  Future<String> uploadMiniatureDirect(File imageFile, {String? tutorielId}) async {
+    try {
+      final folder = tutorielId != null && tutorielId.isNotEmpty
+          ? 'tutoriels/$tutorielId'
+          : 'tutoriels/miniatures';
+      return await _cloudinary.uploadImage(
+        imageFile,
+        folder: folder,
+      );
+    } catch (e) {
+      throw Exception('Erreur lors du téléversement de la miniature: $e');
+    }
+  }
+
+  /// Upload direct de vidéo vers Cloudinary (sans toucher Firestore)
+  Future<String> uploadVideoDirect(File videoFile, {String? tutorielId}) async {
+    try {
+      final folder = tutorielId != null && tutorielId.isNotEmpty
+          ? 'tutoriels/$tutorielId'
+          : 'tutoriels/videos';
+      return await _cloudinary.uploadVideo(
+        videoFile,
+        folder: folder,
+      );
+    } catch (e) {
+      throw Exception('Erreur lors du téléversement de la vidéo: $e');
+    }
+  }
+
+  Future<String> uploadMiniature(String tutorielId, File imageFile) async {
+    try {
+      final downloadUrl = await uploadMiniatureDirect(imageFile, tutorielId: tutorielId);
+      await _tutorielsCollection.doc(tutorielId).update({
+        'miniatureUrl': downloadUrl,
+        'dateModification': Timestamp.now(),
+      });
+      return downloadUrl;
+    } catch (e) {
+      throw Exception('Erreur lors du téléchargement de la miniature: $e');
+    }
+  }
+
+  Future<String> uploadVideo(String tutorielId, File videoFile) async {
+    try {
+      final downloadUrl = await uploadVideoDirect(videoFile, tutorielId: tutorielId);
+      await _tutorielsCollection.doc(tutorielId).update({
+        'videoUrl': downloadUrl,
+        'dateModification': Timestamp.now(),
+      });
+      return downloadUrl;
+    } catch (e) {
+      throw Exception('Erreur lors du téléchargement de la vidéo: $e');
+    }
+  }
+
+  Future<void> publierTutoriel(String id) async {
+    try {
+      await _tutorielsCollection.doc(id).update({
+        'statut': 'publie',
+        'dateModification': Timestamp.now(),
+      });
+    } catch (e) {
+      throw Exception('Erreur: $e');
+    }
+  }
+
+  Future<void> depublierTutoriel(String id) async {
+    try {
+      await _tutorielsCollection.doc(id).update({
+        'statut': 'brouillon',
+        'dateModification': Timestamp.now(),
+      });
+    } catch (e) {
+      throw Exception('Erreur: $e');
+    }
+  }
+
+  Future<List<Tutoriel>> getAllTutoriels() async {
+    try {
+      final snapshot = await _tutorielsCollection
+          .where('statut', isEqualTo: 'publie')
+          .orderBy('dateCreation', descending: true)
+          .get();
+      
+      return snapshot.docs.map((doc) => Tutoriel.fromFirestore(doc)).toList();
+    } catch (e) {
+      throw Exception('Erreur: $e');
+    }
+  }
+
+  Future<List<Tutoriel>> getAllTutorielsForAdmin() async {
+    try {
+      final snapshot = await _tutorielsCollection
+          .orderBy('dateCreation', descending: true)
+          .get();
+      
+      return snapshot.docs.map((doc) => Tutoriel.fromFirestore(doc)).toList();
+    } catch (e) {
+      throw Exception('Erreur: $e');
+    }
+  }
 }

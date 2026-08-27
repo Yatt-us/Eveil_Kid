@@ -93,13 +93,23 @@ class _EmailVerificationBannerState
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final userEmail = authState.utilisateur?.email ?? '';
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final bannerBg = isDark ? const Color(0xFF332005) : const Color(0xFFFFFBEB);
+    final bannerBorder = isDark ? const Color(0xFF78350F) : const Color(0xFFFDE68A);
+    final iconBg = isDark ? const Color(0xFF451A03) : const Color(0xFFFEF3C7);
+    final iconBorder = isDark ? const Color(0xFF78350F) : const Color(0xFFFCD34D);
+    final iconColor = const Color(0xFFF59E0B);
+    final titleColor = isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E);
+    final bodyColor = isDark ? const Color(0xFFFCD34D).withValues(alpha: 0.8) : const Color(0xFFB45309);
+    final emailColor = isDark ? const Color(0xFFFBBF24) : const Color(0xFF78350F);
 
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBEB),
+        color: bannerBg,
         borderRadius: AppRadius.card,
         border: Border.all(
-          color: const Color(0xFFFDE68A),
+          color: bannerBorder,
           width: 1.5,
         ),
         boxShadow: [
@@ -120,13 +130,13 @@ class _EmailVerificationBannerState
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7),
+                  color: iconBg,
                   shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFFCD34D)),
+                  border: Border.all(color: iconBorder),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.mark_email_unread_rounded,
-                  color: Color(0xFFD97706),
+                  color: iconColor,
                   size: 22,
                 ),
               ),
@@ -135,20 +145,20 @@ class _EmailVerificationBannerState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Confirmez votre adresse email',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF92400E),
+                        color: titleColor,
                       ),
                     ),
                     const SizedBox(height: 4),
                     RichText(
                       text: TextSpan(
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
-                          color: Color(0xFFB45309),
+                          color: bodyColor,
                           height: 1.35,
                         ),
                         children: [
@@ -159,9 +169,9 @@ class _EmailVerificationBannerState
                             text: userEmail.isNotEmpty
                                 ? userEmail
                                 : 'votre adresse',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF78350F),
+                              color: emailColor,
                             ),
                           ),
                           const TextSpan(
@@ -183,21 +193,23 @@ class _EmailVerificationBannerState
                 child: OutlinedButton.icon(
                   onPressed: _isResending ? null : _resendVerificationEmail,
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF92400E),
-                    side: const BorderSide(color: Color(0xFFFCD34D)),
-                    backgroundColor: Colors.white.withValues(alpha: 0.8),
+                    foregroundColor: titleColor,
+                    side: BorderSide(color: bannerBorder),
+                    backgroundColor: isDark
+                        ? Theme.of(context).colorScheme.surface
+                        : Colors.white.withValues(alpha: 0.8),
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                   icon: _isResending
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 14,
                           height: 14,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Color(0xFF92400E),
+                            color: titleColor,
                           ),
                         )
                       : const Icon(Icons.send_rounded, size: 16),

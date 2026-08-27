@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/AppRadius.dart';
-import '../../core/constants/app_colors.dart';
 
 /// Carte générique et responsive pour l'application et l'espace admin.
 ///
@@ -46,8 +45,13 @@ class AppCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final effectiveRadius = borderRadius ?? AppRadius.card;
-    final effectiveBorder = border ?? Border.all(color: AppColors.border, width: 1);
+    final effectiveBorder = border ??
+        Border.all(
+          color: theme.dividerColor.withValues(alpha: 0.2),
+          width: 1,
+        );
 
     return Container(
       margin: margin,
@@ -57,48 +61,58 @@ class AppCard extends StatelessWidget {
           final effectivePadding = padding ??
               EdgeInsets.all(isCompact ? 12 : 16);
 
+          final cardContent = Container(
+            padding: effectivePadding,
+            decoration: BoxDecoration(
+              borderRadius: effectiveRadius,
+              border: effectiveBorder,
+              boxShadow: customShadow ??
+                  (elevation > 0
+                      ? null
+                      : [
+                          BoxShadow(
+                            color: (theme.textTheme.bodyMedium?.color ?? Colors.black)
+                                .withValues(alpha: 0.03),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ]),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_hasHeader) ...[
+                  _buildHeader(context, isCompact),
+                  SizedBox(height: isCompact ? 8 : 12),
+                ],
+                child,
+                if (footer != null) ...[
+                  SizedBox(height: isCompact ? 8 : 12),
+                  Divider(
+                    height: 1,
+                    color: theme.dividerColor.withValues(alpha: 0.2),
+                  ),
+                  SizedBox(height: isCompact ? 6 : 8),
+                  footer!,
+                ],
+              ],
+            ),
+          );
+
           return Material(
-            color: backgroundColor ?? AppColors.surface,
+            color: backgroundColor ??
+                theme.cardTheme.color ??
+                theme.colorScheme.surface,
             borderRadius: effectiveRadius,
             elevation: elevation,
-            child: InkWell(
-              onTap: onTap,
-              borderRadius: effectiveRadius,
-              child: Container(
-                padding: effectivePadding,
-                decoration: BoxDecoration(
-                  borderRadius: effectiveRadius,
-                  border: effectiveBorder,
-                  boxShadow: customShadow ??
-                      (elevation > 0
-                          ? null
-                          : [
-                              BoxShadow(
-                                color: AppColors.textPrimary.withValues(alpha: 0.03),
-                                blurRadius: 10,
-                                offset: const Offset(0, 3),
-                              ),
-                            ]),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (_hasHeader) ...[
-                      _buildHeader(context, isCompact),
-                      SizedBox(height: isCompact ? 8 : 12),
-                    ],
-                    child,
-                    if (footer != null) ...[
-                      SizedBox(height: isCompact ? 8 : 12),
-                      const Divider(height: 1, color: AppColors.border),
-                      SizedBox(height: isCompact ? 6 : 8),
-                      footer!,
-                    ],
-                  ],
-                ),
-              ),
-            ),
+            child: onTap != null
+                ? InkWell(
+                    onTap: onTap,
+                    borderRadius: effectiveRadius,
+                    child: cardContent,
+                  )
+                : cardContent,
           );
         },
       ),
@@ -106,6 +120,8 @@ class AppCard extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context, bool isCompact) {
+    final theme = Theme.of(context);
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -124,7 +140,8 @@ class AppCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: isCompact ? 15 : 16,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                    color: theme.textTheme.titleMedium?.color ??
+                        theme.colorScheme.onSurface,
                     letterSpacing: -0.2,
                   ),
                 ),
@@ -134,7 +151,8 @@ class AppCard extends StatelessWidget {
                   subtitle!,
                   style: TextStyle(
                     fontSize: isCompact ? 12 : 13,
-                    color: AppColors.textSecondary,
+                    color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7) ??
+                        theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],

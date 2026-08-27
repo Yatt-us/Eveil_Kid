@@ -14,17 +14,11 @@ class CategorieRepository {
         .where('estActive', isEqualTo: true)
         .get();
 
-    return snapshot.docs
-        .map((doc) => Categorie.fromFirestore(doc))
-        .toList();
+    return snapshot.docs.map((doc) => Categorie.fromFirestore(doc)).toList();
   }
 
-  Future<Categorie?> getCategorieById(
-    String categorieId,
-  ) async {
-    final doc = await _categoriesCollection
-        .doc(categorieId)
-        .get();
+  Future<Categorie?> getCategorieById(String categorieId) async {
+    final doc = await _categoriesCollection.doc(categorieId).get();
 
     if (!doc.exists) {
       return null;
@@ -33,9 +27,7 @@ class CategorieRepository {
     return Categorie.fromFirestore(doc);
   }
 
-  Future<List<Categorie>> searchCategories(
-    String recherche,
-  ) async {
+  Future<List<Categorie>> searchCategories(String recherche) async {
     final snapshot = await _categoriesCollection
         .where('estActive', isEqualTo: true)
         .get();
@@ -45,17 +37,12 @@ class CategorieRepository {
     return snapshot.docs
         .map((doc) => Categorie.fromFirestore(doc))
         .where(
-          (categorie) =>
-              categorie.nom.toLowerCase().contains(
-                    rechercheLower,
-                  ),
+          (categorie) => categorie.nom.toLowerCase().contains(rechercheLower),
         )
         .toList();
   }
 
-  Future<void> ajouterCategorie(
-    Categorie categorie,
-  ) async {
+  Future<void> ajouterCategorie(Categorie categorie) async {
     final docRef = categorie.categorieId.isNotEmpty
         ? _categoriesCollection.doc(categorie.categorieId)
         : _categoriesCollection.doc();
@@ -65,28 +52,20 @@ class CategorieRepository {
     await docRef.set(effectiveCategory.toFirestore(), SetOptions(merge: true));
   }
 
-  Future<void> modifierCategorie(
-    Categorie categorie,
-  ) async {
+  Future<void> modifierCategorie(Categorie categorie) async {
     await _categoriesCollection
         .doc(categorie.categorieId)
         .set(categorie.toFirestore(), SetOptions(merge: true));
   }
 
-  Future<void> supprimerCategorie(
-    String categorieId,
-  ) async {
-    await _categoriesCollection
-        .doc(categorieId)
-        .delete();
+  Future<void> supprimerCategorie(String categorieId) async {
+    await _categoriesCollection.doc(categorieId).delete();
   }
 
   /// Récupère toutes les catégories pour l'administration (actives et inactives)
   Future<List<Categorie>> getAllCategoriesAdmin() async {
     final snapshot = await _categoriesCollection.get();
-    return snapshot.docs
-        .map((doc) => Categorie.fromFirestore(doc))
-        .toList();
+    return snapshot.docs.map((doc) => Categorie.fromFirestore(doc)).toList();
   }
 
   /// Écoute en temps réel les catégories actives (pour les parents/utilisateurs)
@@ -95,19 +74,17 @@ class CategorieRepository {
         .where('estActive', isEqualTo: true)
         .snapshots()
         .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => Categorie.fromFirestore(doc))
-              .toList(),
+          (snapshot) =>
+              snapshot.docs.map((doc) => Categorie.fromFirestore(doc)).toList(),
         );
   }
 
   /// Écoute en temps réel toutes les catégories
   Stream<List<Categorie>> streamCategoriesAdmin() {
     return _categoriesCollection.snapshots().map(
-          (snapshot) => snapshot.docs
-              .map((doc) => Categorie.fromFirestore(doc))
-              .toList(),
-        );
+      (snapshot) =>
+          snapshot.docs.map((doc) => Categorie.fromFirestore(doc)).toList(),
+    );
   }
 
   /// Active ou désactive une catégorie
