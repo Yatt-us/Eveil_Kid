@@ -16,7 +16,10 @@ import 'package:eveilkid/features/parents/presentation/pages/accueil_parent.dart
 import 'package:eveilkid/features/parents/presentation/pages/aide_support_page.dart';
 import 'package:eveilkid/features/parents/presentation/pages/detail_enfant.dart';
 import 'package:eveilkid/features/parents/presentation/pages/profil_parent.dart';
+import 'package:eveilkid/features/tutoriels/models/tutoriel.dart';
+import 'package:eveilkid/features/admin/presentation/pages/admin/admin_tutoriel_form_page.dart';
 import 'package:eveilkid/features/admin/presentation/pages/admin/tutoriels_list_screen.dart';
+import 'package:eveilkid/features/favoris/presentation/pages/favoris_page.dart';
 import 'package:eveilkid/features/panier/presentation/pages/panier_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -251,6 +254,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) {
           return const NoTransitionPage(child: ProfilParentPage());
         },
+        routes: [
+          GoRoute(
+            path: 'favoris',
+            builder: (context, state) => const FavorisPage(),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/favoris',
+        redirect: (context, state) => AppRoutes.favoris,
       ),
       GoRoute(
         path: AppRoutes.tutoriels,
@@ -417,10 +430,25 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.adminTutoriels,
         builder: (context, state) => const TutorielsListScreen(),
       ),
-    GoRoute(
-      path: AppRoutes.adminAddTutoriels,
-      builder: (context, state) => const AddTutorielScreen(),
-    ),
+      GoRoute(
+        path: AppRoutes.adminAddTutoriel,
+        builder: (context, state) => const AdminTutorielFormPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.adminEditTutoriel,
+        builder: (context, state) {
+          final tutorielId = state.pathParameters['tutorielId'];
+          final tutoriel = state.extra as Tutoriel?;
+          return AdminTutorielFormPage(
+            tutorielId: tutorielId,
+            tutorielToEdit: tutoriel,
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.adminTutorielForm,
+        redirect: (context, state) => AppRoutes.adminAddTutoriel,
+      ),
        GoRoute(
         path: AppRoutes.adminCategoryForm,
         builder: (context, state) {

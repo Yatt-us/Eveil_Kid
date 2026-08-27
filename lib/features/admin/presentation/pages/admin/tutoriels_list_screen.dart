@@ -1,14 +1,23 @@
-import 'package:eveilkid/core/constants/AppTextStyles.dart';
-import 'package:eveilkid/core/constants/app_colors.dart';
-import 'package:eveilkid/features/admin/presentation/widgets/admin_drawer.dart';
-import 'package:eveilkid/features/tutoriels/enums/tutoriel_status.enum.dart';
-import 'package:eveilkid/features/tutoriels/models/tutoriel.dart';
-import 'package:eveilkid/features/admin/presentation/widgets/tutoriel_card.dart';
-import 'package:eveilkid/features/tutoriels/providers/tutoriel_provider.dart';
-import 'package:eveilkid/shared/widgets/app_search_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:eveilkid/core/constants/AppTextStyles.dart';
+import 'package:eveilkid/core/constants/app_colors.dart';
+import 'package:eveilkid/core/router/app_routes.dart';
+import 'package:eveilkid/features/admin/presentation/widgets/admin_drawer.dart';
+import 'package:eveilkid/features/admin/presentation/widgets/admin_stat_card.dart';
+import 'package:eveilkid/features/admin/presentation/widgets/tutoriel_card.dart';
+import 'package:eveilkid/features/categories/providers/categorie_provider.dart';
+import 'package:eveilkid/features/tutoriels/enums/tutoriel_status.enum.dart';
+import 'package:eveilkid/features/tutoriels/models/tutoriel.dart';
+import 'package:eveilkid/features/tutoriels/providers/tutoriel_provider.dart';
+import 'package:eveilkid/features/tutoriels/presentation/pages/tutoriel_detail_page.dart';
+import 'package:eveilkid/shared/widgets/app_button.dart';
+import 'package:eveilkid/shared/widgets/app_dialogs.dart';
+import 'package:eveilkid/shared/widgets/app_search_bar.dart';
+import 'package:eveilkid/shared/widgets/app_states.dart';
+
+enum AdminTutorielSortOption { newest, oldest, longest, shortest, titleAsc }
 
 class TutorielsListScreen extends ConsumerStatefulWidget {
   const TutorielsListScreen({super.key});
@@ -19,599 +28,568 @@ class TutorielsListScreen extends ConsumerStatefulWidget {
 
 class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
   String _searchQuery = '';
-  String? _selectedStatus;
-  bool _isFiltered = false;
+  String? _selectedStatus; // null = tous, 'publie', 'brouillon'
+  String? _selectedCategoryId;
+  AdminTutorielSortOption _sortOption = AdminTutorielSortOption.newest;
+
+  bool get _hasActiveFilters =>
+      _selectedStatus != null ||
+      _selectedCategoryId != null ||
+      _sortOption != AdminTutorielSortOption.newest;
 
   final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
   @override
   Widget build(BuildContext context) {
     final tutorielsAsync = ref.watch(adminTutorielsProvider);
+    final categoriesAsync = ref.watch(categoriesProvider);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    // Mapping ID Catégorie -> Nom
+    final categoriesMap = <String, String>{};
+    categoriesAsync.whenData((cats) {
+      for (final c in cats) {
+        categoriesMap[c.categorieId] = c.nom;
+      }
+    });
 
     return Scaffold(
-      key: _scaffoldMessengerKey,
+      backgroundColor: theme.scaffoldBackgroundColor,
       drawer: const AdminDrawer(currentRoute: AdminNavRoute.tutoriels),
       appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        centerTitle: true,
-        title: Text("Tutoriels", style: AppTextStyles.headingMedium),
-        iconTheme: const IconThemeData(color: AppColors.primary),
+        backgroundColor: theme.scaffoldBackgroundColor,
+        elevation: 0,
+        centerTitle: false,
+        title: Text(
+          'Tutoriels Vidéo',
+          style: AppTextStyles.headingMedium.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         actions: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.notifications)),
-          if (_isFiltered)
-            Container(
-              margin: const EdgeInsets.only(right: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                'Filtres',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          context.push("/admin/tutoriels/add");
-        },
-        child: const Icon(Icons.add),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      body: Padding(
-        padding: const EdgeInsets.only(top: 10),
-        child: Column(
-          children: [
-            // Barre de recherche
-            _buildSearchAndFilter(),
-            const SizedBox(height: 10),
-
-            _buildStatusFilters(),
-            const SizedBox(height: 6),
-
-            if (_isFiltered) _buildActiveFilters(),
-            const SizedBox(height: 6),
-
-            Expanded(
-              child: tutorielsAsync.when(
-                loading: () => const Center(
-                  child: CircularProgressIndicator(),
-                ),
-                error: (err, stack) => Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error_outline, size: 64, color: AppColors.danger),
-                      const SizedBox(height: 16),
-                      Text('Erreur: $err'),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () {
-                          ref.invalidate(adminTutorielsProvider);
-                        },
-                        child: const Text('Réessayer'),
-                      ),
-                    ],
-                  ),
-                ),
-                data: (tutoriels) => _buildTutorielList(tutoriels),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSearchAndFilter() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          Expanded(
-            child: AppSearchBar(
-              onChanged: (value) {
-                setState(() => _searchQuery = value);
-              },
-              hintText: 'Rechercher un tutoriel...',
-            ),
-          ),
-          const SizedBox(width: 12),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'reset') {
-                _resetFilters();
-              }
+          IconButton(
+            onPressed: () {
+              ref.invalidate(adminTutorielsProvider);
+              ref.invalidate(categoriesProvider);
             },
-            offset: const Offset(0, 50),
-            color: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: _isFiltered ? AppColors.primary : AppColors.primary,
-              ),
-              child: const Icon(
-                Icons.filter_list,
-                color: Colors.white,
-                size: 20,
-              ),
-            ),
-            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-              PopupMenuItem<String>(
-                value: 'advanced',
-                child: Row(
-                  children: [
-                    Icon(Icons.settings, color: AppColors.primary, size: 18),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'Filtres avancés',
-                      style: TextStyle(fontSize: 14),
-                    ),
-                    const Spacer(),
-                    Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
-                  ],
-                ),
-                onTap: () => _showAdvancedFilters(),
-              ),
-              const PopupMenuDivider(),
-              PopupMenuItem<String>(
-                value: 'reset',
-                child: Row(
-                  children: [
-                    Icon(Icons.refresh, color: AppColors.danger, size: 18),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'Réinitialiser les filtres',
-                      style: TextStyle(
-                        color: AppColors.danger,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            icon: const Icon(Icons.refresh_rounded),
+            tooltip: 'Actualiser',
           ),
+          const SizedBox(width: 8),
         ],
       ),
-    );
-  }
-
-  Widget _buildStatusFilters() {
-    final statuses = [
-      {'value': null, 'label': 'Tous'},
-      {'value': 'publie', 'label': 'Publiés'},
-      {'value': 'brouillon', 'label': 'Brouillons'},
-    ];
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.only(left: 16),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: statuses.map((status) {
-          final isSelected = _selectedStatus == status['value'];
-          return Padding(
-            padding: const EdgeInsets.only(right: 6),
-            child: ChoiceChip(
-              label: Text(
-                status['label'] as String,
-                style: TextStyle(
-                  color: isSelected ? Colors.white : Colors.grey.shade700,
-                  fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                ),
-              ),
-              selected: isSelected,
-              onSelected: (_) {
-                setState(() {
-                  _selectedStatus = isSelected ? null : status['value'] as String?;
-                  _isFiltered = _selectedStatus != null;
-                });
-              },
-              backgroundColor: Colors.grey.shade100,
-              selectedColor: AppColors.primary,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 6,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              visualDensity: VisualDensity.compact,
-            ),
-          );
-        }).toList(),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          context.push(AppRoutes.adminAddTutoriel);
+        },
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('Nouveau tutoriel', style: TextStyle(fontWeight: FontWeight.w700)),
       ),
-    );
-  }
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(adminTutorielsProvider);
+          ref.invalidate(categoriesProvider);
+        },
+        child: tutorielsAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (err, _) => AppErrorState(
+            message: 'Erreur lors du chargement des tutoriels: $err',
+            onRetry: () => ref.invalidate(adminTutorielsProvider),
+          ),
+          data: (allTutoriels) {
+            final totalCount = allTutoriels.length;
+            final publishedCount = allTutoriels
+                .where((t) => t.statut == TutorielStatus.publie)
+                .length;
+            final draftCount = allTutoriels
+                .where((t) => t.statut == TutorielStatus.brouillon)
+                .length;
 
-  Widget _buildActiveFilters() {
-    List<String> activeFilters = [];
+            final filteredList = _applyFilters(allTutoriels);
 
-    if (_selectedStatus != null) {
-      final statusLabels = {
-        'publie': 'Publié',
-        'brouillon': 'Brouillon',
-        'archive': 'Archivé',
-      };
-      activeFilters.add('Statut: ${statusLabels[_selectedStatus] ?? _selectedStatus}');
-    }
-
-    if (activeFilters.isEmpty) return const SizedBox.shrink();
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            const Text(
-              'Filtres actifs: ',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey,
-              ),
-            ),
-            ...activeFilters.map((filter) => Padding(
-                  padding: const EdgeInsets.only(right: 4),
-                  child: Chip(
-                    label: Text(
-                      filter,
-                      style: const TextStyle(fontSize: 10),
-                    ),
-                    backgroundColor: Colors.orange.shade50,
-                    deleteIcon: const Icon(Icons.close, size: 12),
-                    onDeleted: () {
-                      setState(() {
-                        _selectedStatus = null;
-                        _isFiltered = false;
-                      });
-                    },
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  ),
-                )),
-            TextButton(
-              onPressed: _resetFilters,
-              style: TextButton.styleFrom(
-                minimumSize: Size.zero,
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              child: const Text(
-                'Tout effacer',
-                style: TextStyle(fontSize: 11, color: AppColors.danger),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showAdvancedFilters() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        maxChildSize: 0.8,
-        minChildSize: 0.4,
-        expand: false,
-        builder: (context, scrollController) {
-          return StatefulBuilder(
-            builder: (context, setStateBottomSheet) {
-              return Container(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            return CustomScrollView(
+              slivers: [
+                // Cartes Statistiques
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                    child: Row(
                       children: [
-                        const Text(
-                          'Filtres avancés',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                        Expanded(
+                          child: AdminStatCard(
+                            title: 'Total',
+                            value: '$totalCount',
+                            icon: Icons.video_library_rounded,
+                            color: AppColors.primary,
+                            onTap: () => setState(() => _selectedStatus = null),
                           ),
                         ),
-                        IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(Icons.close),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: AdminStatCard(
+                            title: 'Publiés',
+                            value: '$publishedCount',
+                            icon: Icons.check_circle_rounded,
+                            color: AppColors.success,
+                            onTap: () => setState(() => _selectedStatus = 'publie'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: AdminStatCard(
+                            title: 'Brouillons',
+                            value: '$draftCount',
+                            icon: Icons.edit_note_rounded,
+                            color: AppColors.warning,
+                            onTap: () => setState(() => _selectedStatus = 'brouillon'),
+                          ),
                         ),
                       ],
                     ),
-                    const Divider(),
-                    const SizedBox(height: 16),
+                  ),
+                ),
 
-                    Expanded(
-                      child: SingleChildScrollView(
-                        controller: scrollController,
+                // Barre de recherche & Bouton Filtre
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: AppSearchBar(
+                            onChanged: (value) {
+                              setState(() => _searchQuery = value);
+                            },
+                            hintText: 'Rechercher par titre ou description...',
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        // Bouton Filtre modal
+                        GestureDetector(
+                          onTap: () => _showFilterBottomSheet(context),
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: _hasActiveFilters
+                                  ? AppColors.primary
+                                  : (isDark
+                                      ? Colors.white.withValues(alpha: 0.08)
+                                      : Colors.grey.shade100),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: _hasActiveFilters
+                                    ? AppColors.primary
+                                    : (isDark ? Colors.white12 : Colors.grey.shade300),
+                              ),
+                            ),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Icon(
+                                  Icons.tune_rounded,
+                                  color: _hasActiveFilters
+                                      ? Colors.white
+                                      : (isDark ? Colors.white70 : AppColors.textPrimary),
+                                  size: 20,
+                                ),
+                                if (_hasActiveFilters)
+                                  Positioned(
+                                    top: 8,
+                                    right: 8,
+                                    child: Container(
+                                      width: 7,
+                                      height: 7,
+                                      decoration: const BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Chips d'état rapide (Tous, Publiés, Brouillons)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _buildQuickStatusChip(label: 'Tous ($totalCount)', statusValue: null),
+                          const SizedBox(width: 8),
+                          _buildQuickStatusChip(
+                            label: 'Publiés ($publishedCount)',
+                            statusValue: 'publie',
+                          ),
+                          const SizedBox(width: 8),
+                          _buildQuickStatusChip(
+                            label: 'Brouillons ($draftCount)',
+                            statusValue: 'brouillon',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Liste des cartes ou état vide
+                if (filteredList.isEmpty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text(
-                              'Statut de publication',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.video_library_outlined,
+                                size: 48,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Aucun tutoriel trouvé',
+                              style: AppTextStyles.headingSmall.copyWith(
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                             const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 8,
-                              children: [
-                                _buildFilterChip(
-                                  label: 'Tous',
-                                  value: null,
-                                  selectedValue: _selectedStatus,
-                                  onSelected: (val) {
-                                    setStateBottomSheet(() {
-                                      _selectedStatus = val;
-                                    });
-                                  },
-                                ),
-                                _buildFilterChip(
-                                  label: 'Publié',
-                                  value: 'publie',
-                                  selectedValue: _selectedStatus,
-                                  onSelected: (val) {
-                                    setStateBottomSheet(() {
-                                      _selectedStatus = val;
-                                    });
-                                  },
-                                  color: AppColors.childPrimary,
-                                ),
-                                _buildFilterChip(
-                                  label: 'Brouillon',
-                                  value: 'brouillon',
-                                  selectedValue: _selectedStatus,
-                                  onSelected: (val) {
-                                    setStateBottomSheet(() {
-                                      _selectedStatus = val;
-                                    });
-                                  },
-                                  color: AppColors.warning,
-                                ),
-                                _buildFilterChip(
-                                  label: 'Archivé',
-                                  value: 'archive',
-                                  selectedValue: _selectedStatus,
-                                  onSelected: (val) {
-                                    setStateBottomSheet(() {
-                                      _selectedStatus = val;
-                                    });
-                                  },
-                                  color: AppColors.danger,
-                                ),
-                              ],
+                            Text(
+                              _searchQuery.isNotEmpty || _hasActiveFilters
+                                  ? 'Essayez de modifier vos critères de recherche ou de filtre.'
+                                  : 'Commencez par ajouter votre premier tutoriel vidéo.',
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                                fontSize: 13,
+                              ),
+                              textAlign: TextAlign.center,
                             ),
-                            const SizedBox(height: 24),
-
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: OutlinedButton(
-                                    onPressed: () {
-                                      setStateBottomSheet(() {
-                                        _selectedStatus = null;
-                                      });
-                                    },
-                                    child: const Text('Réinitialiser'),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  flex: 2,
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        _isFiltered = _selectedStatus != null;
-                                      });
-                                      Navigator.pop(context);
-                                      _applyFilters();
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.primary,
-                                      foregroundColor: Colors.white,
-                                    ),
-                                    child: const Text('Appliquer les filtres'),
-                                  ),
-                                ),
-                              ],
-                            ),
+                            const SizedBox(height: 20),
+                            if (!_hasActiveFilters && _searchQuery.isEmpty)
+                              AppButton(
+                                text: 'Créer un tutoriel',
+                                icon: Icons.add_rounded,
+                                onPressed: () => context.push(AppRoutes.adminAddTutoriel),
+                              )
+                            else
+                              OutlinedButton.icon(
+                                onPressed: () {
+                                  setState(() {
+                                    _searchQuery = '';
+                                    _selectedStatus = null;
+                                    _selectedCategoryId = null;
+                                    _sortOption = AdminTutorielSortOption.newest;
+                                  });
+                                },
+                                icon: const Icon(Icons.clear_all_rounded),
+                                label: const Text('Réinitialiser les filtres'),
+                              ),
                           ],
                         ),
                       ),
                     ),
-                  ],
-                ),
-              );
-            },
-          );
-        },
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 80),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final tutoriel = filteredList[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: TutorielCard(
+                              tutoriel: tutoriel,
+                              categorieNom: categoriesMap[tutoriel.categorieId],
+                              onTap: () {
+                                if (tutoriel.tutorielId != null) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => TutorielDetailPage(
+                                        tutorielId: tutoriel.tutorielId!,
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
+                              onEdit: () {
+                                context.push(
+                                  AppRoutes.adminEditTutorielPath(tutoriel.tutorielId ?? ''),
+                                  extra: tutoriel,
+                                );
+                              },
+                              onDelete: () => _confirmDelete(tutoriel),
+                              onPublish: () => _publishTutoriel(tutoriel),
+                              onUnpublish: () => _unpublishTutoriel(tutoriel),
+                            ),
+                          );
+                        },
+                        childCount: filteredList.length,
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
 
-  Widget _buildFilterChip({
+  Widget _buildQuickStatusChip({
     required String label,
-    required String? value,
-    required String? selectedValue,
-    required Function(String?) onSelected,
-    Color? color,
+    required String? statusValue,
   }) {
-    final isSelected = value == selectedValue;
-    return FilterChip(
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final isSelected = _selectedStatus == statusValue;
+
+    return ChoiceChip(
       label: Text(
         label,
         style: TextStyle(
-          color: isSelected ? Colors.white : Colors.grey.shade700,
+          color: isSelected
+              ? Colors.white
+              : (isDark ? Colors.white70 : AppColors.textPrimary),
           fontSize: 12,
+          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
         ),
       ),
       selected: isSelected,
+      selectedColor: AppColors.primary,
+      backgroundColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade100,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       onSelected: (_) {
-        onSelected(isSelected ? null : value);
+        setState(() => _selectedStatus = statusValue);
       },
-      backgroundColor: Colors.grey.shade100,
-      selectedColor: color ?? AppColors.primary,
-      checkmarkColor: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+    );
+  }
+
+  List<Tutoriel> _applyFilters(List<Tutoriel> tutoriels) {
+    List<Tutoriel> list = List.from(tutoriels);
+
+    if (_searchQuery.trim().isNotEmpty) {
+      final query = _searchQuery.trim().toLowerCase();
+      list = list.where((t) {
+        return t.titre.toLowerCase().contains(query) ||
+            t.description.toLowerCase().contains(query);
+      }).toList();
+    }
+
+    if (_selectedStatus != null) {
+      list = list.where((t) => t.statut.value == _selectedStatus).toList();
+    }
+
+    if (_selectedCategoryId != null) {
+      list = list.where((t) => t.categorieId == _selectedCategoryId).toList();
+    }
+
+    switch (_sortOption) {
+      case AdminTutorielSortOption.newest:
+        list.sort((a, b) => b.dateCreation.compareTo(a.dateCreation));
+        break;
+      case AdminTutorielSortOption.oldest:
+        list.sort((a, b) => a.dateCreation.compareTo(b.dateCreation));
+        break;
+      case AdminTutorielSortOption.longest:
+        list.sort((a, b) => b.duree.compareTo(a.duree));
+        break;
+      case AdminTutorielSortOption.shortest:
+        list.sort((a, b) => a.duree.compareTo(b.duree));
+        break;
+      case AdminTutorielSortOption.titleAsc:
+        list.sort((a, b) => a.titre.toLowerCase().compareTo(b.titre.toLowerCase()));
+        break;
+    }
+
+    return list;
+  }
+
+  void _showFilterBottomSheet(BuildContext context) {
+    final theme = Theme.of(context);
+    final categoriesAsync = ref.read(categoriesProvider);
+    final categories = categoriesAsync.value ?? [];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: theme.scaffoldBackgroundColor,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (bottomSheetContext) => StatefulBuilder(
+        builder: (ctx, setModalState) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Filtres & Tri',
+                      style: AppTextStyles.headingSmall.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _selectedStatus = null;
+                          _selectedCategoryId = null;
+                          _sortOption = AdminTutorielSortOption.newest;
+                        });
+                        Navigator.pop(ctx);
+                      },
+                      child: const Text('Réinitialiser'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Tri
+                const Text(
+                  'Trier par',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _buildSortChip('Plus récents', AdminTutorielSortOption.newest, setModalState),
+                    _buildSortChip('Plus anciens', AdminTutorielSortOption.oldest, setModalState),
+                    _buildSortChip('Plus longs', AdminTutorielSortOption.longest, setModalState),
+                    _buildSortChip('Plus courts', AdminTutorielSortOption.shortest, setModalState),
+                    _buildSortChip('Titre (A-Z)', AdminTutorielSortOption.titleAsc, setModalState),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Filtre par catégorie
+                if (categories.isNotEmpty) ...[
+                  const Text(
+                    'Catégorie',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String?>(
+                    initialValue: _selectedCategoryId,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    ),
+                    items: [
+                      const DropdownMenuItem(value: null, child: Text('Toutes les catégories')),
+                      ...categories.map(
+                        (c) => DropdownMenuItem(value: c.categorieId, child: Text(c.nom)),
+                      ),
+                    ],
+                    onChanged: (val) {
+                      setModalState(() => _selectedCategoryId = val);
+                      setState(() => _selectedCategoryId = val);
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                ],
+
+                SizedBox(
+                  width: double.infinity,
+                  child: AppButton(
+                    text: 'Appliquer',
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildTutorielList(List<Tutoriel> tutoriels) {
-    List<Tutoriel> filtered = List.from(tutoriels);
-
-    if (_searchQuery.isNotEmpty) {
-      filtered = filtered.where((t) =>
-        t.titre.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-        t.description.toLowerCase().contains(_searchQuery.toLowerCase())
-      ).toList();
-    }
-
-    if (_selectedStatus != null) {
-      filtered = filtered.where((t) => t.statut.value == _selectedStatus).toList();
-    }
-
-    if (filtered.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.video_library_outlined, size: 48, color: Colors.grey.shade400),
-            const SizedBox(height: 12),
-            Text(
-              'Aucun tutoriel trouvé',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade600,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Créez votre premier tutoriel en appuyant sur le +',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey.shade400,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: filtered.length,
-      itemBuilder: (context, index) {
-        final tutoriel = filtered[index];
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 6),
-          child: TutorielCard(
-            tutoriel: tutoriel,
-            onTap: () {
-              // Naviguer vers le détail
-            },
-            onEdit: () {
-              context.push('/admin/tutoriels/edit/${tutoriel.tutorielId}');
-            },
-            onDelete: () => _confirmDelete(tutoriel),
-            onPublish: () => _publishTutoriel(tutoriel),
-            onUnpublish: () => _unpublishTutoriel(tutoriel),
-          ),
-        );
+  Widget _buildSortChip(
+    String label,
+    AdminTutorielSortOption option,
+    StateSetter setModalState,
+  ) {
+    final isSelected = _sortOption == option;
+    return ChoiceChip(
+      label: Text(label, style: TextStyle(fontSize: 12, color: isSelected ? Colors.white : null)),
+      selected: isSelected,
+      selectedColor: AppColors.primary,
+      onSelected: (_) {
+        setModalState(() => _sortOption = option);
+        setState(() => _sortOption = option);
       },
     );
   }
 
-  void _resetFilters() {
-    setState(() {
-      _selectedStatus = null;
-      _searchQuery = '';
-      _isFiltered = false;
-    });
-  }
-
-  void _applyFilters() {
-    setState(() {
-      _isFiltered = _selectedStatus != null;
-    });
-  }
-
-  void _confirmDelete(Tutoriel tutoriel) {
-    showDialog(
+  Future<void> _confirmDelete(Tutoriel tutoriel) async {
+    final confirmed = await AppDialogs.showConfirmDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text('Supprimer le tutoriel'),
-          content: Text('Supprimer "${tutoriel.titre}" ?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                if (Navigator.canPop(dialogContext)) {
-                  Navigator.pop(dialogContext);
-                }
-              },
-              child: const Text('Annuler'),
-            ),
-            TextButton(
-              onPressed: () async {
-                if (Navigator.canPop(dialogContext)) {
-                  Navigator.pop(dialogContext);
-                }
-                await Future.delayed(const Duration(milliseconds: 100));
-                try {
-                  final repository = ref.read(tutorielRepositoryProvider);
-                  await repository.deleteTutoriel(tutoriel.tutorielId!);
-                  ref.refresh(adminTutorielsProvider);
-                  if (mounted) {
-                    _scaffoldMessengerKey.currentState?.showSnackBar(
-                      const SnackBar(
-                        content: Text('Tutoriel supprimé'),
-                        backgroundColor: AppColors.childPrimary,
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  if (mounted) {
-                    _scaffoldMessengerKey.currentState?.showSnackBar(
-                      SnackBar(
-                        content: Text('Erreur: $e'),
-                        backgroundColor: AppColors.danger,
-                      ),
-                    );
-                  }
-                }
-              },
-              style: TextButton.styleFrom(foregroundColor: AppColors.danger),
-              child: const Text('Supprimer'),
-            ),
-          ],
-        );
-      },
+      title: 'Supprimer le tutoriel',
+      message: 'Voulez-vous vraiment supprimer "${tutoriel.titre}" ? Cette action est irréversible.',
+      confirmText: 'Supprimer',
+      isDanger: true,
     );
+
+    if (confirmed == true && mounted) {
+      try {
+        final repository = ref.read(tutorielRepositoryProvider);
+        await repository.deleteTutoriel(tutoriel.tutorielId!);
+        ref.invalidate(adminTutorielsProvider);
+        ref.invalidate(tutorielsProvider);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Tutoriel supprimé avec succès'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erreur: $e'), backgroundColor: AppColors.danger),
+          );
+        }
+      }
+    }
   }
 
   Future<void> _publishTutoriel(Tutoriel tutoriel) async {
@@ -619,21 +597,20 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
       final repository = ref.read(tutorielRepositoryProvider);
       await repository.publierTutoriel(tutoriel.tutorielId!);
       ref.invalidate(adminTutorielsProvider);
+      ref.invalidate(tutorielsProvider);
+
       if (mounted) {
         _scaffoldMessengerKey.currentState?.showSnackBar(
           const SnackBar(
-            content: Text('Tutoriel publié'),
-            backgroundColor: AppColors.childPrimary,
+            content: Text('Tutoriel publié avec succès !'),
+            backgroundColor: AppColors.success,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
-        _scaffoldMessengerKey.currentState?.showSnackBar(
-          SnackBar(
-            content: Text('Erreur: $e'),
-            backgroundColor: AppColors.danger,
-          ),
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: AppColors.danger),
         );
       }
     }
@@ -644,21 +621,20 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
       final repository = ref.read(tutorielRepositoryProvider);
       await repository.depublierTutoriel(tutoriel.tutorielId!);
       ref.invalidate(adminTutorielsProvider);
+      ref.invalidate(tutorielsProvider);
+
       if (mounted) {
         _scaffoldMessengerKey.currentState?.showSnackBar(
           const SnackBar(
-            content: Text('Tutoriel dépublié'),
+            content: Text('Tutoriel repassé en brouillon'),
             backgroundColor: AppColors.warning,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
-        _scaffoldMessengerKey.currentState?.showSnackBar(
-          SnackBar(
-            content: Text('Erreur: $e'),
-            backgroundColor: AppColors.danger,
-          ),
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: AppColors.danger),
         );
       }
     }

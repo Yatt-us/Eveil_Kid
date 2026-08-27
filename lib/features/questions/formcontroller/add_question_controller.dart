@@ -1,3 +1,4 @@
+import 'package:eveilkid/core/cloudinary/cloudinary_service.dart';
 import 'package:eveilkid/features/questions/enums/question_type.enum.dart';
 import 'package:eveilkid/features/questions/models/question_model.dart';
 import 'package:eveilkid/features/questions/options_questions/option_model.dart';
@@ -296,6 +297,13 @@ class AddQuestionController extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (selectedImage != null) {
+        final cloudinary = ref.read(cloudinaryServiceProvider);
+        imageUrl = await cloudinary.uploadImage(
+          selectedImage!,
+          folder: 'questions/$activityId',
+        );
+      }
       final question = buildQuestion();
       final notifier = ref.read(questionNotifierProvider.notifier);
       await notifier.createQuestion(question);
@@ -319,6 +327,13 @@ class AddQuestionController extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (selectedImage != null) {
+        final cloudinary = ref.read(cloudinaryServiceProvider);
+        imageUrl = await cloudinary.uploadImage(
+          selectedImage!,
+          folder: 'questions/$activityId',
+        );
+      }
       final question = buildQuestion();
       final notifier = ref.read(questionNotifierProvider.notifier);
       await notifier.updateQuestion(question);

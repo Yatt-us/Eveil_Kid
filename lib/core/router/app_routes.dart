@@ -18,6 +18,7 @@ class AppRoutes {
   static const String jouets = '/jouets';
   static const String panier = '/panier';
   static const String profile = '/profile';
+  static const String favoris = '/profile/favoris';
   static const String activitesPlay = '/activites/play';
   static const String activitesResultat = '/activites/resultat';
   static const String activitesCorrige = '/activites/corrige';
@@ -31,8 +32,8 @@ class AppRoutes {
   static const String adminStaff = '/admin/staff';
   static const String adminCatalog = '/admin/catalog';
   static const String adminProductForm = '/admin/product-form';
-  static const String adminActivites= '/admin/activites';
-  static const String adminAddActivity= '/admin/activites/add';
+  static const String adminActivites = '/admin/activites';
+  static const String adminAddActivity = '/admin/activites/add';
   static const String adminEditActivity = '/admin/activites/edit/:activityId';
   static const String adminActivityQuestions = '/admin/activites/:activityId/questions';
   static const String adminActivityTypeQuestions = '/admin/activites/:activityId/questions/choose-type';
@@ -40,9 +41,11 @@ class AppRoutes {
   static const String adminActivityEditQuestions = '/admin/activites/:activityId/questions/edit/:questionId';
   static const String adminActivityDetailQuestions = '/admin/activites/:activityId/questions/detail/:questionId';
   static const String adminTutoriels = '/admin/tutoriels';
-  static const String adminAddTutoriels = '/admin/tutoriels/add';
+  static const String adminAddTutoriel = '/admin/tutoriels/add';
+  static const String adminEditTutoriel = '/admin/tutoriels/edit/:tutorielId';
+  static const String adminTutorielForm = '/admin/tutoriel-form';
+  static String adminEditTutorielPath(String tutorielId) => '/admin/tutoriels/edit/$tutorielId';
 
-  
   static const String adminCategoryForm = '/admin/category-form';
   static const String adminManagerForm = '/admin/manager-form';
 
