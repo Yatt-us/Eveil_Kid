@@ -1,6 +1,7 @@
 import 'package:eveilkid/features/activites/presentation/pages/admin/activites_liste.dart';
 import 'package:eveilkid/features/activites/presentation/pages/admin/add_activity_screen.dart';
 import 'package:eveilkid/features/activites/presentation/pages/admin/edit_activity_screen.dart';
+import 'package:eveilkid/features/admin/presentation/pages/admin/add_tutoriel_screen.dart';
 import 'package:eveilkid/features/questions/enums/question_type.enum.dart';
 import 'package:eveilkid/features/questions/options_questions/choose_question_type_screen.dart';
 import 'package:eveilkid/features/questions/presentation/pages/add_question_screen.dart';

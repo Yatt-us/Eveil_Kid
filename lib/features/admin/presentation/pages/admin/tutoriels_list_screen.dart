@@ -37,6 +37,8 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
       _selectedCategoryId != null ||
       _sortOption != AdminTutorielSortOption.newest;
 
+  final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
   @override
   Widget build(BuildContext context) {
     final tutorielsAsync = ref.watch(adminTutorielsProvider);
@@ -598,7 +600,7 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
       ref.invalidate(tutorielsProvider);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        _scaffoldMessengerKey.currentState?.showSnackBar(
           const SnackBar(
             content: Text('Tutoriel publié avec succès !'),
             backgroundColor: AppColors.success,
@@ -622,7 +624,7 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
       ref.invalidate(tutorielsProvider);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        _scaffoldMessengerKey.currentState?.showSnackBar(
           const SnackBar(
             content: Text('Tutoriel repassé en brouillon'),
             backgroundColor: AppColors.warning,
