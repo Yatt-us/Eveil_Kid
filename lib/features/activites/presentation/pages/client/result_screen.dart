@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-
 import '../../../models/activity.dart';
 import '../../../models/client/question_quiz.dart';
+import 'corriges_screen.dart';
 import 'quiz_screen.dart';
 
 class ResultScreen extends StatelessWidget {
   final Activite activite;
   final List<QuestionQuiz> questions;
-  final Map<String, String> reponsesUtilisateur; // questionId -> optionId choisi
+  final Map<String, String> reponsesUtilisateur;
   final int score;
   final int bonnesReponses;
   final int mauvaisesReponses;
@@ -27,7 +27,7 @@ class ResultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF38A155), // Vert Figma
+      backgroundColor: const Color(0xFF38A155),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
@@ -61,7 +61,6 @@ class ResultScreen extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // Titres
               const Text(
                 'Félicitations !',
                 style: TextStyle(
@@ -81,7 +80,7 @@ class ResultScreen extends StatelessWidget {
 
               const Spacer(flex: 1),
 
-              // Carte Blanche des métriques (4 zones)
+              // Carte des métriques
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -211,7 +210,7 @@ class ResultScreen extends StatelessWidget {
         const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossBaseline.alphabetic,
+          crossAxisAlignment: CrossAxisAlignment.baseline,
           textBaseline: TextBaseline.alphabetic,
           children: [
             Text(

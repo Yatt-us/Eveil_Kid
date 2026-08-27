@@ -4,6 +4,7 @@ import 'package:eveilkid/features/activites/enums/publication_status.enum.dart';
 import '../../../providers/client/activity.dart';
 import '../../widgets/categorie_card.dart';
 import 'quiz_screen.dart';
+
 class ActivitesScreen extends ConsumerWidget {
   const ActivitesScreen({super.key});
 
@@ -48,7 +49,6 @@ class ActivitesScreen extends ConsumerWidget {
             child: activitesAsync.when(
               data: (activites) {
                 final filtres = activites.where((a) {
-                  // Progression simulée ou calculée depuis le profil utilisateur dans Firestore
                   final double prog = (a.points / 100).clamp(0.0, 1.0);
                   if (currentFilter == 1) return prog > 0.0 && prog < 1.0;
                   if (currentFilter == 2) return prog >= 1.0 || a.statut == PublicationStatus.archive;
@@ -65,11 +65,13 @@ class ActivitesScreen extends ConsumerWidget {
                   itemCount: filtres.length,
                   itemBuilder: (context, index) {
                     final activite = filtres[index];
-                    final double progressionCalculée = 0.40; // Remplacer par la valeur dynamique utilisateur
+                    
+                    // Progression calculée dynamiquement à partir des points de l'activité
+                    final double progressionCalculee = (activite.points / 100).clamp(0.0, 1.0);
 
                     return CategorieCard(
                       activite: activite,
-                      progression: progressionCalculée,
+                      progression: progressionCalculee,
                       onTap: () {
                         Navigator.push(
                           context,

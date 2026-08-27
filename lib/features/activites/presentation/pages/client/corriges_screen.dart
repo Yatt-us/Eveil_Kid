@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../../../models/client/question_quiz.dart';
 
 class CorrigesScreen extends StatelessWidget {
@@ -43,7 +42,7 @@ class CorrigesScreen extends StatelessWidget {
                   final reponseUser = reponsesUtilisateur[question.id];
                   final bool estCorrecte = reponseUser == question.reponseCorrecteId;
 
-                  // Récupération du libellé de la bonne réponse
+                  // Récupération de la bonne réponse
                   final bonneOption = question.options.firstWhere(
                     (opt) => opt.id == question.reponseCorrecteId,
                     orElse: () => OptionQuiz(id: '', libelle: '-'),
@@ -89,11 +88,11 @@ class CorrigesScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 12),
 
-                        // Affiche le bouton vert du choix correct
+                        // Affichage de la réponse correcte
                         SizedBox(
                           width: double.infinity,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
                             decoration: BoxDecoration(
                               color: estCorrecte ? const Color(0xFF2EA650) : Colors.grey.shade300,
                               borderRadius: BorderRadius.circular(12),
@@ -116,7 +115,7 @@ class CorrigesScreen extends StatelessWidget {
               ),
             ),
 
-            // Bouton "Terminer" en bas
+            // Bouton "Terminer"
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: SizedBox(
@@ -131,7 +130,7 @@ class CorrigesScreen extends StatelessWidget {
                     ),
                   ),
                   onPressed: () {
-                    // Retourne au premier écran de la pile (Liste des activités)
+                    // Retourne à la liste des activités
                     Navigator.of(context).popUntil((route) => route.isFirst);
                   },
                   child: const Text(

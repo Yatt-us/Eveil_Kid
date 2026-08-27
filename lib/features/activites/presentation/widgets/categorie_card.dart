@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:eveilkid/features/activites/enums/publication_status.enum.dart';
-import '../models/activity.dart';
+
+import '../../models/activity.dart';
 
 class CategorieCard extends StatelessWidget {
   final Activite activite;

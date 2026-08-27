@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../models/activity.dart';
 import '../../../models/client/question_quiz.dart';
 import '../../../providers/client/question.dart';
-import 'result_screen.dart'; // Étape suivante
+import 'result_screen.dart';
 
 class QuizScreen extends ConsumerStatefulWidget {
   final Activite activite;
@@ -20,11 +20,16 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
   int _score = 0;
   int _bonnesReponses = 0;
   int _mauvaisesReponses = 0;
+  final Map<String, String> _reponsesUtilisateur = {};
 
   void _validerReponse(List<QuestionQuiz> questions) {
     if (_selectedOptionId == null) return;
 
     final currentQuestion = questions[_currentIndex];
+    
+    // Sauvegarde la réponse de l'utilisateur pour le corrigé
+    _reponsesUtilisateur[currentQuestion.id] = _selectedOptionId!;
+
     final bool estCorrect = _selectedOptionId == currentQuestion.reponseCorrecteId;
 
     if (estCorrect) {
@@ -40,12 +45,15 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
         _selectedOptionId = null;
       });
     } else {
+      // Redirection vers le résultat avec les vraies métriques calculées
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (context) => ResultScreen(
+            activite: widget.activite,
+            questions: questions,
+            reponsesUtilisateur: _reponsesUtilisateur,
             score: _score,
-            totalQuestions: questions.length,
             bonnesReponses: _bonnesReponses,
             mauvaisesReponses: _mauvaisesReponses,
             pointsGagnes: _score * 10,
@@ -130,9 +138,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
                         ),
                         child: IconButton(
                           icon: const Icon(Icons.volume_up_rounded, color: Colors.black87),
-                          onPressed: () {
-                            // Syntaxe audio si audioUrl n'est pas null
-                          },
+                          onPressed: () {},
                         ),
                       ),
                     ],
@@ -140,7 +146,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Grille 2x2 ou Liste d'options
+                // Options en Liste ou Grille 2x2 selon isGrid de Firestore
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
