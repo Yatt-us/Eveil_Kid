@@ -154,123 +154,121 @@ class PanierPage extends ConsumerWidget {
       body: userId.isEmpty
           ? _buildUnauthenticatedState(context, theme)
           : ref.watch(panierProvider(userId)).when(
-                data: (articles) {
-                  if (articles.isEmpty) {
-                    return _buildEmptyState(context, ref, theme);
-                  }
+              data: (articles) {
+                if (articles.isEmpty) {
+                  return _buildEmptyState(context, ref, theme);
+                }
 
-                  final total = ref
-                      .read(panierServiceProvider)
-                      .calculerTotal(articles);
-                  final totalQuantite = articles.fold<int>(
-                    0,
-                    (sum, item) => sum + item.quantite,
-                  );
+                final total = ref
+                    .read(panierServiceProvider)
+                    .calculerTotal(articles);
+                final totalQuantite = articles.fold<int>(
+                  0,
+                  (sum, item) => sum + item.quantite,
+                );
 
-                  return Column(
-                    children: [
-                      Expanded(
-                        child: ListView.separated(
-                          padding: AppPadding.screenLarge,
-                          itemCount: articles.length,
-                          separatorBuilder: (_, _) =>
-                              AppSpacing.verticalSm,
-                          itemBuilder: (context, index) {
-                            final item = articles[index];
-                            return _buildCartItemCard(
-                              context,
-                              ref,
-                              item,
-                              theme,
-                              isDark,
-                            );
-                          },
-                        ),
+                return Column(
+                  children: [
+                    Expanded(
+                      child: ListView.separated(
+                        padding: AppPadding.screenLarge,
+                        itemCount: articles.length,
+                        separatorBuilder: (_, _) =>
+                            AppSpacing.verticalSm,
+                        itemBuilder: (context, index) {
+                          final item = articles[index];
+                          return _buildCartItemCard(
+                            context,
+                            ref,
+                            item,
+                            theme,
+                            isDark,
+                          );
+                        },
                       ),
-
-                      // ── BARRE INFERIEURE RÉCAPITULATIF & COMMANDE ──
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surface,
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(24),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface,
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(24),
+                        ),
+                        border: Border.all(
+                          color: theme.dividerColor.withValues(alpha: 0.2),
+                          width: 1.2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: (isDark ? Colors.black : AppColors.textPrimary)
+                                .withValues(alpha: isDark ? 0.3 : 0.06),
+                            blurRadius: 16,
+                            offset: const Offset(0, -4),
                           ),
-                          border: Border.all(
-                            color: theme.dividerColor.withValues(alpha: 0.2),
-                            width: 1.2,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: (isDark ? Colors.black : AppColors.textPrimary)
-                                  .withValues(alpha: isDark ? 0.3 : 0.06),
-                              blurRadius: 16,
-                              offset: const Offset(0, -4),
+                        ],
+                      ),
+                      child: SafeArea(
+                        top: false,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(
+                              mainAxisAlignment:
+                                  MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Total ($totalQuantite article${totalQuantite > 1 ? 's' : ''})',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: theme.textTheme.bodyMedium?.color
+                                            ?.withValues(alpha: 0.8) ??
+                                        theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                                Text(
+                                  _formatPrice(total),
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            AppSpacing.verticalMd,
+                            AppButton(
+                              text: 'Passer la commande',
+                              icon: Icons.arrow_forward_rounded,
+                              onPressed: () => _passerCommande(
+                                context,
+                                ref,
+                                articles,
+                                userId,
+                              ),
                             ),
                           ],
                         ),
-                        child: SafeArea(
-                          top: false,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Total ($totalQuantite article${totalQuantite > 1 ? 's' : ''})',
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
-                                      color: theme.textTheme.bodyMedium?.color
-                                              ?.withValues(alpha: 0.8) ??
-                                          theme.colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                  Text(
-                                    _formatPrice(total),
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w800,
-                                      color: theme.colorScheme.primary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              AppSpacing.verticalMd,
-                              AppButton(
-                                text: 'Passer la commande',
-                                icon: Icons.arrow_forward_rounded,
-                                onPressed: () => _passerCommande(
-                                  context,
-                                  ref,
-                                  articles,
-                                  userId,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
                       ),
-                    ],
-                  );
-                },
-                loading: () => Center(
-                  child: CircularProgressIndicator(
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-                error: (err, _) => Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Text(
-                      'Erreur de chargement du panier : $err',
-                      textAlign: TextAlign.center,
                     ),
+                  ],
+                );
+              },
+              loading: () => Center(
+                child: CircularProgressIndicator(
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              error: (err, _) => Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Text(
+                    'Erreur de chargement du panier : $err',
+                    textAlign: TextAlign.center,
                   ),
                 ),
               ),
+            ),
     );
   }
 
@@ -326,7 +324,6 @@ class PanierPage extends ConsumerWidget {
         ),
         child: Row(
           children: [
-            // Image
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: Container(
@@ -353,8 +350,6 @@ class PanierPage extends ConsumerWidget {
               ),
             ),
             AppSpacing.horizontalMd,
-
-            // Infos & Contrôle quantité
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -380,12 +375,9 @@ class PanierPage extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-
-                  // Ligne quantité & suppression
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Boutons - / +
                       Container(
                         decoration: BoxDecoration(
                           color: isDark
@@ -434,8 +426,6 @@ class PanierPage extends ConsumerWidget {
                           ],
                         ),
                       ),
-
-                      // Sous-total item
                       Text(
                         _formatPrice(item.sousTotal),
                         style: TextStyle(
