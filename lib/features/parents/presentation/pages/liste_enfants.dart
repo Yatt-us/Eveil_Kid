@@ -1,10 +1,12 @@
-// lib/features/parents/presentation/pages/liste_enfants.dart
-
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../../../core/constants/app_avatars.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/AppSpacing.dart';
 import '../../../../core/constants/AppTextStyles.dart';
+import '../../../../shared/widgets/app_avatar.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
 import '../../../../shared/widgets/app_search_bar.dart';
 import 'package:eveilkid/features/enfant/model/enfant_model.dart';
@@ -24,6 +26,8 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
   String _searchQuery = '';
   String _selectedFilter = 'Tous';
 
+  static const List<String> _childPresetAvatars = AppAvatars.childPresets;
+
   final List<String> _filters = const [
     'Tous',
     'Garçons',
@@ -32,6 +36,231 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
     '4 - 6 ans',
     '7+ ans',
   ];
+
+  Future<void> _updateChildPhoto(EnfantModel enfant, String? newAvatarUrl) async {
+    try {
+      final updated = enfant.copyWith(avatarUrl: newAvatarUrl);
+      await ref.read(parentNotifierProvider.notifier).modifierEnfant(updated);
+      if (mounted) {
+        AppDialogs.showSnackBar(
+          context: context,
+          message: newAvatarUrl == null
+              ? 'Photo de l\'enfant supprimée.'
+              : 'Photo de ${enfant.nom} mise à jour !',
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        AppDialogs.showSnackBar(
+          context: context,
+          message: 'Erreur lors de la mise à jour: $e',
+          isError: true,
+        );
+      }
+    }
+  }
+
+  Future<void> _pickChildImage(EnfantModel enfant, ImageSource source) async {
+    Navigator.pop(context);
+
+    try {
+      final picker = ImagePicker();
+      final XFile? pickedFile = await picker.pickImage(
+        source: source,
+        maxWidth: 360,
+        maxHeight: 360,
+        imageQuality: 75,
+      );
+
+      if (pickedFile != null && mounted) {
+        final bytes = await pickedFile.readAsBytes();
+        final base64String = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+        await _updateChildPhoto(enfant, base64String);
+      }
+    } catch (e) {
+      if (mounted) {
+        AppDialogs.showSnackBar(
+          context: context,
+          message: 'Impossible de charger l\'image: $e',
+          isError: true,
+        );
+      }
+    }
+  }
+
+  void _showAvatarGalleryModal(EnfantModel enfant) {
+    Navigator.pop(context);
+    final theme = Theme.of(context);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: theme.colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: theme.dividerColor.withValues(alpha: 0.4),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                AppSpacing.verticalMd,
+                Text(
+                  'Choisir un avatar enfant',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: theme.textTheme.titleMedium?.color ??
+                        theme.colorScheme.onSurface,
+                  ),
+                ),
+                AppSpacing.verticalMd,
+                SizedBox(
+                  height: 90,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _childPresetAvatars.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 14),
+                    itemBuilder: (ctx, index) {
+                      final url = _childPresetAvatars[index];
+                      final isSelected = enfant.avatarUrl == url;
+
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          _updateChildPhoto(enfant, url);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isSelected
+                                  ? theme.colorScheme.primary
+                                  : Colors.transparent,
+                              width: 2.5,
+                            ),
+                          ),
+                          child: AppAvatar(
+                            imageUrl: url,
+                            radius: 34,
+                            defaultIcon: Icons.face_rounded,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                AppSpacing.verticalSm,
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showPhotoOptionsSheet(EnfantModel enfant) {
+    final theme = Theme.of(context);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: theme.colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: theme.dividerColor.withValues(alpha: 0.4),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                AppSpacing.verticalMd,
+                Text(
+                  'Photo de ${enfant.nom}',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: theme.textTheme.titleMedium?.color ??
+                        theme.colorScheme.onSurface,
+                  ),
+                ),
+                AppSpacing.verticalMd,
+                ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                    child: Icon(Icons.camera_alt_rounded, color: theme.colorScheme.primary),
+                  ),
+                  title: const Text('Prendre une photo', style: TextStyle(fontWeight: FontWeight.w600)),
+                  onTap: () => _pickChildImage(enfant, ImageSource.camera),
+                ),
+                ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: AppColors.secondary.withValues(alpha: 0.1),
+                    child: const Icon(Icons.photo_library_rounded, color: AppColors.secondary),
+                  ),
+                  title: const Text('Choisir depuis la galerie', style: TextStyle(fontWeight: FontWeight.w600)),
+                  onTap: () => _pickChildImage(enfant, ImageSource.gallery),
+                ),
+                ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.amber.withValues(alpha: 0.15),
+                    child: const Icon(Icons.face_retouching_natural_rounded, color: Colors.amber),
+                  ),
+                  title: const Text('Choisir parmi les avatars prédéfinis', style: TextStyle(fontWeight: FontWeight.w600)),
+                  onTap: () => _showAvatarGalleryModal(enfant),
+                ),
+                if (enfant.avatarUrl != null && enfant.avatarUrl!.isNotEmpty) ...[
+                  const Divider(),
+                  ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: theme.colorScheme.error.withValues(alpha: 0.1),
+                      child: Icon(Icons.delete_outline_rounded, color: theme.colorScheme.error),
+                    ),
+                    title: Text(
+                      'Supprimer la photo actuelle',
+                      style: TextStyle(
+                        color: theme.colorScheme.error,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _updateChildPhoto(enfant, null);
+                    },
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   bool _matchesFilter(EnfantModel enfant) {
     switch (_selectedFilter) {
@@ -335,9 +564,6 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
     final badgeText = isGirl
         ? (isDark ? const Color(0xFFF472B6) : const Color(0xFFD81B60))
         : (isDark ? const Color(0xFF60A5FA) : const Color(0xFF1E88E5));
-    final avatarBg = isGirl
-        ? (isDark ? const Color(0xFF3B123C) : const Color(0xFFFFEEF6))
-        : (isDark ? const Color(0xFF172554) : const Color(0xFFEEF5FD));
 
     return Container(
       decoration: BoxDecoration(
@@ -370,40 +596,48 @@ class _ListeEnfantsPageState extends ConsumerState<ListeEnfantsPage> {
           padding: const EdgeInsets.all(14),
           child: Row(
             children: [
-              // Avatar
-              Container(
-                width: 58,
-                height: 58,
-                decoration: BoxDecoration(
-                  color: avatarBg,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isGirl
-                        ? (isDark ? const Color(0xFF831843) : const Color(0xFFF8BBD0))
-                        : (isDark ? const Color(0xFF1E3A8A) : const Color(0xFFBBDEFB)),
-                    width: 1.5,
+              // Avatar avec changement direct
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  AppAvatar(
+                    imageUrl: enfant.avatarUrl,
+                    name: enfant.nom,
+                    radius: 29,
+                    defaultIcon: isGirl ? Icons.face_3_rounded : Icons.face_rounded,
+                    onTap: () => _showPhotoOptionsSheet(enfant),
                   ),
-                ),
-                child: ClipOval(
-                  child: enfant.avatarUrl != null &&
-                          enfant.avatarUrl!.isNotEmpty
-                      ? Image.network(
-                          enfant.avatarUrl!,
-                          fit: BoxFit.cover,
-                          width: 58,
-                          height: 58,
-                          errorBuilder: (context, error, stackTrace) => Icon(
-                            isGirl ? Icons.face_3_rounded : Icons.face_rounded,
-                            size: 34,
-                            color: badgeText,
+                  Positioned(
+                    bottom: -2,
+                    right: -2,
+                    child: GestureDetector(
+                      onTap: () => _showPhotoOptionsSheet(enfant),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: theme.colorScheme.surface,
+                            width: 1.5,
                           ),
-                        )
-                      : Icon(
-                          isGirl ? Icons.face_3_rounded : Icons.face_rounded,
-                          size: 34,
-                          color: badgeText,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.15),
+                              blurRadius: 3,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
                         ),
-                ),
+                        child: Icon(
+                          Icons.camera_alt_rounded,
+                          size: 11,
+                          color: theme.colorScheme.onPrimary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               AppSpacing.horizontalMd,
               // Infos Enfant

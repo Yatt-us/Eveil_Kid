@@ -1,4 +1,4 @@
-// lib/features/parent/models/parent_model.dart
+// lib/features/parents/models/parent_model.dart
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -23,6 +23,7 @@ class UtilisateurModel {
   final String nom;
   final String? photoUrl;
   final String? telephone;
+  final String? adresse;
   final bool estActif;
   final DateTime dateCreation;
   final DateTime dateModification;
@@ -37,6 +38,7 @@ class UtilisateurModel {
     required this.nom,
     this.photoUrl,
     this.telephone,
+    this.adresse,
     this.estActif = true,
     DateTime? dateCreation,
     DateTime? dateModification,
@@ -58,6 +60,7 @@ class UtilisateurModel {
     String? name,
     String? photoUrl,
     String? telephone,
+    String? adresse,
     bool? estActif,
     DateTime? dateCreation,
     DateTime? dateModification,
@@ -72,6 +75,7 @@ class UtilisateurModel {
       nom: nom ?? name ?? this.nom,
       photoUrl: photoUrl ?? this.photoUrl,
       telephone: telephone ?? this.telephone,
+      adresse: adresse ?? this.adresse,
       estActif: estActif ?? this.estActif,
       dateCreation: dateCreation ?? this.dateCreation,
       dateModification: dateModification ?? DateTime.now(),
@@ -89,6 +93,7 @@ class UtilisateurModel {
       'nom': nom,
       'photoUrl': photoUrl,
       'telephone': telephone,
+      'adresse': adresse,
       'estActif': estActif,
       'dateCreation': Timestamp.fromDate(dateCreation),
       'dateModification': Timestamp.fromDate(dateModification),
@@ -117,6 +122,7 @@ class UtilisateurModel {
       nom: map['nom'] ?? '',
       photoUrl: map['photoUrl'],
       telephone: map['telephone'],
+      adresse: map['adresse'],
       estActif: map['estActif'] is bool ? map['estActif'] : true,
       dateCreation: parseDate(map['dateCreation']),
       dateModification: parseDate(map['dateModification']),

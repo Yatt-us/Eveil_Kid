@@ -83,8 +83,9 @@ class ParentFirestoreRepository implements ParentRepository {
       'utilisateurId': parent.utilisateurId,
       'nom': parent.nom,
       'email': parent.email,
-      if (parent.telephone != null) 'telephone': parent.telephone,
-      if (parent.photoUrl != null) 'photoUrl': parent.photoUrl,
+      'telephone': parent.telephone,
+      'adresse': parent.adresse,
+      'photoUrl': parent.photoUrl,
       'dateModification': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
 

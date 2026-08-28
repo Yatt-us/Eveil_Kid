@@ -1,13 +1,17 @@
 // lib/features/parents/presentation/pages/profil_parent.dart
 
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../../../core/constants/app_avatars.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/AppPadding.dart';
 import '../../../../core/constants/AppRadius.dart';
 import '../../../../core/constants/AppSpacing.dart';
 import '../../../../core/router/app_routes.dart';
+import '../../../../shared/widgets/app_avatar.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
 import '../../../../shared/widgets/app_bottom_nav_bar.dart';
 import '../../../../shared/widgets/app_states.dart';
@@ -24,6 +28,280 @@ import '../../../../core/provider/bottom_nav_bar_provider.dart';
 
 class ProfilParentPage extends ConsumerWidget {
   const ProfilParentPage({super.key});
+
+  static const List<String> _presetAvatars = AppAvatars.parentPresets;
+
+  Future<void> _updatePhoto(
+    BuildContext context,
+    WidgetRef ref,
+    Utilisateur parent,
+    String? newPhotoUrl,
+  ) async {
+    try {
+      final updated = parent.copyWith(photoUrl: newPhotoUrl);
+      await ref
+          .read(parentNotifierProvider.notifier)
+          .updateParentProfile(updated);
+      ref.read(authProvider.notifier).updateLocalUtilisateur(updated);
+      if (context.mounted) {
+        AppDialogs.showSnackBar(
+          context: context,
+          message: newPhotoUrl == null
+              ? 'Photo de profil supprimée.'
+              : 'Photo de profil mise à jour !',
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        AppDialogs.showSnackBar(
+          context: context,
+          message: 'Erreur lors de la mise à jour: $e',
+          isError: true,
+        );
+      }
+    }
+  }
+
+  Future<void> _pickImage(
+    BuildContext context,
+    WidgetRef ref,
+    Utilisateur parent,
+    ImageSource source,
+  ) async {
+    Navigator.pop(context);
+
+    try {
+      final picker = ImagePicker();
+      final XFile? pickedFile = await picker.pickImage(
+        source: source,
+        maxWidth: 360,
+        maxHeight: 360,
+        imageQuality: 75,
+      );
+
+      if (pickedFile != null) {
+        final bytes = await pickedFile.readAsBytes();
+        final base64String = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+        if (context.mounted) {
+          await _updatePhoto(context, ref, parent, base64String);
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        AppDialogs.showSnackBar(
+          context: context,
+          message: 'Impossible de charger l\'image: $e',
+          isError: true,
+        );
+      }
+    }
+  }
+
+  void _showAvatarGalleryModal(
+    BuildContext context,
+    WidgetRef ref,
+    Utilisateur parent,
+  ) {
+    Navigator.pop(context);
+    final theme = Theme.of(context);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: theme.colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: theme.dividerColor.withValues(alpha: 0.4),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                AppSpacing.verticalMd,
+                Text(
+                  'Choisir un avatar prédéfini',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color:
+                        theme.textTheme.titleMedium?.color ??
+                        theme.colorScheme.onSurface,
+                  ),
+                ),
+                AppSpacing.verticalMd,
+                SizedBox(
+                  height: 90,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _presetAvatars.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 14),
+                    itemBuilder: (ctx, index) {
+                      final url = _presetAvatars[index];
+                      final isSelected = parent.photoUrl == url;
+
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          _updatePhoto(context, ref, parent, url);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isSelected
+                                  ? theme.colorScheme.primary
+                                  : Colors.transparent,
+                              width: 3,
+                            ),
+                          ),
+                          child: CircleAvatar(
+                            radius: 34,
+                            backgroundImage: NetworkImage(url),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                AppSpacing.verticalMd,
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showPhotoOptionsSheet(
+    BuildContext context,
+    WidgetRef ref,
+    Utilisateur parent,
+  ) {
+    final theme = Theme.of(context);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: theme.colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: theme.dividerColor.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                AppSpacing.verticalMd,
+                Text(
+                  'Modifier la photo de profil',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color:
+                        theme.textTheme.titleMedium?.color ??
+                        theme.colorScheme.onSurface,
+                  ),
+                ),
+                AppSpacing.verticalMd,
+                ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: theme.colorScheme.primary.withValues(
+                      alpha: 0.1,
+                    ),
+                    child: Icon(
+                      Icons.camera_alt_rounded,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                  title: const Text(
+                    'Prendre une photo',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  onTap: () => _pickImage(ctx, ref, parent, ImageSource.camera),
+                ),
+                ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: AppColors.secondary.withValues(alpha: 0.1),
+                    child: const Icon(
+                      Icons.photo_library_rounded,
+                      color: AppColors.secondary,
+                    ),
+                  ),
+                  title: const Text(
+                    'Choisir depuis la galerie',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  onTap: () =>
+                      _pickImage(ctx, ref, parent, ImageSource.gallery),
+                ),
+                ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.amber.withValues(alpha: 0.15),
+                    child: const Icon(
+                      Icons.face_retouching_natural_rounded,
+                      color: Colors.amber,
+                    ),
+                  ),
+                  title: const Text(
+                    'Choisir parmi les avatars prédéfinis',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  onTap: () => _showAvatarGalleryModal(ctx, ref, parent),
+                ),
+                if (parent.photoUrl != null && parent.photoUrl!.isNotEmpty) ...[
+                  const Divider(),
+                  ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: theme.colorScheme.error.withValues(
+                        alpha: 0.1,
+                      ),
+                      child: Icon(
+                        Icons.delete_outline_rounded,
+                        color: theme.colorScheme.error,
+                      ),
+                    ),
+                    title: Text(
+                      'Supprimer la photo actuelle',
+                      style: TextStyle(
+                        color: theme.colorScheme.error,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _updatePhoto(context, ref, parent, null);
+                    },
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   Future<void> _logout(BuildContext context, WidgetRef ref) async {
     final confirmed = await AppDialogs.showConfirmDialog(
@@ -74,7 +352,8 @@ class ProfilParentPage extends ConsumerWidget {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: theme.textTheme.titleMedium?.color ??
+                color:
+                    theme.textTheme.titleMedium?.color ??
                     theme.colorScheme.onSurface,
               ),
             ),
@@ -104,7 +383,8 @@ class ProfilParentPage extends ConsumerWidget {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: theme.textTheme.titleLarge?.color ??
+                      color:
+                          theme.textTheme.titleLarge?.color ??
                           theme.colorScheme.onSurface,
                     ),
                     textAlign: TextAlign.center,
@@ -114,8 +394,10 @@ class ProfilParentPage extends ConsumerWidget {
                     'Connectez-vous pour accéder à votre espace, gérer vos enfants et vos favoris.',
                     style: TextStyle(
                       fontSize: 14,
-                      color: theme.textTheme.bodyMedium?.color
-                              ?.withValues(alpha: 0.7) ??
+                      color:
+                          theme.textTheme.bodyMedium?.color?.withValues(
+                            alpha: 0.7,
+                          ) ??
                           AppColors.textSecondary,
                       height: 1.35,
                     ),
@@ -174,14 +456,18 @@ class ProfilParentPage extends ConsumerWidget {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: theme.textTheme.titleMedium?.color ??
+                color:
+                    theme.textTheme.titleMedium?.color ??
                     theme.colorScheme.onSurface,
               ),
             ),
             centerTitle: true,
             actions: [
               IconButton(
-                icon: Icon(Icons.logout_rounded, color: theme.colorScheme.error),
+                icon: Icon(
+                  Icons.logout_rounded,
+                  color: theme.colorScheme.error,
+                ),
                 tooltip: 'Se déconnecter',
                 onPressed: () => _logout(context, ref),
               ),
@@ -245,7 +531,8 @@ class ProfilParentPage extends ConsumerWidget {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: theme.textTheme.titleMedium?.color ??
+              color:
+                  theme.textTheme.titleMedium?.color ??
                   theme.colorScheme.onSurface,
             ),
           ),
@@ -275,14 +562,15 @@ class ProfilParentPage extends ConsumerWidget {
                 ? parent.role
                 : (userFromAuth?.role ?? UserRole.parent);
 
-            final isAdminOrManager = effectiveRole == UserRole.admin ||
+            final isAdminOrManager =
+                effectiveRole == UserRole.admin ||
                 effectiveRole == UserRole.manager;
 
             final displayName = parent.name.isNotEmpty
                 ? parent.name
                 : (userFromAuth?.nom.isNotEmpty == true
-                    ? userFromAuth!.nom
-                    : 'Utilisateur');
+                      ? userFromAuth!.nom
+                      : 'Utilisateur');
 
             final displayEmail = parent.email.isNotEmpty
                 ? parent.email
@@ -301,51 +589,22 @@ class ProfilParentPage extends ConsumerWidget {
                         Stack(
                           clipBehavior: Clip.none,
                           children: [
-                            Container(
-                              width: 100,
-                              height: 100,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: isDark
-                                    ? theme.colorScheme.surfaceContainerHighest
-                                    : AppColors.surfaceVariant,
-                                border: Border.all(
-                                  color: theme.dividerColor.withValues(alpha: 0.2),
-                                  width: 2,
-                                ),
-                              ),
-                              child: ClipOval(
-                                child: parent.photoUrl != null &&
-                                        parent.photoUrl!.isNotEmpty
-                                    ? Image.network(
-                                        parent.photoUrl!,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (_, _, _) => Icon(
-                                          Icons.person_rounded,
-                                          size: 55,
-                                          color: theme.colorScheme.primary,
-                                        ),
-                                      )
-                                    : Icon(
-                                        Icons.person_rounded,
-                                        size: 55,
-                                        color: theme.colorScheme.primary,
-                                      ),
-                              ),
+                            AppAvatar(
+                              imageUrl: parent.photoUrl,
+                              name: displayName,
+                              radius: 50,
+                              onTap: () =>
+                                  _showPhotoOptionsSheet(context, ref, parent),
                             ),
                             Positioned(
                               right: -2,
                               bottom: -2,
                               child: GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          ModifierProfilPage(parent: parent),
-                                    ),
-                                  );
-                                },
+                                onTap: () => _showPhotoOptionsSheet(
+                                  context,
+                                  ref,
+                                  parent,
+                                ),
                                 child: Container(
                                   padding: const EdgeInsets.all(7),
                                   decoration: BoxDecoration(
@@ -372,7 +631,8 @@ class ProfilParentPage extends ConsumerWidget {
                           style: TextStyle(
                             fontSize: 19,
                             fontWeight: FontWeight.w800,
-                            color: theme.textTheme.titleMedium?.color ??
+                            color:
+                                theme.textTheme.titleMedium?.color ??
                                 theme.colorScheme.onSurface,
                           ),
                         ),
@@ -382,10 +642,45 @@ class ProfilParentPage extends ConsumerWidget {
                             displayEmail,
                             style: TextStyle(
                               fontSize: 13,
-                              color: theme.textTheme.bodySmall?.color
-                                      ?.withValues(alpha: 0.7) ??
+                              color:
+                                  theme.textTheme.bodySmall?.color?.withValues(
+                                    alpha: 0.7,
+                                  ) ??
                                   AppColors.textSecondary,
                             ),
+                          ),
+                        ],
+                        if (parent.adresse != null &&
+                            parent.adresse!.trim().isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.location_on_outlined,
+                                size: 14,
+                                color: theme.colorScheme.primary.withValues(
+                                  alpha: 0.8,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  parent.adresse!.trim(),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color:
+                                        theme.textTheme.bodySmall?.color
+                                            ?.withValues(alpha: 0.75) ??
+                                        AppColors.textSecondary,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                         AppSpacing.verticalSm,
@@ -462,8 +757,7 @@ class ProfilParentPage extends ConsumerWidget {
                           onTap: () {
                             AppDialogs.showSnackBar(
                               context: context,
-                              message:
-                                  '${parent.nombreFavoris ?? 0} favori(s) enregistré(s).',
+                              message: 'Vos favoris seront bientôt disponibles.',
                             );
                           },
                         ),
@@ -519,7 +813,9 @@ class ProfilParentPage extends ConsumerWidget {
                         color: theme.colorScheme.error.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: theme.colorScheme.error.withValues(alpha: 0.25),
+                          color: theme.colorScheme.error.withValues(
+                            alpha: 0.25,
+                          ),
                         ),
                       ),
                       child: Row(
@@ -665,8 +961,11 @@ class ProfilParentPage extends ConsumerWidget {
         borderRadius: AppRadius.card,
         boxShadow: [
           BoxShadow(
-            color: (isRoleAdmin ? const Color(0xFF4338CA) : const Color(0xFFD97706))
-                .withValues(alpha: 0.3),
+            color:
+                (isRoleAdmin
+                        ? const Color(0xFF4338CA)
+                        : const Color(0xFFD97706))
+                    .withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -763,14 +1062,16 @@ class ProfilParentPage extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: theme.textTheme.bodyLarge?.color ??
+                  color:
+                      theme.textTheme.bodyLarge?.color ??
                       theme.colorScheme.onSurface,
                 ),
               ),
             ),
             Icon(
               Icons.chevron_right_rounded,
-              color: theme.iconTheme.color?.withValues(alpha: 0.5) ??
+              color:
+                  theme.iconTheme.color?.withValues(alpha: 0.5) ??
                   AppColors.icon,
               size: 22,
             ),

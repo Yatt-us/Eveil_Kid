@@ -11,6 +11,7 @@ import '../../../../core/constants/AppRadius.dart';
 import '../../../../core/constants/AppSpacing.dart';
 import '../../../../core/constants/AppTextStyles.dart';
 import '../../../../core/router/app_routes.dart';
+import '../../../../shared/widgets/app_avatar.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
 import '../../../../shared/widgets/app_bottom_nav_bar.dart';
 import '../../../../shared/widgets/app_states.dart';
@@ -320,7 +321,8 @@ class AccueilParentPage extends ConsumerWidget {
       children: [
         Text(
           hasChildren ? 'Bonjour, $displayName 👋' : 'Bienvenue !',
-          style: AppTextStyles.headingMedium.copyWith(
+          style: TextStyle(
+            fontSize: 22,
             fontWeight: FontWeight.w800,
             color:
                 theme.textTheme.titleLarge?.color ??
@@ -729,14 +731,6 @@ class AccueilParentPage extends ConsumerWidget {
           final child = displayChildren[index];
           final isGirl = child.genre.toLowerCase() == 'fille';
 
-          final Color avatarBg = isGirl
-              ? (isDark
-                    ? const Color(0xFF880E4F).withValues(alpha: 0.25)
-                    : const Color(0xFFFCE4EC))
-              : (isDark
-                    ? const Color(0xFF0D47A1).withValues(alpha: 0.25)
-                    : const Color(0xFFE3F2FD));
-
           final Color badgeBg = isGirl
               ? (isDark
                     ? const Color(0xFF880E4F).withValues(alpha: 0.35)
@@ -786,34 +780,13 @@ class AccueilParentPage extends ConsumerWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    CircleAvatar(
+                    AppAvatar(
+                      imageUrl: child.avatarUrl,
+                      name: child.nom,
                       radius: 28,
-                      backgroundColor: avatarBg,
-                      child: ClipOval(
-                        child:
-                            child.avatarUrl != null &&
-                                child.avatarUrl!.isNotEmpty
-                            ? Image.network(
-                                child.avatarUrl!,
-                                fit: BoxFit.cover,
-                                width: 56,
-                                height: 56,
-                                errorBuilder: (_, _, _) => Icon(
-                                  isGirl
-                                      ? Icons.face_3_rounded
-                                      : Icons.face_rounded,
-                                  color: badgeText,
-                                  size: 34,
-                                ),
-                              )
-                            : Icon(
-                                isGirl
-                                    ? Icons.face_3_rounded
-                                    : Icons.face_rounded,
-                                color: badgeText,
-                                size: 34,
-                              ),
-                      ),
+                      defaultIcon: isGirl
+                          ? Icons.face_3_rounded
+                          : Icons.face_rounded,
                     ),
                     AppSpacing.verticalSm,
                     Text(
