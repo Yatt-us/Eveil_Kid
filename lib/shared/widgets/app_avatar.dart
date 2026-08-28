@@ -96,7 +96,7 @@ class AppAvatar extends StatelessWidget {
       avatarWidget = CircleAvatar(
         radius: radius,
         backgroundImage: imageProvider,
-        onBackgroundImageError: (_, __) {
+        onBackgroundImageError: (_, _) {
           // Gestion douce des erreurs de chargement réseau/mémoire
         },
         backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
