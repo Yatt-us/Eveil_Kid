@@ -1,4 +1,3 @@
-import 'package:eveilkid/core/constants/AppSpacing.dart';
 import 'package:eveilkid/core/constants/AppTextStyles.dart';
 import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/features/ActivityCategorie/models/activity_category_model.dart';
@@ -11,7 +10,6 @@ import 'package:eveilkid/features/admin/presentation/widgets/admin_drawer.dart';
 import 'package:eveilkid/shared/widgets/app_search_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:go_router/go_router.dart';
 
 class ActivitiesListScreen extends ConsumerStatefulWidget {
@@ -23,7 +21,7 @@ class ActivitiesListScreen extends ConsumerStatefulWidget {
 
 class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen> {
   String _searchQuery = '';
-  String? _selectedCategoryId = 'all'; 
+  String? _selectedCategoryId = 'all';
   String? _selectedStatus;
   int? _selectedAgeMin;
   int? _selectedAgeMax;
@@ -76,21 +74,31 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen> {
         padding: const EdgeInsets.only(top: 10),
         child: Column(
           children: [
-            // Barre de recherche et filtre
             _buildSearchAndFilter(),
-            const SizedBox(height: 15),
+            const SizedBox(height: 10),
 
             categoriesAsync.when(
-              loading: () => const SizedBox.shrink(),
-              error: (_, _) => const SizedBox.shrink(),
+              loading: () => const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: SizedBox(
+                  height: 20,
+                  child: Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                ),
+              ),
+              error: (_, __) => const SizedBox.shrink(),
               data: (categories) => _buildCategoryFilters(categories),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 6),
 
             if (_isFiltered) _buildActiveFilters(),
-            const SizedBox(height: 10),
+            const SizedBox(height: 6),
 
-           
             Expanded(
               child: activitiesAsync.when(
                 loading: () => const Center(
@@ -123,79 +131,85 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen> {
   }
 
   Widget _buildSearchAndFilter() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: [
-          Expanded(
-            child: AppSearchBar(
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value;
-                });
-              },
-              hintText: 'Rechercher une activité...',
-            ),
-          ),
-          AppSpacing.horizontalXl,
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'reset') {
-                _resetFilters();
-              }
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    child: Row(
+      children: [
+        Expanded(
+          child: AppSearchBar(
+            onChanged: (value) {
+              setState(() {
+                _searchQuery = value;
+              });
             },
-            offset: const Offset(0, 50),
-            color: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Container(
-              width: 45,
-              height: 45,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: _isFiltered ? AppColors.primary : AppColors.primary,
-              ),
-              child: const Icon(
-                Icons.filter_list,
-                color: Colors.white,
-                size: 24,
-              ),
-            ),
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'advanced',
-                child: Row(
-                  children: [
-                    Icon(Icons.settings, color: AppColors.primary),
-                    const SizedBox(width: 12),
-                    const Text('Filtres avancés'),
-                    const Spacer(),
-                    Icon(Icons.arrow_forward, size: 16, color: Colors.grey),
-                  ],
-                ),
-                onTap: () => _showAdvancedFilters(),
-              ),
-              const PopupMenuDivider(),
-              PopupMenuItem(
-                value: 'reset',
-                child: Row(
-                  children: [
-                    Icon(Icons.refresh, color: AppColors.danger),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'Réinitialiser les filtres',
-                      style: TextStyle(color: AppColors.danger),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            hintText: 'Rechercher une activité...',
           ),
-        ],
-      ),
-    );
-  }
+        ),
+        const SizedBox(width: 12),
+        PopupMenuButton<String>(
+          onSelected: (value) {
+            if (value == 'reset') {
+              _resetFilters();
+            }
+          },
+          offset: const Offset(0, 50),
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: _isFiltered ? AppColors.primary : AppColors.primary,
+            ),
+            child: const Icon(
+              Icons.filter_list,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+          itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+            PopupMenuItem<String>(
+              value: 'advanced',
+              child: Row(
+                children: [
+                  Icon(Icons.settings, color: AppColors.primary, size: 18),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Filtres avancés',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                  const Spacer(),
+                  Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+                ],
+              ),
+              onTap: () => _showAdvancedFilters(),
+            ),
+            const PopupMenuDivider(),
+            PopupMenuItem<String>(
+              value: 'reset',
+              child: Row(
+                children: [
+                  Icon(Icons.refresh, color: AppColors.danger, size: 18),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Réinitialiser les filtres',
+                    style: TextStyle(
+                      color: AppColors.danger,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
 
   void _showAdvancedFilters() {
     showModalBottomSheet(
@@ -242,7 +256,6 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Filtre par statut de publication
                             const Text(
                               'Statut de publication',
                               style: TextStyle(
@@ -301,7 +314,6 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen> {
                             ),
                             const SizedBox(height: 24),
 
-                            // Filtre par tranche d'âge
                             const Text(
                               'Tranche d\'âge',
                               style: TextStyle(
@@ -385,7 +397,6 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen> {
                             ),
                             const SizedBox(height: 24),
 
-                            // Boutons d'action
                             Row(
                               children: [
                                 Expanded(
@@ -436,7 +447,6 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen> {
     );
   }
 
-  // Widget pour les chips de filtre
   Widget _buildFilterChip({
     required String label,
     required String? value,
@@ -450,6 +460,7 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen> {
         label,
         style: TextStyle(
           color: isSelected ? Colors.white : Colors.grey.shade700,
+          fontSize: 12,
         ),
       ),
       selected: isSelected,
@@ -459,70 +470,71 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen> {
       backgroundColor: Colors.grey.shade100,
       selectedColor: color ?? AppColors.primary,
       checkmarkColor: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
     );
   }
 
-
   Widget _buildCategoryFilters(List<ActiviteCategorie> categories) {
-  final allCategories = [
-    ActiviteCategorie(
-      id: 'all',
-      nom: 'Tous',
-      description: '',
-      dateCreation: DateTime.now(),
-      dateModification: DateTime.now(),
-    ),
-    ...categories,
-  ];
+    final allCategories = [
+      ActiviteCategorie(
+        id: 'all',
+        nom: 'Tous',
+        description: '',
+        dateCreation: DateTime.now(),
+        dateModification: DateTime.now(),
+      ),
+      ...categories,
+    ];
 
-  return Container(
-    height: 50,
-    padding: const EdgeInsets.only(left: 20),
-    child: ListView.builder(
+    return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      itemCount: allCategories.length,
-      itemBuilder: (context, index) {
-        final category = allCategories[index];
-        final isSelected = _selectedCategoryId == category.id;
-        
-        return Padding(
-          padding: EdgeInsets.only(right: index == allCategories.length - 1 ? 20 : 8),
-          child: ChoiceChip(
-            label: Text(
-              category.nom,
-              style: TextStyle(
-                color: isSelected ? Colors.white : Colors.grey.shade700,
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: allCategories.map((category) {
+          final isSelected = _selectedCategoryId == category.id;
+          return Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: ChoiceChip(
+              label: Text(
+                category.nom,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : Colors.grey.shade700,
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                ),
               ),
+              selected: isSelected,
+              onSelected: (_) {
+                setState(() {
+                  _selectedCategoryId = isSelected ? null : category.id;
+                  if (!isSelected && category.id == 'all') {
+                    _selectedCategoryId = 'all';
+                  } else if (isSelected) {
+                    _selectedCategoryId = 'all';
+                  }
+                });
+              },
+              backgroundColor: Colors.grey.shade100,
+              selectedColor: AppColors.primary,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 6,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              visualDensity: VisualDensity.compact,
             ),
-            selected: isSelected,
-            onSelected: (_) {
-              setState(() {
-                _selectedCategoryId = isSelected ? null : category.id;
-                if (!isSelected && category.id == 'all') {
-                  _selectedCategoryId = 'all';
-                } else if (isSelected) {
-                  _selectedCategoryId = 'all';
-                }
-              });
-            },
-            backgroundColor: Colors.grey.shade100,
-            selectedColor: AppColors.primary,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 10,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            visualDensity: VisualDensity.compact,
-          ),
-        );
-      },
-    ),
-  );
-}
+          );
+        }).toList(),
+      ),
+    );
+  }
+
   Widget _buildActiveFilters() {
     List<String> activeFilters = [];
 
@@ -546,7 +558,7 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen> {
     if (activeFilters.isEmpty) return const SizedBox.shrink();
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
@@ -554,20 +566,20 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen> {
             const Text(
               'Filtres actifs: ',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: FontWeight.w600,
                 color: Colors.grey,
               ),
             ),
             ...activeFilters.map((filter) => Padding(
-                  padding: const EdgeInsets.only(right: 6),
+                  padding: const EdgeInsets.only(right: 4),
                   child: Chip(
                     label: Text(
                       filter,
-                      style: const TextStyle(fontSize: 11),
+                      style: const TextStyle(fontSize: 10),
                     ),
                     backgroundColor: Colors.orange.shade50,
-                    deleteIcon: const Icon(Icons.close, size: 14),
+                    deleteIcon: const Icon(Icons.close, size: 12),
                     onDeleted: () {
                       setState(() {
                         _selectedStatus = null;
@@ -576,18 +588,19 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen> {
                         _isFiltered = false;
                       });
                     },
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   ),
                 )),
             TextButton(
               onPressed: _resetFilters,
               style: TextButton.styleFrom(
                 minimumSize: Size.zero,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 6),
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
               child: const Text(
                 'Tout effacer',
-                style: TextStyle(fontSize: 12, color: AppColors.danger),
+                style: TextStyle(fontSize: 11, color: AppColors.danger),
               ),
             ),
           ],
@@ -599,7 +612,6 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen> {
   Widget _buildActivityList(List<Activite> activities) {
     List<Activite> filtered = List.from(activities);
 
-    // Filtre par recherche
     if (_searchQuery.isNotEmpty) {
       filtered = filtered.where((activity) {
         return activity.titre.toLowerCase().contains(_searchQuery.toLowerCase()) ||
@@ -607,7 +619,6 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen> {
       }).toList();
     }
 
-   
     if (_selectedCategoryId != null && _selectedCategoryId != 'all') {
       filtered = filtered.where((activity) {
         return activity.categorieId == _selectedCategoryId;
@@ -620,7 +631,6 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen> {
       }).toList();
     }
 
-   
     if (_selectedAgeMin != null) {
       filtered = filtered.where((activity) {
         return activity.ageMinimum >= _selectedAgeMin!;
@@ -640,26 +650,26 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen> {
           children: [
             Icon(
               Icons.search_off,
-              size: 64,
+              size: 48,
               color: Colors.grey.shade400,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Text(
               'Aucune activité trouvée',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 14,
                 color: Colors.grey.shade600,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               'Essayez de modifier votre recherche ou vos filtres',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 12,
                 color: Colors.grey.shade400,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             TextButton(
               onPressed: _resetFilters,
               child: const Text('Réinitialiser les filtres'),
@@ -670,12 +680,12 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: filtered.length,
       itemBuilder: (context, index) {
         final activity = filtered[index];
         return Padding(
-          padding: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.only(bottom: 6),
           child: ActivityCard(
             activity: activity,
             onTap: () {
@@ -699,7 +709,7 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen> {
 
   void _resetFilters() {
     setState(() {
-      _selectedCategoryId = 'all'; 
+      _selectedCategoryId = 'all';
       _selectedStatus = null;
       _selectedAgeMin = null;
       _selectedAgeMax = null;

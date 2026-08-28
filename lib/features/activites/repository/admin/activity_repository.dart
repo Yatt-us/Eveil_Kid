@@ -1,16 +1,16 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:eveilkid/features/activites/mappers/activity_mapper.dart';
-
 import 'dart:io';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:eveilkid/core/cloudinary/cloudinary_service.dart';
+import 'package:eveilkid/features/activites/mappers/activity_mapper.dart';
 import 'package:eveilkid/features/activites/models/activity.dart';
-
-
 
 class ActivityRepository {
   final CollectionReference _activitesRef = 
       FirebaseFirestore.instance.collection('activites');
-  final FirebaseStorage _storage = FirebaseStorage.instance;
+  final CloudinaryService _cloudinary;
+
+  ActivityRepository({CloudinaryService? cloudinary})
+      : _cloudinary = cloudinary ?? CloudinaryService();
 
   // Récupérer toutes les activités publiées
   Future<List<Activite>> getAllActivites() async {
@@ -132,15 +132,13 @@ class ActivityRepository {
     }
   }
 
-  // Upload d'image
+  // Upload d'image avec Cloudinary
   Future<String> uploadImage(String activityId, File imageFile) async {
     try {
-      final ref = _storage.ref().child(
-        'activites/$activityId/${DateTime.now().millisecondsSinceEpoch}.jpg'
+      final downloadUrl = await _cloudinary.uploadImage(
+        imageFile,
+        folder: 'activites/$activityId',
       );
-      
-      final uploadTask = await ref.putFile(imageFile);
-      final downloadUrl = await uploadTask.ref.getDownloadURL();
       
       await _activitesRef.doc(activityId).update({
         'imageUrl': downloadUrl,

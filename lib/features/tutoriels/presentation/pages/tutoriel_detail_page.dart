@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:eveilkid/core/constants/AppRadius.dart';
+import 'package:eveilkid/features/auth/providers/auth_provider.dart';
 import 'package:eveilkid/features/categories/providers/categorie_provider.dart';
+import 'package:eveilkid/features/favoris/models/favoris.dart';
+import 'package:eveilkid/features/favoris/providers/favoris_providers.dart';
+import 'package:eveilkid/features/panier/presentation/widgets/panier_app_bar_action.dart';
 import 'package:eveilkid/features/tutoriels/models/tutoriel.dart';
 import 'package:eveilkid/features/tutoriels/presentation/pages/video_player_page.dart';
 import 'package:eveilkid/features/tutoriels/presentation/widgets/jouets_suggestion_card.dart';
 import 'package:eveilkid/features/tutoriels/presentation/widgets/tutoriel_card.dart';
 import 'package:eveilkid/features/tutoriels/providers/progression_provider.dart';
 import 'package:eveilkid/features/tutoriels/providers/tutoriel_provider.dart';
+import 'package:eveilkid/shared/widgets/app_button.dart';
+import 'package:eveilkid/shared/widgets/app_card.dart';
+import 'package:eveilkid/shared/widgets/app_states.dart';
 
 class TutorielDetailPage extends ConsumerStatefulWidget {
   const TutorielDetailPage({
@@ -35,41 +41,73 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: theme.scaffoldBackgroundColor,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          color: theme.colorScheme.onSurface,
+          icon: Icon(
+            Icons.arrow_back_rounded,
+            color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
+          ),
           tooltip: 'Retour',
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Text(
           'Détail du tutoriel',
           style: TextStyle(
-            fontSize: 17,
+            fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: theme.colorScheme.onSurface,
+            color: theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface,
           ),
         ),
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.share_outlined, size: 20),
-            color: theme.colorScheme.onSurface,
-            tooltip: 'Partager',
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Lien du tutoriel copié')),
+          Consumer(
+            builder: (context, ref, _) {
+              final isFav = ref.watch(isElementFavoriProvider(widget.tutorielId));
+              final authState = ref.watch(authProvider);
+              final userId = authState.utilisateur?.utilisateurId ?? '';
+
+              return tutorielAsync.maybeWhen(
+                data: (tutoriel) {
+                  if (tutoriel == null) return const SizedBox.shrink();
+                  return IconButton(
+                    icon: Icon(
+                      isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                      color: isFav
+                          ? Colors.redAccent
+                          : (theme.iconTheme.color ?? theme.colorScheme.onSurface),
+                    ),
+                    tooltip: isFav ? 'Retirer des favoris' : 'Ajouter aux favoris',
+                    onPressed: () {
+                      if (userId.isEmpty) return;
+                      ref.read(favoriServiceProvider).toggleFavori(
+                            utilisateurId: userId,
+                            elementId: tutoriel.tutorielId!,
+                            typeElement: TypeElement.tutoriel,
+                            titre: tutoriel.titre,
+                            miniatureUrl: tutoriel.miniatureUrl,
+                            prix: 0.0,
+                          );
+                    },
+                  );
+                },
+                orElse: () => const SizedBox.shrink(),
               );
             },
           ),
-          const SizedBox(width: 4),
+          const PanierAppBarAction(),
+          const SizedBox(width: 8),
         ],
       ),
       body: tutorielAsync.when(
         data: (tutoriel) {
           if (tutoriel == null) {
-            return _buildNotFound(context);
+            return AppEmptyState(
+              title: 'Tutoriel introuvable',
+              description: 'Ce tutoriel n\'est plus disponible.',
+              actionText: 'Retour aux tutoriels',
+              onActionPressed: () => Navigator.of(context).maybePop(),
+            );
           }
 
           final categoryName = categoriesAsync.maybeWhen(
@@ -123,13 +161,13 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
           return Stack(
             children: [
               SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(18, 8, 18, 100),
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // ── BANNIÈRE VIDÉO HERO ──
                     _buildVideoHero(context, tutoriel),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 16),
 
                     // ── REPRENDRE LA LECTURE (SI EN COURS) ──
                     if (hasProgress) ...[
@@ -140,52 +178,55 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
                         totalDuration,
                         progressRatio,
                       ),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 16),
                     ],
 
-                    // ── TITRE & BADGES ──
+                    // ── TITRE & INFORMATIONS ÉPURÉES ──
                     Text(
                       tutoriel.titre,
                       style: TextStyle(
-                        fontSize: 22,
+                        fontSize: 20,
                         fontWeight: FontWeight.w800,
-                        color: theme.colorScheme.onSurface,
-                        letterSpacing: -0.4,
+                        color: theme.textTheme.titleLarge?.color ?? theme.colorScheme.onSurface,
+                        letterSpacing: -0.3,
                         height: 1.25,
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 6),
 
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
+                    Row(
                       children: [
-                        if (categoryName != null)
-                          _buildBadge(
-                            context,
-                            icon: Icons.category_outlined,
-                            label: categoryName,
-                            color: theme.colorScheme.primary,
-                          ),
-                        _buildBadge(
-                          context,
-                          icon: Icons.child_care_rounded,
-                          label: tutoriel.ageRangeLabel,
-                          color: theme.colorScheme.secondary,
+                        Icon(
+                          Icons.play_circle_outline_rounded,
+                          size: 15,
+                          color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.65) ??
+                              theme.colorScheme.onSurfaceVariant,
                         ),
-                        _buildBadge(
-                          context,
-                          icon: Icons.timer_outlined,
-                          label: tutoriel.dureeFormatee,
-                          color: theme.colorScheme.onSurfaceVariant,
+                        const SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            [
+                              if (categoryName != null && categoryName.isNotEmpty) categoryName,
+                              tutoriel.ageRangeLabel,
+                              tutoriel.dureeFormatee,
+                            ].join(' • '),
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.65) ??
+                                  theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 16),
 
                     // ── DESCRIPTION ──
-                    _buildDescriptionSection(context, tutoriel.description),
-                    const SizedBox(height: 24),
+                    if (tutoriel.description.isNotEmpty) ...[
+                      _buildDescriptionCard(context, tutoriel.description),
+                      const SizedBox(height: 20),
+                    ],
 
                     // ── JOUETS & MATÉRIEL ASSOCIÉS ──
                     if (toyIds.isNotEmpty) ...[
@@ -201,7 +242,7 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
                           child: JouetSuggestionCard(jouetId: toyId),
                         ),
                       ),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 16),
                     ],
 
                     // ── TUTORIELS RECOMMANDÉS ──
@@ -236,64 +277,25 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
                 ),
               ),
 
-              // ── BOUTON CTA FLOTTANT / FIXE EN BAS ──
+              // ── BOUTON CTA FLOTTANT EN BAS ──
               Positioned(
-                left: 18,
-                right: 18,
-                bottom: 18,
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.35),
-                        blurRadius: 18,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: ElevatedButton.icon(
-                    onPressed: () => _openVideoPlayer(context, tutoriel),
-                    icon: const Icon(Icons.play_arrow_rounded, size: 26),
-                    label: Text(
-                      hasProgress ? 'Reprendre le tutoriel' : 'Regarder le tutoriel',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: theme.colorScheme.onPrimary,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                  ),
+                left: 16,
+                right: 16,
+                bottom: 16,
+                child: AppButton(
+                  text: hasProgress ? 'Reprendre le tutoriel' : 'Regarder le tutoriel',
+                  icon: Icons.play_arrow_rounded,
+                  size: AppButtonSize.large,
+                  onPressed: () => _openVideoPlayer(context, tutoriel),
                 ),
               ),
             ],
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.error_outline_rounded, size: 48, color: theme.colorScheme.error),
-                const SizedBox(height: 12),
-                Text('Erreur de chargement: $err'),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => ref.invalidate(tutorielByIdProvider(widget.tutorielId)),
-                  child: const Text('Réessayer'),
-                ),
-              ],
-            ),
-          ),
+        error: (err, _) => AppErrorState(
+          message: err.toString(),
+          onRetry: () => ref.invalidate(tutorielByIdProvider(widget.tutorielId)),
         ),
       ),
     );
@@ -309,17 +311,17 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
       onTap: () => _openVideoPlayer(context, tutoriel),
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
-              blurRadius: 18,
-              offset: const Offset(0, 6),
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(18),
           child: AspectRatio(
             aspectRatio: 16 / 9.5,
             child: Stack(
@@ -352,8 +354,8 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
                 ),
                 Center(
                   child: Container(
-                    width: 68,
-                    height: 68,
+                    width: 64,
+                    height: 64,
                     decoration: BoxDecoration(
                       color: theme.colorScheme.primary,
                       shape: BoxShape.circle,
@@ -367,30 +369,30 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
                     ),
                     child: const Icon(
                       Icons.play_arrow_rounded,
-                      size: 38,
+                      size: 36,
                       color: Colors.white,
                     ),
                   ),
                 ),
                 Positioned(
-                  right: 14,
-                  bottom: 12,
+                  right: 12,
+                  bottom: 10,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.75),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(6),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.timer_outlined, size: 13, color: Colors.white),
+                        const Icon(Icons.timer_outlined, size: 12, color: Colors.white),
                         const SizedBox(width: 4),
                         Text(
                           tutoriel.dureeFormatee,
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 12.5,
+                            fontSize: 12,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -414,20 +416,10 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
     double progressRatio,
   ) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
-    return Container(
+    return AppCard(
+      onTap: () => _openVideoPlayer(context, tutoriel),
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDark
-            ? theme.colorScheme.surfaceContainerHighest
-            : theme.colorScheme.primary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.25),
-          width: 1,
-        ),
-      ),
       child: Row(
         children: [
           Container(
@@ -494,76 +486,25 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
     );
   }
 
-  Widget _buildBadge(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDescriptionSection(BuildContext context, String description) {
+  Widget _buildDescriptionCard(BuildContext context, String description) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    if (description.isEmpty) return const SizedBox.shrink();
-
     final isLong = description.length > 200;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark
-            ? theme.colorScheme.surfaceContainerHighest
-            : theme.colorScheme.surface,
-        borderRadius: AppRadius.card,
-        border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: isDark ? 0.2 : 0.12),
-        ),
-      ),
+    return AppCard(
+      title: 'À propos de ce tutoriel',
+      padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'À propos de ce tutoriel',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: theme.colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: 8),
           Text(
             description,
             maxLines: isLong && !_isDescriptionExpanded ? 4 : null,
             overflow: isLong && !_isDescriptionExpanded ? TextOverflow.ellipsis : null,
             style: TextStyle(
               fontSize: 13.5,
-              height: 1.5,
-              color: theme.colorScheme.onSurfaceVariant,
+              height: 1.45,
+              color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8) ??
+                  theme.colorScheme.onSurfaceVariant,
             ),
           ),
           if (isLong) ...[
@@ -598,9 +539,9 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
         Text(
           title,
           style: TextStyle(
-            fontSize: 17,
+            fontSize: 16.5,
             fontWeight: FontWeight.w800,
-            color: theme.colorScheme.onSurface,
+            color: theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface,
             letterSpacing: -0.3,
           ),
         ),
@@ -609,37 +550,11 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
           subtitle,
           style: TextStyle(
             fontSize: 12.5,
-            color: theme.colorScheme.onSurfaceVariant,
+            color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+                theme.colorScheme.onSurfaceVariant,
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildNotFound(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.video_library_outlined, size: 56, color: theme.colorScheme.onSurfaceVariant),
-          const SizedBox(height: 16),
-          Text(
-            'Tutoriel introuvable',
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-              color: theme.colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).maybePop(),
-            child: const Text('Retour à la liste'),
-          ),
-        ],
-      ),
     );
   }
 

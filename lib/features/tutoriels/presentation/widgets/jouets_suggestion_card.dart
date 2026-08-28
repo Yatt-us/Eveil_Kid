@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:eveilkid/core/constants/AppRadius.dart';
 import 'package:eveilkid/features/auth/providers/auth_provider.dart';
 import 'package:eveilkid/features/jouets/models/jouet.dart';
 import 'package:eveilkid/features/jouets/presentation/page/jouet_detail_screen.dart';
 import 'package:eveilkid/features/jouets/providers/jouet_provider.dart';
+import 'package:eveilkid/shared/widgets/app_button.dart';
+import 'package:eveilkid/shared/widgets/app_card.dart';
+import 'package:eveilkid/shared/widgets/app_chip.dart';
 
 class JouetSuggestionCard extends ConsumerWidget {
   final String? jouetId;
@@ -51,7 +53,7 @@ class JouetSuggestionCard extends ConsumerWidget {
               : Colors.white.withValues(alpha: 0.96),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: theme.colorScheme.outline.withValues(alpha: 0.2),
+            color: theme.dividerColor.withValues(alpha: 0.2),
             width: 1,
           ),
           boxShadow: [
@@ -120,18 +122,11 @@ class JouetSuggestionCard extends ConsumerWidget {
               ),
             ),
             const SizedBox(width: 8),
-            TextButton(
+            AppButton(
+              text: 'Voir',
+              isFullWidth: false,
+              size: AppButtonSize.small,
               onPressed: () => _navigateToDetail(context, ref, item),
-              style: TextButton.styleFrom(
-                backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-                foregroundColor: theme.colorScheme.primary,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              child: const Text(
-                'Voir',
-                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
-              ),
             ),
             if (onClose != null) ...[
               const SizedBox(width: 4),
@@ -148,101 +143,64 @@ class JouetSuggestionCard extends ConsumerWidget {
       );
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark
-            ? theme.colorScheme.surfaceContainerHighest
-            : theme.colorScheme.surface,
-        borderRadius: AppRadius.card,
-        border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: isDark ? 0.2 : 0.12),
-          width: 1,
-        ),
-        boxShadow: [
-          if (!isDark)
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
+    return AppCard(
+      onTap: () => _navigateToDetail(context, ref, item),
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: SizedBox(
+              width: 72,
+              height: 72,
+              child: item.imagePrincipaleUrl.isNotEmpty
+                  ? Image.network(
+                      item.imagePrincipaleUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => _buildPlaceholderIcon(context),
+                    )
+                  : _buildPlaceholderIcon(context),
             ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => _navigateToDetail(context, ref, item),
-          borderRadius: AppRadius.card,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: SizedBox(
-                    width: 72,
-                    height: 72,
-                    child: item.imagePrincipaleUrl.isNotEmpty
-                        ? Image.network(
-                            item.imagePrincipaleUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => _buildPlaceholderIcon(context),
-                          )
-                        : _buildPlaceholderIcon(context),
+                const AppChip(
+                  label: 'Matériel utilisé',
+                  variant: AppChipVariant.primary,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  item.nom,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          'Matériel utilisé',
-                          style: TextStyle(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w700,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        item.nom,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w700,
-                          color: theme.colorScheme.onSurface,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${item.prix.toStringAsFixed(0)} FCFA • ${item.ageMinimum}-${item.ageMaximum} ans',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
+                const SizedBox(height: 4),
+                Text(
+                  '${item.prix.toStringAsFixed(0)} FCFA • ${item.ageMinimum}-${item.ageMaximum} ans',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
-                ),
-                const SizedBox(width: 8),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 16,
-                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
                 ),
               ],
             ),
           ),
-        ),
+          const SizedBox(width: 8),
+          Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: 16,
+            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+          ),
+        ],
       ),
     );
   }
@@ -268,7 +226,7 @@ class JouetSuggestionCard extends ConsumerWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-        borderRadius: AppRadius.card,
+        borderRadius: BorderRadius.circular(16),
       ),
       child: const Center(
         child: SizedBox(
