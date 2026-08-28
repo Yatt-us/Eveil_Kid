@@ -1,8 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../models/client/question_quiz.dart';
-import '../../presentation/pages/client/quiz_screen.dart';
 final questionsStreamProvider =
     StreamProvider.family<List<QuestionQuiz>, String>((ref, activiteId) {
   return FirebaseFirestore.instance
