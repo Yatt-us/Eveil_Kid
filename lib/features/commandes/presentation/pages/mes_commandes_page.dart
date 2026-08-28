@@ -1,3 +1,5 @@
+// lib/features/commandes/presentation/pages/mes_commandes_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/commande_provider.dart';
@@ -69,9 +71,24 @@ class _MesCommandesPageState extends ConsumerState<MesCommandesPage> with Single
               controller: _tabController,
               children: [
                 _buildOrderList(commandeState.commandes),
-                _buildOrderList(commandeState.commandes.where((c) => c.statut == 'En cours').toList()),
-                _buildOrderList(commandeState.commandes.where((c) => c.statut == 'Livrée').toList()),
-                _buildOrderList(commandeState.commandes.where((c) => c.statut == 'Annulée' || c.statut == 'annulee').toList()),
+                _buildOrderList(
+                  commandeState.commandes.where((c) {
+                    final s = c.statut.trim().toLowerCase();
+                    return s == 'en cours' || s == 'en_cours' || s == 'pending';
+                  }).toList(),
+                ),
+                _buildOrderList(
+                  commandeState.commandes.where((c) {
+                    final s = c.statut.trim().toLowerCase();
+                    return s == 'livrée' || s == 'livree' || s == 'delivered';
+                  }).toList(),
+                ),
+                _buildOrderList(
+                  commandeState.commandes.where((c) {
+                    final s = c.statut.trim().toLowerCase();
+                    return s == 'annulée' || s == 'annulee' || s == 'cancelled';
+                  }).toList(),
+                ),
               ],
             ),
     );
@@ -79,7 +96,12 @@ class _MesCommandesPageState extends ConsumerState<MesCommandesPage> with Single
 
   Widget _buildOrderList(List<CommandeModel> commandes) {
     if (commandes.isEmpty) {
-      return const Center(child: Text('Aucune commande trouvée.'));
+      return const Center(
+        child: Text(
+          'Aucune commande trouvée.',
+          style: TextStyle(color: Colors.grey, fontSize: 14),
+        ),
+      );
     }
 
     return ListView.builder(
@@ -87,12 +109,26 @@ class _MesCommandesPageState extends ConsumerState<MesCommandesPage> with Single
       itemCount: commandes.length,
       itemBuilder: (context, index) {
         final item = commandes[index];
-        bool isEnCours = item.statut == 'En cours';
+        final statutLower = item.statut.trim().toLowerCase();
         
-        Color badgeBg = isEnCours ? const Color(0xFFFFF7E6) : const Color(0xFFE6F7ED);
-        Color badgeTxt = isEnCours ? const Color(0xFFFF9900) : const Color(0xFF289F51);
+        bool isEnCours = statutLower == 'en cours' || statutLower == 'en_cours' || statutLower == 'pending';
+        bool isLivree = statutLower == 'livrée' || statutLower == 'livree' || statutLower == 'delivered';
+        
+        Color badgeBg;
+        Color badgeTxt;
 
-        // Sécurisation de l'affichage de l'ID pour éviter d'afficher juste "#"
+        if (isEnCours) {
+          badgeBg = const Color(0xFFFFF7E6);
+          badgeTxt = const Color(0xFFFF9900);
+        } else if (isLivree) {
+          badgeBg = const Color(0xFFE6F7ED);
+          badgeTxt = const Color(0xFF289F51);
+        } else {
+          // Pour les annulées ou autres statuts
+          badgeBg = const Color(0xFFFFECEE);
+          badgeTxt = const Color(0xFFE53935);
+        }
+
         String displayId = item.id.isNotEmpty 
             ? '#CMD-${item.id.length > 6 ? item.id.substring(0, 6).toUpperCase() : item.id}' 
             : '#CMD-2025-000123';
@@ -140,7 +176,7 @@ class _MesCommandesPageState extends ConsumerState<MesCommandesPage> with Single
                 // Aperçu horizontal des articles
                 if (item.articles.isNotEmpty) ...[
                   SizedBox(
-                    height: 50,
+                    height: 56,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: item.articles.length > 3 ? 4 : item.articles.length,
@@ -149,11 +185,11 @@ class _MesCommandesPageState extends ConsumerState<MesCommandesPage> with Single
                         if (artIndex == 3 && item.articles.length > 3) {
                           int reste = item.articles.length - 3;
                           return Container(
-                            width: 50,
-                            height: 50,
+                            width: 56,
+                            height: 56,
                             decoration: BoxDecoration(
                               color: Colors.grey.shade100,
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(12),
                               border: Border.all(color: Colors.grey.shade200),
                             ),
                             child: Center(
@@ -162,7 +198,7 @@ class _MesCommandesPageState extends ConsumerState<MesCommandesPage> with Single
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.black54,
-                                  fontSize: 13,
+                                  fontSize: 14,
                                 ),
                               ),
                             ),
@@ -171,15 +207,15 @@ class _MesCommandesPageState extends ConsumerState<MesCommandesPage> with Single
 
                         final article = item.articles[artIndex];
                         return Container(
-                          width: 50,
-                          height: 50,
+                          width: 56,
+                          height: 56,
                           decoration: BoxDecoration(
                             color: Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: Colors.grey.shade200),
                           ),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(12),
                             child: (article.urlImage != null && article.urlImage!.isNotEmpty)
                                 ? Image.network(
                                     article.urlImage!,
@@ -187,11 +223,13 @@ class _MesCommandesPageState extends ConsumerState<MesCommandesPage> with Single
                                     errorBuilder: (context, error, stackTrace) => Image.asset(
                                       'assets/images/commande.png',
                                       fit: BoxFit.cover,
+                                      errorBuilder: (ctx, err, st) => const Icon(Icons.image, color: Colors.grey),
                                     ),
                                   )
                                 : Image.asset(
                                     'assets/images/commande.png',
                                     fit: BoxFit.cover,
+                                    errorBuilder: (ctx, err, st) => const Icon(Icons.image, color: Colors.grey),
                                   ),
                           ),
                         );
@@ -206,7 +244,7 @@ class _MesCommandesPageState extends ConsumerState<MesCommandesPage> with Single
                   children: [
                     const Text('Total', style: TextStyle(fontSize: 12, color: Colors.grey)),
                     Text(
-                      '${item.montantTotal.toStringAsFixed(0)} XOF', // toStringAsFixed(0) pour enlever les .00 inutiles
+                      '${item.montantTotal.toStringAsFixed(0)} XOF',
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                     ),
                   ],
