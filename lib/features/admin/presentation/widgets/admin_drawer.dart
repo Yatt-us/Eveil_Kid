@@ -193,7 +193,7 @@ class _AdminNavigationContent extends ConsumerWidget {
         icon: Icons.video_library_outlined,
         activeIcon: Icons.video_library_rounded,
         label: 'Tutoriels',
-        onTap: () => _navigate(context, AdminNavRoute.tutoriels),
+        onTap: () =>  _navigate(context, AdminNavRoute.tutoriels),
       ),
       _AdminNavItemData(
         route: AdminNavRoute.activites,

@@ -1,3 +1,4 @@
+import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/features/activites/formController/activity_form_controller.dart';
 import 'package:eveilkid/features/activites/presentation/widgets/activity_age_selector.dart';
 import 'package:eveilkid/features/activites/presentation/widgets/activity_category_selector.dart';
@@ -245,9 +246,7 @@ class _EditActivityScreenState
 
                 const SizedBox(height: 16),
 
-                // =========================================================
-                // DURÉE + POINTS
-                // =========================================================
+                
 
                 Row(
                   children: [
@@ -284,10 +283,7 @@ class _EditActivityScreenState
 
                 const SizedBox(height: 24),
 
-                // =========================================================
-                // QUESTIONS
-                // =========================================================
-
+              
                 SizedBox(
                   width: double.infinity,
 
@@ -299,14 +295,14 @@ class _EditActivityScreenState
 
                     icon: const Icon(
                       Icons.add,
-                      color: Colors.blue,
+                      color: AppColors.primary,
                       size: 20,
                     ),
 
                     label: const Text(
                       '+ Ajouter des questions',
                       style: TextStyle(
-                        color: Colors.blue,
+                        color: AppColors.primary,
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
@@ -325,9 +321,6 @@ class _EditActivityScreenState
 
                 const SizedBox(height: 16),
 
-                // =========================================================
-                // BOUTON MODIFIER
-                // =========================================================
 
                 SizedBox(
                   width: double.infinity,
@@ -340,7 +333,7 @@ class _EditActivityScreenState
 
                     style:
                         ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
+                      backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
 
                       shape:
@@ -395,9 +388,6 @@ class _EditActivityScreenState
     );
   }
 
-  // ===========================================================
-  // MODIFICATION
-  // ===========================================================
 
   Future<void> _updateActivity() async {
     final success = await _controller.save(
@@ -420,9 +410,6 @@ class _EditActivityScreenState
     }
   }
 
-  // ===========================================================
-  // DIALOGUE SUPPRESSION
-  // ===========================================================
 
   void _showDeleteDialog(BuildContext context) {
     showDialog(
@@ -467,9 +454,7 @@ class _EditActivityScreenState
     );
   }
 
-  // ===========================================================
-  // SUPPRESSION
-  // ===========================================================
+
 
   Future<void> _deleteActivity() async {
     if (widget.activite.id == null) {

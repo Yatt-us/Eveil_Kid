@@ -1,5 +1,4 @@
-
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:eveilkid/features/activites/enums/publication_status.enum.dart';
 
 class Activite {
@@ -39,7 +38,57 @@ class Activite {
     this.ordreAffichage = 0,
   });
 
-  
+  // Construction d'une instance depuis un DocumentSnapshot Firestore
+  factory Activite.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> snapshot, [
+    SnapshotOptions? options,
+  ]) {
+    final data = snapshot.data() ?? {};
+
+    return Activite(
+      id: snapshot.id,
+      titre: data['titre'] ?? '',
+      description: data['description'] ?? '',
+      categorieId: data['categorieId'] ?? '',
+      difficulte: data['difficulte'] ?? 'facile',
+      ageMinimum: (data['ageMinimum'] as num?)?.toInt() ?? 3,
+      ageMaximum: (data['ageMaximum'] as num?)?.toInt() ?? 6,
+      dureeEnMinutes: (data['dureeEnMinutes'] as num?)?.toInt() ?? 5,
+      materiels: List<String>.from(data['materiels'] ?? []),
+      objectifsApprentissage: List<String>.from(data['objectifsApprentissage'] ?? []),
+      statut: PublicationStatus.values.firstWhere(
+        (e) => e.name == data['statut'],
+        orElse: () => PublicationStatus.brouillon,
+      ),
+      imageUrl: data['imageUrl'],
+      points: (data['points'] as num?)?.toInt() ?? 0,
+      dateCreation: (data['dateCreation'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      dateModification: (data['dateModification'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      ordreAffichage: (data['ordreAffichage'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  // Conversion de l'objet en Map pour l'enregistrement Firestore
+  Map<String, dynamic> toFirestore() {
+    return {
+      'titre': titre,
+      'description': description,
+      'categorieId': categorieId,
+      'difficulte': difficulte,
+      'ageMinimum': ageMinimum,
+      'ageMaximum': ageMaximum,
+      'dureeEnMinutes': dureeEnMinutes,
+      'materiels': materiels,
+      'objectifsApprentissage': objectifsApprentissage,
+      'statut': statut.name,
+      if (imageUrl != null) 'imageUrl': imageUrl,
+      'points': points,
+      'dateCreation': Timestamp.fromDate(dateCreation),
+      'dateModification': Timestamp.fromDate(dateModification),
+      'ordreAffichage': ordreAffichage,
+    };
+  }
+
   static Activite empty() {
     return Activite(
       titre: '',
