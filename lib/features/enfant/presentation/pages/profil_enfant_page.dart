@@ -28,7 +28,8 @@ class ProfilEnfantPages extends ConsumerWidget {
       );
     }
 
-    final wishesCount = enfant.souhait.length;
+    final wishesCount =
+        enfant.souhait.where((s) => !s.contains(' ') && s.isNotEmpty).length;
     final activitiesCount = enfant.resultatsActivite.length;
     final starsCount = (activitiesCount * 15) + 30;
     final level = (enfant.age + (activitiesCount ~/ 5)).clamp(1, 10);
@@ -74,7 +75,7 @@ class ProfilEnfantPages extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Mon Profil 🎈',
+                          'Mon Profil',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w900,

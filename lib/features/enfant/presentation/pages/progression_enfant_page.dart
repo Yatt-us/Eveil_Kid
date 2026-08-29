@@ -25,44 +25,44 @@ class ProgressionEnfantPage extends ConsumerWidget {
 
     final badges = [
       {
-        'title': 'Premier Pas 🌟',
+        'title': 'Premier Pas',
         'desc': 'Première activité complétée !',
-        'icon': '🌟',
+        'icon': Icons.stars_rounded,
         'unlocked': true,
         'color': const Color(0xFFFEF3C7),
       },
       {
-        'title': 'Ami des Animaux 🦁',
+        'title': 'Ami des Animaux',
         'desc': '3 défis sur les animaux réussis',
-        'icon': '🦁',
+        'icon': Icons.pets_rounded,
         'unlocked': true,
         'color': const Color(0xFFFFEDD5),
       },
       {
-        'title': 'As du Calcul 🔢',
+        'title': 'As du Calcul',
         'desc': 'Champion des chiffres jusqu’à 10',
-        'icon': '🔢',
+        'icon': Icons.calculate_rounded,
         'unlocked': completedCount >= 2,
         'color': const Color(0xFFE0F2FE),
       },
       {
-        'title': 'Artiste Étoilé 🎨',
+        'title': 'Artiste Étoilé',
         'desc': 'Toutes les couleurs maîtrisées',
-        'icon': '🎨',
+        'icon': Icons.palette_rounded,
         'unlocked': completedCount >= 4,
         'color': const Color(0xFFF3E8FF),
       },
       {
-        'title': 'Pilote de l’Espace 🚀',
+        'title': 'Pilote de l’Espace',
         'desc': 'Atteindre le niveau 5',
-        'icon': '🚀',
+        'icon': Icons.rocket_launch_rounded,
         'unlocked': level >= 5,
         'color': const Color(0xFFDCFCE7),
       },
       {
-        'title': 'Super Champion 👑',
+        'title': 'Super Champion',
         'desc': 'Terminer 10 activités avec succès',
-        'icon': '👑',
+        'icon': Icons.workspace_premium_rounded,
         'unlocked': completedCount >= 10,
         'color': const Color(0xFFFCE7F3),
       },
@@ -109,7 +109,7 @@ class ProgressionEnfantPage extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Ma Progression 🌟',
+                          'Ma Progression',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w900,
@@ -308,7 +308,7 @@ class ProgressionEnfantPage extends ConsumerWidget {
 
                     // ── GALERIE DE TROPHÉES & BADGES ──
                     Text(
-                      'Mes Badges & Trophées 🏆',
+                      'Mes Badges & Trophées',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w900,
@@ -381,9 +381,12 @@ class ProgressionEnfantPage extends ConsumerWidget {
                                     ],
                                   ),
                                   child: Center(
-                                    child: Text(
-                                      b['icon'] as String,
-                                      style: const TextStyle(fontSize: 26),
+                                    child: Icon(
+                                      b['icon'] as IconData,
+                                      size: 28,
+                                      color: isUnlocked
+                                          ? KidTheme.primaryGreenDark
+                                          : Colors.grey,
                                     ),
                                   ),
                                 ),

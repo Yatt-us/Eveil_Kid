@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:eveilkid/core/themes/kid_theme.dart';
 import 'package:eveilkid/features/enfant/presentation/pages/tutoriel_detail_enfant_page.dart';
+import 'package:eveilkid/features/enfant/presentation/widgets/kid_filter_chip.dart';
 import 'package:eveilkid/features/tutoriels/models/tutoriel.dart';
 import 'package:eveilkid/features/tutoriels/providers/tutoriel_provider.dart';
 
@@ -155,18 +156,38 @@ class _TutorielsEnfantPageState extends ConsumerState<TutorielsEnfantPage> {
 
             // ── FILTRES D'ÂGE ──
             SizedBox(
-              height: 38,
+              height: 48,
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
                 scrollDirection: Axis.horizontal,
                 children: [
-                  _buildAgeChip('Tous les âges 🎈', null, theme, isDark),
+                  KidFilterChip(
+                    label: 'Tous les âges',
+                    icon: Icons.all_inclusive_rounded,
+                    isSelected: _selectedAgeFilter == null,
+                    onTap: () => setState(() => _selectedAgeFilter = null),
+                  ),
                   const SizedBox(width: 8),
-                  _buildAgeChip('0 - 3 ans 🍼', 2, theme, isDark),
+                  KidFilterChip(
+                    label: '0 - 3 ans',
+                    icon: Icons.child_care_rounded,
+                    isSelected: _selectedAgeFilter == 2,
+                    onTap: () => setState(() => _selectedAgeFilter = 2),
+                  ),
                   const SizedBox(width: 8),
-                  _buildAgeChip('4 - 6 ans 🧩', 5, theme, isDark),
+                  KidFilterChip(
+                    label: '4 - 6 ans',
+                    icon: Icons.toys_outlined,
+                    isSelected: _selectedAgeFilter == 5,
+                    onTap: () => setState(() => _selectedAgeFilter = 5),
+                  ),
                   const SizedBox(width: 8),
-                  _buildAgeChip('7 ans et + 🚀', 8, theme, isDark),
+                  KidFilterChip(
+                    label: '7 ans et +',
+                    icon: Icons.school_outlined,
+                    isSelected: _selectedAgeFilter == 8,
+                    onTap: () => setState(() => _selectedAgeFilter = 8),
+                  ),
                 ],
               ),
             ),
@@ -210,53 +231,6 @@ class _TutorielsEnfantPageState extends ConsumerState<TutorielsEnfantPage> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAgeChip(
-    String label,
-    int? ageValue,
-    ThemeData theme,
-    bool isDark,
-  ) {
-    final isSelected = _selectedAgeFilter == ageValue;
-
-    return GestureDetector(
-      onTap: () => setState(() => _selectedAgeFilter = ageValue),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? KidTheme.primaryGreen
-              : (isDark
-                  ? theme.colorScheme.surfaceContainerHighest
-                  : Colors.white),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected
-                ? KidTheme.primaryGreen
-                : theme.dividerColor.withValues(alpha: isDark ? 0.3 : 0.2),
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: KidTheme.primaryGreen.withValues(alpha: 0.25),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-            color: isSelected ? Colors.white : theme.colorScheme.onSurface,
-          ),
         ),
       ),
     );

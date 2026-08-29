@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:eveilkid/core/themes/kid_theme.dart';
 import 'package:eveilkid/features/categories/providers/categorie_provider.dart';
+import 'package:eveilkid/features/enfant/presentation/widgets/kid_filter_chip.dart';
 import 'package:eveilkid/features/enfant/providers/child_mode_provider.dart';
 import 'package:eveilkid/features/enfant/providers/enfant_providers.dart';
 import 'package:eveilkid/features/jouets/models/jouet.dart';
@@ -130,7 +131,7 @@ class _ListeJouetsPageState extends ConsumerState<ListeJouetsPage> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${enfant?.souhait.length ?? 0}',
+                          '${enfant?.souhait.where((s) => !s.contains(' ') && s.isNotEmpty).length ?? 0}',
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w900,
@@ -192,18 +193,20 @@ class _ListeJouetsPageState extends ConsumerState<ListeJouetsPage> {
 
               // ── PUCES DE CATÉGORIES ──
               SizedBox(
-                height: 40,
+                height: 48,
                 child: categoriesAsync.when(
                   data: (categories) {
                     final chips = <Widget>[
-                      _FilterChip(
-                        label: 'Tous les jouets 🎈',
+                      KidFilterChip(
+                        label: 'Tous les jouets',
+                        icon: Icons.all_inclusive_rounded,
                         isSelected: _selectedCategoryId == null,
                         onTap: () => setState(() => _selectedCategoryId = null),
                       ),
                       ...categories.map(
-                        (cat) => _FilterChip(
+                        (cat) => KidFilterChip(
                           label: cat.nom,
+                          icon: Icons.category_outlined,
                           isSelected: _selectedCategoryId == cat.categorieId,
                           onTap: () {
                             setState(() {
@@ -218,6 +221,7 @@ class _ListeJouetsPageState extends ConsumerState<ListeJouetsPage> {
                     ];
 
                     return ListView.separated(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
                       scrollDirection: Axis.horizontal,
                       itemCount: chips.length,
                       separatorBuilder: (_, _) => const SizedBox(width: 8),
@@ -303,8 +307,8 @@ class _ListeJouetsPageState extends ConsumerState<ListeJouetsPage> {
       SnackBar(
         content: Text(
           isNowWished
-              ? '💖 "${jouet.nom}" ajouté à ta liste de souhaits !'
-              : '💔 "${jouet.nom}" retiré de ta liste de souhaits.',
+              ? '"${jouet.nom}" ajouté à ta liste de souhaits !'
+              : '"${jouet.nom}" retiré de ta liste de souhaits.',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor:
@@ -466,7 +470,7 @@ class _ListeJouetsPageState extends ConsumerState<ListeJouetsPage> {
                     label: Text(
                       isWished
                           ? 'Dans mes souhaits (Retirer)'
-                          : 'Ajouter à mes souhaits ❤️',
+                          : 'Ajouter à mes souhaits',
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w900,
@@ -542,61 +546,6 @@ class _ListeJouetsPageState extends ConsumerState<ListeJouetsPage> {
   }
 }
 
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _FilterChip({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? KidTheme.primaryGreen
-              : (isDark
-                  ? theme.colorScheme.surfaceContainerHighest
-                  : Colors.white),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected
-                ? KidTheme.primaryGreen
-                : theme.dividerColor.withValues(alpha: isDark ? 0.3 : 0.2),
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: KidTheme.primaryGreen.withValues(alpha: 0.25),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.white : theme.colorScheme.onSurface,
-            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-            fontSize: 12.5,
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class _KidToyCard extends StatelessWidget {
   final Jouet jouet;

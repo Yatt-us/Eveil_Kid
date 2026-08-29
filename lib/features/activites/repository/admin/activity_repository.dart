@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:eveilkid/core/cloudinary/cloudinary_service.dart';
+import 'package:eveilkid/features/activites/enums/publication_status.enum.dart';
 import 'package:eveilkid/features/activites/mappers/activity_mapper.dart';
 import 'package:eveilkid/features/activites/models/activity.dart';
 
@@ -19,13 +20,26 @@ class ActivityRepository {
   Future<List<Activite>> getAllActivites() async {
     try {
       final snapshot = await _activitesRef
-          .where('statut', isEqualTo: 'publie')
           .orderBy('ordreAffichage')
           .get();
       
-      return ActivityMapper.fromFirestoreList(snapshot.docs);
-    } catch (e) {
-      throw Exception('Erreur lors de la récupération: $e');
+      final list = ActivityMapper.fromFirestoreList(snapshot.docs);
+      return list.where((a) => a.statut == PublicationStatus.publie).toList();
+    } catch (_) {
+      try {
+        final snapshot = await _activitesRef
+            .where('statut', isEqualTo: 'publie')
+            .get();
+        final list = ActivityMapper.fromFirestoreList(snapshot.docs);
+        list.sort((a, b) => a.ordreAffichage.compareTo(b.ordreAffichage));
+        return list;
+      } catch (e) {
+        final snapshot = await _activitesRef.get();
+        final list = ActivityMapper.fromFirestoreList(snapshot.docs);
+        final published = list.where((a) => a.statut == PublicationStatus.publie).toList();
+        published.sort((a, b) => a.ordreAffichage.compareTo(b.ordreAffichage));
+        return published;
+      }
     }
   }
 

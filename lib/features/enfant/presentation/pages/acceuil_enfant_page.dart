@@ -22,26 +22,10 @@ class AccueilEnfantPage extends ConsumerStatefulWidget {
   ConsumerState<AccueilEnfantPage> createState() => _AccueilEnfantPageState();
 }
 
-class _AccueilEnfantPageState extends ConsumerState<AccueilEnfantPage>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _floatAnimController;
-  late final Animation<double> _floatAnimation;
-
+class _AccueilEnfantPageState extends ConsumerState<AccueilEnfantPage> {
   @override
   void initState() {
     super.initState();
-
-    _floatAnimController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 3),
-    )..repeat(reverse: true);
-
-    _floatAnimation = Tween<double>(begin: -4.0, end: 4.0).animate(
-      CurvedAnimation(
-        parent: _floatAnimController,
-        curve: Curves.easeInOut,
-      ),
-    );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final parentId = FirebaseAuth.instance.currentUser?.uid;
@@ -69,12 +53,6 @@ class _AccueilEnfantPageState extends ConsumerState<AccueilEnfantPage>
         ref.read(enfantNotifierProvider.notifier).chargerEnfants(parentId);
       }
     });
-  }
-
-  @override
-  void dispose() {
-    _floatAnimController.dispose();
-    super.dispose();
   }
 
   @override
@@ -163,14 +141,12 @@ class _AccueilEnfantPageState extends ConsumerState<AccueilEnfantPage>
     final starsCount = (completedCount * 15) + 30;
     final level = (enfant.age + (completedCount ~/ 5)).clamp(1, 10);
 
-    // Les 6 modules ludiques de l'espace enfant
+    // Les 6 modules ludiques sans texte, basés sur de grandes icônes iconiques
     final modules = [
       _ModuleItem(
-        title: 'Activités',
-        subtitle: 'Jeux & Défis',
-        badge: '$completedCount faites',
         icon: Icons.sports_esports_rounded,
         lightBackground: const Color(0xFFF3E8FF),
+        gradientColors: [const Color(0xFFF3E8FF), const Color(0xFFE9D5FF)],
         accent: const Color(0xFF9333EA),
         onTap: () {
           Navigator.push(
@@ -182,11 +158,9 @@ class _AccueilEnfantPageState extends ConsumerState<AccueilEnfantPage>
         },
       ),
       _ModuleItem(
-        title: 'Tutoriels',
-        subtitle: 'Vidéos ludiques',
-        badge: 'Regarder',
         icon: Icons.smart_display_rounded,
         lightBackground: const Color(0xFFFFEDD5),
+        gradientColors: [const Color(0xFFFFEDD5), const Color(0xFFFED7AA)],
         accent: const Color(0xFFEA580C),
         onTap: () {
           Navigator.push(
@@ -198,11 +172,9 @@ class _AccueilEnfantPageState extends ConsumerState<AccueilEnfantPage>
         },
       ),
       _ModuleItem(
-        title: 'Jouets',
-        subtitle: 'Explorer & Rêver',
-        badge: 'Catalogue',
         icon: Icons.smart_toy_rounded,
         lightBackground: const Color(0xFFFEF3C7),
+        gradientColors: [const Color(0xFFFEF3C7), const Color(0xFFFDE68A)],
         accent: const Color(0xFFD97706),
         onTap: () {
           Navigator.push(
@@ -214,11 +186,9 @@ class _AccueilEnfantPageState extends ConsumerState<AccueilEnfantPage>
         },
       ),
       _ModuleItem(
-        title: 'Progression',
-        subtitle: 'Étoiles & Badges',
-        badge: 'Niveau $level',
         icon: Icons.stars_rounded,
         lightBackground: const Color(0xFFDCFCE7),
+        gradientColors: [const Color(0xFFDCFCE7), const Color(0xFFBBF7D0)],
         accent: const Color(0xFF16A34A),
         onTap: () {
           Navigator.push(
@@ -231,11 +201,9 @@ class _AccueilEnfantPageState extends ConsumerState<AccueilEnfantPage>
         },
       ),
       _ModuleItem(
-        title: 'Mes Souhaits',
-        subtitle: 'Idées cadeaux',
-        badge: '${enfant.souhait.length} jouets',
         icon: Icons.favorite_rounded,
         lightBackground: const Color(0xFFFCE7F3),
+        gradientColors: [const Color(0xFFFCE7F3), const Color(0xFFFBCFE8)],
         accent: const Color(0xFFDB2777),
         onTap: () {
           Navigator.push(
@@ -248,11 +216,9 @@ class _AccueilEnfantPageState extends ConsumerState<AccueilEnfantPage>
         },
       ),
       _ModuleItem(
-        title: 'Mon Profil',
-        subtitle: 'Avatar & Infos',
-        badge: '${enfant.age} ans',
         icon: Icons.face_rounded,
         lightBackground: const Color(0xFFE0F2FE),
+        gradientColors: [const Color(0xFFE0F2FE), const Color(0xFFBAE6FD)],
         accent: const Color(0xFF0284C7),
         onTap: () {
           Navigator.push(
@@ -293,7 +259,7 @@ class _AccueilEnfantPageState extends ConsumerState<AccueilEnfantPage>
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
-                          vertical: 6,
+                          vertical: 7,
                         ),
                         decoration: BoxDecoration(
                           color: KidTheme.primaryGreen.withValues(
@@ -309,8 +275,14 @@ class _AccueilEnfantPageState extends ConsumerState<AccueilEnfantPage>
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            const Icon(
+                              Icons.child_care_rounded,
+                              size: 16,
+                              color: KidTheme.primaryGreenDark,
+                            ),
+                            const SizedBox(width: 6),
                             const Text(
-                              '🎈 Espace Enfant',
+                              'Espace Enfant',
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w900,
@@ -340,7 +312,9 @@ class _AccueilEnfantPageState extends ConsumerState<AccueilEnfantPage>
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFEF3C7),
+                            color: isDark
+                                ? const Color(0xFF78350F).withValues(alpha: 0.4)
+                                : const Color(0xFFFEF3C7),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                               color: const Color(0xFFFDE68A),
@@ -423,135 +397,121 @@ class _AccueilEnfantPageState extends ConsumerState<AccueilEnfantPage>
 
                 const SizedBox(height: 18),
 
-                // ── BANNIÈRE HERO ENFANT AVEC AVATAR REBONDISSANT ──
-                AnimatedBuilder(
-                  animation: _floatAnimation,
-                  builder: (context, child) {
-                    return Transform.translate(
-                      offset: Offset(0, _floatAnimation.value),
-                      child: child,
-                    );
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: isDark
-                          ? [const Color(0xFF14532D), const Color(0xFF064E3B)]
-                          : [const Color(0xFFDCFCE7), const Color(0xFFBBF7D0)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(28),
-                      border: Border.all(
-                        color: KidTheme.primaryGreen.withValues(alpha: 0.4),
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: KidTheme.primaryGreen.withValues(
-                            alpha: isDark ? 0.25 : 0.12,
-                          ),
-                          blurRadius: 14,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
+                // ── BANNIÈRE HERO ENFANT (STATIQUE ET FIXE) ──
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: isDark
+                        ? [const Color(0xFF14532D), const Color(0xFF064E3B)]
+                        : [const Color(0xFFDCFCE7), const Color(0xFFBBF7D0)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    child: Row(
-                      children: [
-                        // Avatar enfant avec couronne ou anneau coloré
-                        Container(
-                          width: 74,
-                          height: 74,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white,
-                            border: Border.all(
-                              color: KidTheme.primaryGreen,
-                              width: 3,
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(
+                      color: KidTheme.primaryGreen.withValues(alpha: 0.4),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: KidTheme.primaryGreen.withValues(alpha: isDark ? 0.3 : 0.15),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      // Avatar avec contour festif
+                      Container(
+                        width: 68,
+                        height: 68,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 3),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.12),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.08),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: ClipOval(
-                            child: enfant.avatarUrl != null &&
-                                    enfant.avatarUrl!.isNotEmpty
-                                ? Image.network(
-                                    enfant.avatarUrl!,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, _, _) =>
-                                        _defaultAvatar(theme),
-                                  )
-                                : _defaultAvatar(theme),
-                          ),
+                          ],
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Salut ${enfant.nom} ! 🌟',
-                                style: TextStyle(
-                                  fontSize: 21,
-                                  fontWeight: FontWeight.w900,
-                                  color: isDark
-                                      ? Colors.white
-                                      : const Color(0xFF14532D),
-                                  letterSpacing: -0.4,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Niveau $level • Prêt pour l’aventure ?',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: isDark
-                                      ? const Color(0xFF86EFAC)
-                                      : const Color(0xFF166534),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              // Barre d'étoiles vers niveau suivant
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: LinearProgressIndicator(
-                                  value: progressValue,
-                                  minHeight: 6,
-                                  backgroundColor: isDark
-                                      ? Colors.black26
-                                      : Colors.white.withValues(alpha: 0.6),
-                                  valueColor:
-                                      const AlwaysStoppedAnimation<Color>(
-                                    KidTheme.primaryGreenDark,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                        child: ClipOval(
+                          child: enfant.avatarUrl != null &&
+                                  enfant.avatarUrl!.isNotEmpty
+                              ? Image.network(
+                                  enfant.avatarUrl!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, _, _) =>
+                                      _defaultAvatar(theme),
+                                )
+                              : _defaultAvatar(theme),
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 16),
+                      // Textes de bienvenue & Progression
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Salut ${enfant.nom} !',
+                              style: TextStyle(
+                                fontSize: 21,
+                                fontWeight: FontWeight.w900,
+                                color: isDark
+                                    ? Colors.white
+                                    : const Color(0xFF14532D),
+                                letterSpacing: -0.4,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Niveau $level • Prêt pour l’aventure ?',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: isDark
+                                    ? const Color(0xFF86EFAC)
+                                    : const Color(0xFF166534),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            // Barre d'étoiles vers niveau suivant
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: LinearProgressIndicator(
+                                value: progressValue,
+                                minHeight: 6,
+                                backgroundColor: isDark
+                                    ? Colors.black26
+                                    : Colors.white.withValues(alpha: 0.6),
+                                valueColor:
+                                    const AlwaysStoppedAnimation<Color>(
+                                  KidTheme.primaryGreenDark,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
 
                 const SizedBox(height: 24),
 
-                // ── TITRE SECTION : MES UNIVERS ──
+                // ── TITRE SECTION : MES MONDES ──
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Tes Mondes de Découverte ✨',
+                      'Tes Mondes de Découverte',
                       style: theme.textTheme.titleMedium?.copyWith(
                             fontSize: 18,
                             fontWeight: FontWeight.w900,
@@ -568,34 +528,37 @@ class _AccueilEnfantPageState extends ConsumerState<AccueilEnfantPage>
 
                 const SizedBox(height: 14),
 
-                // ── GRILLE DES 6 MODULES ENFANTS ──
-                GridView.count(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 14,
-                  mainAxisSpacing: 14,
-                  childAspectRatio: 0.96,
-                  children: modules
-                      .map(
-                        (module) => _CarteAccueilModule(
-                          iconData: module.icon,
-                          titre: module.title,
-                          sousTitre: module.subtitle,
-                          badge: module.badge,
-                          lightBackground: module.lightBackground,
-                          couleurIcone: module.accent,
-                          onTap: module.onTap,
-                        ),
-                      )
-                      .toList(),
+                // ── GRILLE DES 6 MODULES ENFANTS (100% VISUELLE AVEC GRANDES ICÔNES ET SANS TEXTE) ──
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isTabletOrDesktop = constraints.maxWidth >= 600;
+                    return GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: isTabletOrDesktop ? 3 : 2,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 1.05,
+                      children: modules
+                          .map(
+                            (module) => _CarteAccueilModule(
+                              iconData: module.icon,
+                              gradientColors: module.gradientColors,
+                              lightBackground: module.lightBackground,
+                              couleurIcone: module.accent,
+                              onTap: module.onTap,
+                            ),
+                          )
+                          .toList(),
+                    );
+                  },
                 ),
 
                 const SizedBox(height: 24),
 
                 // ── SECTION DÉFI DU JOUR / CONTINUER ──
                 Text(
-                  'Défi du moment 🏆',
+                  'Défi du moment',
                   style: theme.textTheme.titleMedium?.copyWith(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
@@ -634,7 +597,7 @@ class _AccueilEnfantPageState extends ConsumerState<AccueilEnfantPage>
                   child: Row(
                     children: [
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(18),
                         child: Container(
                           width: 60,
                           height: 60,
@@ -663,7 +626,7 @@ class _AccueilEnfantPageState extends ConsumerState<AccueilEnfantPage>
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              '+20 étoiles à gagner ! ⭐',
+                              '+20 points à gagner',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
@@ -676,7 +639,7 @@ class _AccueilEnfantPageState extends ConsumerState<AccueilEnfantPage>
                         ),
                       ),
                       const SizedBox(width: 8),
-                      ElevatedButton(
+                      ElevatedButton.icon(
                         onPressed: () {
                           Navigator.push(
                             context,
@@ -687,7 +650,11 @@ class _AccueilEnfantPageState extends ConsumerState<AccueilEnfantPage>
                             ),
                           );
                         },
+                        icon: const Icon(Icons.play_arrow_rounded, size: 20),
+                        label: const Text('Jouer'),
                         style: ElevatedButton.styleFrom(
+                          backgroundColor: KidTheme.primaryGreen,
+                          foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 14,
                             vertical: 10,
@@ -696,7 +663,6 @@ class _AccueilEnfantPageState extends ConsumerState<AccueilEnfantPage>
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: const Text('Jouer ▶'),
                       ),
                     ],
                   ),
@@ -738,15 +704,16 @@ class _AccueilEnfantPageState extends ConsumerState<AccueilEnfantPage>
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Changer de profil enfant 🎈',
+                const SizedBox(height: 18),
+                Text(
+                  'Changer de profil',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w900,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
                 ...enfants.map((item) {
                   final isSelected = item.enfantId == activeChild.enfantId;
                   return ListTile(
@@ -805,125 +772,121 @@ class _AccueilEnfantPageState extends ConsumerState<AccueilEnfantPage>
 }
 
 class _ModuleItem {
-  final String title;
-  final String subtitle;
-  final String badge;
   final IconData icon;
   final Color lightBackground;
+  final List<Color> gradientColors;
   final Color accent;
   final VoidCallback onTap;
 
   const _ModuleItem({
-    required this.title,
-    required this.subtitle,
-    required this.badge,
     required this.icon,
     required this.lightBackground,
+    required this.gradientColors,
     required this.accent,
     required this.onTap,
   });
 }
 
-class _CarteAccueilModule extends StatelessWidget {
+/// Carte de module ludique 100% visuelle, ultra-animée avec grande icône pour enfant.
+class _CarteAccueilModule extends StatefulWidget {
   final IconData iconData;
-  final String titre;
-  final String sousTitre;
-  final String badge;
   final Color lightBackground;
+  final List<Color> gradientColors;
   final Color couleurIcone;
   final VoidCallback onTap;
 
   const _CarteAccueilModule({
     required this.iconData,
-    required this.titre,
-    required this.sousTitre,
-    required this.badge,
     required this.lightBackground,
+    required this.gradientColors,
     required this.couleurIcone,
     required this.onTap,
   });
+
+  @override
+  State<_CarteAccueilModule> createState() => _CarteAccueilModuleState();
+}
+
+class _CarteAccueilModuleState extends State<_CarteAccueilModule> {
+  bool _isPressed = false;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final backgroundColor = isDark
-        ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)
-        : lightBackground;
+    final cardBgColor = isDark
+        ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.55)
+        : widget.lightBackground;
 
-    return Material(
-      color: backgroundColor,
-      borderRadius: BorderRadius.circular(26),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(26),
+    final double scale = _isPressed ? 0.91 : 1.0;
+
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) {
+        setState(() => _isPressed = false);
+        widget.onTap();
+      },
+      onTapCancel: () => setState(() => _isPressed = false),
+      child: AnimatedScale(
+        scale: scale,
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutBack,
         child: Container(
-          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(26),
+            gradient: isDark
+                ? null
+                : LinearGradient(
+                    colors: widget.gradientColors,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+            color: cardBgColor,
+            borderRadius: BorderRadius.circular(32),
             border: Border.all(
               color: isDark
-                  ? theme.dividerColor.withValues(alpha: 0.25)
-                  : couleurIcone.withValues(alpha: 0.2),
-              width: 1.5,
+                  ? theme.dividerColor.withValues(alpha: 0.3)
+                  : widget.couleurIcone.withValues(alpha: 0.25),
+              width: 1.8,
             ),
             boxShadow: [
               BoxShadow(
-                color: (isDark ? Colors.black : couleurIcone).withValues(
-                  alpha: isDark ? 0.2 : 0.06,
+                color: (isDark ? Colors.black : widget.couleurIcone).withValues(
+                  alpha: isDark ? 0.35 : 0.18,
                 ),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
+                blurRadius: 14,
+                spreadRadius: 1,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: isDark ? theme.colorScheme.surface : Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: couleurIcone.withValues(alpha: 0.2),
+          child: Center(
+            child: Container(
+              width: 78,
+              height: 78,
+              decoration: BoxDecoration(
+                color: isDark ? theme.colorScheme.surface : Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: widget.couleurIcone.withValues(alpha: isDark ? 0.3 : 0.2),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: widget.couleurIcone.withValues(alpha: isDark ? 0.4 : 0.2),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(
-                        alpha: isDark ? 0.25 : 0.05,
-                      ),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Icon(iconData, color: couleurIcone, size: 28),
+                ],
               ),
-              const SizedBox(height: 10),
-              Text(
-                titre,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w900,
-                  color: theme.colorScheme.onSurface,
+              child: Center(
+                child: Icon(
+                  widget.iconData,
+                  color: widget.couleurIcone,
+                  size: 46,
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                sousTitre,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: theme.colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

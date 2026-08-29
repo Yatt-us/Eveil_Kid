@@ -18,13 +18,21 @@ class QuestionRepository {
   Future<List<Question>> getQuestionsByActivite(String activiteId) async {
     try {
       final snapshot = await _getQuestionsCollection(activiteId)
-          .where('estArchive', isEqualTo: false) 
           .orderBy('ordre')
           .get();
       
-      return snapshot.docs.map((doc) => _fromFirestore(doc, activiteId)).toList();
-    } catch (e) {
-      throw Exception('Erreur: $e');
+      final list = snapshot.docs.map((doc) => _fromFirestore(doc, activiteId)).toList();
+      return list.where((q) => !q.estArchive).toList();
+    } catch (_) {
+      try {
+        final snapshot = await _getQuestionsCollection(activiteId).get();
+        final list = snapshot.docs.map((doc) => _fromFirestore(doc, activiteId)).toList();
+        final activeQuestions = list.where((q) => !q.estArchive).toList();
+        activeQuestions.sort((a, b) => a.ordre.compareTo(b.ordre));
+        return activeQuestions;
+      } catch (e) {
+        throw Exception('Erreur: $e');
+      }
     }
   }
 

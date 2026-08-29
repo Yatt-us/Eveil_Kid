@@ -65,7 +65,7 @@ class ListeSouhaitsEnfantPage extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Mes Souhaits 💖',
+                          'Mes Souhaits',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w900,
@@ -84,24 +84,32 @@ class ListeSouhaitsEnfantPage extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFCE7F3),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFFBCFE8)),
-                    ),
-                    child: Text(
-                      '${enfant?.souhait.length ?? 0} souhait${(enfant?.souhait.length ?? 0) > 1 ? 's' : ''}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF9D174D),
-                      ),
-                    ),
+                  Builder(
+                    builder: (context) {
+                      final cleanWishCount = enfant?.souhait
+                              .where((s) => !s.contains(' ') && s.isNotEmpty)
+                              .length ??
+                          0;
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFCE7F3),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: const Color(0xFFFBCFE8)),
+                        ),
+                        child: Text(
+                          '$cleanWishCount souhait${cleanWishCount > 1 ? 's' : ''}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF9D174D),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -119,7 +127,9 @@ class ListeSouhaitsEnfantPage extends ConsumerWidget {
                   ),
                 ),
                 data: (allJouets) {
-                  final wishIds = enfant?.souhait ?? [];
+                  final wishIds = (enfant?.souhait ?? [])
+                      .where((s) => !s.contains(' ') && s.isNotEmpty)
+                      .toSet();
                   final wishedToys = allJouets
                       .where((j) => wishIds.contains(j.jouetId))
                       .toList();
@@ -169,7 +179,7 @@ class ListeSouhaitsEnfantPage extends ConsumerWidget {
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: theme.dividerColor.withValues(alpha: isDark ? 0.25 : 0.15),
+          color: const Color(0xFFDB2777).withValues(alpha: isDark ? 0.35 : 0.2),
           width: 1.2,
         ),
         boxShadow: [
@@ -195,13 +205,13 @@ class ListeSouhaitsEnfantPage extends ConsumerWidget {
                         jouet.imagePrincipaleUrl,
                         fit: BoxFit.cover,
                         errorBuilder: (_, _, _) => const Icon(
-                          Icons.card_giftcard_rounded,
+                          Icons.smart_toy_rounded,
                           size: 36,
                           color: Color(0xFFD97706),
                         ),
                       )
                     : const Icon(
-                        Icons.card_giftcard_rounded,
+                        Icons.smart_toy_rounded,
                         size: 36,
                         color: Color(0xFFD97706),
                       ),
@@ -212,6 +222,37 @@ class ListeSouhaitsEnfantPage extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Badge Souhait de l'enfant
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2.5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFCE7F3),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.favorite_rounded,
+                          size: 12,
+                          color: Color(0xFFDB2777),
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          'Choisi par l’enfant',
+                          style: TextStyle(
+                            color: Color(0xFFBE185D),
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 5),
                   Text(
                     jouet.nom,
                     maxLines: 1,
@@ -289,8 +330,8 @@ class ListeSouhaitsEnfantPage extends ConsumerWidget {
           children: [
             Container(
               padding: const EdgeInsets.all(22),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFCE7F3),
+              decoration: const BoxDecoration(
+                color: Color(0xFFFCE7F3),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -330,7 +371,7 @@ class ListeSouhaitsEnfantPage extends ConsumerWidget {
               },
               icon: const Icon(Icons.search_rounded),
               label: const Text(
-                'Découvrir les jouets 🧸',
+                'Découvrir les jouets',
                 style: TextStyle(fontWeight: FontWeight.w800),
               ),
             ),

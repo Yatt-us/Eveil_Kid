@@ -127,5 +127,53 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getString('child_mode_active_child_id'), equals('enfant_B'));
     });
+
+    test('toggleWishlist() adds and removes toy from child wishes', () async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final enfant = EnfantModel(
+        enfantId: 'enfant_10',
+        utilisateurId: 'parent_10',
+        nom: 'Lucas',
+        genre: 'Garçon',
+        dateNaissance: DateTime(2020, 1, 1),
+        souhait: ['jouet_existing'],
+        resultatsActivite: [],
+        codeSecuriteHash: '',
+        estActif: true,
+        dateCreation: DateTime.now(),
+        dateModification: DateTime.now(),
+      );
+
+      await container.read(childModeProvider.notifier).enterChildMode(
+            childId: 'enfant_10',
+            child: enfant,
+          );
+
+      // Ajouter un nouveau jouet
+      await container.read(childModeProvider.notifier).toggleWishlist(
+            parentId: 'parent_10',
+            enfantId: 'enfant_10',
+            jouetId: 'jouet_new',
+          );
+
+      var state = container.read(childModeProvider);
+      expect(state.activeChild?.souhait, contains('jouet_new'));
+      expect(state.activeChild?.souhait, contains('jouet_existing'));
+      expect(state.activeChild?.souhait.length, equals(2));
+
+      // Retirer le jouet
+      await container.read(childModeProvider.notifier).toggleWishlist(
+            parentId: 'parent_10',
+            enfantId: 'enfant_10',
+            jouetId: 'jouet_new',
+          );
+
+      state = container.read(childModeProvider);
+      expect(state.activeChild?.souhait, isNot(contains('jouet_new')));
+      expect(state.activeChild?.souhait, contains('jouet_existing'));
+      expect(state.activeChild?.souhait.length, equals(1));
+    });
   });
 }

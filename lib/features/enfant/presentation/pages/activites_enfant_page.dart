@@ -3,104 +3,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:eveilkid/core/themes/kid_theme.dart';
 import 'package:eveilkid/features/activites/models/activity.dart';
 import 'package:eveilkid/features/activites/providers/admin/activity_provider.dart';
+import 'package:eveilkid/features/categories/models/categorie.dart';
+import 'package:eveilkid/features/categories/providers/categorie_provider.dart';
+import 'package:eveilkid/features/enfant/model/enfant_model.dart';
+import 'package:eveilkid/features/enfant/presentation/pages/questions_enfant_page.dart';
+import 'package:eveilkid/features/enfant/presentation/widgets/kid_filter_chip.dart';
 import 'package:eveilkid/features/enfant/providers/child_mode_provider.dart';
 import 'package:eveilkid/features/enfant/providers/enfant_providers.dart';
+import 'package:eveilkid/shared/widgets/app_states.dart';
 
 class ActivitesEnfantPage extends ConsumerStatefulWidget {
   const ActivitesEnfantPage({super.key});
 
   @override
-  ConsumerState<ActivitesEnfantPage> createState() =>
-      _ActivitesEnfantPageState();
+  ConsumerState<ActivitesEnfantPage> createState() => _ActivitesEnfantPageState();
 }
 
 class _ActivitesEnfantPageState extends ConsumerState<ActivitesEnfantPage> {
   int _filtreStatut = 0; // 0 = Toutes, 1 = En cours, 2 = Terminées
-  String _categorieSelectionnee = 'Toutes';
-
-  final List<String> _categories = const [
-    'Toutes',
-    'Maths 🔢',
-    'Animaux 🦁',
-    'Couleurs 🎨',
-    'Formes 🔷',
-    'Éveil 🚀',
-  ];
-
-  final List<Map<String, dynamic>> _activitesParDefaut = const [
-    {
-      'id': '1',
-      'titre': 'Le Safari des Animaux',
-      'categorie': 'Animaux 🦁',
-      'duree': '10 min',
-      'emoji': '🦁',
-      'progression': 0.80,
-      'difficulte': 'Facile',
-      'points': 20,
-      'description':
-          'Reconnais les animaux de la savane et apprends leurs cris rigolos !',
-    },
-    {
-      'id': '2',
-      'titre': 'La Ronde des Couleurs',
-      'categorie': 'Couleurs 🎨',
-      'duree': '8 min',
-      'emoji': '🎨',
-      'progression': 0.90,
-      'difficulte': 'Facile',
-      'points': 15,
-      'description':
-          'Mélange les couleurs primaires et découvre de magnifiques teintes magiques.',
-    },
-    {
-      'id': '3',
-      'titre': 'Comptons les Étoiles',
-      'categorie': 'Maths 🔢',
-      'duree': '12 min',
-      'emoji': '🔢',
-      'progression': 0.50,
-      'difficulte': 'Moyen',
-      'points': 25,
-      'description':
-          'Apprends à compter jusqu’à 10 avec des constellations lumineuses.',
-    },
-    {
-      'id': '4',
-      'titre': 'Puzzle des Formes Géométriques',
-      'categorie': 'Formes 🔷',
-      'duree': '10 min',
-      'emoji': '🔷',
-      'progression': 0.35,
-      'difficulte': 'Moyen',
-      'points': 20,
-      'description':
-          'Assemble les ronds, carrés et triangles pour construire un château.',
-    },
-    {
-      'id': '5',
-      'titre': 'Voyage dans l’Espace',
-      'categorie': 'Éveil 🚀',
-      'duree': '15 min',
-      'emoji': '🚀',
-      'progression': 0.10,
-      'difficulte': 'Champion',
-      'points': 30,
-      'description':
-          'Explore le système solaire et pilote ta propre fusée spatiale !',
-    },
-    {
-      'id': '6',
-      'titre': 'Le Panier de Fruits Délicieux',
-      'categorie': 'Éveil 🚀',
-      'duree': '7 min',
-      'emoji': '🍎',
-      'progression': 1.0,
-      'difficulte': 'Facile',
-      'points': 15,
-      'description':
-          'Nomme les fruits savoureux et découvre leurs vitamines d’énergie.',
-    },
-  ];
+  String? _selectedCategorieId; // null = Toutes les catégories
 
   @override
   Widget build(BuildContext context) {
@@ -114,13 +35,23 @@ class _ActivitesEnfantPageState extends ConsumerState<ActivitesEnfantPage> {
         );
 
     final firestoreActivitesAsync = ref.watch(activitesProvider);
+    final categoriesAsync = ref.watch(categoriesProvider);
+
+    final categoriesMap = <String, String>{};
+    categoriesAsync.whenData((categories) {
+      for (final cat in categories) {
+        categoriesMap[cat.categorieId] = cat.nom;
+      }
+    });
+
+    final totalStars = _calculateTotalStars(enfant);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
-            // ── APP BAR LUDIQUE ENFANT ──
+            // ── BARRE SUPÉRIEURE ──
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
               child: Row(
@@ -156,16 +87,16 @@ class _ActivitesEnfantPageState extends ConsumerState<ActivitesEnfantPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Jeux & Activités 🎮',
+                          'Jeux et Activités',
                           style: TextStyle(
-                            fontSize: 20,
+                            fontSize: 19,
                             fontWeight: FontWeight.w900,
                             color: theme.colorScheme.onSurface,
                             letterSpacing: -0.3,
                           ),
                         ),
                         Text(
-                          'Apprends en t’amusant !',
+                          'Défis et apprentissage ludique',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -177,11 +108,13 @@ class _ActivitesEnfantPageState extends ConsumerState<ActivitesEnfantPage> {
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
+                      horizontal: 12,
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFEF3C7),
+                      color: isDark
+                          ? const Color(0xFF78350F).withValues(alpha: 0.4)
+                          : const Color(0xFFFEF3C7),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: const Color(0xFFFDE68A),
@@ -197,7 +130,7 @@ class _ActivitesEnfantPageState extends ConsumerState<ActivitesEnfantPage> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${(enfant?.resultatsActivite.length ?? 0) * 15 + 30} ⭐',
+                          '$totalStars points',
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w900,
@@ -211,119 +144,117 @@ class _ActivitesEnfantPageState extends ConsumerState<ActivitesEnfantPage> {
               ),
             ),
 
-            // ── FILTRES D'ÉTAT (Toutes, En cours, Terminées) ──
+            // ── BARRE DE FILTRE DE STATUT (SEGMENTED) ──
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  _buildStateFilterTab('Toutes', 0, theme, isDark),
-                  const SizedBox(width: 8),
-                  _buildStateFilterTab('En cours', 1, theme, isDark),
-                  const SizedBox(width: 8),
-                  _buildStateFilterTab('Terminées 🏆', 2, theme, isDark),
+              child: KidFilterSegmentBar(
+                items: const ['Toutes', 'En cours', 'Terminées'],
+                icons: const [
+                  Icons.grid_view_rounded,
+                  Icons.play_circle_outline_rounded,
+                  Icons.check_circle_outline_rounded,
                 ],
+                selectedIndex: _filtreStatut,
+                onSelected: (idx) => setState(() => _filtreStatut = idx),
               ),
             ),
 
             const SizedBox(height: 12),
 
-            // ── FILTRES PAR CATÉGORIES LUDIQUES ──
-            SizedBox(
-              height: 42,
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                scrollDirection: Axis.horizontal,
-                itemCount: _categories.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 8),
-                itemBuilder: (context, index) {
-                  final cat = _categories[index];
-                  final isSelected = _categorieSelectionnee == cat;
-
-                  return GestureDetector(
-                    onTap: () => setState(() => _categorieSelectionnee = cat),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 9,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? KidTheme.primaryGreen
-                            : (isDark
-                                ? theme.colorScheme.surfaceContainerHighest
-                                : Colors.white),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: isSelected
-                              ? KidTheme.primaryGreen
-                              : theme.dividerColor.withValues(
-                                  alpha: isDark ? 0.3 : 0.2,
-                                ),
-                          width: isSelected ? 1.5 : 1.0,
-                        ),
-                        boxShadow: isSelected
-                            ? [
-                                BoxShadow(
-                                  color: KidTheme.primaryGreen
-                                      .withValues(alpha: 0.3),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 2),
-                                )
-                              ]
-                            : null,
-                      ),
-                      child: Text(
-                        cat,
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight:
-                              isSelected ? FontWeight.w800 : FontWeight.w600,
-                          color: isSelected
-                              ? Colors.white
-                              : theme.colorScheme.onSurface,
-                        ),
-                      ),
-                    ),
-                  );
-                },
+            // ── FILTRES PAR CATÉGORIES (KID FILTER CHIPS) ──
+            categoriesAsync.when(
+              data: (categories) => _buildCategoriesBar(categories),
+              loading: () => const SizedBox(
+                height: 42,
+                child: Center(
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
               ),
+              error: (_, _) => const SizedBox.shrink(),
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
 
-            // ── LISTE DES ACTIVITÉS ──
+            // ── LISTE RESPONSIVE DES ACTIVITÉS ──
             Expanded(
-              child: firestoreActivitesAsync.maybeWhen(
-                data: (firestoreActivities) {
-                  final listToDisplay = _getFilteredActivities(firestoreActivities);
-
-                  if (listToDisplay.isEmpty) {
-                    return _buildEmptyState(theme, isDark);
-                  }
-
-                  return ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
-                    itemCount: listToDisplay.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final act = listToDisplay[index];
-                      return _buildActivityCard(act, theme, isDark);
-                    },
-                  );
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  ref.invalidate(activitesProvider);
+                  ref.invalidate(categoriesProvider);
                 },
-                orElse: () {
-                  final listToDisplay = _getFilteredActivities([]);
-                  return ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
-                    itemCount: listToDisplay.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final act = listToDisplay[index];
-                      return _buildActivityCard(act, theme, isDark);
-                    },
-                  );
-                },
+                child: firestoreActivitesAsync.when(
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                  error: (err, _) => Center(
+                    child: AppErrorState(
+                      title: 'Impossible de charger les activités',
+                      message: '$err',
+                      onRetry: () => ref.invalidate(activitesProvider),
+                    ),
+                  ),
+                  data: (activities) {
+                    final filteredActivities = _filterActivities(activities, enfant);
+
+                    if (filteredActivities.isEmpty) {
+                      return _buildEmptyState(theme);
+                    }
+
+                    return LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isTablet = constraints.maxWidth >= 600 && constraints.maxWidth < 960;
+                        final isDesktop = constraints.maxWidth >= 960;
+                        final horizontalPadding = isDesktop ? 32.0 : (isTablet ? 24.0 : 16.0);
+
+                        return Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 1200),
+                            child: isDesktop || isTablet
+                                ? GridView.builder(
+                                    padding: EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 30),
+                                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: isDesktop ? 3 : 2,
+                                      crossAxisSpacing: 14,
+                                      mainAxisSpacing: 14,
+                                      mainAxisExtent: 155,
+                                    ),
+                                    itemCount: filteredActivities.length,
+                                    itemBuilder: (context, index) {
+                                      final act = filteredActivities[index];
+                                      return _buildActivityCard(
+                                        activite: act,
+                                        enfant: enfant,
+                                        categorieNom: categoriesMap[act.categorieId] ?? 'Activité',
+                                        theme: theme,
+                                        isDark: isDark,
+                                      );
+                                    },
+                                  )
+                                : ListView.separated(
+                                    padding: EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 30),
+                                    itemCount: filteredActivities.length,
+                                    separatorBuilder: (_, _) => const SizedBox(height: 12),
+                                    itemBuilder: (context, index) {
+                                      final act = filteredActivities[index];
+                                      return _buildActivityCard(
+                                        activite: act,
+                                        enfant: enfant,
+                                        categorieNom: categoriesMap[act.categorieId] ?? 'Activité',
+                                        theme: theme,
+                                        isDark: isDark,
+                                      );
+                                    },
+                                  ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
             ),
           ],
@@ -332,153 +263,163 @@ class _ActivitesEnfantPageState extends ConsumerState<ActivitesEnfantPage> {
     );
   }
 
-  Widget _buildStateFilterTab(
-    String label,
-    int index,
-    ThemeData theme,
-    bool isDark,
-  ) {
-    final isSelected = _filtreStatut == index;
+  Widget _buildCategoriesBar(List<Categorie> categories) {
+    return SizedBox(
+      height: 48,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
+        scrollDirection: Axis.horizontal,
+        itemCount: categories.length + 1,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            final isSelected = _selectedCategorieId == null;
+            return KidFilterChip(
+              label: 'Toutes',
+              icon: Icons.all_inclusive_rounded,
+              isSelected: isSelected,
+              onTap: () => setState(() => _selectedCategorieId = null),
+            );
+          }
 
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _filtreStatut = index),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: isSelected
-                ? KidTheme.primaryGreen.withValues(alpha: isDark ? 0.25 : 0.15)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isSelected
-                  ? KidTheme.primaryGreen
-                  : theme.dividerColor.withValues(alpha: 0.15),
-            ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-              color: isSelected
-                  ? KidTheme.primaryGreenDark
-                  : theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
+          final cat = categories[index - 1];
+          final isSelected = _selectedCategorieId == cat.categorieId;
+
+          return KidFilterChip(
+            label: cat.nom,
+            icon: Icons.category_outlined,
+            isSelected: isSelected,
+            onTap: () => setState(() => _selectedCategorieId = cat.categorieId),
+          );
+        },
       ),
     );
   }
 
-  List<Map<String, dynamic>> _getFilteredActivities(
-    List<Activite> firestoreActivities,
-  ) {
-    var items = List<Map<String, dynamic>>.from(_activitesParDefaut);
-
-    if (firestoreActivities.isNotEmpty) {
-      for (final fa in firestoreActivities) {
-        items.add({
-          'id': fa.id ?? '',
-          'titre': fa.titre,
-          'categorie': 'Éveil 🚀',
-          'duree': '${fa.dureeEnMinutes} min',
-          'emoji': '⭐',
-          'progression': 0.0,
-          'difficulte': fa.difficulte.isNotEmpty ? fa.difficulte : 'Moyen',
-          'points': fa.points,
-          'description': fa.description,
-        });
-      }
-    }
-
-    return items.where((act) {
-      final prog = (act['progression'] as num).toDouble();
-
-      // Filtre statut
-      if (_filtreStatut == 1 && (prog <= 0.0 || prog >= 1.0)) return false;
-      if (_filtreStatut == 2 && prog < 1.0) return false;
-
-      // Filtre catégorie
-      if (_categorieSelectionnee != 'Toutes' &&
-          act['categorie'] != _categorieSelectionnee) {
+  List<Activite> _filterActivities(List<Activite> allActivities, EnfantModel? enfant) {
+    return allActivities.where((act) {
+      if (_selectedCategorieId != null && act.categorieId != _selectedCategorieId) {
         return false;
+      }
+
+      final progress = _getActivityProgress(act.id, enfant);
+      final isCompleted = progress >= 1.0;
+
+      if (_filtreStatut == 1) {
+        if (isCompleted || progress == 0.0) return false;
+      } else if (_filtreStatut == 2) {
+        if (!isCompleted) return false;
       }
 
       return true;
     }).toList();
   }
 
-  Widget _buildActivityCard(
-    Map<String, dynamic> act,
-    ThemeData theme,
-    bool isDark,
-  ) {
-    final prog = (act['progression'] as num).toDouble();
-    final isCompleted = prog >= 1.0;
+  double _getActivityProgress(String? activityId, EnfantModel? enfant) {
+    if (activityId == null || enfant == null) return 0.0;
+    final results = enfant.resultatsActivite;
+    for (final res in results) {
+      if (res is Map && res['activiteId'] == activityId) {
+        if (res['termine'] == true || res['estReussi'] == true) {
+          return 1.0;
+        }
+        final prog = res['progression'];
+        if (prog is num) return prog.toDouble();
+        return 0.5;
+      }
+    }
+    return 0.0;
+  }
+
+  int _calculateTotalStars(EnfantModel? enfant) {
+    if (enfant == null) return 30;
+    int total = 30;
+    for (final res in enfant.resultatsActivite) {
+      if (res is Map) {
+        final points = res['pointsGagnes'];
+        if (points is num) {
+          total += points.toInt();
+        } else {
+          total += 15;
+        }
+      }
+    }
+    return total;
+  }
+
+  Widget _buildActivityCard({
+    required Activite activite,
+    required EnfantModel? enfant,
+    required String categorieNom,
+    required ThemeData theme,
+    required bool isDark,
+  }) {
+    final progress = _getActivityProgress(activite.id, enfant);
+    final isCompleted = progress >= 1.0;
 
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(
           color: isCompleted
-              ? KidTheme.primaryGreen.withValues(alpha: 0.5)
-              : theme.dividerColor.withValues(alpha: isDark ? 0.25 : 0.15),
-          width: 1.5,
+              ? KidTheme.primaryGreen.withValues(alpha: 0.6)
+              : theme.dividerColor.withValues(alpha: isDark ? 0.25 : 0.12),
+          width: isCompleted ? 1.8 : 1.0,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(22),
         child: InkWell(
-          onTap: () => _showPlayActivitySheet(act),
-          borderRadius: BorderRadius.circular(24),
+          onTap: () => _showPlayActivitySheet(activite, categorieNom, isCompleted),
+          borderRadius: BorderRadius.circular(22),
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Row(
               children: [
-                // Icône / Emoji ludique
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? KidTheme.primaryGreen.withValues(alpha: 0.2)
-                        : const Color(0xFFDCFCE7),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: KidTheme.primaryGreen.withValues(alpha: 0.3),
+                // 1. Illustration / Badge Icône
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    width: 68,
+                    height: 68,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? KidTheme.primaryGreen.withValues(alpha: 0.2)
+                          : const Color(0xFFDCFCE7),
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      act['emoji'] ?? '🎮',
-                      style: const TextStyle(fontSize: 32),
-                    ),
+                    child: activite.imageUrl != null && activite.imageUrl!.isNotEmpty
+                        ? Image.network(
+                            activite.imageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => _buildDefaultActivityIcon(isDark),
+                          )
+                        : _buildDefaultActivityIcon(isDark),
                   ),
                 ),
 
                 const SizedBox(width: 14),
 
-                // Informations
+                // 2. Informations de l'activité
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Row(
                         children: [
                           Expanded(
                             child: Text(
-                              act['titre'],
+                              activite.titre,
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w800,
@@ -488,42 +429,76 @@ class _ActivitesEnfantPageState extends ConsumerState<ActivitesEnfantPage> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          if (isCompleted)
+                          if (isCompleted) ...[
+                            const SizedBox(width: 6),
                             const Icon(
                               Icons.check_circle_rounded,
                               color: KidTheme.primaryGreen,
                               size: 18,
                             ),
+                          ],
                         ],
                       ),
                       const SizedBox(height: 4),
+                      Text(
+                        categorieNom,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: KidTheme.primaryGreenDark,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 6),
                       Row(
                         children: [
-                          Text(
-                            '⏱ ${act['duree']}',
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w600,
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.schedule_rounded,
+                                size: 13,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 3),
+                              Text(
+                                '${activite.dureeEnMinutes} min',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(width: 10),
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFEF3C7),
-                              borderRadius: BorderRadius.circular(10),
+                              color: isDark
+                                  ? const Color(0xFF78350F).withValues(alpha: 0.4)
+                                  : const Color(0xFFFEF3C7),
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Text(
-                              '+${act['points']} ⭐',
-                              style: const TextStyle(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFFB45309),
-                              ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.star_rounded,
+                                  size: 13,
+                                  color: Color(0xFFD97706),
+                                ),
+                                const SizedBox(width: 3),
+                                Text(
+                                  '+${activite.points} pts',
+                                  style: const TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFFB45309),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -531,16 +506,13 @@ class _ActivitesEnfantPageState extends ConsumerState<ActivitesEnfantPage> {
                       const SizedBox(height: 8),
                       // Barre de progression
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(6),
                         child: LinearProgressIndicator(
-                          value: prog,
-                          minHeight: 6,
-                          backgroundColor:
-                              KidTheme.primaryGreen.withValues(alpha: 0.12),
+                          value: isCompleted ? 1.0 : progress,
+                          minHeight: 5,
+                          backgroundColor: KidTheme.primaryGreen.withValues(alpha: 0.12),
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            isCompleted
-                                ? KidTheme.primaryGreen
-                                : KidTheme.playfulSky,
+                            isCompleted ? KidTheme.primaryGreen : KidTheme.playfulSky,
                           ),
                         ),
                       ),
@@ -550,23 +522,19 @@ class _ActivitesEnfantPageState extends ConsumerState<ActivitesEnfantPage> {
 
                 const SizedBox(width: 10),
 
-                // Bouton Jouer
+                // 3. Bouton Lancer / Rejouer
                 Container(
                   width: 38,
                   height: 38,
                   decoration: BoxDecoration(
                     color: isCompleted
-                        ? const Color(0xFFDCFCE7)
+                        ? (isDark ? KidTheme.primaryGreen.withValues(alpha: 0.2) : const Color(0xFFDCFCE7))
                         : KidTheme.primaryGreen,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    isCompleted
-                        ? Icons.replay_rounded
-                        : Icons.play_arrow_rounded,
-                    color: isCompleted
-                        ? KidTheme.primaryGreenDark
-                        : Colors.white,
+                    isCompleted ? Icons.replay_rounded : Icons.play_arrow_rounded,
+                    color: isCompleted ? KidTheme.primaryGreenDark : Colors.white,
                     size: 22,
                   ),
                 ),
@@ -578,13 +546,26 @@ class _ActivitesEnfantPageState extends ConsumerState<ActivitesEnfantPage> {
     );
   }
 
-  void _showPlayActivitySheet(Map<String, dynamic> act) {
+  Widget _buildDefaultActivityIcon(bool isDark) {
+    return Center(
+      child: Icon(
+        Icons.sports_esports_rounded,
+        size: 32,
+        color: KidTheme.primaryGreenDark,
+      ),
+    );
+  }
+
+  void _showPlayActivitySheet(Activite act, String categorieNom, bool isCompleted) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: theme.colorScheme.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (ctx) {
         return SafeArea(
@@ -592,81 +573,138 @@ class _ActivitesEnfantPageState extends ConsumerState<ActivitesEnfantPage> {
             padding: const EdgeInsets.fromLTRB(22, 16, 22, 28),
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 44,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  act['emoji'] ?? '🎮',
-                  style: const TextStyle(fontSize: 56),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  act['titre'],
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFDCFCE7),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '${act['categorie']} • Durée : ${act['duree']}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: KidTheme.primaryGreenDark,
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white24 : Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  act['description'] ??
-                      'Une activité captivante pour stimuler ta créativité et ton raisonnement !',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade700,
-                    height: 1.4,
-                  ),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: KidTheme.primaryGreen.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(
+                        Icons.sports_esports_rounded,
+                        color: KidTheme.primaryGreenDark,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            act.titre,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              color: theme.colorScheme.onSurface,
+                            ),
+                          ),
+                          Text(
+                            '$categorieNom • ${act.dureeEnMinutes} min • +${act.points} points',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
+                if (act.description.isNotEmpty) ...[
+                  Text(
+                    act.description,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      height: 1.45,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                ],
+                if (act.objectifsApprentissage.isNotEmpty) ...[
+                  Text(
+                    'Objectifs :',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  ...act.objectifsApprentissage.map(
+                    (obj) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.check_rounded,
+                            size: 16,
+                            color: KidTheme.primaryGreen,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              obj,
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                ],
+                const SizedBox(height: 10),
                 SizedBox(
                   width: double.infinity,
-                  height: 52,
+                  height: 50,
                   child: ElevatedButton.icon(
                     onPressed: () {
                       Navigator.pop(ctx);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            '🌟 Défi "${act['titre']}" lancé ! Amuse-toi bien !',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          backgroundColor: KidTheme.primaryGreen,
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => QuestionsEnfantPage(activite: act),
                         ),
                       );
                     },
-                    icon: const Icon(Icons.rocket_launch_rounded),
-                    label: const Text(
-                      'Commencer l’aventure !',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: KidTheme.primaryGreen,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    icon: Icon(
+                      isCompleted ? Icons.replay_rounded : Icons.play_arrow_rounded,
+                      size: 22,
+                    ),
+                    label: Text(
+                      isCompleted ? 'Rejouer l\'activité' : 'Commencer le défi',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ),
@@ -679,7 +717,7 @@ class _ActivitesEnfantPageState extends ConsumerState<ActivitesEnfantPage> {
     );
   }
 
-  Widget _buildEmptyState(ThemeData theme, bool isDark) {
+  Widget _buildEmptyState(ThemeData theme) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -693,22 +731,23 @@ class _ActivitesEnfantPageState extends ConsumerState<ActivitesEnfantPage> {
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.search_off_rounded,
-                size: 52,
-                color: KidTheme.primaryGreen,
+                Icons.sports_esports_outlined,
+                size: 48,
+                color: KidTheme.primaryGreenDark,
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Aucune activité trouvée',
+            Text(
+              'Aucune activité disponible',
               style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w800,
+                color: theme.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 6),
             Text(
-              'Essaie de sélectionner un autre filtre ou une autre catégorie.',
+              'Revenez bientôt pour découvrir de nouveaux jeux et défis.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
