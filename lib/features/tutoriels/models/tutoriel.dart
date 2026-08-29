@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../enums/tutoriel_status.enum.dart';
+import '../utils/duration_utils.dart';
 
 class Tutoriel {
   final String? tutorielId;
@@ -11,7 +12,7 @@ class Tutoriel {
   final List<String> jouetsSuggeres;
   final String videoUrl;
   final String miniatureUrl;
-  final int duree; 
+  final int duree; // Durée de la vidéo en secondes stockée dans Firestore
   final int ageMinimum;
   final int ageMaximum;
   final TutorielStatus statut;
@@ -28,7 +29,7 @@ class Tutoriel {
     this.jouetsSuggeres = const [],
     required this.videoUrl,
     required this.miniatureUrl,
-    required this.duree,
+    this.duree = 0,
     required this.ageMinimum,
     required this.ageMaximum,
     this.statut = TutorielStatus.brouillon,
@@ -36,25 +37,51 @@ class Tutoriel {
     required this.dateModification,
   });
 
+  /// Retourne la durée formatée en chaîne lisible (ex: "03:45" ou "01:12:30")
+  String get dureeFormatted => formatDurationSeconds(duree.toDouble());
+
   factory Tutoriel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    
+    final data = (doc.data() as Map<String, dynamic>?) ?? {};
+
+    DateTime parseDate(dynamic val) {
+      if (val is Timestamp) return val.toDate();
+      if (val is DateTime) return val;
+      if (val is String) return DateTime.tryParse(val) ?? DateTime.now();
+      return DateTime.now();
+    }
+
+    TutorielStatus parseStatut(dynamic statutVal, dynamic estPublieVal) {
+      if (statutVal != null && statutVal.toString().trim().isNotEmpty) {
+        return TutorielStatusExtension.fromString(statutVal.toString());
+      }
+      if (estPublieVal == true) {
+        return TutorielStatus.publie;
+      }
+      return TutorielStatus.publie;
+    }
+
     return Tutoriel(
       tutorielId: doc.id,
-      categorieId: data['categorieId'] ?? '',
-      jouetLieId: data['jouetLieId'],
-      createurId: data['createurId'] ?? '',
-      titre: data['titre'] ?? '',
-      description: data['description'] ?? '',
+      categorieId: data['categorieId']?.toString() ?? '',
+      jouetLieId: data['jouetLieId']?.toString(),
+      createurId: data['createurId']?.toString() ?? '',
+      titre: data['titre']?.toString() ?? '',
+      description: data['description']?.toString() ?? '',
       jouetsSuggeres: List<String>.from(data['jouetsSuggeres'] ?? []),
-      videoUrl: data['videoUrl'] ?? '',
-      miniatureUrl: data['miniatureUrl'] ?? '',
-      duree: data['duree'] ?? 0,
-      ageMinimum: data['ageMinimum'] ?? 0,
-      ageMaximum: data['ageMaximum'] ?? 0,
-      statut: TutorielStatusExtension.fromString(data['statut'] ?? 'brouillon'),
-      dateCreation: (data['dateCreation'] as Timestamp).toDate(),
-      dateModification: (data['dateModification'] as Timestamp).toDate(),
+      videoUrl: data['videoUrl']?.toString() ?? '',
+      miniatureUrl: data['miniatureUrl']?.toString() ?? '',
+      duree: (data['duree'] is num)
+          ? (data['duree'] as num).toInt()
+          : int.tryParse(data['duree']?.toString() ?? '0') ?? 0,
+      ageMinimum: (data['ageMinimum'] is num)
+          ? (data['ageMinimum'] as num).toInt()
+          : int.tryParse(data['ageMinimum']?.toString() ?? '0') ?? 0,
+      ageMaximum: (data['ageMaximum'] is num)
+          ? (data['ageMaximum'] as num).toInt()
+          : int.tryParse(data['ageMaximum']?.toString() ?? '0') ?? 0,
+      statut: parseStatut(data['statut'], data['estPublie']),
+      dateCreation: parseDate(data['dateCreation']),
+      dateModification: parseDate(data['dateModification']),
     );
   }
 
@@ -72,6 +99,7 @@ class Tutoriel {
       'ageMinimum': ageMinimum,
       'ageMaximum': ageMaximum,
       'statut': statut.value,
+      'estPublie': statut == TutorielStatus.publie,
       'dateCreation': Timestamp.fromDate(dateCreation),
       'dateModification': Timestamp.fromDate(dateModification),
     };
@@ -113,16 +141,15 @@ class Tutoriel {
     );
   }
 
-  String get dureeFormatee {
-    final minutes = duree ~/ 60;
-    final secondes = duree % 60;
-    return '${minutes.toString().padLeft(2, '0')}:${secondes.toString().padLeft(2, '0')}';
-  }
+  bool get estPublie => statut == TutorielStatus.publie;
+  bool get estBrouillon => statut == TutorielStatus.brouillon;
 
   String get statutLabel => statut.label;
 
-   String get ageRangeLabel =>
-      ageMinimum == ageMaximum ? '$ageMinimum ans' : '$ageMinimum-$ageMaximum ans';
+  String get ageRangeLabel {
+    if (ageMinimum == ageMaximum) return '$ageMinimum ans';
+    return '$ageMinimum - $ageMaximum ans';
+  }
 
-  String get durationLabel => '${duree.toString()} sec';
+  bool isTargetedForAge(int age) => age >= ageMinimum && age <= ageMaximum;
 }

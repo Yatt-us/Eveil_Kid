@@ -949,20 +949,29 @@ class AdminShellScaffold extends StatelessWidget {
     final currentRoute = _getCurrentRoute(context);
     final theme = Theme.of(context);
 
-    if (isMobile) {
-      return navigationShell;
-    }
+    final widgetContent = isMobile
+        ? navigationShell
+        : Scaffold(
+            backgroundColor: theme.scaffoldBackgroundColor,
+            body: Row(
+              children: [
+                AdminSidebar(currentRoute: currentRoute),
+                Expanded(
+                  child: navigationShell,
+                ),
+              ],
+            ),
+          );
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: Row(
-        children: [
-          AdminSidebar(currentRoute: currentRoute),
-          Expanded(
-            child: navigationShell,
-          ),
-        ],
-      ),
+    return PopScope(
+      canPop: navigationShell.currentIndex == 0,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (context.mounted && navigationShell.currentIndex != 0) {
+          navigationShell.goBranch(0);
+        }
+      },
+      child: widgetContent,
     );
   }
 }
@@ -994,23 +1003,34 @@ class AdminScaffold extends StatelessWidget {
     final isMobile = AdminBreakpoints.isMobile(context);
     final theme = Theme.of(context);
 
-    if (isMobile) {
-      return Scaffold(
-        backgroundColor: backgroundColor ?? theme.scaffoldBackgroundColor,
-        appBar: appBar,
-        drawer: AdminDrawer(currentRoute: currentRoute),
-        floatingActionButton: floatingActionButton,
-        floatingActionButtonLocation: floatingActionButtonLocation,
-        body: body,
-      );
-    }
+    final widgetContent = isMobile
+        ? Scaffold(
+            backgroundColor: backgroundColor ?? theme.scaffoldBackgroundColor,
+            appBar: appBar,
+            drawer: AdminDrawer(currentRoute: currentRoute),
+            floatingActionButton: floatingActionButton,
+            floatingActionButtonLocation: floatingActionButtonLocation,
+            body: body,
+          )
+        : Scaffold(
+            backgroundColor: backgroundColor ?? Colors.transparent,
+            appBar: appBar != null
+                ? _sanitizeDesktopAppBar(context, appBar!)
+                : null,
+            floatingActionButton: floatingActionButton,
+            floatingActionButtonLocation: floatingActionButtonLocation,
+            body: body,
+          );
 
-    return Scaffold(
-      backgroundColor: backgroundColor ?? Colors.transparent,
-      appBar: appBar != null ? _sanitizeDesktopAppBar(context, appBar!) : null,
-      floatingActionButton: floatingActionButton,
-      floatingActionButtonLocation: floatingActionButtonLocation,
-      body: body,
+    return PopScope(
+      canPop: currentRoute == AdminNavRoute.dashboard,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (context.mounted && currentRoute != AdminNavRoute.dashboard) {
+          context.go(AppRoutes.admin);
+        }
+      },
+      child: widgetContent,
     );
   }
 

@@ -43,8 +43,10 @@ class AppRoutes {
   static const String adminTutoriels = '/admin/tutoriels';
   static const String adminAddTutoriel = '/admin/tutoriels/add';
   static const String adminEditTutoriel = '/admin/tutoriels/edit/:tutorielId';
+  static const String adminDetailTutoriel = '/admin/tutoriels/detail/:tutorielId';
   static const String adminTutorielForm = '/admin/tutoriel-form';
   static String adminEditTutorielPath(String tutorielId) => '/admin/tutoriels/edit/$tutorielId';
+  static String adminDetailTutorielPath(String tutorielId) => '/admin/tutoriels/detail/$tutorielId';
 
   static const String adminCategoryForm = '/admin/category-form';
   static const String adminManagerForm = '/admin/manager-form';

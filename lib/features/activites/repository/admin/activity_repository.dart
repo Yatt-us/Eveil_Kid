@@ -5,12 +5,15 @@ import 'package:eveilkid/features/activites/mappers/activity_mapper.dart';
 import 'package:eveilkid/features/activites/models/activity.dart';
 
 class ActivityRepository {
-  final CollectionReference _activitesRef = 
-      FirebaseFirestore.instance.collection('activites');
+  final FirebaseFirestore? _firestore;
   final CloudinaryService _cloudinary;
 
-  ActivityRepository({CloudinaryService? cloudinary})
-      : _cloudinary = cloudinary ?? CloudinaryService();
+  ActivityRepository({FirebaseFirestore? firestore, CloudinaryService? cloudinary})
+      : _firestore = firestore,
+        _cloudinary = cloudinary ?? CloudinaryService();
+
+  CollectionReference get _activitesRef =>
+      (_firestore ?? FirebaseFirestore.instance).collection('activites');
 
   // Récupérer toutes les activités publiées
   Future<List<Activite>> getAllActivites() async {

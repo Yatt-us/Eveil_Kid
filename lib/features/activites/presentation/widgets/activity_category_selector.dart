@@ -1,9 +1,7 @@
-import 'package:eveilkid/core/constants/app_colors.dart';
-import 'package:eveilkid/features/ActivityCategorie/models/activity_category_model.dart';
-import 'package:eveilkid/features/ActivityCategorie/providers/activity_category_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:eveilkid/features/ActivityCategorie/models/activity_category_model.dart';
+import 'package:eveilkid/features/ActivityCategorie/providers/activity_category_provider.dart';
 
 class ActivityCategorySelector extends ConsumerWidget {
   final String selectedCategoryId;
@@ -18,54 +16,90 @@ class ActivityCategorySelector extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final categoriesAsync = ref.watch(categoriesActivesProvider);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return categoriesAsync.when(
       loading: () => const Center(
-        child: SizedBox(
-          height: 50,
-          child: CircularProgressIndicator(),
+        child: Padding(
+          padding: EdgeInsets.all(12),
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
         ),
       ),
-      error: (err, stack) => Container(
-        padding: const EdgeInsets.all(8),
-        color: AppColors.danger,
+      error: (err, _) => Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.error.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
         child: Text(
-          'Erreur: $err',
-          style: const TextStyle(color: AppColors.danger),
+          'Erreur chargement catégories : $err',
+          style: TextStyle(color: theme.colorScheme.error, fontSize: 12),
         ),
       ),
       data: (categories) {
         if (categories.isEmpty) {
           return Container(
-            padding: const EdgeInsets.all(8),
-            color: Colors.orange.shade50,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? const Color(0xFF78350F).withValues(alpha: 0.3)
+                  : const Color(0xFFFEF3C7),
+              borderRadius: BorderRadius.circular(10),
+            ),
             child: const Text(
-              'Aucune catégorie disponible. Veuillez en créer une.',
-              style: TextStyle(color: Colors.orange),
+              'Aucune catégorie disponible. Veuillez en créer une dans la zone admin.',
+              style: TextStyle(color: Color(0xFFB45309), fontSize: 12.5),
             ),
           );
         }
-        return _buildCategoryChips(categories);
+        return _buildCategoryChips(categories, theme, isDark);
       },
     );
   }
 
-  Widget _buildCategoryChips(List<ActiviteCategorie> categories) {
+  Widget _buildCategoryChips(
+    List<ActiviteCategorie> categories,
+    ThemeData theme,
+    bool isDark,
+  ) {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       children: categories.map((categorie) {
-        final isSelected = selectedCategoryId == categorie.id;
+        final catId = categorie.id ?? '';
+        final isSelected = selectedCategoryId == catId;
+        final iconName = categorie.icon;
+
         return FilterChip(
           label: Text(categorie.nom),
           selected: isSelected,
-          onSelected: (_) => onChanged(categorie.id!),
-          backgroundColor: Colors.grey.shade200,
-          selectedColor: AppColors.primary,
-          avatar: categorie.icon != null
+          onSelected: (_) => onChanged(catId),
+          backgroundColor: isDark
+              ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)
+              : theme.colorScheme.surface,
+          selectedColor: theme.colorScheme.primary.withValues(alpha: isDark ? 0.3 : 0.15),
+          checkmarkColor: theme.colorScheme.primary,
+          labelStyle: TextStyle(
+            color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+            fontSize: 12.5,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+          ),
+          side: BorderSide(
+            color: isSelected
+                ? theme.colorScheme.primary
+                : theme.dividerColor.withValues(alpha: isDark ? 0.3 : 0.15),
+          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          avatar: iconName != null && iconName.isNotEmpty
               ? Icon(
-                  _getIconData(categorie.icon!),
-                  color: isSelected ? AppColors.primary : Colors.grey,
+                  _getIconData(iconName),
+                  size: 16,
+                  color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
                 )
               : null,
         );
@@ -80,17 +114,17 @@ class ActivityCategorySelector extends ConsumerWidget {
       case 'numbers':
         return Icons.numbers;
       case 'science':
-        return Icons.science;
+        return Icons.science_outlined;
       case 'art_track':
-        return Icons.art_track;
+        return Icons.palette_outlined;
       case 'music_note':
-        return Icons.music_note;
+        return Icons.music_note_outlined;
       case 'psychology':
-        return Icons.psychology;
+        return Icons.psychology_outlined;
       case 'sports':
-        return Icons.sports;
+        return Icons.sports_basketball_outlined;
       default:
-        return Icons.category;
+        return Icons.category_outlined;
     }
   }
 }

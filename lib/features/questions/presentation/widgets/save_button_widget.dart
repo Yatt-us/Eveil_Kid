@@ -1,37 +1,39 @@
-import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class SaveButtonWidget extends StatelessWidget {
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final String label;
 
   const SaveButtonWidget({
     super.key,
     required this.onPressed,
-    this.label = 'Enregistrer',
+    this.label = 'Enregistrer la question',
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return SizedBox(
       width: double.infinity,
       height: 50,
-      child: ElevatedButton(
+      child: ElevatedButton.icon(
         onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          elevation: 0,
-        ),
-        child: Text(
+        icon: const Icon(Icons.check_circle_outline_rounded, size: 19),
+        label: Text(
           label,
           style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
           ),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: theme.colorScheme.primary,
+          foregroundColor: theme.colorScheme.onPrimary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          elevation: 1,
         ),
       ),
     );

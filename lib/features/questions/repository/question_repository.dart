@@ -1,12 +1,15 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:eveilkid/features/questions/enums/question_type.enum.dart';
 import 'package:eveilkid/features/questions/models/question_model.dart';
 import 'package:eveilkid/features/questions/options_questions/option_model.dart';
 
 class QuestionRepository {
+  final FirebaseFirestore? _firestore;
+
+  QuestionRepository({FirebaseFirestore? firestore}) : _firestore = firestore;
+
   CollectionReference _getQuestionsCollection(String activiteId) {
-    return FirebaseFirestore.instance
+    return (_firestore ?? FirebaseFirestore.instance)
         .collection('activites')
         .doc(activiteId)
         .collection('questions');
@@ -25,7 +28,6 @@ class QuestionRepository {
     }
   }
 
-  
   Future<List<Question>> getAllQuestionsByActivite(String activiteId) async {
     try {
       final snapshot = await _getQuestionsCollection(activiteId)
@@ -50,10 +52,8 @@ class QuestionRepository {
     }
   }
 
- 
   Future<Question> createQuestion(String activiteId, Question question) async {
     try {
-      // Récupérer le nombre de questions existantes (non archivées)
       final existingQuestions = await getQuestionsByActivite(activiteId);
       final nextOrder = existingQuestions.length;
       
@@ -71,15 +71,13 @@ class QuestionRepository {
     }
   }
 
- 
   Future<Question> updateQuestion(String activiteId, Question question) async {
     try {
       if (question.id == null) throw Exception('ID manquant');
       
-      // Conserver l'ordre existant et le statut d'archivage
       final existingDoc = await _getQuestionsCollection(activiteId).doc(question.id).get();
       final existingData = existingDoc.data() as Map<String, dynamic>?;
-      final existingOrder = existingData?['ordre'] ?? 0;
+      final existingOrder = existingData?['ordre'] ?? question.ordre;
       final existingArchived = existingData?['estArchive'] ?? false;
       
       final updatedQuestion = question.copyWith(
@@ -96,50 +94,42 @@ class QuestionRepository {
     }
   }
 
-
   Future<void> archiveQuestion(String activiteId, String questionId) async {
-  try {
-    // 1. Marquer la question comme archivée
-    await _getQuestionsCollection(activiteId)
-        .doc(questionId)
-        .update({
-          'estArchive': true,
-          'dateArchivage': Timestamp.now(),
-        });
-    
-    // 2. Réorganiser les ordres des questions restantes
-    await _reorderQuestionsAfterArchive(activiteId);
-  } catch (e) {
-    throw Exception('Erreur lors de l\'archivage: $e');
-  }
-}
-
-
-Future<void> _reorderQuestionsAfterArchive(String activiteId) async {
-  try {
-    // Récupérer les questions non archivées
-    final questions = await getQuestionsByActivite(activiteId);
-    final batch = FirebaseFirestore.instance.batch();
-    
-    // Mettre à jour les ordres
-    for (int i = 0; i < questions.length; i++) {
-      final question = questions[i];
-      if (question.id != null) {
-        batch.update(
-          _getQuestionsCollection(activiteId).doc(question.id),
-          {'ordre': i}
-        );
-      }
+    try {
+      await _getQuestionsCollection(activiteId)
+          .doc(questionId)
+          .update({
+            'estArchive': true,
+            'dateArchivage': Timestamp.now(),
+          });
+      
+      await _reorderQuestionsAfterArchive(activiteId);
+    } catch (e) {
+      throw Exception('Erreur lors de l\'archivage: $e');
     }
-    
-    await batch.commit();
-  } catch (e) {
-    throw Exception('Erreur lors du réordonnancement: $e');
   }
-}
 
+  Future<void> _reorderQuestionsAfterArchive(String activiteId) async {
+    try {
+      final questions = await getQuestionsByActivite(activiteId);
+      final batch = (_firestore ?? FirebaseFirestore.instance).batch();
+      
+      for (int i = 0; i < questions.length; i++) {
+        final question = questions[i];
+        if (question.id != null) {
+          batch.update(
+            _getQuestionsCollection(activiteId).doc(question.id),
+            {'ordre': i}
+          );
+        }
+      }
+      
+      await batch.commit();
+    } catch (e) {
+      throw Exception('Erreur lors du réordonnancement: $e');
+    }
+  }
 
-  
   Future<void> restoreQuestion(String activiteId, String questionId) async {
     try {
       await _getQuestionsCollection(activiteId)
@@ -149,7 +139,6 @@ Future<void> _reorderQuestionsAfterArchive(String activiteId) async {
             'dateArchivage': null,
           });
       
-      // Réorganiser les ordres
       await _reorderQuestionsAfterArchive(activiteId);
     } catch (e) {
       throw Exception('Erreur lors de la restauration: $e');
@@ -158,7 +147,7 @@ Future<void> _reorderQuestionsAfterArchive(String activiteId) async {
 
   Future<void> updateQuestionsOrder(String activiteId, List<Question> questions) async {
     try {
-      final batch = FirebaseFirestore.instance.batch();
+      final batch = (_firestore ?? FirebaseFirestore.instance).batch();
       for (var question in questions) {
         if (question.id != null) {
           batch.update(

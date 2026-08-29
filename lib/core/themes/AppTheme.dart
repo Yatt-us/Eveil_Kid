@@ -3,6 +3,7 @@ import 'package:eveilkid/core/constants/AppTextStyles.dart';
 import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+export 'kid_theme.dart';
 
 class AppTheme {
   AppTheme._();

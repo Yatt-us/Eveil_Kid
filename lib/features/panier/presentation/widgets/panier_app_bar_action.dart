@@ -31,8 +31,7 @@ class PanierAppBarAction extends ConsumerWidget {
     final panierAsync = ref.watch(panierProvider(userId));
 
     final totalArticles = panierAsync.when(
-      data: (articles) =>
-          articles.fold<int>(0, (sum, item) => sum + item.quantite),
+      data: (articles) => articles.length,
       loading: () => 0,
       error: (_, _) => 0,
     );

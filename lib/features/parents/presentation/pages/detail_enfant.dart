@@ -2,11 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/AppSpacing.dart';
-import '../../../../core/router/app_routes.dart';
-import '../../../../shared/widgets/app_dialogs.dart';
+import 'package:eveilkid/core/utils/parental_pin_helper.dart';
 import 'package:eveilkid/features/enfant/model/enfant_model.dart';
 import '../../providers/parent_provider.dart';
 import 'modifier_enfant.dart';
@@ -208,12 +206,13 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
               width: double.infinity,
               height: 54,
               child: ElevatedButton(
-                onPressed: () {
-                  context.go(AppRoutes.espaceEnfantFor(currentEnfant.enfantId));
-                  AppDialogs.showSnackBar(
+                onPressed: () async {
+                  await ParentalPinHelper.enterChildSpace(
                     context: context,
-                    message:
-                        'Bascule vers l\'espace de ${currentEnfant.nom} en cours...',
+                    ref: ref,
+                    enfantId: currentEnfant.enfantId,
+                    enfant: currentEnfant,
+                    enfantNom: currentEnfant.nom,
                   );
                 },
                 style: ElevatedButton.styleFrom(

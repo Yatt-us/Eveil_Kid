@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:eveilkid/core/constants/AppTextStyles.dart';
 import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/core/router/app_routes.dart';
 import 'package:eveilkid/features/admin/presentation/widgets/admin_drawer.dart';
@@ -11,7 +10,6 @@ import 'package:eveilkid/features/categories/providers/categorie_provider.dart';
 import 'package:eveilkid/features/tutoriels/enums/tutoriel_status.enum.dart';
 import 'package:eveilkid/features/tutoriels/models/tutoriel.dart';
 import 'package:eveilkid/features/tutoriels/providers/tutoriel_provider.dart';
-import 'package:eveilkid/features/tutoriels/presentation/pages/tutoriel_detail_page.dart';
 import 'package:eveilkid/shared/widgets/app_button.dart';
 import 'package:eveilkid/shared/widgets/app_dialogs.dart';
 import 'package:eveilkid/shared/widgets/app_search_bar.dart';
@@ -52,17 +50,22 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
       }
     });
 
-    return Scaffold(
+    return AdminScaffold(
+      currentRoute: AdminNavRoute.tutoriels,
       backgroundColor: theme.scaffoldBackgroundColor,
-      drawer: const AdminDrawer(currentRoute: AdminNavRoute.tutoriels),
       appBar: AppBar(
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         centerTitle: false,
         title: Text(
           'Tutoriels Vidéo',
-          style: AppTextStyles.headingMedium.copyWith(
-            fontWeight: FontWeight.w700,
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w800,
+            color: theme.colorScheme.onSurface,
+          ) ?? TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 20,
+            color: theme.colorScheme.onSurface,
           ),
         ),
         actions: [
@@ -266,8 +269,14 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
                             const SizedBox(height: 16),
                             Text(
                               'Aucun tutoriel trouvé',
-                              style: AppTextStyles.headingSmall.copyWith(
+                              style: theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w700,
+                                color: theme.colorScheme.onSurface,
+                                fontSize: 17,
+                              ) ?? TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 17,
+                                color: theme.colorScheme.onSurface,
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -275,8 +284,11 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
                               _searchQuery.isNotEmpty || _hasActiveFilters
                                   ? 'Essayez de modifier vos critères de recherche ou de filtre.'
                                   : 'Commencez par ajouter votre premier tutoriel vidéo.',
-                              style: TextStyle(
-                                color: Colors.grey.shade600,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                                fontSize: 13,
+                              ) ?? TextStyle(
+                                color: theme.colorScheme.onSurfaceVariant,
                                 fontSize: 13,
                               ),
                               textAlign: TextAlign.center,
@@ -320,13 +332,9 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
                               categorieNom: categoriesMap[tutoriel.categorieId],
                               onTap: () {
                                 if (tutoriel.tutorielId != null) {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => TutorielDetailPage(
-                                        tutorielId: tutoriel.tutorielId!,
-                                      ),
-                                    ),
+                                  context.push(
+                                    AppRoutes.adminDetailTutorielPath(tutoriel.tutorielId!),
+                                    extra: tutoriel,
                                   );
                                 }
                               },
@@ -425,6 +433,7 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
 
   void _showFilterBottomSheet(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final categoriesAsync = ref.read(categoriesProvider);
     final categories = categoriesAsync.value ?? [];
 
@@ -448,7 +457,7 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
+                      color: isDark ? Colors.white24 : Colors.grey.shade300,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -459,8 +468,14 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
                   children: [
                     Text(
                       'Filtres & Tri',
-                      style: AppTextStyles.headingSmall.copyWith(
+                      style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
+                        fontSize: 18,
+                        color: theme.colorScheme.onSurface,
+                      ) ?? TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 18,
+                        color: theme.colorScheme.onSurface,
                       ),
                     ),
                     TextButton(
@@ -479,9 +494,17 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
                 const SizedBox(height: 16),
 
                 // Tri
-                const Text(
+                Text(
                   'Trier par',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: theme.colorScheme.onSurface,
+                  ) ?? TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: theme.colorScheme.onSurface,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Wrap(
@@ -499,9 +522,17 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
 
                 // Filtre par catégorie
                 if (categories.isNotEmpty) ...[
-                  const Text(
+                  Text(
                     'Catégorie',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: theme.colorScheme.onSurface,
+                    ) ?? TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: theme.colorScheme.onSurface,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String?>(
@@ -544,11 +575,24 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
     AdminTutorielSortOption option,
     StateSetter setModalState,
   ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final isSelected = _sortOption == option;
     return ChoiceChip(
-      label: Text(label, style: TextStyle(fontSize: 12, color: isSelected ? Colors.white : null)),
+      label: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+          color: isSelected
+              ? Colors.white
+              : (isDark ? Colors.white70 : theme.colorScheme.onSurface),
+        ),
+      ),
       selected: isSelected,
       selectedColor: AppColors.primary,
+      backgroundColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade100,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       onSelected: (_) {
         setModalState(() => _sortOption = option);
         setState(() => _sortOption = option);

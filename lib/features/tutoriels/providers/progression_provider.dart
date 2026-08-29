@@ -33,17 +33,16 @@ class ProgressionController {
 
   ProgressionController(this._repository);
 
+  /// Sauvegarde la position de lecture.
+  /// [termine] doit être passé par l'appelant (issu de VideoPlayerController.value).
   Future<void> saveProgression({
     required String tutorielId,
     required num position,
-    required num duree,
+    bool termine = false,
   }) async {
-    final termine = position >= duree;
-
     final progression = Progression(
       tutorielId: tutorielId,
       position: position,
-      duree: duree,
       termine: termine,
       dateDerniereLecture: DateTime.now(),
     );

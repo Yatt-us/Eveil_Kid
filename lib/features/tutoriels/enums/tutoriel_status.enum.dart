@@ -19,11 +19,20 @@ extension TutorielStatusExtension on TutorielStatus {
   }
 
   static TutorielStatus fromString(String value) {
-    switch (value) {
+    final lower = value.trim().toLowerCase();
+    switch (lower) {
       case 'publie':
+      case 'publié':
+      case 'published':
+      case 'true':
         return TutorielStatus.publie;
       case 'archive':
+      case 'archivé':
+      case 'archived':
         return TutorielStatus.archive;
+      case 'brouillon':
+      case 'draft':
+      case 'false':
       default:
         return TutorielStatus.brouillon;
     }
