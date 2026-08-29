@@ -363,9 +363,11 @@ class _ActivitesEnfantPageState extends ConsumerState<ActivitesEnfantPage> {
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
           color: isCompleted
-              ? KidTheme.primaryGreen.withValues(alpha: 0.6)
+              ? (isDark
+                  ? KidTheme.primaryGreenLight.withValues(alpha: 0.35)
+                  : KidTheme.primaryGreen.withValues(alpha: 0.5))
               : theme.dividerColor.withValues(alpha: isDark ? 0.25 : 0.12),
-          width: isCompleted ? 1.8 : 1.0,
+          width: isCompleted ? 1.5 : 1.0,
         ),
         boxShadow: [
           BoxShadow(

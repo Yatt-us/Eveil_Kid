@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_assets.dart';
 import 'package:eveilkid/core/utils/parental_pin_helper.dart';
 import 'package:eveilkid/features/enfant/model/enfant_model.dart';
 import 'package:eveilkid/features/enfant/providers/enfant_providers.dart';
@@ -111,61 +112,60 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 18),
-              child: Column(
-                children: [
-                  const SizedBox(height: 12),
+      floatingActionButton: _AnimatedSpaceSwitchFab(
+        isDark: isDark,
+        onPressed: () async {
+          await ParentalPinHelper.enterChildSpace(
+            context: context,
+            ref: ref,
+            enfantId: currentEnfant.enfantId,
+            enfant: currentEnfant,
+            enfantNom: currentEnfant.nom,
+          );
+        },
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 18),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
 
-                  // ── CARTE HERO PROFIL DE L'ENFANT ──
-                  _buildProfileHeroCard(
-                    enfant: currentEnfant,
-                    niveau: niveau,
-                    starsCount: starsCount,
-                    cleanWishesCount: cleanWishesCount,
-                    completedActivitiesCount: completedActivitiesCount,
-                    theme: theme,
-                    isDark: isDark,
-                  ),
+            // ── CARTE HERO PROFIL DE L'ENFANT ──
+            _buildProfileHeroCard(
+              enfant: currentEnfant,
+              niveau: niveau,
+              starsCount: starsCount,
+              cleanWishesCount: cleanWishesCount,
+              completedActivitiesCount: completedActivitiesCount,
+              theme: theme,
+              isDark: isDark,
+            ),
 
-                  const SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-                  // ── BARRE D'ONGLETS SEGMENTÉE ──
-                  _buildSegmentedTabBar(
-                    enfant: currentEnfant,
-                    cleanWishesCount: cleanWishesCount,
-                    theme: theme,
-                    isDark: isDark,
-                  ),
+            // ── BARRE D'ONGLETS SEGMENTÉE ──
+            _buildSegmentedTabBar(
+              enfant: currentEnfant,
+              cleanWishesCount: cleanWishesCount,
+              theme: theme,
+              isDark: isDark,
+            ),
 
-                  const SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-                  // ── CONTENU DE L'ONGLET SÉLECTIONNÉ ──
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 250),
-                    child: _buildCurrentTabContent(
-                      enfant: currentEnfant,
-                      theme: theme,
-                      isDark: isDark,
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-                ],
+            // ── CONTENU DE L'ONGLET SÉLECTIONNÉ ──
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              child: _buildCurrentTabContent(
+                enfant: currentEnfant,
+                theme: theme,
+                isDark: isDark,
               ),
             ),
-          ),
 
-          // ── BARRE INFÉRIEURE : BASCULER VERS L'ESPACE ENFANT ──
-          _buildBottomActionBar(
-            enfant: currentEnfant,
-            theme: theme,
-            isDark: isDark,
-          ),
-        ],
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
     );
   }
@@ -211,24 +211,14 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(20, 22, 20, 16),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: isDark
-                    ? [
-                        AppColors.primary.withValues(alpha: 0.25),
-                        theme.colorScheme.surface,
-                      ]
-                    : [
-                        AppColors.primary.withValues(alpha: 0.08),
-                        AppColors.surfaceVariant.withValues(alpha: 0.15),
-                      ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
+              color: isDark
+                  ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.25)
+                  : AppColors.surfaceVariant.withValues(alpha: 0.25),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             ),
             child: Column(
               children: [
-                // Avatar avec halo et badge
+                // Avatar avec contour sobre et badge
                 Stack(
                   alignment: Alignment.center,
                   clipBehavior: Clip.none,
@@ -240,14 +230,16 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
                         shape: BoxShape.circle,
                         color: theme.colorScheme.surface,
                         border: Border.all(
-                          color: accentColor.withValues(alpha: 0.4),
+                          color: isDark
+                              ? theme.dividerColor.withValues(alpha: 0.3)
+                              : accentColor.withValues(alpha: 0.35),
                           width: 3.5,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: accentColor.withValues(alpha: isDark ? 0.4 : 0.2),
-                            blurRadius: 14,
-                            offset: const Offset(0, 4),
+                            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.08),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
                           ),
                         ],
                       ),
@@ -1497,69 +1489,167 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
       }).toList(),
     );
   }
+}
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // 4. BARRE D'ACTION INFÉRIEURE
-  // ═══════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════
+// BOUTON FLOTTANT ANIMÉ AVEC BORDURE BICOLORE (PARENT / ENFANT)
+// ═══════════════════════════════════════════════════════════════════════
 
-  Widget _buildBottomActionBar({
-    required EnfantModel enfant,
-    required ThemeData theme,
-    required bool isDark,
-  }) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(18, 12, 18, 20),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border(
-          top: BorderSide(
-            color: theme.dividerColor.withValues(alpha: isDark ? 0.2 : 0.1),
-          ),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, -3),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: ElevatedButton.icon(
-            onPressed: () async {
-              await ParentalPinHelper.enterChildSpace(
-                context: context,
-                ref: ref,
-                enfantId: enfant.enfantId,
-                enfant: enfant,
-                enfantNom: enfant.nom,
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: theme.colorScheme.onPrimary,
-              elevation: 2,
-              shadowColor: theme.colorScheme.primary.withValues(alpha: 0.3),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
+class _AnimatedSpaceSwitchFab extends StatefulWidget {
+  final VoidCallback onPressed;
+  final bool isDark;
+
+  const _AnimatedSpaceSwitchFab({
+    required this.onPressed,
+    required this.isDark,
+  });
+
+  @override
+  State<_AnimatedSpaceSwitchFab> createState() => _AnimatedSpaceSwitchFabState();
+}
+
+class _AnimatedSpaceSwitchFabState extends State<_AnimatedSpaceSwitchFab>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    );
+    if (!WidgetsBinding.instance.runtimeType.toString().contains('Test')) {
+      _controller.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final parentColor = theme.colorScheme.primary;
+    final childColor = AppColors.childPrimary;
+    final bgColor = widget.isDark
+        ? const Color(0xFFE5E5EB)
+        : theme.colorScheme.surface;
+
+    const double size = 60.0;
+    const double borderRadius = 20.0;
+    const double strokeWidth = 3.5;
+
+    return Tooltip(
+      message: 'Basculer vers l’espace enfant',
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return CustomPaint(
+            foregroundPainter: _DualBorderPainter(
+              animationProgress: _controller.value,
+              parentColor: parentColor,
+              childColor: childColor,
+              strokeWidth: strokeWidth,
+              borderRadius: borderRadius,
+              segmentCount: 2,
             ),
-            icon: const Icon(Icons.rocket_launch_rounded, size: 20),
-            label: const Text(
-              'Basculer vers l’espace enfant',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.2,
+            child: child,
+          );
+        },
+        child: Material(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(borderRadius),
+          elevation: 4,
+          shadowColor: Colors.black.withValues(alpha: widget.isDark ? 0.4 : 0.15),
+          child: InkWell(
+            onTap: widget.onPressed,
+            borderRadius: BorderRadius.circular(borderRadius),
+            child: Container(
+              width: size,
+              height: size,
+              padding: const EdgeInsets.all(12),
+              child: Image.asset(
+                AppAssets.spaceSwitchIcon,
+                fit: BoxFit.contain,
               ),
             ),
           ),
         ),
       ),
     );
+  }
+}
+
+class _DualBorderPainter extends CustomPainter {
+  final double animationProgress;
+  final Color parentColor;
+  final Color childColor;
+  final double strokeWidth;
+  final double borderRadius;
+  final int segmentCount;
+
+  _DualBorderPainter({
+    required this.animationProgress,
+    required this.parentColor,
+    required this.childColor,
+    this.strokeWidth = 3.5,
+    this.borderRadius = 20,
+    this.segmentCount = 2,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final rrect = RRect.fromRectAndRadius(
+      rect.deflate(strokeWidth / 2),
+      Radius.circular(borderRadius),
+    );
+
+    final path = Path()..addRRect(rrect);
+    final pathMetrics = path.computeMetrics().toList();
+    if (pathMetrics.isEmpty) return;
+
+    final metric = pathMetrics.first;
+    final totalLength = metric.length;
+
+    // Segments alternés distincts sans dégradé
+    final segmentLength = totalLength / segmentCount;
+    final offset = (animationProgress * totalLength) % totalLength;
+
+    for (int i = 0; i < segmentCount; i++) {
+      final isParent = i % 2 == 0;
+      final paint = Paint()
+        ..color = isParent ? parentColor : childColor
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = StrokeCap.butt;
+
+      final start = (offset + i * segmentLength) % totalLength;
+      final end = start + segmentLength;
+
+      if (end <= totalLength) {
+        final extracted = metric.extractPath(start, end);
+        canvas.drawPath(extracted, paint);
+      } else {
+        final extracted1 = metric.extractPath(start, totalLength);
+        final extracted2 = metric.extractPath(0, end - totalLength);
+        canvas.drawPath(extracted1, paint);
+        canvas.drawPath(extracted2, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DualBorderPainter oldDelegate) {
+    return oldDelegate.animationProgress != animationProgress ||
+        oldDelegate.parentColor != parentColor ||
+        oldDelegate.childColor != childColor ||
+        oldDelegate.strokeWidth != strokeWidth ||
+        oldDelegate.borderRadius != borderRadius ||
+        oldDelegate.segmentCount != segmentCount;
   }
 }

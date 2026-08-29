@@ -4,6 +4,8 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/AppSpacing.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
+import '../../../auth/providers/auth_provider.dart';
+import '../../../panier/providers/panier_provider.dart';
 import '../../models/commande_model.dart';
 import '../../providers/commande_provider.dart';
 import '../widgets/checkout_stepper.dart';
@@ -191,27 +193,47 @@ class _PaiementPageState extends ConsumerState<PaiementPage> {
                     onPressed: commandeState.estEnChargement
                         ? null
                         : () async {
+                            final authUser = ref.read(authProvider).utilisateur;
+                            final parentId = widget.brouillonCommande.parentId.isNotEmpty
+                                ? widget.brouillonCommande.parentId
+                                : (authUser?.utilisateurId ?? '');
+
                             final commandeFinale = widget.brouillonCommande.copyWith(
+                              parentId: parentId,
                               modePaiement: modePaiementSelectionne,
                               dateCreation: DateTime.now(),
                             );
 
-                            bool succes = await ref
+                            final commandeCreee = await ref
                                 .read(commandeProvider.notifier)
                                 .passerCommande(commandeFinale);
 
-                            if (succes && context.mounted) {
-                              Navigator.pushAndRemoveUntil(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => ConfirmationPage(commande: commandeFinale),
-                                ),
-                                (route) => route.isFirst,
-                              );
-                            } else if (commandeState.messageErreur != null && context.mounted) {
+                            if (!context.mounted) return;
+
+                            if (commandeCreee != null) {
+                              if (parentId.isNotEmpty) {
+                                try {
+                                  await ref
+                                      .read(panierServiceProvider)
+                                      .viderPanier(parentId);
+                                } catch (_) {}
+                              }
+
+                              if (context.mounted) {
+                                Navigator.pushAndRemoveUntil(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => ConfirmationPage(commande: commandeCreee),
+                                  ),
+                                  (route) => route.isFirst,
+                                );
+                              }
+                            } else {
+                              final errorMsg = ref.read(commandeProvider).messageErreur ??
+                                  'Impossible d\'enregistrer la commande. Veuillez réessayer.';
                               AppDialogs.showSnackBar(
                                 context: context,
-                                message: commandeState.messageErreur!,
+                                message: errorMsg,
                                 isError: true,
                               );
                             }

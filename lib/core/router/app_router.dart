@@ -21,6 +21,9 @@ import 'package:eveilkid/features/admin/presentation/pages/admin/admin_tutoriel_
 import 'package:eveilkid/features/admin/presentation/pages/admin/tutoriels_list_screen.dart';
 import 'package:eveilkid/features/favoris/presentation/pages/favoris_page.dart';
 import 'package:eveilkid/features/panier/presentation/pages/panier_page.dart';
+import 'package:eveilkid/features/commandes/models/commande_model.dart';
+import 'package:eveilkid/features/admin/presentation/pages/commandes/admin_commandes_screen.dart';
+import 'package:eveilkid/features/admin/presentation/pages/commandes/admin_detail_commande_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -483,6 +486,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.adminManagerForm,
         builder: (context, state) => const AdminManagerFormPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.adminCommandes,
+        builder: (context, state) => const AdminCommandesScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.adminDetailCommande,
+        builder: (context, state) {
+          final commandeId = state.pathParameters['commandeId']!;
+          final commande = state.extra as CommandeModel?;
+          return AdminDetailCommandePage(
+            commandeId: commandeId,
+            initialCommande: commande,
+          );
+        },
       ),
 
       // ── Espace Jouets ──

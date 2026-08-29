@@ -12,6 +12,7 @@ import 'package:eveilkid/features/panier/presentation/widgets/panier_floating_bu
 import 'package:eveilkid/features/tutoriels/models/tutoriel.dart';
 import 'package:eveilkid/features/tutoriels/presentation/pages/tutoriel_detail_page.dart';
 import 'package:eveilkid/features/tutoriels/presentation/widgets/tutoriel_card.dart';
+import 'package:eveilkid/features/tutoriels/presentation/widgets/tutoriel_card_skeleton.dart';
 import 'package:eveilkid/features/tutoriels/providers/tutoriel_provider.dart';
 import 'package:eveilkid/shared/widgets/app_bottom_nav_bar.dart';
 import 'package:eveilkid/shared/widgets/app_search_bar.dart';
@@ -268,9 +269,9 @@ class _TutorielPageState extends ConsumerState<TutorielPage> {
                       delegate: SliverChildBuilderDelegate(
                         (context, index) => const Padding(
                           padding: EdgeInsets.only(bottom: 16),
-                          child: AppSkeletonLoader(height: 220, borderRadius: 18),
+                          child: TutorielCardSkeleton(),
                         ),
-                        childCount: 3,
+                        childCount: 4,
                       ),
                     ),
                     error: (error, _) => SliverFillRemaining(

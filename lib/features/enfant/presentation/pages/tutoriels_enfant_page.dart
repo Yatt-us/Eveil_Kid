@@ -4,6 +4,7 @@ import 'package:eveilkid/core/themes/kid_theme.dart';
 import 'package:eveilkid/features/enfant/presentation/pages/tutoriel_detail_enfant_page.dart';
 import 'package:eveilkid/features/enfant/presentation/widgets/kid_filter_chip.dart';
 import 'package:eveilkid/features/tutoriels/models/tutoriel.dart';
+import 'package:eveilkid/features/tutoriels/presentation/widgets/tutoriel_card_skeleton.dart';
 import 'package:eveilkid/features/tutoriels/providers/tutoriel_provider.dart';
 
 class TutorielsEnfantPage extends ConsumerStatefulWidget {
@@ -72,7 +73,7 @@ class _TutorielsEnfantPageState extends ConsumerState<TutorielsEnfantPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Tutoriels Vidéo 📺',
+                          'Tutoriels Vidéo',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w900,
@@ -214,10 +215,11 @@ class _TutorielsEnfantPageState extends ConsumerState<TutorielsEnfantPage> {
                     },
                   );
                 },
-                loading: () => const Center(
-                  child: CircularProgressIndicator(
-                    color: KidTheme.primaryGreen,
-                  ),
+                loading: () => ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
+                  itemCount: 4,
+                  separatorBuilder: (_, _) => const SizedBox(height: 14),
+                  itemBuilder: (_, _) => const KidTutorialCardSkeleton(),
                 ),
                 error: (err, _) => Center(
                   child: Padding(

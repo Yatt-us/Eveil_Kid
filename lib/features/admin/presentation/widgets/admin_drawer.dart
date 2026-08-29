@@ -186,7 +186,7 @@ class _AdminNavigationContent extends ConsumerWidget {
         icon: Icons.shopping_bag_outlined,
         activeIcon: Icons.shopping_bag_rounded,
         label: 'Commandes',
-        onTap: () => _showComingSoon(context, 'Commandes'),
+        onTap: () => _navigate(context, AdminNavRoute.commandes),
       ),
       _AdminNavItemData(
         route: AdminNavRoute.tutoriels,
@@ -333,6 +333,9 @@ class _AdminNavigationContent extends ConsumerWidget {
       case AdminNavRoute.categories:
         context.go(AppRoutes.adminCategories);
         break;
+      case AdminNavRoute.commandes:
+        context.go(AppRoutes.adminCommandes);
+        break;
       case AdminNavRoute.tutoriels:
         context.go(AppRoutes.adminTutoriels);
         break;
@@ -348,26 +351,7 @@ class _AdminNavigationContent extends ConsumerWidget {
       case AdminNavRoute.profile:
         context.go(AppRoutes.adminProfile);
         break;
-      default:
-        return;
     }
-  }
-
-  void _showComingSoon(BuildContext context, String module) {
-    if (isDrawer && context.canPop()) context.pop();
-    final theme = Theme.of(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: theme.colorScheme.inverseSurface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        content: Text(
-          '$module — Module bientôt disponible',
-          style: TextStyle(color: theme.colorScheme.onInverseSurface, fontSize: 13),
-        ),
-        duration: const Duration(seconds: 2),
-      ),
-    );
   }
 }
 

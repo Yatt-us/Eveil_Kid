@@ -73,26 +73,25 @@ class _KidFilterChipState extends State<KidFilterChip> {
             borderRadius: BorderRadius.circular(22),
             border: Border.all(
               color: widget.isSelected
-                  ? primaryColor
-                  : theme.dividerColor.withValues(alpha: isDark ? 0.35 : 0.2),
-              width: widget.isSelected ? 1.8 : 1.2,
+                  ? (isDark
+                      ? KidTheme.primaryGreenLight.withValues(alpha: 0.6)
+                      : primaryColor)
+                  : theme.dividerColor.withValues(alpha: isDark ? 0.25 : 0.15),
+              width: widget.isSelected ? 1.5 : 1.0,
             ),
-            boxShadow: widget.isSelected
-                ? [
-                    BoxShadow(
-                      color: primaryColor.withValues(alpha: isDark ? 0.5 : 0.35),
-                      blurRadius: 10,
-                      spreadRadius: 1,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                : [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(
+                  alpha: widget.isSelected
+                      ? (isDark ? 0.25 : 0.1)
+                      : (isDark ? 0.2 : 0.04),
+                ),
+                blurRadius: widget.isSelected ? 8 : 4,
+                offset: widget.isSelected
+                    ? const Offset(0, 3)
+                    : const Offset(0, 2),
+              ),
+            ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -271,18 +270,11 @@ class _SegmentItemState extends State<_SegmentItem> {
             boxShadow: widget.isSelected
                 ? [
                     BoxShadow(
-                      color: KidTheme.primaryGreen.withValues(
-                        alpha: widget.isDark ? 0.35 : 0.18,
-                      ),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                    BoxShadow(
                       color: Colors.black.withValues(
-                        alpha: widget.isDark ? 0.3 : 0.05,
+                        alpha: widget.isDark ? 0.25 : 0.08,
                       ),
-                      blurRadius: 4,
-                      offset: const Offset(0, 1),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
                     ),
                   ]
                 : null,
@@ -301,7 +293,9 @@ class _SegmentItemState extends State<_SegmentItem> {
                     widget.icon,
                     size: 16,
                     color: widget.isSelected
-                        ? KidTheme.primaryGreenDark
+                        ? (widget.isDark
+                            ? KidTheme.primaryGreenLight
+                            : KidTheme.primaryGreenDark)
                         : widget.theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
@@ -314,7 +308,9 @@ class _SegmentItemState extends State<_SegmentItem> {
                   fontSize: 13,
                   fontWeight: widget.isSelected ? FontWeight.w900 : FontWeight.w600,
                   color: widget.isSelected
-                      ? KidTheme.primaryGreenDark
+                      ? (widget.isDark
+                          ? KidTheme.primaryGreenLight
+                          : KidTheme.primaryGreenDark)
                       : widget.theme.colorScheme.onSurfaceVariant,
                   letterSpacing: -0.1,
                 ),

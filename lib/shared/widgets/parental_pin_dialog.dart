@@ -263,12 +263,29 @@ class _ParentalPinDialogState extends ConsumerState<ParentalPinDialog>
     return PopScope(
       canPop: false,
       child: Dialog(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        backgroundColor: isDark ? const Color(0xFF1E2433) : theme.colorScheme.surface,
+        elevation: isDark ? 16 : 4,
+        shadowColor: Colors.black.withValues(alpha: isDark ? 0.7 : 0.2),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(28),
+          side: BorderSide(
+            color: isDark
+                ? const Color(0xFF475569).withValues(alpha: 0.8)
+                : theme.dividerColor.withValues(alpha: 0.25),
+            width: isDark ? 1.6 : 1.2,
+          ),
+        ),
         insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
         child: Container(
           width: min(MediaQuery.of(context).size.width, 360),
           padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(
+              color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.transparent,
+              width: 1,
+            ),
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -474,7 +491,7 @@ class _ParentalPinDialogState extends ConsumerState<ParentalPinDialog>
   Widget _buildKeypadButton(String digit, ThemeData theme, bool isDark) {
     return Material(
       color: isDark
-          ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)
+          ? const Color(0xFF2D3748)
           : theme.colorScheme.surfaceContainerLow,
       shape: const CircleBorder(),
       child: InkWell(
@@ -487,7 +504,10 @@ class _ParentalPinDialogState extends ConsumerState<ParentalPinDialog>
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(
-              color: theme.dividerColor.withValues(alpha: isDark ? 0.2 : 0.1),
+              color: isDark
+                  ? const Color(0xFF4A5568)
+                  : theme.dividerColor.withValues(alpha: 0.15),
+              width: 1.2,
             ),
           ),
           child: Text(

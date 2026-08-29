@@ -40,11 +40,12 @@ class ConfirmationPage extends StatelessWidget {
         children: [
           const CheckoutStepper(stepActuel: 3),
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  const SizedBox(height: 12),
                   // Icône de succès
                   Container(
                     width: 90,
@@ -59,9 +60,10 @@ class ConfirmationPage extends StatelessWidget {
                       color: successColor,
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
                   Text(
                     'Merci pour votre commande !',
+                    textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 19,
                       fontWeight: FontWeight.bold,
@@ -77,60 +79,104 @@ class ConfirmationPage extends StatelessWidget {
                       fontSize: 13,
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 24),
 
                   // Informations récapitulatives de commande
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surface,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(18),
                       border: Border.all(color: dividerColor),
+                      boxShadow: [
+                        if (!isDark)
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.03),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                      ],
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    child: Column(
                       children: [
-                        Column(
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            Text(
-                              'N° DE COMMANDE',
-                              style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: textSecondary),
+                            Column(
+                              children: [
+                                Text(
+                                  'N° DE COMMANDE',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: textSecondary,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  commande.id.isNotEmpty
+                                      ? '#${commande.id.length > 8 ? commande.id.substring(0, 8).toUpperCase() : commande.id.toUpperCase()}'
+                                      : 'En cours',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 14,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              commande.id.isNotEmpty
-                                  ? '#${commande.id.length > 8 ? commande.id.substring(0, 8) : commande.id}'
-                                  : 'En cours',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                                color: theme.colorScheme.primary,
-                              ),
+                            Container(width: 1, height: 32, color: dividerColor),
+                            Column(
+                              children: [
+                                Text(
+                                  'STATUT',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: textSecondary,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  commande.statut,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color: successColor,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                        Container(width: 1, height: 32, color: dividerColor),
-                        Column(
-                          children: [
-                            Text(
-                              'STATUT',
-                              style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: textSecondary),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              commande.statut,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                                color: successColor,
+                        if (commande.montantTotal > 0 || commande.articles.isNotEmpty) ...[
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: Divider(height: 1, color: dividerColor),
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '${commande.articles.length} article(s)',
+                                style: TextStyle(fontSize: 13, color: textSecondary),
                               ),
-                            ),
-                          ],
-                        ),
+                              Text(
+                                '${commande.montantTotal.toStringAsFixed(0).replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]} ")} FCFA',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                  color: theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ],
                     ),
                   ),
-                  const Spacer(),
+                  const SizedBox(height: 32),
 
                   // Bouton Voir mes commandes
                   AppButton(

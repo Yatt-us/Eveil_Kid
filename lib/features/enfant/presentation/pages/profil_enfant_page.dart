@@ -130,16 +130,18 @@ class ProfilEnfantPages extends ConsumerWidget {
                         ),
                         borderRadius: BorderRadius.circular(28),
                         border: Border.all(
-                          color: KidTheme.primaryGreen.withValues(alpha: 0.4),
+                          color: isDark
+                              ? theme.dividerColor.withValues(alpha: 0.25)
+                              : KidTheme.primaryGreen.withValues(alpha: 0.3),
                           width: 1.5,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: KidTheme.primaryGreen.withValues(
-                              alpha: isDark ? 0.25 : 0.12,
+                            color: Colors.black.withValues(
+                              alpha: isDark ? 0.25 : 0.08,
                             ),
-                            blurRadius: 14,
-                            offset: const Offset(0, 6),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
                           ),
                         ],
                       ),

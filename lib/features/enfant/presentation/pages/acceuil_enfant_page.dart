@@ -215,20 +215,6 @@ class _AccueilEnfantPageState extends ConsumerState<AccueilEnfantPage> {
           );
         },
       ),
-      _ModuleItem(
-        icon: Icons.face_rounded,
-        lightBackground: const Color(0xFFE0F2FE),
-        gradientColors: [const Color(0xFFE0F2FE), const Color(0xFFBAE6FD)],
-        accent: const Color(0xFF0284C7),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const KidThemeScope(child: ProfilEnfantPages()),
-            ),
-          );
-        },
-      ),
     ];
 
     return PopScope(
@@ -246,261 +232,207 @@ class _AccueilEnfantPageState extends ConsumerState<AccueilEnfantPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── BARRE SUPÉRIEURE : SÉLECTEUR D'ENFANT & BOUTON QUITTER PIN ──
+                // ── BARRE SUPÉRIEURE : PILULE D'ÉTOILES (À GAUCHE) & BOUTON QUITTER PIN (À DROITE) ──
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Badge Espace Enfant & Switcher d'enfant
-                    InkWell(
-                      onTap: enfants.length > 1
-                          ? () => _showChildSwitcherSheet(context, enfants, enfant)
-                          : null,
-                      borderRadius: BorderRadius.circular(20),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 7,
-                        ),
-                        decoration: BoxDecoration(
-                          color: KidTheme.primaryGreen.withValues(
-                            alpha: isDark ? 0.25 : 0.15,
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: KidTheme.primaryGreen.withValues(
-                              alpha: isDark ? 0.4 : 0.3,
-                            ),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.child_care_rounded,
-                              size: 16,
-                              color: KidTheme.primaryGreenDark,
-                            ),
-                            const SizedBox(width: 6),
-                            const Text(
-                              'Espace Enfant',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w900,
-                                color: KidTheme.primaryGreenDark,
-                              ),
-                            ),
-                            if (enfants.length > 1) ...[
-                              const SizedBox(width: 4),
-                              const Icon(
-                                Icons.swap_horiz_rounded,
-                                size: 16,
-                                color: KidTheme.primaryGreenDark,
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
+                    // Pilule d'étoiles interactive à gauche
+                    _InteractiveStarPill(
+                      starsCount: starsCount,
+                      onTap: () => _showStarsInfoSheet(context, starsCount),
                     ),
 
-                    // Pilule étoiles + Bouton de sortie sécurisé
-                    Row(
-                      children: [
-                        // Compteur d'étoiles gagnées
-                        Container(
+                    // Bouton sécurisé Quitter avec code PIN à droite
+                    Material(
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(20),
+                      elevation: isDark ? 0 : 1,
+                      child: InkWell(
+                        onTap: () => ParentalPinHelper.exitChildSpace(
+                          context: context,
+                          ref: ref,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
+                            horizontal: 12,
+                            vertical: 7,
                           ),
                           decoration: BoxDecoration(
-                            color: isDark
-                                ? const Color(0xFF78350F).withValues(alpha: 0.4)
-                                : const Color(0xFFFEF3C7),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: const Color(0xFFFDE68A),
+                              color: theme.dividerColor.withValues(
+                                alpha: isDark ? 0.3 : 0.2,
+                              ),
+                              width: 1.2,
                             ),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               const Icon(
-                                Icons.star_rounded,
-                                size: 16,
-                                color: Color(0xFFD97706),
+                                Icons.lock_outline_rounded,
+                                size: 14,
+                                color: KidTheme.primaryGreenDark,
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: 5),
                               Text(
-                                '$starsCount',
-                                style: const TextStyle(
+                                'Quitter',
+                                style: TextStyle(
                                   fontSize: 12,
-                                  fontWeight: FontWeight.w900,
-                                  color: Color(0xFF92400E),
+                                  fontWeight: FontWeight.w800,
+                                  color: theme.colorScheme.onSurface,
                                 ),
                               ),
                             ],
                           ),
                         ),
-
-                        const SizedBox(width: 8),
-
-                        // Bouton sécurisé Quitter avec code PIN
-                        Material(
-                          color: theme.colorScheme.surface,
-                          borderRadius: BorderRadius.circular(20),
-                          elevation: isDark ? 0 : 1,
-                          child: InkWell(
-                            onTap: () => ParentalPinHelper.exitChildSpace(
-                              context: context,
-                              ref: ref,
-                            ),
-                            borderRadius: BorderRadius.circular(20),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: theme.dividerColor.withValues(
-                                    alpha: isDark ? 0.3 : 0.2,
-                                  ),
-                                  width: 1.2,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.lock_outline_rounded,
-                                    size: 14,
-                                    color: KidTheme.primaryGreenDark,
-                                  ),
-                                  const SizedBox(width: 5),
-                                  Text(
-                                    'Quitter',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w800,
-                                      color: theme.colorScheme.onSurface,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
 
                 const SizedBox(height: 18),
 
-                // ── BANNIÈRE HERO ENFANT (STATIQUE ET FIXE) ──
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: isDark
-                        ? [const Color(0xFF14532D), const Color(0xFF064E3B)]
-                        : [const Color(0xFFDCFCE7), const Color(0xFFBBF7D0)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                // ── BANNIÈRE HERO ENFANT (CLIQUABLE VERS LE PROFIL) ──
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              const KidThemeScope(child: ProfilEnfantPages()),
+                        ),
+                      );
+                    },
                     borderRadius: BorderRadius.circular(28),
-                    border: Border.all(
-                      color: KidTheme.primaryGreen.withValues(alpha: 0.4),
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: KidTheme.primaryGreen.withValues(alpha: isDark ? 0.3 : 0.15),
-                        blurRadius: 16,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      // Avatar avec contour festif
-                      Container(
-                        width: 68,
-                        height: 68,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 3),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.12),
-                              blurRadius: 8,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: isDark
+                            ? [const Color(0xFF14532D), const Color(0xFF064E3B)]
+                            : [const Color(0xFFDCFCE7), const Color(0xFFBBF7D0)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                        child: ClipOval(
-                          child: enfant.avatarUrl != null &&
-                                  enfant.avatarUrl!.isNotEmpty
-                              ? Image.network(
-                                  enfant.avatarUrl!,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, _, _) =>
-                                      _defaultAvatar(theme),
-                                )
-                              : _defaultAvatar(theme),
+                        borderRadius: BorderRadius.circular(28),
+                        border: Border.all(
+                          color: isDark
+                              ? theme.dividerColor.withValues(alpha: 0.25)
+                              : KidTheme.primaryGreen.withValues(alpha: 0.3),
+                          width: 1.5,
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.08),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 16),
-                      // Textes de bienvenue & Progression
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Salut ${enfant.nom} !',
-                              style: TextStyle(
-                                fontSize: 21,
-                                fontWeight: FontWeight.w900,
-                                color: isDark
-                                    ? Colors.white
-                                    : const Color(0xFF14532D),
-                                letterSpacing: -0.4,
+                      child: Row(
+                        children: [
+                          // Avatar avec contour festif (et switcher d'enfant si multiple)
+                          GestureDetector(
+                            onTap: enfants.length > 1
+                                ? () => _showChildSwitcherSheet(context, enfants, enfant)
+                                : null,
+                            child: Container(
+                              width: 68,
+                              height: 68,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 3),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.12),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Niveau $level • Prêt pour l’aventure ?',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: isDark
-                                    ? const Color(0xFF86EFAC)
-                                    : const Color(0xFF166534),
+                              child: ClipOval(
+                                child: enfant.avatarUrl != null &&
+                                        enfant.avatarUrl!.isNotEmpty
+                                    ? Image.network(
+                                        enfant.avatarUrl!,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, _, _) =>
+                                            _defaultAvatar(theme),
+                                      )
+                                    : _defaultAvatar(theme),
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            // Barre d'étoiles vers niveau suivant
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: LinearProgressIndicator(
-                                value: progressValue,
-                                minHeight: 6,
-                                backgroundColor: isDark
-                                    ? Colors.black26
-                                    : Colors.white.withValues(alpha: 0.6),
-                                valueColor:
-                                    const AlwaysStoppedAnimation<Color>(
-                                  KidTheme.primaryGreenDark,
+                          ),
+                          const SizedBox(width: 16),
+                          // Textes de bienvenue & Progression
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        'Salut ${enfant.nom} !',
+                                        style: TextStyle(
+                                          fontSize: 21,
+                                          fontWeight: FontWeight.w900,
+                                          color: isDark
+                                              ? Colors.white
+                                              : const Color(0xFF14532D),
+                                          letterSpacing: -0.4,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.chevron_right_rounded,
+                                      color: isDark
+                                          ? const Color(0xFF86EFAC)
+                                          : const Color(0xFF166534),
+                                      size: 24,
+                                    ),
+                                  ],
                                 ),
-                              ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Niveau $level • Prêt pour l’aventure ?',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark
+                                        ? const Color(0xFF86EFAC)
+                                        : const Color(0xFF166534),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                // Barre d'étoiles vers niveau suivant
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: LinearProgressIndicator(
+                                    value: progressValue,
+                                    minHeight: 6,
+                                    backgroundColor: isDark
+                                        ? Colors.black26
+                                        : Colors.white.withValues(alpha: 0.6),
+                                    valueColor:
+                                        const AlwaysStoppedAnimation<Color>(
+                                      KidTheme.primaryGreenDark,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
 
@@ -755,6 +687,122 @@ class _AccueilEnfantPageState extends ConsumerState<AccueilEnfantPage> {
     );
   }
 
+  void _showStarsInfoSheet(BuildContext context, int starsCount) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: theme.colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Poignée
+                Container(
+                  width: 44,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: theme.dividerColor.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Étoile géante
+                Container(
+                  width: 84,
+                  height: 84,
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? theme.colorScheme.surfaceContainerHighest
+                        : const Color(0xFFFEF3C7),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isDark
+                          ? theme.dividerColor.withValues(alpha: 0.25)
+                          : const Color(0xFFFDE68A),
+                      width: 2,
+                    ),
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.star_rounded,
+                      size: 52,
+                      color: Color(0xFFD97706),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                Text(
+                  'Ton Trésor d’Étoiles',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 20,
+                  ),
+                ),
+                const SizedBox(height: 6),
+
+                Text(
+                  '$starsCount étoiles gagnées !',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: isDark
+                        ? KidTheme.primaryGreenLight
+                        : KidTheme.primaryGreenDark,
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                Text(
+                  'Termine des jeux, réponds aux quiz et découvre des tutoriels pour récolter encore plus d’étoiles !',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w500,
+                    color: theme.colorScheme.onSurfaceVariant,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 22),
+
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: KidTheme.primaryGreen,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                    ),
+                    child: const Text(
+                      'C’est parti !',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   double _progressValueFrom(EnfantModel enfant) {
     final completed = enfant.resultatsActivite.length;
     return ((completed % 5) / 5.0).clamp(0.1, 1.0);
@@ -816,7 +864,7 @@ class _CarteAccueilModuleState extends State<_CarteAccueilModule> {
     final isDark = theme.brightness == Brightness.dark;
 
     final cardBgColor = isDark
-        ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.55)
+        ? theme.colorScheme.surface
         : widget.lightBackground;
 
     final double scale = _isPressed ? 0.91 : 1.0;
@@ -845,18 +893,17 @@ class _CarteAccueilModuleState extends State<_CarteAccueilModule> {
             borderRadius: BorderRadius.circular(32),
             border: Border.all(
               color: isDark
-                  ? theme.dividerColor.withValues(alpha: 0.3)
-                  : widget.couleurIcone.withValues(alpha: 0.25),
-              width: 1.8,
+                  ? theme.dividerColor.withValues(alpha: 0.25)
+                  : widget.couleurIcone.withValues(alpha: 0.2),
+              width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: (isDark ? Colors.black : widget.couleurIcone).withValues(
-                  alpha: isDark ? 0.35 : 0.18,
+                color: Colors.black.withValues(
+                  alpha: isDark ? 0.25 : 0.06,
                 ),
-                blurRadius: 14,
-                spreadRadius: 1,
-                offset: const Offset(0, 6),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
@@ -865,17 +912,19 @@ class _CarteAccueilModuleState extends State<_CarteAccueilModule> {
               width: 78,
               height: 78,
               decoration: BoxDecoration(
-                color: isDark ? theme.colorScheme.surface : Colors.white,
+                color: isDark ? theme.colorScheme.surfaceContainerHighest : Colors.white,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: widget.couleurIcone.withValues(alpha: isDark ? 0.3 : 0.2),
-                  width: 2,
+                  color: isDark
+                      ? theme.dividerColor.withValues(alpha: 0.2)
+                      : widget.couleurIcone.withValues(alpha: 0.15),
+                  width: 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: widget.couleurIcone.withValues(alpha: isDark ? 0.4 : 0.2),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
@@ -887,6 +936,114 @@ class _CarteAccueilModuleState extends State<_CarteAccueilModule> {
                 ),
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Pilule d'étoiles interactive animée avec rotation et rebond au tap
+class _InteractiveStarPill extends StatefulWidget {
+  final int starsCount;
+  final VoidCallback onTap;
+
+  const _InteractiveStarPill({
+    required this.starsCount,
+    required this.onTap,
+  });
+
+  @override
+  State<_InteractiveStarPill> createState() => _InteractiveStarPillState();
+}
+
+class _InteractiveStarPillState extends State<_InteractiveStarPill>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _starAnimController;
+  bool _isPressed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _starAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+  }
+
+  @override
+  void dispose() {
+    _starAnimController.dispose();
+    super.dispose();
+  }
+
+  void _handleTap() {
+    _starAnimController.forward(from: 0.0);
+    widget.onTap();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final double scale = _isPressed ? 0.92 : 1.0;
+
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      onTap: _handleTap,
+      child: AnimatedScale(
+        scale: scale,
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOutBack,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+          decoration: BoxDecoration(
+            color: isDark
+                ? theme.colorScheme.surfaceContainerHighest
+                : const Color(0xFFFEF3C7),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: isDark
+                  ? theme.dividerColor.withValues(alpha: 0.25)
+                  : const Color(0xFFFDE68A),
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RotationTransition(
+                turns: Tween<double>(begin: 0.0, end: 0.08)
+                    .chain(CurveTween(curve: Curves.elasticOut))
+                    .animate(_starAnimController),
+                child: const Icon(
+                  Icons.star_rounded,
+                  size: 20,
+                  color: Color(0xFFD97706),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '${widget.starsCount}',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                  color: isDark
+                      ? theme.colorScheme.onSurface
+                      : const Color(0xFF92400E),
+                  letterSpacing: -0.2,
+                ),
+              ),
+            ],
           ),
         ),
       ),

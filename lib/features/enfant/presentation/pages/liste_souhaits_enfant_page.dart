@@ -179,7 +179,9 @@ class ListeSouhaitsEnfantPage extends ConsumerWidget {
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: const Color(0xFFDB2777).withValues(alpha: isDark ? 0.35 : 0.2),
+          color: isDark
+              ? theme.dividerColor.withValues(alpha: 0.25)
+              : const Color(0xFFDB2777).withValues(alpha: 0.2),
           width: 1.2,
         ),
         boxShadow: [

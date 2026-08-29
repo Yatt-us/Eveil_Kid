@@ -5,6 +5,7 @@ import 'package:eveilkid/features/tutoriels/enums/tutoriel_status.enum.dart';
 import 'package:eveilkid/features/tutoriels/models/tutoriel.dart';
 import 'package:eveilkid/features/tutoriels/presentation/widgets/video_player_widget.dart';
 import 'package:eveilkid/features/tutoriels/providers/tutoriel_provider.dart';
+import 'package:eveilkid/shared/widgets/app_states.dart';
 
 /// Page de détail d'un tutoriel dédiée à l'Espace Enfant :
 /// - Design minimaliste & épuré (pas d'informations superflues)
@@ -108,7 +109,7 @@ class TutorielDetailEnfantPage extends ConsumerWidget {
                       const SizedBox(width: 14),
                       Expanded(
                         child: Text(
-                          'Tutoriel Vidéo 📺',
+                          'Tutoriel Vidéo',
                           style: TextStyle(
                             fontSize: 19,
                             fontWeight: FontWeight.w900,
@@ -252,7 +253,7 @@ class TutorielDetailEnfantPage extends ConsumerWidget {
                         if (relatedTutoriels.isNotEmpty) ...[
                           const SizedBox(height: 24),
                           Text(
-                            'Regarde aussi 🎬',
+                            'Regarde aussi',
                             style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w900,
@@ -286,9 +287,7 @@ class TutorielDetailEnfantPage extends ConsumerWidget {
               ],
             );
           },
-          loading: () => const Center(
-            child: CircularProgressIndicator(color: KidTheme.primaryGreen),
-          ),
+          loading: () => _buildDetailSkeleton(theme, isDark),
           error: (err, _) => Center(
             child: Padding(
               padding: const EdgeInsets.all(24),
@@ -309,69 +308,120 @@ class TutorielDetailEnfantPage extends ConsumerWidget {
     ThemeData theme,
     bool isDark,
   ) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => KidThemeScope(
-              child: TutorielDetailEnfantPage(
-                tutorielId: item.tutorielId ?? '',
-              ),
-            ),
-          ),
-        );
-      },
-      child: Container(
-        width: 160,
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: theme.dividerColor.withValues(alpha: isDark ? 0.25 : 0.15),
-          ),
+    return Container(
+      width: 140,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: theme.dividerColor.withValues(alpha: isDark ? 0.25 : 0.15),
+          width: 1.2,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-              child: Container(
-                height: 75,
-                width: 160,
-                color: const Color(0xFFFFEDD5),
-                child: item.miniatureUrl.isNotEmpty
-                    ? Image.network(
-                        item.miniatureUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => const Icon(
-                          Icons.play_circle_fill_rounded,
-                          size: 32,
-                          color: Color(0xFFEA580C),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          onTap: () {
+            if (item.tutorielId != null && item.tutorielId!.isNotEmpty) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => KidThemeScope(
+                    child: TutorielDetailEnfantPage(
+                      tutorielId: item.tutorielId!,
+                    ),
+                  ),
+                ),
+              );
+            }
+          },
+          borderRadius: BorderRadius.circular(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(18),
+                ),
+                child: SizedBox(
+                  height: 75,
+                  width: double.infinity,
+                  child: item.miniatureUrl.isNotEmpty
+                      ? Image.network(
+                          item.miniatureUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => Container(
+                            color: const Color(0xFFFFEDD5),
+                            child: const Icon(
+                              Icons.movie_rounded,
+                              color: Color(0xFFEA580C),
+                            ),
+                          ),
+                        )
+                      : Container(
+                          color: const Color(0xFFFFEDD5),
+                          child: const Icon(
+                            Icons.movie_rounded,
+                            color: Color(0xFFEA580C),
+                          ),
                         ),
-                      )
-                    : const Icon(
-                        Icons.play_circle_fill_rounded,
-                        size: 32,
-                        color: Color(0xFFEA580C),
-                      ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8),
-              child: Text(
-                item.titre,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: theme.colorScheme.onSurface,
                 ),
               ),
-            ),
-          ],
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
+                child: Text(
+                  item.titre,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w800,
+                    color: theme.colorScheme.onSurface,
+                    height: 1.2,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildDetailSkeleton(ThemeData theme, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: const AppSkeletonLoader(
+              height: 220,
+              borderRadius: 24,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: const [
+              AppSkeletonLoader(width: 80, height: 26, borderRadius: 12),
+              SizedBox(width: 8),
+              AppSkeletonLoader(width: 70, height: 26, borderRadius: 12),
+            ],
+          ),
+          const SizedBox(height: 14),
+          const AppSkeletonLoader(width: 240, height: 24, borderRadius: 8),
+          const SizedBox(height: 14),
+          const AppSkeletonLoader(height: 80, borderRadius: 18),
+        ],
       ),
     );
   }

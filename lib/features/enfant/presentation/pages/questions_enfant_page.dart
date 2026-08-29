@@ -418,7 +418,9 @@ class _QuestionsEnfantPageState extends ConsumerState<QuestionsEnfantPage> {
                               color: theme.colorScheme.surface,
                               borderRadius: BorderRadius.circular(24),
                               border: Border.all(
-                                color: KidTheme.primaryGreen.withValues(alpha: 0.3),
+                                color: isDark
+                                    ? theme.dividerColor.withValues(alpha: 0.25)
+                                    : KidTheme.primaryGreen.withValues(alpha: 0.3),
                                 width: 1.5,
                               ),
                               boxShadow: [
