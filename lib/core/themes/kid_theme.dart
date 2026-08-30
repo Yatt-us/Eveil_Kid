@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:eveilkid/core/constants/AppTextStyles.dart';
@@ -27,13 +28,19 @@ class KidTheme {
   static const Color lightBackground = Color(0xFFF0FDF4); // Doux vert pastel
   static const Color lightSurface = Colors.white;
   static const Color lightSurfaceVariant = Color(0xFFDCFCE7); // Vert très pâle
-  static const Color lightTextPrimary = Color(0xFF14532D); // Vert forêt très sombre lisible
+  static const Color lightTextPrimary = Color(
+    0xFF14532D,
+  ); // Vert forêt très sombre lisible
   static const Color lightTextSecondary = Color(0xFF475569);
   static const Color lightBorder = Color(0xFFBBF7D0);
 
   /// Fonds et surfaces mode sombre (fond gris inspiré du mode nuit parent mais légèrement plus clair)
-  static const Color darkBackground = Color(0xFF18181C); // Gris sombre légèrement plus clair que le parent (0xFF121214)
-  static const Color darkSurface = Color(0xFF222228); // Surface gris sombre légèrement plus claire (0xFF1E1E22)
+  static const Color darkBackground = Color(
+    0xFF18181C,
+  ); // Gris sombre légèrement plus clair que le parent (0xFF121214)
+  static const Color darkSurface = Color(
+    0xFF222228,
+  ); // Surface gris sombre légèrement plus claire (0xFF1E1E22)
   static const Color darkSurfaceVariant = Color(0xFF2E2E36);
   static const Color darkTextPrimary = Color(0xFFF8F7FC);
   static const Color darkTextSecondary = Color(0xFFB8B3C7);
@@ -42,15 +49,16 @@ class KidTheme {
   // ============================================================
   // TRANSITIONS DE PAGE
   // ============================================================
-  static const PageTransitionsTheme _pageTransitionsTheme = PageTransitionsTheme(
-    builders: {
-      TargetPlatform.android: ZoomPageTransitionsBuilder(),
-      TargetPlatform.iOS: ZoomPageTransitionsBuilder(),
-      TargetPlatform.linux: FadeForwardsPageTransitionsBuilder(),
-      TargetPlatform.macOS: FadeForwardsPageTransitionsBuilder(),
-      TargetPlatform.windows: FadeForwardsPageTransitionsBuilder(),
-    },
-  );
+  static const PageTransitionsTheme _pageTransitionsTheme =
+      PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.linux: FadeForwardsPageTransitionsBuilder(),
+          TargetPlatform.windows: FadeForwardsPageTransitionsBuilder(),
+        },
+      );
 
   // ============================================================
   // THÈME CLAIR ENFANT
@@ -189,17 +197,13 @@ class KidTheme {
         backgroundColor: primaryGreen,
         foregroundColor: Colors.white,
         elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
 
       // ── DIALOGUES ──
       dialogTheme: DialogThemeData(
         backgroundColor: lightSurface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(28),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
         titleTextStyle: const TextStyle(
           fontFamily: AppTextStyles.fontFamily,
           fontSize: 20,
@@ -376,17 +380,13 @@ class KidTheme {
         backgroundColor: primaryGreenLight,
         foregroundColor: const Color(0xFF052E16),
         elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
 
       // ── DIALOGUES ──
       dialogTheme: DialogThemeData(
         backgroundColor: darkSurface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(28),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
         titleTextStyle: const TextStyle(
           fontFamily: AppTextStyles.fontFamily,
           fontSize: 20,
@@ -440,9 +440,6 @@ class KidThemeScope extends StatelessWidget {
     final isDark = parentTheme.brightness == Brightness.dark;
     final kidTheme = isDark ? KidTheme.dark : KidTheme.light;
 
-    return Theme(
-      data: kidTheme,
-      child: child,
-    );
+    return Theme(data: kidTheme, child: child);
   }
 }

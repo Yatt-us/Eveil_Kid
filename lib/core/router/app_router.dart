@@ -1,7 +1,6 @@
 import 'package:eveilkid/features/activites/presentation/pages/admin/activites_liste.dart';
 import 'package:eveilkid/features/activites/presentation/pages/admin/add_activity_screen.dart';
 import 'package:eveilkid/features/activites/presentation/pages/admin/edit_activity_screen.dart';
-import 'package:eveilkid/features/admin/presentation/pages/admin/add_tutoriel_screen.dart';
 import 'package:eveilkid/features/questions/enums/question_type.enum.dart';
 import 'package:eveilkid/features/questions/options_questions/choose_question_type_screen.dart';
 import 'package:eveilkid/features/questions/presentation/pages/add_question_screen.dart';
@@ -64,8 +63,33 @@ class _RouterRefreshNotifier extends ChangeNotifier {
   final Ref _ref;
   _RouterRefreshNotifier(this._ref) {
     _ref.listen<AuthState>(authProvider, (_, next) => notifyListeners());
-    _ref.listen<ChildModeState>(childModeProvider, (_, next) => notifyListeners());
+    _ref.listen<ChildModeState>(
+      childModeProvider,
+      (_, next) => notifyListeners(),
+    );
   }
+}
+
+/// Animation fluide avec fondu subtil pour les changements d'onglets principaux
+CustomTransitionPage<void> _buildFadePage({
+  required GoRouterState state,
+  required Widget child,
+}) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 220),
+    reverseTransitionDuration: const Duration(milliseconds: 180),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      return FadeTransition(
+        opacity: CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeInOutCubic,
+        ),
+        child: child,
+      );
+    },
+  );
 }
 
 /// Provider de configuration globale de GoRouter
@@ -143,7 +167,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             : AppRoutes.espaceEnfant;
 
         // Si l'utilisateur arrive du splash, de l'auth ou d'une route parent -> envoi direct
-        if (!state.matchedLocation.startsWith(AppRoutes.espaceEnfant) || isSplash || isGoingToAuth) {
+        if (!state.matchedLocation.startsWith(AppRoutes.espaceEnfant) ||
+            isSplash ||
+            isGoingToAuth) {
           return childDestination;
         }
 
@@ -269,15 +295,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ── Accueil & Fonctionnalités Utilisateur ──
       GoRoute(
         path: AppRoutes.home,
-        pageBuilder: (context, state) {
-          return const NoTransitionPage(child: AccueilParentPage());
-        },
+        pageBuilder: (context, state) =>
+            _buildFadePage(state: state, child: const AccueilParentPage()),
       ),
       GoRoute(
         path: AppRoutes.profile,
-        pageBuilder: (context, state) {
-          return const NoTransitionPage(child: ProfilParentPage());
-        },
+        pageBuilder: (context, state) =>
+            _buildFadePage(state: state, child: const ProfilParentPage()),
         routes: [
           GoRoute(
             path: 'favoris',
@@ -291,9 +315,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.tutoriels,
-        pageBuilder: (context, state) {
-          return const NoTransitionPage(child: TutorielPage());
-        },
+        pageBuilder: (context, state) =>
+            _buildFadePage(state: state, child: const TutorielPage()),
       ),
       GoRoute(
         path: AppRoutes.panier,
@@ -516,7 +539,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
           final utilisateurId = authState.utilisateur?.utilisateurId ?? '';
 
-          return NoTransitionPage(
+          return _buildFadePage(
+            state: state,
             child: JouetsScreen(utilisateurId: utilisateurId),
           );
         },
