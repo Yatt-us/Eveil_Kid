@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:eveilkid/core/constants/AppTextStyles.dart';
 import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/core/router/app_routes.dart';
 import 'package:eveilkid/features/admin/presentation/widgets/admin_drawer.dart';
@@ -11,7 +10,6 @@ import 'package:eveilkid/features/categories/providers/categorie_provider.dart';
 import 'package:eveilkid/features/tutoriels/enums/tutoriel_status.enum.dart';
 import 'package:eveilkid/features/tutoriels/models/tutoriel.dart';
 import 'package:eveilkid/features/tutoriels/providers/tutoriel_provider.dart';
-import 'package:eveilkid/features/tutoriels/presentation/pages/tutoriel_detail_page.dart';
 import 'package:eveilkid/shared/widgets/app_button.dart';
 import 'package:eveilkid/shared/widgets/app_dialogs.dart';
 import 'package:eveilkid/shared/widgets/app_search_bar.dart';
@@ -23,7 +21,8 @@ class TutorielsListScreen extends ConsumerStatefulWidget {
   const TutorielsListScreen({super.key});
 
   @override
-  ConsumerState<TutorielsListScreen> createState() => _TutorielsListScreenState();
+  ConsumerState<TutorielsListScreen> createState() =>
+      _TutorielsListScreenState();
 }
 
 class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
@@ -54,18 +53,25 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
       }
     });
 
-    return Scaffold(
+    return AdminScaffold(
+      currentRoute: AdminNavRoute.tutoriels,
       backgroundColor: theme.scaffoldBackgroundColor,
-      drawer: const AdminDrawer(currentRoute: AdminNavRoute.tutoriels),
       appBar: AppBar(
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         centerTitle: false,
         title: Text(
           'Tutoriels Vidéo',
-          style: AppTextStyles.headingMedium.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
+          style:
+              theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: theme.colorScheme.onSurface,
+              ) ??
+              TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 20,
+                color: theme.colorScheme.onSurface,
+              ),
         ),
         actions: [
           IconButton(
@@ -86,7 +92,10 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add_rounded),
-        label: const Text('Nouveau tutoriel', style: TextStyle(fontWeight: FontWeight.w700)),
+        label: const Text(
+          'Nouveau tutoriel',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -94,7 +103,7 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
           ref.invalidate(categoriesProvider);
         },
         child: tutorielsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => _buildAdminSkeleton(theme, isDark),
           error: (err, _) => AppErrorState(
             message: 'Erreur lors du chargement des tutoriels: $err',
             onRetry: () => ref.invalidate(adminTutorielsProvider),
@@ -134,7 +143,8 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
                             value: '$publishedCount',
                             icon: Icons.check_circle_rounded,
                             color: AppColors.success,
-                            onTap: () => setState(() => _selectedStatus = 'publie'),
+                            onTap: () =>
+                                setState(() => _selectedStatus = 'publie'),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -144,7 +154,8 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
                             value: '$draftCount',
                             icon: Icons.edit_note_rounded,
                             color: AppColors.warning,
-                            onTap: () => setState(() => _selectedStatus = 'brouillon'),
+                            onTap: () =>
+                                setState(() => _selectedStatus = 'brouillon'),
                           ),
                         ),
                       ],
@@ -177,13 +188,15 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
                               color: _hasActiveFilters
                                   ? AppColors.primary
                                   : (isDark
-                                      ? Colors.white.withValues(alpha: 0.08)
-                                      : Colors.grey.shade100),
+                                        ? Colors.white.withValues(alpha: 0.08)
+                                        : Colors.grey.shade100),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: _hasActiveFilters
                                     ? AppColors.primary
-                                    : (isDark ? Colors.white12 : Colors.grey.shade300),
+                                    : (isDark
+                                          ? Colors.white12
+                                          : Colors.grey.shade300),
                               ),
                             ),
                             child: Stack(
@@ -193,7 +206,9 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
                                   Icons.tune_rounded,
                                   color: _hasActiveFilters
                                       ? Colors.white
-                                      : (isDark ? Colors.white70 : AppColors.textPrimary),
+                                      : (isDark
+                                            ? Colors.white70
+                                            : AppColors.textPrimary),
                                   size: 20,
                                 ),
                                 if (_hasActiveFilters)
@@ -226,7 +241,10 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
                       scrollDirection: Axis.horizontal,
                       child: Row(
                         children: [
-                          _buildQuickStatusChip(label: 'Tous ($totalCount)', statusValue: null),
+                          _buildQuickStatusChip(
+                            label: 'Tous ($totalCount)',
+                            statusValue: null,
+                          ),
                           const SizedBox(width: 8),
                           _buildQuickStatusChip(
                             label: 'Publiés ($publishedCount)',
@@ -268,19 +286,32 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
                             const SizedBox(height: 16),
                             Text(
                               'Aucun tutoriel trouvé',
-                              style: AppTextStyles.headingSmall.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
+                              style:
+                                  theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: theme.colorScheme.onSurface,
+                                    fontSize: 17,
+                                  ) ??
+                                  TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 17,
+                                    color: theme.colorScheme.onSurface,
+                                  ),
                             ),
                             const SizedBox(height: 8),
                             Text(
                               _searchQuery.isNotEmpty || _hasActiveFilters
                                   ? 'Essayez de modifier vos critères de recherche ou de filtre.'
                                   : 'Commencez par ajouter votre premier tutoriel vidéo.',
-                              style: TextStyle(
-                                color: Colors.grey.shade600,
-                                fontSize: 13,
-                              ),
+                              style:
+                                  theme.textTheme.bodyMedium?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                    fontSize: 13,
+                                  ) ??
+                                  TextStyle(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                    fontSize: 13,
+                                  ),
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 20),
@@ -288,7 +319,8 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
                               AppButton(
                                 text: 'Créer un tutoriel',
                                 icon: Icons.add_rounded,
-                                onPressed: () => context.push(AppRoutes.adminAddTutoriel),
+                                onPressed: () =>
+                                    context.push(AppRoutes.adminAddTutoriel),
                               )
                             else
                               OutlinedButton.icon(
@@ -297,7 +329,8 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
                                     _searchQuery = '';
                                     _selectedStatus = null;
                                     _selectedCategoryId = null;
-                                    _sortOption = AdminTutorielSortOption.newest;
+                                    _sortOption =
+                                        AdminTutorielSortOption.newest;
                                   });
                                 },
                                 icon: const Icon(Icons.clear_all_rounded),
@@ -312,40 +345,37 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 80),
                     sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final tutoriel = filteredList[index];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: TutorielCard(
-                              tutoriel: tutoriel,
-                              categorieNom: categoriesMap[tutoriel.categorieId],
-                              onTap: () {
-                                if (tutoriel.tutorielId != null) {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => TutorielDetailPage(
-                                        tutorielId: tutoriel.tutorielId!,
-                                      ),
-                                    ),
-                                  );
-                                }
-                              },
-                              onEdit: () {
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        final tutoriel = filteredList[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: TutorielCard(
+                            tutoriel: tutoriel,
+                            categorieNom: categoriesMap[tutoriel.categorieId],
+                            onTap: () {
+                              if (tutoriel.tutorielId != null) {
                                 context.push(
-                                  AppRoutes.adminEditTutorielPath(tutoriel.tutorielId ?? ''),
+                                  AppRoutes.adminDetailTutorielPath(
+                                    tutoriel.tutorielId!,
+                                  ),
                                   extra: tutoriel,
                                 );
-                              },
-                              onDelete: () => _confirmDelete(tutoriel),
-                              onPublish: () => _publishTutoriel(tutoriel),
-                              onUnpublish: () => _unpublishTutoriel(tutoriel),
-                            ),
-                          );
-                        },
-                        childCount: filteredList.length,
-                      ),
+                              }
+                            },
+                            onEdit: () {
+                              context.push(
+                                AppRoutes.adminEditTutorielPath(
+                                  tutoriel.tutorielId ?? '',
+                                ),
+                                extra: tutoriel,
+                              );
+                            },
+                            onDelete: () => _confirmDelete(tutoriel),
+                            onPublish: () => _publishTutoriel(tutoriel),
+                            onUnpublish: () => _unpublishTutoriel(tutoriel),
+                          ),
+                        );
+                      }, childCount: filteredList.length),
                     ),
                   ),
               ],
@@ -377,7 +407,9 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
       ),
       selected: isSelected,
       selectedColor: AppColors.primary,
-      backgroundColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade100,
+      backgroundColor: isDark
+          ? Colors.white.withValues(alpha: 0.05)
+          : Colors.grey.shade100,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       onSelected: (_) {
         setState(() => _selectedStatus = statusValue);
@@ -418,7 +450,9 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
         list.sort((a, b) => a.duree.compareTo(b.duree));
         break;
       case AdminTutorielSortOption.titleAsc:
-        list.sort((a, b) => a.titre.toLowerCase().compareTo(b.titre.toLowerCase()));
+        list.sort(
+          (a, b) => a.titre.toLowerCase().compareTo(b.titre.toLowerCase()),
+        );
         break;
     }
 
@@ -427,6 +461,7 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
 
   void _showFilterBottomSheet(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final categoriesAsync = ref.read(categoriesProvider);
     final categories = categoriesAsync.value ?? [];
 
@@ -450,7 +485,7 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
+                      color: isDark ? Colors.white24 : Colors.grey.shade300,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -461,9 +496,17 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
                   children: [
                     Text(
                       'Filtres & Tri',
-                      style: AppTextStyles.headingSmall.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                      style:
+                          theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 18,
+                            color: theme.colorScheme.onSurface,
+                          ) ??
+                          TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 18,
+                            color: theme.colorScheme.onSurface,
+                          ),
                     ),
                     TextButton(
                       onPressed: () {
@@ -481,41 +524,92 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
                 const SizedBox(height: 16),
 
                 // Tri
-                const Text(
+                Text(
                   'Trier par',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                  style:
+                      theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: theme.colorScheme.onSurface,
+                      ) ??
+                      TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: theme.colorScheme.onSurface,
+                      ),
                 ),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    _buildSortChip('Plus récents', AdminTutorielSortOption.newest, setModalState),
-                    _buildSortChip('Plus anciens', AdminTutorielSortOption.oldest, setModalState),
-                    _buildSortChip('Plus longs', AdminTutorielSortOption.longest, setModalState),
-                    _buildSortChip('Plus courts', AdminTutorielSortOption.shortest, setModalState),
-                    _buildSortChip('Titre (A-Z)', AdminTutorielSortOption.titleAsc, setModalState),
+                    _buildSortChip(
+                      'Plus récents',
+                      AdminTutorielSortOption.newest,
+                      setModalState,
+                    ),
+                    _buildSortChip(
+                      'Plus anciens',
+                      AdminTutorielSortOption.oldest,
+                      setModalState,
+                    ),
+                    _buildSortChip(
+                      'Plus longs',
+                      AdminTutorielSortOption.longest,
+                      setModalState,
+                    ),
+                    _buildSortChip(
+                      'Plus courts',
+                      AdminTutorielSortOption.shortest,
+                      setModalState,
+                    ),
+                    _buildSortChip(
+                      'Titre (A-Z)',
+                      AdminTutorielSortOption.titleAsc,
+                      setModalState,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
 
                 // Filtre par catégorie
                 if (categories.isNotEmpty) ...[
-                  const Text(
+                  Text(
                     'Catégorie',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                    style:
+                        theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          color: theme.colorScheme.onSurface,
+                        ) ??
+                        TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          color: theme.colorScheme.onSurface,
+                        ),
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String?>(
                     initialValue: _selectedCategoryId,
                     decoration: InputDecoration(
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                     ),
                     items: [
-                      const DropdownMenuItem(value: null, child: Text('Toutes les catégories')),
+                      const DropdownMenuItem(
+                        value: null,
+                        child: Text('Toutes les catégories'),
+                      ),
                       ...categories.map(
-                        (c) => DropdownMenuItem(value: c.categorieId, child: Text(c.nom)),
+                        (c) => DropdownMenuItem(
+                          value: c.categorieId,
+                          child: Text(c.nom),
+                        ),
                       ),
                     ],
                     onChanged: (val) {
@@ -546,11 +640,26 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
     AdminTutorielSortOption option,
     StateSetter setModalState,
   ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final isSelected = _sortOption == option;
     return ChoiceChip(
-      label: Text(label, style: TextStyle(fontSize: 12, color: isSelected ? Colors.white : null)),
+      label: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+          color: isSelected
+              ? Colors.white
+              : (isDark ? Colors.white70 : theme.colorScheme.onSurface),
+        ),
+      ),
       selected: isSelected,
       selectedColor: AppColors.primary,
+      backgroundColor: isDark
+          ? Colors.white.withValues(alpha: 0.05)
+          : Colors.grey.shade100,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       onSelected: (_) {
         setModalState(() => _sortOption = option);
         setState(() => _sortOption = option);
@@ -562,7 +671,8 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
     final confirmed = await AppDialogs.showConfirmDialog(
       context: context,
       title: 'Supprimer le tutoriel',
-      message: 'Voulez-vous vraiment supprimer "${tutoriel.titre}" ? Cette action est irréversible.',
+      message:
+          'Voulez-vous vraiment supprimer "${tutoriel.titre}" ? Cette action est irréversible.',
       confirmText: 'Supprimer',
       isDanger: true,
     );
@@ -585,7 +695,10 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Erreur: $e'), backgroundColor: AppColors.danger),
+            SnackBar(
+              content: Text('Erreur: $e'),
+              backgroundColor: AppColors.danger,
+            ),
           );
         }
       }
@@ -610,7 +723,10 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e'), backgroundColor: AppColors.danger),
+          SnackBar(
+            content: Text('Erreur: $e'),
+            backgroundColor: AppColors.danger,
+          ),
         );
       }
     }
@@ -634,9 +750,86 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e'), backgroundColor: AppColors.danger),
+          SnackBar(
+            content: Text('Erreur: $e'),
+            backgroundColor: AppColors.danger,
+          ),
         );
       }
     }
+  }
+
+  Widget _buildAdminSkeleton(ThemeData theme, bool isDark) {
+    return CustomScrollView(
+      slivers: [
+        // Cartes Statistiques Skeleton
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: Row(
+              children: const [
+                Expanded(
+                  child: AppSkeletonLoader(height: 75, borderRadius: 14),
+                ),
+                SizedBox(width: 10),
+                Expanded(
+                  child: AppSkeletonLoader(height: 75, borderRadius: 14),
+                ),
+                SizedBox(width: 10),
+                Expanded(
+                  child: AppSkeletonLoader(height: 75, borderRadius: 14),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Recherche Skeleton
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: const [
+                Expanded(
+                  child: AppSkeletonLoader(height: 44, borderRadius: 12),
+                ),
+                SizedBox(width: 10),
+                AppSkeletonLoader(width: 44, height: 44, borderRadius: 12),
+              ],
+            ),
+          ),
+        ),
+
+        // Chips Skeleton
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+            child: Row(
+              children: const [
+                AppSkeletonLoader(width: 75, height: 32, borderRadius: 10),
+                SizedBox(width: 8),
+                AppSkeletonLoader(width: 85, height: 32, borderRadius: 10),
+                SizedBox(width: 8),
+                AppSkeletonLoader(width: 90, height: 32, borderRadius: 10),
+              ],
+            ),
+          ),
+        ),
+
+        // Liste Skeleton Cards
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) => const Padding(
+                padding: EdgeInsets.only(bottom: 12),
+                child: AppSkeletonLoader(height: 110, borderRadius: 16),
+              ),
+              childCount: 5,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }

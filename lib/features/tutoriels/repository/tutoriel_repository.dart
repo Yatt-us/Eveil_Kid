@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:eveilkid/core/cloudinary/cloudinary_service.dart';
+import 'package:eveilkid/features/tutoriels/enums/tutoriel_status.enum.dart';
 import 'package:eveilkid/features/tutoriels/models/tutoriel.dart';
 
 class TutorielRepository {
@@ -17,15 +18,39 @@ class TutorielRepository {
   CollectionReference<Map<String, dynamic>> get _tutorielsCollection =>
       _firestore.collection('tutoriels');
 
+  /// Récupère la liste des tutoriels pour l'espace parent ou public.
+  /// Récupère les documents triés par date décroissante et filtre sur le statut publié.
   Future<List<Tutoriel>> getTutoriels({bool onlyPublished = true}) async {
-    final query = onlyPublished
-        ? _tutorielsCollection.where('estPublie', isEqualTo: true)
-        : _tutorielsCollection;
+    try {
+      final snapshot = await _tutorielsCollection
+          .orderBy('dateCreation', descending: true)
+          .get();
 
-    final snapshot = await query.get();
-    return snapshot.docs
-        .map((doc) => Tutoriel.fromFirestore(doc))
-        .toList();
+      final all = snapshot.docs
+          .map((doc) => Tutoriel.fromFirestore(doc))
+          .toList();
+
+      if (onlyPublished) {
+        return all
+            .where((t) => t.statut == TutorielStatus.publie)
+            .toList();
+      }
+      return all;
+    } catch (e) {
+      // Fallback sans clause orderBy au cas où l'index Firestore ou un champ date est manquant
+      final snapshot = await _tutorielsCollection.get();
+      final all = snapshot.docs
+          .map((doc) => Tutoriel.fromFirestore(doc))
+          .toList();
+      all.sort((a, b) => b.dateCreation.compareTo(a.dateCreation));
+
+      if (onlyPublished) {
+        return all
+            .where((t) => t.statut == TutorielStatus.publie)
+            .toList();
+      }
+      return all;
+    }
   }
 
   Future<Tutoriel?> getTutorielById(String tutorielId) async {
@@ -46,8 +71,21 @@ class TutorielRepository {
     return Tutoriel.fromFirestore(snapshot.docs.first);
   }
 
+  /// Écoute les modifications d'un tutoriel en temps réel depuis Firestore
+  Stream<Tutoriel?> streamTutorielById(String tutorielId) {
+    final cleanedId = tutorielId.trim();
+    if (cleanedId.isEmpty) return Stream.value(null);
+
+    return _tutorielsCollection.doc(cleanedId).snapshots().map((doc) {
+      if (doc.exists && doc.data() != null) {
+        return Tutoriel.fromFirestore(doc);
+      }
+      return null;
+    });
+  }
+
   Future<List<Tutoriel>> searchTutoriels(String query) async {
-    final tutoriels = await getTutoriels();
+    final tutoriels = await getTutoriels(onlyPublished: true);
     final normalized = query.trim().toLowerCase();
     if (normalized.isEmpty) return tutoriels;
 
@@ -142,8 +180,10 @@ class TutorielRepository {
   Future<String> uploadVideo(String tutorielId, File videoFile) async {
     try {
       final downloadUrl = await uploadVideoDirect(videoFile, tutorielId: tutorielId);
+      final durationSec = await _cloudinary.getVideoDuration(downloadUrl);
       await _tutorielsCollection.doc(tutorielId).update({
         'videoUrl': downloadUrl,
+        'duree': durationSec.round(),
         'dateModification': Timestamp.now(),
       });
       return downloadUrl;
@@ -156,6 +196,7 @@ class TutorielRepository {
     try {
       await _tutorielsCollection.doc(id).update({
         'statut': 'publie',
+        'estPublie': true,
         'dateModification': Timestamp.now(),
       });
     } catch (e) {
@@ -167,6 +208,7 @@ class TutorielRepository {
     try {
       await _tutorielsCollection.doc(id).update({
         'statut': 'brouillon',
+        'estPublie': false,
         'dateModification': Timestamp.now(),
       });
     } catch (e) {
@@ -175,27 +217,10 @@ class TutorielRepository {
   }
 
   Future<List<Tutoriel>> getAllTutoriels() async {
-    try {
-      final snapshot = await _tutorielsCollection
-          .where('statut', isEqualTo: 'publie')
-          .orderBy('dateCreation', descending: true)
-          .get();
-      
-      return snapshot.docs.map((doc) => Tutoriel.fromFirestore(doc)).toList();
-    } catch (e) {
-      throw Exception('Erreur: $e');
-    }
+    return getTutoriels(onlyPublished: true);
   }
 
   Future<List<Tutoriel>> getAllTutorielsForAdmin() async {
-    try {
-      final snapshot = await _tutorielsCollection
-          .orderBy('dateCreation', descending: true)
-          .get();
-      
-      return snapshot.docs.map((doc) => Tutoriel.fromFirestore(doc)).toList();
-    } catch (e) {
-      throw Exception('Erreur: $e');
-    }
+    return getTutoriels(onlyPublished: false);
   }
 }

@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'dart:io';
+import 'package:flutter/material.dart';
 
 class ImagePickerWidget extends StatelessWidget {
   final File? selectedImage;
@@ -17,32 +17,39 @@ class ImagePickerWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final dividerColor = theme.dividerColor.withValues(alpha: isDark ? 0.3 : 0.15);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Image (optionnel)',
+        Text(
+          'Illustration (optionnel)',
           style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: theme.colorScheme.onSurface,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         GestureDetector(
           onTap: onImageTap,
           child: Container(
-            height: 120,
+            height: 130,
+            width: double.infinity,
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(8),
-              color: Colors.grey.shade50,
+              border: Border.all(color: dividerColor, width: 1.2),
+              borderRadius: BorderRadius.circular(14),
+              color: isDark
+                  ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4)
+                  : theme.colorScheme.surface,
             ),
             child: selectedImage != null
                 ? _buildFileImage()
                 : imageUrl != null && imageUrl!.isNotEmpty
-                    ? _buildNetworkImage()
-                    : _buildPlaceholder(),
+                    ? _buildNetworkImage(theme)
+                    : _buildPlaceholder(theme),
           ),
         ),
       ],
@@ -54,7 +61,7 @@ class ImagePickerWidget extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(14),
           child: Image.file(
             selectedImage!,
             fit: BoxFit.cover,
@@ -65,19 +72,20 @@ class ImagePickerWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildNetworkImage() {
+  Widget _buildNetworkImage(ThemeData theme) {
     return Stack(
       fit: StackFit.expand,
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(14),
           child: Image.network(
             imageUrl!,
             fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => Container(
-              color: Colors.grey.shade200,
-              child: const Center(
-                child: Icon(Icons.broken_image, color: Colors.grey),
+            errorBuilder: (_, _, _) => Center(
+              child: Icon(
+                Icons.broken_image_rounded,
+                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                size: 32,
               ),
             ),
           ),
@@ -91,34 +99,44 @@ class ImagePickerWidget extends StatelessWidget {
     return Positioned(
       top: 8,
       right: 8,
-      child: CircleAvatar(
-        backgroundColor: Colors.black.withValues(alpha: 0.6),
-        radius: 16,
+      child: Material(
+        color: Colors.black.withValues(alpha: 0.65),
+        shape: const CircleBorder(),
         child: IconButton(
-          icon: const Icon(Icons.close, color: Colors.white, size: 16),
+          icon: const Icon(Icons.close_rounded, color: Colors.white, size: 16),
           onPressed: onImageRemoved,
-          padding: EdgeInsets.zero,
+          padding: const EdgeInsets.all(6),
+          constraints: const BoxConstraints(),
+          tooltip: 'Supprimer l\'image',
         ),
       ),
     );
   }
 
-  Widget _buildPlaceholder() {
+  Widget _buildPlaceholder(ThemeData theme) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.add_photo_alternate,
-            size: 48,
-            color: Colors.grey.shade400,
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.add_photo_alternate_rounded,
+              size: 26,
+              color: theme.colorScheme.primary,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Tapez pour ajouter une image',
+            'Ajouter une illustration',
             style: TextStyle(
-              color: Colors.grey.shade600,
-              fontSize: 14,
+              color: theme.colorScheme.onSurface,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],

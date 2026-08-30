@@ -360,26 +360,21 @@ class AccueilParentPage extends ConsumerWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isDark
-              ? [const Color(0xFF2E1065), const Color(0xFF1E1B4B)]
-              : [const Color(0xFFF3E8FF), const Color(0xFFEDE9FE)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: isDark
+            ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35)
+            : const Color(0xFFF3E8FF),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
           color: isDark
-              ? const Color(0xFF6B21A8).withValues(alpha: 0.5)
+              ? theme.dividerColor.withValues(alpha: 0.25)
               : const Color(0xFFDDD6FE).withValues(alpha: 0.8),
           width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: (isDark ? Colors.black : const Color(0xFF7C3AED))
-                .withValues(alpha: isDark ? 0.25 : 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -518,13 +513,9 @@ class AccueilParentPage extends ConsumerWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isDark
-              ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
-              : [const Color(0xFFEFF6FF), const Color(0xFFDBEAFE)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: isDark
+            ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
+            : const Color(0xFFEFF6FF),
         borderRadius: AppRadius.card,
         border: Border.all(
           color: isDark
@@ -533,10 +524,9 @@ class AccueilParentPage extends ConsumerWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: (isDark ? Colors.black : const Color(0xFF2563EB))
-                .withValues(alpha: isDark ? 0.2 : 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -615,15 +605,16 @@ class AccueilParentPage extends ConsumerWidget {
         color: theme.colorScheme.surface,
         borderRadius: AppRadius.card,
         border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.4 : 0.5),
-          width: 1.5,
+          color: isDark
+              ? theme.dividerColor.withValues(alpha: 0.25)
+              : theme.colorScheme.primary.withValues(alpha: 0.25),
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: (isDark ? Colors.black : theme.colorScheme.primary)
-                .withValues(alpha: isDark ? 0.25 : 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -1179,17 +1170,17 @@ class AccueilParentPage extends ConsumerWidget {
                   horizontal: 8,
                 ),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: gradientColors,
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: isDark
+                      ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4)
+                      : (gradientColors.isNotEmpty ? gradientColors.first : theme.colorScheme.surface),
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: borderColor, width: 1.2),
+                  border: Border.all(
+                    color: isDark ? theme.dividerColor.withValues(alpha: 0.25) : borderColor,
+                    width: 1.2,
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: (isDark ? Colors.black : iconColor)
-                          .withValues(alpha: isDark ? 0.2 : 0.08),
+                      color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
@@ -1207,9 +1198,9 @@ class AccueilParentPage extends ConsumerWidget {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: iconColor.withValues(alpha: isDark ? 0.25 : 0.18),
-                            blurRadius: 5,
-                            offset: const Offset(0, 2),
+                            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
                           ),
                         ],
                       ),

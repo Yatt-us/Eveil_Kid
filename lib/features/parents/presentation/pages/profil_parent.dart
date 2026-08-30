@@ -19,6 +19,7 @@ import 'liste_enfants.dart';
 import 'modifier_profil.dart';
 import 'notification_settings_page.dart';
 import 'parametre_page.dart';
+import '../../../commandes/presentation/pages/mes_commandes_page.dart';
 
 import '../../../../core/provider/bottom_nav_bar_provider.dart';
 
@@ -472,10 +473,13 @@ class ProfilParentPage extends ConsumerWidget {
                           icon: Icons.shopping_cart_outlined,
                           title: 'Mes commandes',
                           onTap: () {
-                            AppDialogs.showSnackBar(
-                              context: context,
-                              message:
-                                  'Vos commandes et réservations d\'emprunt seront affichées ici.',
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => MesCommandesPage(
+                                  parentId: parent.utilisateurId,
+                                ),
+                              ),
                             );
                           },
                         ),

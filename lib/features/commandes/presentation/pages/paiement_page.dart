@@ -1,560 +1,341 @@
-
-// lib/features/commandes/presentation/pages/paiement_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/AppSpacing.dart';
+import '../../../../shared/widgets/app_button.dart';
+import '../../../../shared/widgets/app_dialogs.dart';
+import '../../../auth/providers/auth_provider.dart';
+import '../../../panier/providers/panier_provider.dart';
 import '../../models/commande_model.dart';
 import '../../providers/commande_provider.dart';
+import '../widgets/checkout_stepper.dart';
 import 'confirmation_page.dart';
 
 class PaiementPage extends ConsumerStatefulWidget {
   final CommandeModel brouillonCommande;
-  final String adresseLivraison;
 
-  const PaiementPage({
-    super.key,
-    required this.brouillonCommande,
-    required this.adresseLivraison,
-  });
+  const PaiementPage({super.key, required this.brouillonCommande});
 
   @override
   ConsumerState<PaiementPage> createState() => _PaiementPageState();
 }
 
 class _PaiementPageState extends ConsumerState<PaiementPage> {
-  String? _modePaiement;
+  String modePaiementSelectionne = 'Mobile Money';
 
-  static const Color primaryColor = Color(0xFF7E3DBE);
+  String _formatPrice(double price) {
+    final formatted = price.toStringAsFixed(0).replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]} ',
+        );
+    return '$formatted FCFA';
+  }
 
   @override
   Widget build(BuildContext context) {
-    final double montant = widget.brouillonCommande.montantTotal;
-    final double fraisLivraison =
-        widget.brouillonCommande.fraisLivraison;
-    final double sousTotal = montant - fraisLivraison;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final dividerColor = theme.dividerColor.withValues(alpha: 0.2);
+    final textSecondary = theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+        (isDark ? Colors.white70 : AppColors.textSecondary);
+
+    final commandeState = ref.watch(commandeProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Paiement',
           style: TextStyle(
-            color: Colors.black,
+            color: theme.textTheme.titleLarge?.color ?? theme.colorScheme.onSurface,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.black,
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
+            size: 20,
           ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // =========================
-            // STEPPER
-            // =========================
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildStepItem(
-                  icon: Icons.check,
-                  label: 'Livraison',
-                  isCompleted: true,
-                  primaryColor: primaryColor,
-                ),
-                _buildStepDivider(),
-                _buildStepItem(
-                  textNumber: '2',
-                  label: 'Paiement',
-                  isActive: true,
-                  primaryColor: primaryColor,
-                ),
-                _buildStepDivider(),
-                _buildStepItem(
-                  textNumber: '3',
-                  label: 'Confirmation',
-                  primaryColor: primaryColor,
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 24),
-
-            // =========================
-            // MODE DE PAIEMENT
-            // =========================
-            const Text(
-              'Methode de paiement',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-                color: Colors.black,
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            _buildCustomPaymentCard(
-              value: 'Mobile Money',
-              title: 'Mobile Money',
-              trailingWidget: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Image.asset(
-                    'assets/icons/logo.MM.png',
-                    height: 42,
-                    width: 54,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const SizedBox();
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  Image.asset(
-                    'assets/icons/logo.OM.jpg',
-                    height: 42,
-                    width: 54,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const SizedBox();
-                    },
-                  ),
-                ],
-              ),
-              primaryColor: primaryColor,
-            ),
-
-            const SizedBox(height: 10),
-
-            _buildCustomPaymentCard(
-              value: 'Carte bancaire',
-              title: 'Carte bancaire',
-              iconData: Icons.credit_card,
-              trailingWidget: Image.asset(
-                'assets/icons/LOGO visa.jpg',
-                height: 48,
-                width: 86,
-                errorBuilder: (context, error, stackTrace) {
-                  return const Text(
-                    'VISA',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue,
-                    ),
-                  );
-                },
-              ),
-              primaryColor: primaryColor,
-            ),
-
-            const SizedBox(height: 10),
-
-            _buildCustomPaymentCard(
-              value: 'Paiement à la livraison',
-              title: 'Paiement a la livraison',
-              iconData: Icons.mail_outline,
-              primaryColor: primaryColor,
-            ),
-
-            const SizedBox(height: 20),
-
-            // =========================
-            // RESUME
-            // =========================
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF9F9FB),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Colors.grey.shade200,
-                ),
-              ),
+      body: Column(
+        children: [
+          const CheckoutStepper(stepActuel: 2),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Resume de la commande',
+                  Text(
+                    'MÉTHODE DE PAIEMENT',
                     style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: Colors.black87,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                      color: textSecondary,
                     ),
                   ),
-
                   const SizedBox(height: 12),
-
-                  _buildSummaryRow(
-                    'Sous-total',
-                    '${sousTotal.toStringAsFixed(2)} XOF',
+                  _buildPaymentOption(
+                    'Mobile Money',
+                    Icons.phone_android_rounded,
+                    'Wave, Orange Money, MTN, Moov',
+                    theme,
+                    isDark,
                   ),
-
-                  const SizedBox(height: 8),
-
-                  _buildSummaryRow(
-                    'Livraison',
-                    fraisLivraison == 0
-                        ? 'Gratuite'
-                        : '${fraisLivraison.toStringAsFixed(2)} XOF',
-                    valueColor:
-                        fraisLivraison == 0 ? Colors.green : null,
+                  _buildPaymentOption(
+                    'Carte bancaire',
+                    Icons.credit_card_rounded,
+                    'Visa, Mastercard sécurisé',
+                    theme,
+                    isDark,
                   ),
+                  _buildPaymentOption(
+                    'Paiement à la livraison',
+                    Icons.local_shipping_outlined,
+                    'Payez en espèces ou par Wave à la réception',
+                    theme,
+                    isDark,
+                  ),
+                  const SizedBox(height: 24),
 
-                  const Divider(height: 20),
+                  Text(
+                    'RÉSUMÉ DU MONTANT',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                      color: textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: dividerColor),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Sous-total articles', style: TextStyle(color: textSecondary, fontSize: 13.5)),
+                            Text(
+                              _formatPrice(widget.brouillonCommande.montantTotal - widget.brouillonCommande.fraisLivraison),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13.5,
+                                color: theme.textTheme.bodyLarge?.color ?? theme.colorScheme.onSurface,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Frais de livraison', style: TextStyle(color: textSecondary, fontSize: 13.5)),
+                            Text(
+                              widget.brouillonCommande.fraisLivraison == 0
+                                  ? 'Gratuite'
+                                  : _formatPrice(widget.brouillonCommande.fraisLivraison),
+                              style: const TextStyle(
+                                color: Color(0xFF10B981),
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: Divider(height: 1, color: dividerColor),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Total à payer',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 15.5,
+                                color: theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface,
+                              ),
+                            ),
+                            Text(
+                              _formatPrice(widget.brouillonCommande.montantTotal),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 18,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 32),
 
-                  _buildSummaryRow(
-                    'Total',
-                    '${montant.toStringAsFixed(2)} XOF',
-                    isTotal: true,
+                  AppButton(
+                    text: 'Payer ${_formatPrice(widget.brouillonCommande.montantTotal)}',
+                    icon: Icons.lock_outline_rounded,
+                    isLoading: commandeState.estEnChargement,
+                    onPressed: commandeState.estEnChargement
+                        ? null
+                        : () async {
+                            final authUser = ref.read(authProvider).utilisateur;
+                            final parentId = widget.brouillonCommande.parentId.isNotEmpty
+                                ? widget.brouillonCommande.parentId
+                                : (authUser?.utilisateurId ?? '');
+
+                            final commandeFinale = widget.brouillonCommande.copyWith(
+                              parentId: parentId,
+                              modePaiement: modePaiementSelectionne,
+                              dateCreation: DateTime.now(),
+                            );
+
+                            final commandeCreee = await ref
+                                .read(commandeProvider.notifier)
+                                .passerCommande(commandeFinale);
+
+                            if (!context.mounted) return;
+
+                            if (commandeCreee != null) {
+                              if (parentId.isNotEmpty) {
+                                try {
+                                  await ref
+                                      .read(panierServiceProvider)
+                                      .viderPanier(parentId);
+                                } catch (_) {}
+                              }
+
+                              if (context.mounted) {
+                                Navigator.pushAndRemoveUntil(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => ConfirmationPage(commande: commandeCreee),
+                                  ),
+                                  (route) => route.isFirst,
+                                );
+                              }
+                            } else {
+                              final errorMsg = ref.read(commandeProvider).messageErreur ??
+                                  'Impossible d\'enregistrer la commande. Veuillez réessayer.';
+                              AppDialogs.showSnackBar(
+                                context: context,
+                                message: errorMsg,
+                                isError: true,
+                              );
+                            }
+                          },
+                  ),
+                  AppSpacing.verticalLg,
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentOption(
+    String title,
+    IconData icon,
+    String subtitle,
+    ThemeData theme,
+    bool isDark,
+  ) {
+    final bool isSelected = modePaiementSelectionne == title;
+    final primaryColor = theme.colorScheme.primary;
+
+    return GestureDetector(
+      onTap: () => setState(() => modePaiementSelectionne = title),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          border: Border.all(
+            color: isSelected ? primaryColor : theme.dividerColor.withValues(alpha: 0.2),
+            width: isSelected ? 1.8 : 1.0,
+          ),
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : [],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? primaryColor.withValues(alpha: isDark ? 0.25 : 0.1)
+                    : (isDark
+                        ? theme.colorScheme.surfaceContainerHighest
+                        : AppColors.surfaceVariant.withValues(alpha: 0.5)),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                icon,
+                color: isSelected
+                    ? primaryColor
+                    : (theme.iconTheme.color ?? theme.colorScheme.onSurfaceVariant),
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                      fontSize: 14,
+                      color: isSelected
+                          ? primaryColor
+                          : (theme.textTheme.bodyLarge?.color ?? theme.colorScheme.onSurface),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+                          (isDark ? Colors.white60 : AppColors.textSecondary),
+                    ),
                   ),
                 ],
               ),
             ),
-
-            const SizedBox(height: 30),
-
-            // =========================
-            // CONFIRMER
-            // =========================
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  elevation: 2,
-                ),
-                onPressed: () async {
-                  // Vérification du paiement
-                  if (_modePaiement == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Veuillez sélectionner un mode de paiement',
-                        ),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                    return;
-                  }
-
-                  // =====================================================
-                  // IMPORTANT :
-                  // On crée une NOUVELLE liste indépendante des articles.
-                  // Cela évite qu'une modification du panier puisse
-                  // modifier les articles d'une ancienne commande.
-                  // =====================================================
-                  final articlesCommande =
-                      widget.brouillonCommande.articles
-                          .map(
-                            (article) => ArticleCommandeModel(
-                              produitId: article.produitId,
-                              titre: article.titre,
-                              quantite: article.quantite,
-                              prix: article.prix,
-                              urlImage: article.urlImage,
-                            ),
-                          )
-                          .toList();
-
-                  // Création de la commande définitive
-                  final nouvelleCommande = CommandeModel(
-                    id: DateTime.now()
-                        .millisecondsSinceEpoch
-                        .toString(),
-
-                    parentId: widget.brouillonCommande.parentId,
-
-                    // On utilise la COPIE indépendante
-                    articles: articlesCommande,
-
-                    montantTotal: montant,
-
-                    fraisLivraison: fraisLivraison,
-
-                    adresseLivraison:
-                        widget.adresseLivraison,
-
-                    modePaiement: _modePaiement!,
-
-                    dateCreation: DateTime.now(),
-
-                    statut: 'En cours',
-                  );
-
-                  // =====================================================
-                  // ENREGISTREMENT DANS FIRESTORE
-                  // =====================================================
-                  final succes = await ref
-                      .read(commandeProvider.notifier)
-                      .passerCommande(nouvelleCommande);
-
-                  if (!mounted) return;
-
-                  if (!succes) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Impossible d\'enregistrer la commande.',
-                        ),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                    return;
-                  }
-
-                  // =====================================================
-                  // COMMANDE ENREGISTREE AVEC SUCCES
-                  // =====================================================
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ConfirmationPage(
-                        commande: nouvelleCommande,
-                      ),
-                    ),
-                  );
-                },
-                child: Text(
-                  'Payer ${montant.toStringAsFixed(2)} XOF',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ============================================================
-  // ETAPE DU CHECKOUT
-  // ============================================================
-
-  Widget _buildStepItem({
-    String? textNumber,
-    IconData? icon,
-    required String label,
-    bool isActive = false,
-    bool isCompleted = false,
-    required Color primaryColor,
-  }) {
-    final Color circleColor =
-        (isCompleted || isActive)
-            ? primaryColor
-            : Colors.grey.shade300;
-
-    final Color textColor =
-        (isCompleted || isActive)
-            ? Colors.white
-            : Colors.grey.shade700;
-
-    return Column(
-      children: [
-        Container(
-          width: 26,
-          height: 26,
-          decoration: BoxDecoration(
-            color: circleColor,
-            shape: BoxShape.circle,
-          ),
-          child: Center(
-            child: icon != null
-                ? Icon(
-                    icon,
-                    size: 14,
-                    color: Colors.white,
-                  )
-                : Text(
-                    textNumber ?? '',
-                    style: TextStyle(
-                      color: textColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-          ),
-        ),
-
-        const SizedBox(height: 4),
-
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            color: isActive || isCompleted
-                ? Colors.black
-                : Colors.grey,
-            fontWeight:
-                isActive ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStepDivider() {
-    return Container(
-      width: 35,
-      height: 2,
-      color: Colors.grey.shade300,
-      margin: const EdgeInsets.symmetric(
-        horizontal: 6,
-        vertical: 12,
-      ),
-    );
-  }
-
-  // ============================================================
-  // CARTE PAIEMENT
-  // ============================================================
-
-  Widget _buildCustomPaymentCard({
-    required String value,
-    required String title,
-    Widget? trailingWidget,
-    IconData iconData =
-        Icons.account_balance_wallet_outlined,
-    required Color primaryColor,
-  }) {
-    final bool isSelected = _modePaiement == value;
-
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _modePaiement = value;
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 14,
-        ),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isSelected
-                ? primaryColor
-                : Colors.grey.shade200,
-            width: isSelected ? 1.5 : 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
             Icon(
-              iconData,
-              color: isSelected
-                  ? primaryColor
-                  : Colors.black54,
-              size: 22,
-            ),
-
-            const SizedBox(width: 12),
-
-            Expanded(
-              child: Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-            ),
-
-            if (trailingWidget != null) ...[
-              trailingWidget,
-              const SizedBox(width: 10),
-            ],
-
-            Container(
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? primaryColor
-                    : Colors.grey.shade200,
-                shape: BoxShape.circle,
-              ),
-              child: const Center(
-                child: Icon(
-                  Icons.check,
-                  size: 14,
-                  color: Colors.white,
-                ),
-              ),
+              isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+              color: isSelected ? primaryColor : (isDark ? Colors.white30 : Colors.grey.shade400),
+              size: 20,
             ),
           ],
         ),
       ),
-    );
-  }
-
-  // ============================================================
-  // LIGNE DU RESUME
-  // ============================================================
-
-  Widget _buildSummaryRow(
-    String label,
-    String value, {
-    bool isTotal = false,
-    Color? valueColor,
-  }) {
-    return Row(
-      mainAxisAlignment:
-          MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: isTotal ? 15 : 13,
-            fontWeight: isTotal
-                ? FontWeight.bold
-                : FontWeight.normal,
-            color: isTotal
-                ? Colors.black
-                : Colors.grey.shade600,
-          ),
-        ),
-
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: isTotal ? 16 : 13,
-            fontWeight: isTotal
-                ? FontWeight.bold
-                : FontWeight.w600,
-            color: valueColor ??
-                (isTotal
-                    ? Colors.black
-                    : Colors.black87),
-          ),
-        ),
-      ],
     );
   }
 }

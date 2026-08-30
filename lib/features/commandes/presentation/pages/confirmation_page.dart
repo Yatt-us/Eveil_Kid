@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/AppSpacing.dart';
+import '../../../../shared/widgets/app_button.dart';
 import '../../models/commande_model.dart';
 import '../widgets/checkout_stepper.dart';
 import 'mes_commandes_page.dart';
@@ -10,22 +13,26 @@ class ConfirmationPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryColor = Color(0xFF7E3DBE);
-
-    // Formatage propre du numéro de commande si besoin
-    String numeroCommandeAffiche = commande.id.isNotEmpty
-        ? '#CMD-${commande.id.substring(0, commande.id.length > 6 ? 6 : commande.id.length).toUpperCase()}'
-        : '#CMD-2026-000123';
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final dividerColor = theme.dividerColor.withValues(alpha: 0.2);
+    final textSecondary = theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+        (isDark ? Colors.white70 : AppColors.textSecondary);
+    const Color successColor = Color(0xFF10B981);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Confirmation',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: theme.textTheme.titleLarge?.color ?? theme.colorScheme.onSurface,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: false,
       ),
@@ -34,142 +41,168 @@ class ConfirmationPage extends StatelessWidget {
           const CheckoutStepper(stepActuel: 3),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Image de confirmation avec taille augmentée
-                  Image.asset(
-                    'assets/images/confirmation.PNG',
-                    height: 220,
-                    fit: BoxFit.contain,
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  const Text(
-                    'Merci pour votre commande !',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                  const SizedBox(height: 12),
+                  // Icône de succès
+                  Container(
+                    width: 90,
+                    height: 90,
+                    decoration: BoxDecoration(
+                      color: successColor.withValues(alpha: isDark ? 0.25 : 0.15),
+                      shape: BoxShape.circle,
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Votre commande a été passée avec succès.',
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 12,
+                    child: const Icon(
+                      Icons.check_circle_rounded,
+                      size: 55,
+                      color: successColor,
                     ),
                   ),
                   const SizedBox(height: 20),
-                  
-                  // Encadré Numéro de commande / Livraison
-                  Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey.shade200),
+                  Text(
+                    'Merci pour votre commande !',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.bold,
+                      color: theme.textTheme.titleLarge?.color ?? theme.colorScheme.onSurface,
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Votre commande a été enregistrée avec succès.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: textSecondary,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Informations récapitulatives de commande
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: dividerColor),
+                      boxShadow: [
+                        if (!isDark)
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.03),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                      ],
+                    ),
+                    child: Column(
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            const Text(
-                              'Numero de commande',
-                              style: TextStyle(fontSize: 11, color: Colors.grey),
+                            Column(
+                              children: [
+                                Text(
+                                  'N° DE COMMANDE',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: textSecondary,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  commande.id.isNotEmpty
+                                      ? '#${commande.id.length > 8 ? commande.id.substring(0, 8).toUpperCase() : commande.id.toUpperCase()}'
+                                      : 'En cours',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 14,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              numeroCommandeAffiche,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
+                            Container(width: 1, height: 32, color: dividerColor),
+                            Column(
+                              children: [
+                                Text(
+                                  'STATUT',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: textSecondary,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  commande.statut,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color: successColor,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                        Container(height: 25, width: 1, color: Colors.grey.shade300),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Livraison estimée',
-                              style: TextStyle(fontSize: 11, color: Colors.grey),
-                            ),
-                            const SizedBox(height: 4),
-                            const Text(
-                              '12-15 MAI 2026',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
+                        if (commande.montantTotal > 0 || commande.articles.isNotEmpty) ...[
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: Divider(height: 1, color: dividerColor),
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '${commande.articles.length} article(s)',
+                                style: TextStyle(fontSize: 13, color: textSecondary),
                               ),
-                            ),
-                          ],
-                        ),
+                              Text(
+                                '${commande.montantTotal.toStringAsFixed(0).replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]} ")} FCFA',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                  color: theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ],
                     ),
                   ),
-                  const SizedBox(height: 30),
-                  
-                  // Bouton "Voir mes commandes"
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(25),
+                  const SizedBox(height: 32),
+
+                  // Bouton Voir mes commandes
+                  AppButton(
+                    text: 'Voir mes commandes',
+                    icon: Icons.receipt_long_rounded,
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => MesCommandesPage(parentId: commande.parentId),
                         ),
-                      ),
-                      onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => MesCommandesPage(parentId: commande.parentId),
-                          ),
-                        );
-                      },
-                      child: const Text(
-                        'Voir mes commandes',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ),
+                      );
+                    },
                   ),
-                  const SizedBox(height: 12),
-                  
-                  // Bouton "Retour à l'accueil"
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: primaryColor),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(25),
-                        ),
-                      ),
-                      onPressed: () {
-                        Navigator.popUntil(context, (route) => route.isFirst);
-                      },
-                      child: const Text(
-                        'Retour à l\'accueil',
-                        style: TextStyle(
-                          color: primaryColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ),
+                  AppSpacing.verticalSm,
+
+                  // Bouton Retour à l'accueil
+                  AppButton(
+                    text: 'Retour à l\'accueil',
+                    variant: AppButtonVariant.outlined,
+                    icon: Icons.home_outlined,
+                    onPressed: () {
+                      Navigator.popUntil(context, (route) => route.isFirst);
+                    },
                   ),
-                  const SizedBox(height: 10),
+                  AppSpacing.verticalMd,
                 ],
               ),
             ),

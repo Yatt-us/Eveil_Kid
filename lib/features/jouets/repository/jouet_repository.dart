@@ -27,6 +27,14 @@ class JouetRepository {
     return Jouet.fromFirestore(doc);
   }
 
+  /// Écoute en temps réel les changements d'un jouet
+  Stream<Jouet?> streamJouetById(String jouetId) {
+    return _jouetsCollection.doc(jouetId).snapshots().map((doc) {
+      if (!doc.exists) return null;
+      return Jouet.fromFirestore(doc);
+    });
+  }
+
   Future<List<Jouet>> getJouetsByCategorie(String categorieId) async {
     final snapshot = await _jouetsCollection
         .where('categorieId', isEqualTo: categorieId)

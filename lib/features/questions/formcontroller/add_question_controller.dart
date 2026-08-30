@@ -1,14 +1,13 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:eveilkid/core/cloudinary/cloudinary_service.dart';
 import 'package:eveilkid/features/questions/enums/question_type.enum.dart';
 import 'package:eveilkid/features/questions/models/question_model.dart';
 import 'package:eveilkid/features/questions/options_questions/option_model.dart';
 import 'package:eveilkid/features/questions/providers/question_provider.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'dart:io';
 
 class AddQuestionController extends ChangeNotifier {
-  final WidgetRef ref;
+  final dynamic ref;
   final String activityId;
   final QuestionType type;
   final Question? existingQuestion;
@@ -25,7 +24,6 @@ class AddQuestionController extends ChangeNotifier {
   String? selectedTrueFalse;
   String? imageUrl;
 
- 
   String? questionError;
   String? pointsError;
   String? optionsError;
@@ -67,11 +65,10 @@ class AddQuestionController extends ChangeNotifier {
 
     if (type == QuestionType.vraiFaux && options.isEmpty) {
       options.addAll([
-        OptionQuestion(id: 'opt_vrai', texte: 'Vrai'),
-        OptionQuestion(id: 'opt_faux', texte: 'Faux'),
+        const OptionQuestion(id: 'opt_vrai', texte: 'Vrai'),
+        const OptionQuestion(id: 'opt_faux', texte: 'Faux'),
       ]);
     }
-    
     
     _clearErrors();
   }
@@ -86,9 +83,9 @@ class AddQuestionController extends ChangeNotifier {
     switch (type) {
       case QuestionType.choixMultiple:
         options.addAll([
-          OptionQuestion(id: 'opt_1', texte: ''),
-          OptionQuestion(id: 'opt_2', texte: ''),
-          OptionQuestion(id: 'opt_3', texte: ''),
+          const OptionQuestion(id: 'opt_1', texte: ''),
+          const OptionQuestion(id: 'opt_2', texte: ''),
+          const OptionQuestion(id: 'opt_3', texte: ''),
         ]);
         optionControllers.addAll([
           TextEditingController(),
@@ -99,16 +96,16 @@ class AddQuestionController extends ChangeNotifier {
 
       case QuestionType.vraiFaux:
         options.addAll([
-          OptionQuestion(id: 'opt_vrai', texte: 'Vrai'),
-          OptionQuestion(id: 'opt_faux', texte: 'Faux'),
+          const OptionQuestion(id: 'opt_vrai', texte: 'Vrai'),
+          const OptionQuestion(id: 'opt_faux', texte: 'Faux'),
         ]);
         break;
 
       case QuestionType.association:
         options.addAll([
-          OptionQuestion(id: 'assoc_1', texte: ''),
-          OptionQuestion(id: 'assoc_2', texte: ''),
-          OptionQuestion(id: 'assoc_3', texte: ''),
+          const OptionQuestion(id: 'assoc_1', texte: ''),
+          const OptionQuestion(id: 'assoc_2', texte: ''),
+          const OptionQuestion(id: 'assoc_3', texte: ''),
         ]);
         optionControllers.addAll([
           TextEditingController(),
@@ -119,9 +116,9 @@ class AddQuestionController extends ChangeNotifier {
 
       case QuestionType.classement:
         options.addAll([
-          OptionQuestion(id: 'class_1', texte: ''),
-          OptionQuestion(id: 'class_2', texte: ''),
-          OptionQuestion(id: 'class_3', texte: ''),
+          const OptionQuestion(id: 'class_1', texte: ''),
+          const OptionQuestion(id: 'class_2', texte: ''),
+          const OptionQuestion(id: 'class_3', texte: ''),
         ]);
         optionControllers.addAll([
           TextEditingController(),
@@ -131,7 +128,6 @@ class AddQuestionController extends ChangeNotifier {
         break;
     }
   }
-
 
   void _clearErrors() {
     errorMessage = null;
@@ -157,7 +153,6 @@ class AddQuestionController extends ChangeNotifier {
   void updateOptionText(int index, String value) {
     if (index < options.length) {
       options[index] = options[index].copyWith(texte: value);
-    
       if (optionsError != null) {
         optionsError = null;
         notifyListeners();
@@ -182,7 +177,7 @@ class AddQuestionController extends ChangeNotifier {
     }
 
     if (options.length <= minOptions) {
-      errorMessage = 'Minimum $minOptions éléments';
+      errorMessage = 'Minimum $minOptions éléments requis';
       notifyListeners();
       return;
     }
@@ -207,32 +202,38 @@ class AddQuestionController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void _syncOptionsFromControllers() {
+    for (int i = 0; i < options.length && i < optionControllers.length; i++) {
+      options[i] = options[i].copyWith(texte: optionControllers[i].text.trim());
+    }
+  }
 
   bool validateForm() {
     _clearErrors();
+    _syncOptionsFromControllers();
     bool isValid = true;
 
-  
     if (questionController.text.trim().isEmpty) {
-      questionError = 'Veuillez saisir une question';
+      questionError = 'Veuillez saisir un énoncé de question';
       isValid = false;
     }
 
-  
     if (pointsController.text.trim().isEmpty) {
       pointsError = 'Veuillez saisir les points';
       isValid = false;
-    } else if (int.tryParse(pointsController.text.trim()) == null) {
-      pointsError = 'Les points doivent être un nombre valide';
-      isValid = false;
+    } else {
+      final points = int.tryParse(pointsController.text.trim());
+      if (points == null || points < 0) {
+        pointsError = 'Les points doivent être un nombre supérieur ou égal à 0';
+        isValid = false;
+      }
     }
 
- 
     switch (type) {
       case QuestionType.choixMultiple:
         final hasEmptyOption = options.any((opt) => opt.texte.trim().isEmpty);
         if (hasEmptyOption) {
-          optionsError = 'Veuillez remplir toutes les options';
+          optionsError = 'Veuillez remplir toutes les options de réponses';
           isValid = false;
         }
         if (selectedCorrectOptionId.isEmpty) {
@@ -258,9 +259,8 @@ class AddQuestionController extends ChangeNotifier {
         break;
     }
 
-    
     if (!isValid) {
-      errorMessage = 'Veuillez corriger les erreurs ci-dessous';
+      errorMessage = 'Veuillez corriger les erreurs ci-dessus';
     } else {
       errorMessage = null;
     }
@@ -270,10 +270,12 @@ class AddQuestionController extends ChangeNotifier {
   }
 
   Question buildQuestion() {
+    _syncOptionsFromControllers();
+
     if (type == QuestionType.vraiFaux && options.isEmpty) {
       options.addAll([
-        OptionQuestion(id: 'opt_vrai', texte: 'Vrai'),
-        OptionQuestion(id: 'opt_faux', texte: 'Faux'),
+        const OptionQuestion(id: 'opt_vrai', texte: 'Vrai'),
+        const OptionQuestion(id: 'opt_faux', texte: 'Faux'),
       ]);
     }
 
@@ -284,9 +286,10 @@ class AddQuestionController extends ChangeNotifier {
       type: type,
       options: options,
       idReponseCorrecte: selectedCorrectOptionId,
-      points: int.tryParse(pointsController.text) ?? 10,
+      points: int.tryParse(pointsController.text.trim()) ?? 10,
       ordre: existingQuestion?.ordre ?? 0,
       imageUrl: imageUrl,
+      estArchive: existingQuestion?.estArchive ?? false,
     );
   }
 
@@ -306,8 +309,11 @@ class AddQuestionController extends ChangeNotifier {
       }
       final question = buildQuestion();
       final notifier = ref.read(questionNotifierProvider.notifier);
+      notifier.setActiviteId(activityId);
       await notifier.createQuestion(question);
       
+      _invalidateCaches(question.id);
+
       isLoading = false;
       _clearErrors();
       notifyListeners();
@@ -336,8 +342,11 @@ class AddQuestionController extends ChangeNotifier {
       }
       final question = buildQuestion();
       final notifier = ref.read(questionNotifierProvider.notifier);
+      notifier.setActiviteId(activityId);
       await notifier.updateQuestion(question);
       
+      _invalidateCaches(question.id);
+
       isLoading = false;
       _clearErrors();
       notifyListeners();
@@ -350,6 +359,16 @@ class AddQuestionController extends ChangeNotifier {
     }
   }
 
+  void _invalidateCaches(String? questionId) {
+    ref.invalidate(questionsByActiviteProvider(activityId));
+    if (questionId != null) {
+      ref.invalidate(
+        questionByIdProvider((activiteId: activityId, questionId: questionId)),
+      );
+    }
+    ref.invalidate(questionNotifierProvider);
+  }
+
   @override
   void dispose() {
     questionController.dispose();
@@ -359,5 +378,4 @@ class AddQuestionController extends ChangeNotifier {
     }
     super.dispose();
   }
-  
 }

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:eveilkid/core/constants/AppRadius.dart';
 import 'package:eveilkid/features/tutoriels/models/tutoriel.dart';
+import 'package:eveilkid/features/tutoriels/providers/cloudinary_duration_provider.dart';
+import 'package:eveilkid/features/tutoriels/utils/duration_utils.dart';
 
 /// Carte vidéo moderne, épurée et sans badge parasite,
 /// mettant en valeur l'aperçu vidéo et les informations essentielles.
-class TutorielCard extends StatelessWidget {
+class TutorielCard extends ConsumerWidget {
   final Tutoriel tutoriel;
   final VoidCallback? onTap;
   final String? categoryName;
@@ -19,13 +22,20 @@ class TutorielCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final dividerColor = theme.dividerColor.withValues(alpha: 0.15);
     final titleColor = theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface;
     final textSecondary = theme.textTheme.bodySmall?.color?.withValues(alpha: 0.65) ??
         theme.colorScheme.onSurfaceVariant;
+    final durationSecs = tutoriel.duree > 0
+        ? tutoriel.duree.toDouble()
+        : (ref
+                .watch(cloudinaryVideoDurationProvider(tutoriel.videoUrl))
+                .asData
+                ?.value ??
+            0.0);
 
     final imageUrl = tutoriel.miniatureUrl.isNotEmpty
         ? tutoriel.miniatureUrl
@@ -75,11 +85,12 @@ class TutorielCard extends StatelessWidget {
                             errorBuilder: (_, _, _) => _buildPlaceholder(context),
                           ),
                           _buildPlayOverlay(context, isCompact: true),
-                          Positioned(
-                            right: 6,
-                            bottom: 6,
-                            child: _buildDurationBadge(tutoriel.dureeFormatee),
-                          ),
+                          if (durationSecs > 0)
+                            Positioned(
+                              right: 6,
+                              bottom: 6,
+                              child: _buildDurationBadge(formatDurationSeconds(durationSecs)),
+                            ),
                         ],
                       ),
                     ),
@@ -191,11 +202,12 @@ class TutorielCard extends StatelessWidget {
                       // Bouton Play central
                       _buildPlayOverlay(context),
                       // Badge durée vidéo
-                      Positioned(
-                        right: 10,
-                        bottom: 10,
-                        child: _buildDurationBadge(tutoriel.dureeFormatee),
-                      ),
+                      if (durationSecs > 0)
+                        Positioned(
+                          right: 10,
+                          bottom: 10,
+                          child: _buildDurationBadge(formatDurationSeconds(durationSecs)),
+                        ),
                     ],
                   ),
                 ),

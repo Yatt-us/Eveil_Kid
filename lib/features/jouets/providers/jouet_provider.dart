@@ -23,6 +23,12 @@ final jouetByIdProvider = FutureProvider.family<Jouet?, String>((ref, jouetId) a
   return repository.getJouetById(jouetId);
 });
 
+/// Stream d'un jouet en temps réel (réactivité totale de la fiche produit)
+final jouetStreamProvider = StreamProvider.family<Jouet?, String>((ref, jouetId) {
+  final repository = ref.read(jouetRepositoryProvider);
+  return repository.streamJouetById(jouetId);
+});
+
 final jouetsByCategorieProvider = FutureProvider.family<List<Jouet>, String>(
   (ref, categorieId) async {
     final repository = ref.read(jouetRepositoryProvider);
