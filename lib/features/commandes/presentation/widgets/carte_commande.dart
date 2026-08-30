@@ -1,4 +1,3 @@
-import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/commande_model.dart';
@@ -8,11 +7,8 @@ class CarteCommande extends StatelessWidget {
   final CommandeModel commande;
   final VoidCallback surClic;
 
-  const CarteCommande({
-    Key? key,
-    required this.commande,
-    required this.surClic,
-  }) : super(key: key);
+  const CarteCommande({Key? key, required this.commande, required this.surClic})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {

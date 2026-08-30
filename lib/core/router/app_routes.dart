@@ -35,22 +35,36 @@ class AppRoutes {
   static const String adminActivites = '/admin/activites';
   static const String adminAddActivity = '/admin/activites/add';
   static const String adminEditActivity = '/admin/activites/edit/:activityId';
-  static const String adminActivityQuestions = '/admin/activites/:activityId/questions';
-  static const String adminActivityTypeQuestions = '/admin/activites/:activityId/questions/choose-type';
-  static const String adminActivityAddQuestions = '/admin/activites/:activityId/questions/add';
-  static const String adminActivityEditQuestions = '/admin/activites/:activityId/questions/edit/:questionId';
-  static const String adminActivityDetailQuestions = '/admin/activites/:activityId/questions/detail/:questionId';
+  static const String adminActivityQuestions =
+      '/admin/activites/:activityId/questions';
+  static String adminEditActivityPath(String activityId) =>
+      '/admin/activites/edit/$activityId';
+  static String adminActivityQuestionsPath(String activityId) =>
+      '/admin/activites/$activityId/questions';
+  static const String adminActivityTypeQuestions =
+      '/admin/activites/:activityId/questions/choose-type';
+  static const String adminActivityAddQuestions =
+      '/admin/activites/:activityId/questions/add';
+  static const String adminActivityEditQuestions =
+      '/admin/activites/:activityId/questions/edit/:questionId';
+  static const String adminActivityDetailQuestions =
+      '/admin/activites/:activityId/questions/detail/:questionId';
   static const String adminTutoriels = '/admin/tutoriels';
   static const String adminAddTutoriel = '/admin/tutoriels/add';
   static const String adminEditTutoriel = '/admin/tutoriels/edit/:tutorielId';
-  static const String adminDetailTutoriel = '/admin/tutoriels/detail/:tutorielId';
+  static const String adminDetailTutoriel =
+      '/admin/tutoriels/detail/:tutorielId';
   static const String adminTutorielForm = '/admin/tutoriel-form';
-  static String adminEditTutorielPath(String tutorielId) => '/admin/tutoriels/edit/$tutorielId';
-  static String adminDetailTutorielPath(String tutorielId) => '/admin/tutoriels/detail/$tutorielId';
+  static String adminEditTutorielPath(String tutorielId) =>
+      '/admin/tutoriels/edit/$tutorielId';
+  static String adminDetailTutorielPath(String tutorielId) =>
+      '/admin/tutoriels/detail/$tutorielId';
 
   static const String adminCommandes = '/admin/commandes';
-  static const String adminDetailCommande = '/admin/commandes/detail/:commandeId';
-  static String adminDetailCommandePath(String commandeId) => '/admin/commandes/detail/$commandeId';
+  static const String adminDetailCommande =
+      '/admin/commandes/detail/:commandeId';
+  static String adminDetailCommandePath(String commandeId) =>
+      '/admin/commandes/detail/$commandeId';
 
   static const String adminCategoryForm = '/admin/category-form';
   static const String adminManagerForm = '/admin/manager-form';

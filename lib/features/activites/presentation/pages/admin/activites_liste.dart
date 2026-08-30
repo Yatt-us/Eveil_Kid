@@ -18,7 +18,8 @@ class ActivitiesListScreen extends ConsumerStatefulWidget {
   const ActivitiesListScreen({super.key});
 
   @override
-  ConsumerState<ActivitiesListScreen> createState() => _ActivitiesListScreenState();
+  ConsumerState<ActivitiesListScreen> createState() =>
+      _ActivitiesListScreenState();
 }
 
 class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen>
@@ -56,8 +57,11 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen>
 
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final dividerColor = theme.dividerColor.withValues(alpha: isDark ? 0.25 : 0.12);
-    final textSecondary = theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+    final dividerColor = theme.dividerColor.withValues(
+      alpha: isDark ? 0.25 : 0.12,
+    );
+    final textSecondary =
+        theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
         (isDark ? Colors.white70 : AppColors.textSecondary);
 
     final categoriesList = categoriesAsync.value ?? [];
@@ -68,7 +72,9 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen>
         title: Text(
           "Gestion des Activités",
           style: TextStyle(
-            color: theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface,
+            color:
+                theme.textTheme.titleMedium?.color ??
+                theme.colorScheme.onSurface,
             fontWeight: FontWeight.w800,
             fontSize: 18,
             letterSpacing: -0.3,
@@ -123,8 +129,14 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen>
               ),
               labelColor: theme.colorScheme.primary,
               unselectedLabelColor: textSecondary,
-              labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-              unselectedLabelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+              labelStyle: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
               splashFactory: NoSplash.splashFactory,
               overlayColor: WidgetStateProperty.all(Colors.transparent),
               tabs: const [
@@ -146,7 +158,8 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen>
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final isTablet = constraints.maxWidth >= 600 && constraints.maxWidth < 950;
+          final isTablet =
+              constraints.maxWidth >= 600 && constraints.maxWidth < 950;
           final isDesktop = constraints.maxWidth >= 950;
           final horizontalPadding = isDesktop ? 32.0 : (isTablet ? 24.0 : 16.0);
 
@@ -159,7 +172,9 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen>
 
                   // Barre de recherche + Bouton de Filtres modal
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: horizontalPadding,
+                    ),
                     child: Row(
                       children: [
                         Expanded(
@@ -171,7 +186,12 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen>
                           ),
                         ),
                         const SizedBox(width: 8),
-                        _buildFilterButton(theme, isDark, dividerColor, categoriesList),
+                        _buildFilterButton(
+                          theme,
+                          isDark,
+                          dividerColor,
+                          categoriesList,
+                        ),
                       ],
                     ),
                   ),
@@ -181,9 +201,8 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen>
                   // Liste / Grille responsive des activités
                   Expanded(
                     child: activitiesAsync.when(
-                      loading: () => const Center(
-                        child: CircularProgressIndicator(),
-                      ),
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
                       error: (err, _) => Center(
                         child: AppErrorState(
                           title: 'Impossible de charger les activités',
@@ -198,13 +217,17 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen>
                           return Center(
                             child: AppEmptyState(
                               icon: Icons.extension_outlined,
-                              title: _searchQuery.isNotEmpty || _hasActiveFilters
+                              title:
+                                  _searchQuery.isNotEmpty || _hasActiveFilters
                                   ? 'Aucune activité correspondante'
                                   : 'Aucune activité trouvée',
-                              description: _searchQuery.isNotEmpty || _hasActiveFilters
+                              description:
+                                  _searchQuery.isNotEmpty || _hasActiveFilters
                                   ? 'Essayez de modifier vos critères de recherche ou vos filtres.'
                                   : 'Créez votre première activité ludique pour les enfants.',
-                              actionText: _hasActiveFilters ? 'Réinitialiser les filtres' : 'Nouvelle Activité',
+                              actionText: _hasActiveFilters
+                                  ? 'Réinitialiser les filtres'
+                                  : 'Nouvelle Activité',
                               onActionPressed: () {
                                 if (_hasActiveFilters) {
                                   setState(() {
@@ -258,7 +281,9 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen>
         width: 42,
         decoration: BoxDecoration(
           color: _hasActiveFilters
-              ? theme.colorScheme.primary.withValues(alpha: isDark ? 0.25 : 0.12)
+              ? theme.colorScheme.primary.withValues(
+                  alpha: isDark ? 0.25 : 0.12,
+                )
               : theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
@@ -272,7 +297,9 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen>
             Icon(
               Icons.tune_rounded,
               size: 20,
-              color: _hasActiveFilters ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+              color: _hasActiveFilters
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurfaceVariant,
             ),
             if (_hasActiveFilters)
               Positioned(
@@ -306,7 +333,12 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen>
     if (isDesktop || isTablet) {
       final crossAxisCount = isDesktop ? 3 : 2;
       return GridView.builder(
-        padding: EdgeInsets.fromLTRB(horizontalPadding, 6, horizontalPadding, 85),
+        padding: EdgeInsets.fromLTRB(
+          horizontalPadding,
+          6,
+          horizontalPadding,
+          85,
+        ),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: crossAxisCount,
           crossAxisSpacing: 14,
@@ -329,8 +361,10 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen>
               }
             },
             onDelete: () => _confirmDeleteActivity(activity),
-            onPublish: () => _togglePublicationStatus(activity, PublicationStatus.publie),
-            onUnpublish: () => _togglePublicationStatus(activity, PublicationStatus.brouillon),
+            onPublish: () =>
+                _togglePublicationStatus(activity, PublicationStatus.publie),
+            onUnpublish: () =>
+                _togglePublicationStatus(activity, PublicationStatus.brouillon),
           );
         },
       );
@@ -354,14 +388,19 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen>
             }
           },
           onDelete: () => _confirmDeleteActivity(activity),
-          onPublish: () => _togglePublicationStatus(activity, PublicationStatus.publie),
-          onUnpublish: () => _togglePublicationStatus(activity, PublicationStatus.brouillon),
+          onPublish: () =>
+              _togglePublicationStatus(activity, PublicationStatus.publie),
+          onUnpublish: () =>
+              _togglePublicationStatus(activity, PublicationStatus.brouillon),
         );
       },
     );
   }
 
-  void _showFilterBottomSheet(BuildContext context, List<ActiviteCategorie> categories) {
+  void _showFilterBottomSheet(
+    BuildContext context,
+    List<ActiviteCategorie> categories,
+  ) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -438,7 +477,8 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen>
                     _buildModalChip(
                       label: 'Toutes',
                       isSelected: tempCategory == 'all',
-                      onSelected: () => setModalState(() => tempCategory = 'all'),
+                      onSelected: () =>
+                          setModalState(() => tempCategory = 'all'),
                       theme: theme,
                       isDark: isDark,
                     ),
@@ -447,7 +487,8 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen>
                       return _buildModalChip(
                         label: cat.nom,
                         isSelected: tempCategory == catId,
-                        onSelected: () => setModalState(() => tempCategory = catId),
+                        onSelected: () =>
+                            setModalState(() => tempCategory = catId),
                         theme: theme,
                         isDark: isDark,
                       );
@@ -474,28 +515,32 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen>
                     _buildModalChip(
                       label: 'Toutes',
                       isSelected: tempDifficulty == 'all',
-                      onSelected: () => setModalState(() => tempDifficulty = 'all'),
+                      onSelected: () =>
+                          setModalState(() => tempDifficulty = 'all'),
                       theme: theme,
                       isDark: isDark,
                     ),
                     _buildModalChip(
                       label: 'Facile',
                       isSelected: tempDifficulty == 'facile',
-                      onSelected: () => setModalState(() => tempDifficulty = 'facile'),
+                      onSelected: () =>
+                          setModalState(() => tempDifficulty = 'facile'),
                       theme: theme,
                       isDark: isDark,
                     ),
                     _buildModalChip(
                       label: 'Moyen',
                       isSelected: tempDifficulty == 'moyen',
-                      onSelected: () => setModalState(() => tempDifficulty = 'moyen'),
+                      onSelected: () =>
+                          setModalState(() => tempDifficulty = 'moyen'),
                       theme: theme,
                       isDark: isDark,
                     ),
                     _buildModalChip(
                       label: 'Difficile',
                       isSelected: tempDifficulty == 'difficile',
-                      onSelected: () => setModalState(() => tempDifficulty = 'difficile'),
+                      onSelected: () =>
+                          setModalState(() => tempDifficulty = 'difficile'),
                       theme: theme,
                       isDark: isDark,
                     ),
@@ -521,28 +566,32 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen>
                     _buildModalChip(
                       label: 'Tous les âges',
                       isSelected: tempAgeGroup == 'all',
-                      onSelected: () => setModalState(() => tempAgeGroup = 'all'),
+                      onSelected: () =>
+                          setModalState(() => tempAgeGroup = 'all'),
                       theme: theme,
                       isDark: isDark,
                     ),
                     _buildModalChip(
                       label: '3 - 5 ans',
                       isSelected: tempAgeGroup == '3-5',
-                      onSelected: () => setModalState(() => tempAgeGroup = '3-5'),
+                      onSelected: () =>
+                          setModalState(() => tempAgeGroup = '3-5'),
                       theme: theme,
                       isDark: isDark,
                     ),
                     _buildModalChip(
                       label: '6 - 8 ans',
                       isSelected: tempAgeGroup == '6-8',
-                      onSelected: () => setModalState(() => tempAgeGroup = '6-8'),
+                      onSelected: () =>
+                          setModalState(() => tempAgeGroup = '6-8'),
                       theme: theme,
                       isDark: isDark,
                     ),
                     _buildModalChip(
                       label: '9 - 12 ans',
                       isSelected: tempAgeGroup == '9-12',
-                      onSelected: () => setModalState(() => tempAgeGroup = '9-12'),
+                      onSelected: () =>
+                          setModalState(() => tempAgeGroup = '9-12'),
                       theme: theme,
                       isDark: isDark,
                     ),
@@ -566,7 +615,9 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen>
                         style: OutlinedButton.styleFrom(
                           foregroundColor: theme.colorScheme.onSurfaceVariant,
                           side: BorderSide(
-                            color: theme.dividerColor.withValues(alpha: isDark ? 0.3 : 0.2),
+                            color: theme.dividerColor.withValues(
+                              alpha: isDark ? 0.3 : 0.2,
+                            ),
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 13),
                           shape: RoundedRectangleBorder(
@@ -621,14 +672,18 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen>
       selected: isSelected,
       onSelected: (_) => onSelected(),
       showCheckmark: false,
-      selectedColor: theme.colorScheme.primary.withValues(alpha: isDark ? 0.25 : 0.12),
+      selectedColor: theme.colorScheme.primary.withValues(
+        alpha: isDark ? 0.25 : 0.12,
+      ),
       backgroundColor: isDark
           ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4)
           : theme.colorScheme.surface,
       labelStyle: TextStyle(
         fontSize: 12.5,
         fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-        color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+        color: isSelected
+            ? theme.colorScheme.primary
+            : theme.colorScheme.onSurface,
       ),
       side: BorderSide(
         color: isSelected
@@ -646,18 +701,22 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen>
 
     return list.where((activity) {
       // Filtre d'onglet (statut)
-      if (_tabController.index == 1 && activity.statut != PublicationStatus.publie) {
+      if (_tabController.index == 1 &&
+          activity.statut != PublicationStatus.publie) {
         return false;
       }
-      if (_tabController.index == 2 && activity.statut != PublicationStatus.brouillon) {
+      if (_tabController.index == 2 &&
+          activity.statut != PublicationStatus.brouillon) {
         return false;
       }
-      if (_tabController.index == 3 && activity.statut != PublicationStatus.archive) {
+      if (_tabController.index == 3 &&
+          activity.statut != PublicationStatus.archive) {
         return false;
       }
 
       // Filtre catégorie
-      if (_selectedCategoryId != 'all' && activity.categorieId != _selectedCategoryId) {
+      if (_selectedCategoryId != 'all' &&
+          activity.categorieId != _selectedCategoryId) {
         return false;
       }
 
@@ -671,13 +730,16 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen>
       if (_selectedAgeGroup != 'all') {
         switch (_selectedAgeGroup) {
           case '3-5':
-            if (activity.ageMaximum < 3 || activity.ageMinimum > 5) return false;
+            if (activity.ageMaximum < 3 || activity.ageMinimum > 5)
+              return false;
             break;
           case '6-8':
-            if (activity.ageMaximum < 6 || activity.ageMinimum > 8) return false;
+            if (activity.ageMaximum < 6 || activity.ageMinimum > 8)
+              return false;
             break;
           case '9-12':
-            if (activity.ageMaximum < 9 || activity.ageMinimum > 12) return false;
+            if (activity.ageMaximum < 9 || activity.ageMinimum > 12)
+              return false;
             break;
         }
       }
@@ -693,7 +755,10 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen>
     }).toList();
   }
 
-  Future<void> _togglePublicationStatus(Activite activity, PublicationStatus newStatus) async {
+  Future<void> _togglePublicationStatus(
+    Activite activity,
+    PublicationStatus newStatus,
+  ) async {
     if (activity.id == null) return;
     try {
       final notifier = ref.read(activityNotifierProvider.notifier);
@@ -733,7 +798,9 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen>
       context: context,
       builder: (dialogCtx) => AlertDialog(
         title: const Text('Supprimer l\'activité'),
-        content: Text('Êtes-vous sûr de vouloir supprimer "${activity.titre}" ?'),
+        content: Text(
+          'Êtes-vous sûr de vouloir supprimer "${activity.titre}" ?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogCtx),
