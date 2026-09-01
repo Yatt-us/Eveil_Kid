@@ -206,33 +206,43 @@ class _AdminProductFormPageState extends ConsumerState<AdminProductFormPage> {
     final List<Categorie> categories = categoriesAsync.value ?? [];
     final theme = Theme.of(context);
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text(
-          _isEditing ? "Modifier le produit" : "Nouveau Produit",
-          style: TextStyle(
-            color: theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface,
-            fontWeight: FontWeight.w800,
-            fontSize: 18,
-            letterSpacing: -0.3,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        } else if (context.mounted) {
+          context.go(AppRoutes.adminProducts);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        appBar: AppBar(
+          title: Text(
+            _isEditing ? "Modifier le produit" : "Nouveau Produit",
+            style: TextStyle(
+              color: theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface,
+              fontWeight: FontWeight.w800,
+              fontSize: 18,
+              letterSpacing: -0.3,
+            ),
           ),
-        ),
-        backgroundColor: theme.colorScheme.surface,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_rounded,
-            color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
+          backgroundColor: theme.colorScheme.surface,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(
+              Icons.arrow_back_rounded,
+              color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
+            ),
+            onPressed: () {
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              } else {
+                context.go(AppRoutes.adminProducts);
+              }
+            },
           ),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go(AppRoutes.adminProducts);
-            }
-          },
-        ),
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -249,8 +259,9 @@ class _AdminProductFormPageState extends ConsumerState<AdminProductFormPage> {
           );
         },
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildStandardForm(List<Categorie> categories) {
     return Column(

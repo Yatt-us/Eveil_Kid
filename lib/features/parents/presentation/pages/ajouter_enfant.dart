@@ -71,7 +71,7 @@ class _AjouterEnfantPageState extends ConsumerState<AjouterEnfantPage> {
       genre: _selectedGenre,
       avatarUrl: _selectedAvatarUrl,
     ).copyWith(
-      souhait: _selectedSouhaits,
+      souhait: const [],
       codeSecuriteHash: _pinController.text.trim(),
     );
 

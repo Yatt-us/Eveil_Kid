@@ -81,7 +81,9 @@ class _ModifierEnfantPageState extends ConsumerState<ModifierEnfantPage> {
       dateNaissance: _selectedDate,
       genre: _selectedGenre,
       avatarUrl: _selectedAvatarUrl,
-      souhait: _selectedSouhaits,
+      souhait: widget.enfant.souhait
+          .where((s) => !s.contains(' ') && s.isNotEmpty)
+          .toList(),
       codeSecuriteHash: _pinController.text.trim(),
       dateModification: DateTime.now(),
     );

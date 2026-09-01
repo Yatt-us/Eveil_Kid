@@ -1,5 +1,8 @@
-import 'package:eveilkid/core/constants/AppTextStyles.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:eveilkid/core/constants/app_colors.dart';
+import 'package:eveilkid/core/router/app_routes.dart';
 import 'package:eveilkid/features/ActivityCategorie/models/activity_category_model.dart';
 import 'package:eveilkid/features/ActivityCategorie/providers/activity_category_provider.dart';
 import 'package:eveilkid/features/activites/enums/publication_status.enum.dart';
@@ -8,832 +11,834 @@ import 'package:eveilkid/features/activites/presentation/widgets/activity_card.d
 import 'package:eveilkid/features/activites/providers/admin/activity_provider.dart';
 import 'package:eveilkid/features/admin/presentation/widgets/admin_drawer.dart';
 import 'package:eveilkid/shared/widgets/app_search_bar.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import 'package:eveilkid/shared/widgets/app_states.dart';
 
+/// Écran d'administration des activités avec onglets épurés, recherche, bouton filtre modal theme-aware et affichage responsive.
 class ActivitiesListScreen extends ConsumerStatefulWidget {
   const ActivitiesListScreen({super.key});
 
   @override
-  ConsumerState<ActivitiesListScreen> createState() => _ActivitiesListScreenState();
+  ConsumerState<ActivitiesListScreen> createState() =>
+      _ActivitiesListScreenState();
 }
 
-class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen> {
+class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   String _searchQuery = '';
-  String? _selectedCategoryId = 'all';
-  String? _selectedStatus;
-  int? _selectedAgeMin;
-  int? _selectedAgeMax;
-  bool _isFiltered = false;
+  String _selectedCategoryId = 'all';
+  String _selectedDifficulty = 'all'; // 'all', 'facile', 'moyen', 'difficile'
+  String _selectedAgeGroup = 'all'; // 'all', '3-5', '6-8', '9-12'
 
-  final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+  bool get _hasActiveFilters =>
+      _selectedCategoryId != 'all' ||
+      _selectedDifficulty != 'all' ||
+      _selectedAgeGroup != 'all';
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 4, vsync: this);
+    _tabController.addListener(() {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final activitiesAsync = ref.watch(adminActivitesProvider);
     final categoriesAsync = ref.watch(categoriesActivesProvider);
 
-    return Scaffold(
-      key: _scaffoldMessengerKey,
-      drawer: const AdminDrawer(currentRoute: AdminNavRoute.activites),
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        centerTitle: true,
-        title: Text("Activité", style: AppTextStyles.headingMedium),
-        iconTheme: const IconThemeData(color: AppColors.primary),
-        actions: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.notifications)),
-          if (_isFiltered)
-            Container(
-              margin: const EdgeInsets.only(right: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                'Filtres',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          context.push("/admin/activites/add");
-        },
-        child: const Icon(Icons.add),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      body: Padding(
-        padding: const EdgeInsets.only(top: 10),
-        child: Column(
-          children: [
-            _buildSearchAndFilter(),
-            const SizedBox(height: 10),
-
-            categoriesAsync.when(
-              loading: () => const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                child: SizedBox(
-                  height: 20,
-                  child: Center(
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  ),
-                ),
-              ),
-              error: (_, __) => const SizedBox.shrink(),
-              data: (categories) => _buildCategoryFilters(categories),
-            ),
-            const SizedBox(height: 6),
-
-            if (_isFiltered) _buildActiveFilters(),
-            const SizedBox(height: 6),
-
-            Expanded(
-              child: activitiesAsync.when(
-                loading: () => const Center(
-                  child: CircularProgressIndicator(),
-                ),
-                error: (err, stack) => Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error_outline, size: 64, color: AppColors.danger),
-                      const SizedBox(height: 16),
-                      Text('Erreur: $err'),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () {
-                          ref.invalidate(adminActivitesProvider);
-                        },
-                        child: const Text('Réessayer'),
-                      ),
-                    ],
-                  ),
-                ),
-                data: (activities) => _buildActivityList(activities),
-              ),
-            ),
-          ],
-        ),
-      ),
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final dividerColor = theme.dividerColor.withValues(
+      alpha: isDark ? 0.25 : 0.12,
     );
-  }
+    final textSecondary =
+        theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+        (isDark ? Colors.white70 : AppColors.textSecondary);
 
-  Widget _buildSearchAndFilter() {
-  return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 16),
-    child: Row(
-      children: [
-        Expanded(
-          child: AppSearchBar(
-            onChanged: (value) {
-              setState(() {
-                _searchQuery = value;
-              });
-            },
-            hintText: 'Rechercher une activité...',
+    final categoriesList = categoriesAsync.value ?? [];
+
+    return AdminScaffold(
+      currentRoute: AdminNavRoute.activites,
+      appBar: AppBar(
+        title: Text(
+          "Gestion des Activités",
+          style: TextStyle(
+            color:
+                theme.textTheme.titleMedium?.color ??
+                theme.colorScheme.onSurface,
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+            letterSpacing: -0.3,
           ),
         ),
-        const SizedBox(width: 12),
-        PopupMenuButton<String>(
-          onSelected: (value) {
-            if (value == 'reset') {
-              _resetFilters();
-            }
-          },
-          offset: const Offset(0, 50),
-          color: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+        backgroundColor: theme.colorScheme.surface,
+        elevation: 0,
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: Icon(
+              Icons.menu_rounded,
+              color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
+            ),
+            onPressed: () => Scaffold.of(context).openDrawer(),
           ),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded),
+            tooltip: 'Actualiser',
+            onPressed: () => ref.invalidate(adminActivitesProvider),
+          ),
+        ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(46),
           child: Container(
-            width: 40,
-            height: 40,
+            margin: const EdgeInsets.fromLTRB(14, 0, 14, 6),
+            padding: const EdgeInsets.all(3),
+            height: 38,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: _isFiltered ? AppColors.primary : AppColors.primary,
+              color: isDark
+                  ? theme.colorScheme.surfaceContainerHighest
+                  : AppColors.surfaceVariant.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: dividerColor, width: 1),
             ),
-            child: const Icon(
-              Icons.filter_list,
-              color: Colors.white,
-              size: 20,
+            child: TabBar(
+              controller: _tabController,
+              indicatorSize: TabBarIndicatorSize.tab,
+              dividerColor: Colors.transparent,
+              indicator: BoxDecoration(
+                color: theme.colorScheme.surface,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: dividerColor, width: 0.8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                    blurRadius: 3,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+              labelColor: theme.colorScheme.primary,
+              unselectedLabelColor: textSecondary,
+              labelStyle: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+              splashFactory: NoSplash.splashFactory,
+              overlayColor: WidgetStateProperty.all(Colors.transparent),
+              tabs: const [
+                Tab(text: 'Toutes'),
+                Tab(text: 'Publiées'),
+                Tab(text: 'Brouillons'),
+                Tab(text: 'Archivées'),
+              ],
             ),
           ),
-          itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-            PopupMenuItem<String>(
-              value: 'advanced',
-              child: Row(
-                children: [
-                  Icon(Icons.settings, color: AppColors.primary, size: 18),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'Filtres avancés',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                  const Spacer(),
-                  Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
-                ],
-              ),
-              onTap: () => _showAdvancedFilters(),
-            ),
-            const PopupMenuDivider(),
-            PopupMenuItem<String>(
-              value: 'reset',
-              child: Row(
-                children: [
-                  Icon(Icons.refresh, color: AppColors.danger, size: 18),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'Réinitialiser les filtres',
-                    style: TextStyle(
-                      color: AppColors.danger,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
         ),
-      ],
-    ),
-  );
-}
-
-  void _showAdvancedFilters() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        maxChildSize: 0.9,
-        minChildSize: 0.5,
-        expand: false,
-        builder: (context, scrollController) {
-          return StatefulBuilder(
-            builder: (context, setStateBottomSheet) {
-              return Container(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('Nouvelle Activité'),
+        onPressed: () => context.push(AppRoutes.adminAddActivity),
+      ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isTablet =
+              constraints.maxWidth >= 600 && constraints.maxWidth < 950;
+          final isDesktop = constraints.maxWidth >= 950;
+          final horizontalPadding = isDesktop ? 32.0 : (isTablet ? 24.0 : 16.0);
+
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1280),
+              child: Column(
+                children: [
+                  const SizedBox(height: 12),
+
+                  // Barre de recherche + Bouton de Filtres modal
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: horizontalPadding,
+                    ),
+                    child: Row(
                       children: [
-                        const Text(
-                          'Filtres avancés',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                        Expanded(
+                          child: AppSearchBar(
+                            hintText: 'Rechercher une activité...',
+                            onChanged: (val) {
+                              setState(() => _searchQuery = val);
+                            },
                           ),
                         ),
-                        IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(Icons.close),
+                        const SizedBox(width: 8),
+                        _buildFilterButton(
+                          theme,
+                          isDark,
+                          dividerColor,
+                          categoriesList,
                         ),
                       ],
                     ),
-                    const Divider(),
-                    const SizedBox(height: 16),
+                  ),
 
-                    Expanded(
-                      child: SingleChildScrollView(
-                        controller: scrollController,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Statut de publication',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 8,
-                              children: [
-                                _buildFilterChip(
-                                  label: 'Tous',
-                                  value: null,
-                                  selectedValue: _selectedStatus,
-                                  onSelected: (val) {
-                                    setStateBottomSheet(() {
-                                      _selectedStatus = val;
-                                    });
-                                  },
-                                ),
-                                _buildFilterChip(
-                                  label: 'Publié',
-                                  value: 'publie',
-                                  selectedValue: _selectedStatus,
-                                  onSelected: (val) {
-                                    setStateBottomSheet(() {
-                                      _selectedStatus = val;
-                                    });
-                                  },
-                                  color: AppColors.childPrimary,
-                                ),
-                                _buildFilterChip(
-                                  label: 'Brouillon',
-                                  value: 'brouillon',
-                                  selectedValue: _selectedStatus,
-                                  onSelected: (val) {
-                                    setStateBottomSheet(() {
-                                      _selectedStatus = val;
-                                    });
-                                  },
-                                  color: AppColors.warning,
-                                ),
-                                _buildFilterChip(
-                                  label: 'Archivé',
-                                  value: 'archive',
-                                  selectedValue: _selectedStatus,
-                                  onSelected: (val) {
-                                    setStateBottomSheet(() {
-                                      _selectedStatus = val;
-                                    });
-                                  },
-                                  color: AppColors.danger,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 24),
+                  const SizedBox(height: 8),
 
-                            const Text(
-                              'Tranche d\'âge',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        'Âge minimum',
-                                        style: TextStyle(fontSize: 12),
-                                      ),
-                                      DropdownButtonFormField<int>(
-                                        initialValue: _selectedAgeMin,
-                                        decoration: const InputDecoration(
-                                          border: OutlineInputBorder(),
-                                          contentPadding: EdgeInsets.symmetric(horizontal: 12),
-                                        ),
-                                        items: [
-                                          const DropdownMenuItem(
-                                            value: null,
-                                            child: Text('Aucun'),
-                                          ),
-                                          ...List.generate(12, (index) => index + 1)
-                                              .map((age) => DropdownMenuItem(
-                                                    value: age,
-                                                    child: Text('$age ans'),
-                                                  )),
-                                        ],
-                                        onChanged: (value) {
-                                          setStateBottomSheet(() {
-                                            _selectedAgeMin = value;
-                                          });
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        'Âge maximum',
-                                        style: TextStyle(fontSize: 12),
-                                      ),
-                                      DropdownButtonFormField<int>(
-                                        initialValue: _selectedAgeMax,
-                                        decoration: const InputDecoration(
-                                          border: OutlineInputBorder(),
-                                          contentPadding: EdgeInsets.symmetric(horizontal: 12),
-                                        ),
-                                        items: [
-                                          const DropdownMenuItem(
-                                            value: null,
-                                            child: Text('Aucun'),
-                                          ),
-                                          ...List.generate(12, (index) => index + 1)
-                                              .map((age) => DropdownMenuItem(
-                                                    value: age,
-                                                    child: Text('$age ans'),
-                                                  )),
-                                        ],
-                                        onChanged: (value) {
-                                          setStateBottomSheet(() {
-                                            _selectedAgeMax = value;
-                                          });
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 24),
-
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: OutlinedButton(
-                                    onPressed: () {
-                                      setStateBottomSheet(() {
-                                        _selectedStatus = null;
-                                        _selectedAgeMin = null;
-                                        _selectedAgeMax = null;
-                                      });
-                                    },
-                                    child: const Text('Réinitialiser'),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  flex: 2,
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        _isFiltered = _selectedStatus != null ||
-                                            _selectedAgeMin != null ||
-                                            _selectedAgeMax != null;
-                                      });
-                                      Navigator.pop(context);
-                                      _applyFilters();
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.primary,
-                                      foregroundColor: Colors.white,
-                                    ),
-                                    child: const Text('Appliquer les filtres'),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                  // Liste / Grille responsive des activités
+                  Expanded(
+                    child: activitiesAsync.when(
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (err, _) => Center(
+                        child: AppErrorState(
+                          title: 'Impossible de charger les activités',
+                          message: '$err',
+                          onRetry: () => ref.invalidate(adminActivitesProvider),
                         ),
                       ),
+                      data: (activities) {
+                        final filtered = _getFilteredActivities(activities);
+
+                        if (filtered.isEmpty) {
+                          return Center(
+                            child: AppEmptyState(
+                              icon: Icons.extension_outlined,
+                              title:
+                                  _searchQuery.isNotEmpty || _hasActiveFilters
+                                  ? 'Aucune activité correspondante'
+                                  : 'Aucune activité trouvée',
+                              description:
+                                  _searchQuery.isNotEmpty || _hasActiveFilters
+                                  ? 'Essayez de modifier vos critères de recherche ou vos filtres.'
+                                  : 'Créez votre première activité ludique pour les enfants.',
+                              actionText: _hasActiveFilters
+                                  ? 'Réinitialiser les filtres'
+                                  : 'Nouvelle Activité',
+                              onActionPressed: () {
+                                if (_hasActiveFilters) {
+                                  setState(() {
+                                    _selectedCategoryId = 'all';
+                                    _selectedDifficulty = 'all';
+                                    _selectedAgeGroup = 'all';
+                                    _searchQuery = '';
+                                  });
+                                } else {
+                                  context.push(AppRoutes.adminAddActivity);
+                                }
+                              },
+                            ),
+                          );
+                        }
+
+                        return RefreshIndicator(
+                          onRefresh: () async {
+                            ref.invalidate(adminActivitesProvider);
+                          },
+                          child: _buildResponsiveActivityView(
+                            filtered: filtered,
+                            isTablet: isTablet,
+                            isDesktop: isDesktop,
+                            horizontalPadding: horizontalPadding,
+                          ),
+                        );
+                      },
                     ),
-                  ],
-                ),
-              );
-            },
+                  ),
+                ],
+              ),
+            ),
           );
         },
       ),
     );
   }
 
-  Widget _buildFilterChip({
-    required String label,
-    required String? value,
-    required String? selectedValue,
-    required Function(String?) onSelected,
-    Color? color,
-  }) {
-    final isSelected = value == selectedValue;
-    return FilterChip(
-      label: Text(
-        label,
-        style: TextStyle(
-          color: isSelected ? Colors.white : Colors.grey.shade700,
-          fontSize: 12,
+  Widget _buildFilterButton(
+    ThemeData theme,
+    bool isDark,
+    Color dividerColor,
+    List<ActiviteCategorie> categories,
+  ) {
+    return InkWell(
+      onTap: () => _showFilterBottomSheet(context, categories),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        height: 42,
+        width: 42,
+        decoration: BoxDecoration(
+          color: _hasActiveFilters
+              ? theme.colorScheme.primary.withValues(
+                  alpha: isDark ? 0.25 : 0.12,
+                )
+              : theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: _hasActiveFilters ? theme.colorScheme.primary : dividerColor,
+            width: _hasActiveFilters ? 1.4 : 1.0,
+          ),
         ),
-      ),
-      selected: isSelected,
-      onSelected: (_) {
-        onSelected(isSelected ? null : value);
-      },
-      backgroundColor: Colors.grey.shade100,
-      selectedColor: color ?? AppColors.primary,
-      checkmarkColor: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
-    );
-  }
-
-  Widget _buildCategoryFilters(List<ActiviteCategorie> categories) {
-    final allCategories = [
-      ActiviteCategorie(
-        id: 'all',
-        nom: 'Tous',
-        description: '',
-        dateCreation: DateTime.now(),
-        dateModification: DateTime.now(),
-      ),
-      ...categories,
-    ];
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: allCategories.map((category) {
-          final isSelected = _selectedCategoryId == category.id;
-          return Padding(
-            padding: const EdgeInsets.only(right: 6),
-            child: ChoiceChip(
-              label: Text(
-                category.nom,
-                style: TextStyle(
-                  color: isSelected ? Colors.white : Colors.grey.shade700,
-                  fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                ),
-              ),
-              selected: isSelected,
-              onSelected: (_) {
-                setState(() {
-                  _selectedCategoryId = isSelected ? null : category.id;
-                  if (!isSelected && category.id == 'all') {
-                    _selectedCategoryId = 'all';
-                  } else if (isSelected) {
-                    _selectedCategoryId = 'all';
-                  }
-                });
-              },
-              backgroundColor: Colors.grey.shade100,
-              selectedColor: AppColors.primary,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 6,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              visualDensity: VisualDensity.compact,
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildActiveFilters() {
-    List<String> activeFilters = [];
-
-    if (_selectedStatus != null) {
-      final statusLabels = {
-        'publie': 'Publié',
-        'brouillon': 'Brouillon',
-        'archive': 'Archivé',
-      };
-      activeFilters.add('Statut: ${statusLabels[_selectedStatus] ?? _selectedStatus}');
-    }
-
-    if (_selectedAgeMin != null && _selectedAgeMax != null) {
-      activeFilters.add('Âge: $_selectedAgeMin-$_selectedAgeMax ans');
-    } else if (_selectedAgeMin != null) {
-      activeFilters.add('Âge minimum: $_selectedAgeMin ans');
-    } else if (_selectedAgeMax != null) {
-      activeFilters.add('Âge maximum: $_selectedAgeMax ans');
-    }
-
-    if (activeFilters.isEmpty) return const SizedBox.shrink();
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            const Text(
-              'Filtres actifs: ',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey,
-              ),
-            ),
-            ...activeFilters.map((filter) => Padding(
-                  padding: const EdgeInsets.only(right: 4),
-                  child: Chip(
-                    label: Text(
-                      filter,
-                      style: const TextStyle(fontSize: 10),
-                    ),
-                    backgroundColor: Colors.orange.shade50,
-                    deleteIcon: const Icon(Icons.close, size: 12),
-                    onDeleted: () {
-                      setState(() {
-                        _selectedStatus = null;
-                        _selectedAgeMin = null;
-                        _selectedAgeMax = null;
-                        _isFiltered = false;
-                      });
-                    },
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  ),
-                )),
-            TextButton(
-              onPressed: _resetFilters,
-              style: TextButton.styleFrom(
-                minimumSize: Size.zero,
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              child: const Text(
-                'Tout effacer',
-                style: TextStyle(fontSize: 11, color: AppColors.danger),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActivityList(List<Activite> activities) {
-    List<Activite> filtered = List.from(activities);
-
-    if (_searchQuery.isNotEmpty) {
-      filtered = filtered.where((activity) {
-        return activity.titre.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-               activity.description.toLowerCase().contains(_searchQuery.toLowerCase());
-      }).toList();
-    }
-
-    if (_selectedCategoryId != null && _selectedCategoryId != 'all') {
-      filtered = filtered.where((activity) {
-        return activity.categorieId == _selectedCategoryId;
-      }).toList();
-    }
-
-    if (_selectedStatus != null) {
-      filtered = filtered.where((activity) {
-        return activity.statut.value == _selectedStatus;
-      }).toList();
-    }
-
-    if (_selectedAgeMin != null) {
-      filtered = filtered.where((activity) {
-        return activity.ageMinimum >= _selectedAgeMin!;
-      }).toList();
-    }
-
-    if (_selectedAgeMax != null) {
-      filtered = filtered.where((activity) {
-        return activity.ageMaximum <= _selectedAgeMax!;
-      }).toList();
-    }
-
-    if (filtered.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Stack(
+          alignment: Alignment.center,
           children: [
             Icon(
-              Icons.search_off,
-              size: 48,
-              color: Colors.grey.shade400,
+              Icons.tune_rounded,
+              size: 20,
+              color: _hasActiveFilters
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurfaceVariant,
             ),
-            const SizedBox(height: 12),
-            Text(
-              'Aucune activité trouvée',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade600,
+            if (_hasActiveFilters)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: theme.colorScheme.surface,
+                      width: 1.5,
+                    ),
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Essayez de modifier votre recherche ou vos filtres',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey.shade400,
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextButton(
-              onPressed: _resetFilters,
-              child: const Text('Réinitialiser les filtres'),
-            ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildResponsiveActivityView({
+    required List<Activite> filtered,
+    required bool isTablet,
+    required bool isDesktop,
+    required double horizontalPadding,
+  }) {
+    if (isDesktop || isTablet) {
+      final crossAxisCount = isDesktop ? 3 : 2;
+      return GridView.builder(
+        padding: EdgeInsets.fromLTRB(
+          horizontalPadding,
+          6,
+          horizontalPadding,
+          85,
+        ),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: crossAxisCount,
+          crossAxisSpacing: 14,
+          mainAxisSpacing: 12,
+          mainAxisExtent: 165,
+        ),
+        itemCount: filtered.length,
+        itemBuilder: (context, index) {
+          final activity = filtered[index];
+          return ActivityCard(
+            activity: activity,
+            onTap: () {
+              if (activity.id != null) {
+                context.push('/admin/activites/${activity.id}/questions');
+              }
+            },
+            onEdit: () {
+              if (activity.id != null) {
+                context.push('/admin/activites/edit/${activity.id}');
+              }
+            },
+            onDelete: () => _confirmDeleteActivity(activity),
+            onPublish: () =>
+                _togglePublicationStatus(activity, PublicationStatus.publie),
+            onUnpublish: () =>
+                _togglePublicationStatus(activity, PublicationStatus.brouillon),
+          );
+        },
       );
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.fromLTRB(horizontalPadding, 6, horizontalPadding, 85),
       itemCount: filtered.length,
       itemBuilder: (context, index) {
         final activity = filtered[index];
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 6),
-          child: ActivityCard(
-            activity: activity,
-            onTap: () {
-              context.push(
-                '/admin/activites/${activity.id}/questions'
-              );
-            },
-            onEdit: () {
-              context.push(
-                '/admin/activites/edit/${activity.id}'
-              );
-            },
-            onDelete: () => _confirmDelete(activity),
-            onPublish: () => _publishActivity(activity),
-            onUnpublish: () => _unpublishActivity(activity),
-          ),
+        return ActivityCard(
+          activity: activity,
+          onTap: () {
+            if (activity.id != null) {
+              context.push('/admin/activites/${activity.id}/questions');
+            }
+          },
+          onEdit: () {
+            if (activity.id != null) {
+              context.push('/admin/activites/edit/${activity.id}');
+            }
+          },
+          onDelete: () => _confirmDeleteActivity(activity),
+          onPublish: () =>
+              _togglePublicationStatus(activity, PublicationStatus.publie),
+          onUnpublish: () =>
+              _togglePublicationStatus(activity, PublicationStatus.brouillon),
         );
       },
     );
   }
 
-  void _resetFilters() {
-    setState(() {
-      _selectedCategoryId = 'all';
-      _selectedStatus = null;
-      _selectedAgeMin = null;
-      _selectedAgeMax = null;
-      _searchQuery = '';
-      _isFiltered = false;
-    });
+  void _showFilterBottomSheet(
+    BuildContext context,
+    List<ActiviteCategorie> categories,
+  ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    String tempCategory = _selectedCategoryId;
+    String tempDifficulty = _selectedDifficulty;
+    String tempAgeGroup = _selectedAgeGroup;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: theme.colorScheme.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (bottomSheetContext) => StatefulBuilder(
+        builder: (ctx, setModalState) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Poignée de glissement
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white24 : Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // En-tête
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Filtres des Activités',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 17,
+                          color: theme.colorScheme.onSurface,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, size: 20),
+                      onPressed: () => Navigator.pop(bottomSheetContext),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // 1. SECTION CATÉGORIE
+                Text(
+                  'Catégorie d\'univers',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _buildModalChip(
+                      label: 'Toutes',
+                      isSelected: tempCategory == 'all',
+                      onSelected: () =>
+                          setModalState(() => tempCategory = 'all'),
+                      theme: theme,
+                      isDark: isDark,
+                    ),
+                    ...categories.map((cat) {
+                      final catId = cat.id ?? '';
+                      return _buildModalChip(
+                        label: cat.nom,
+                        isSelected: tempCategory == catId,
+                        onSelected: () =>
+                            setModalState(() => tempCategory = catId),
+                        theme: theme,
+                        isDark: isDark,
+                      );
+                    }),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // 2. SECTION DIFFICULTÉ
+                Text(
+                  'Niveau de difficulté',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _buildModalChip(
+                      label: 'Toutes',
+                      isSelected: tempDifficulty == 'all',
+                      onSelected: () =>
+                          setModalState(() => tempDifficulty = 'all'),
+                      theme: theme,
+                      isDark: isDark,
+                    ),
+                    _buildModalChip(
+                      label: 'Facile',
+                      isSelected: tempDifficulty == 'facile',
+                      onSelected: () =>
+                          setModalState(() => tempDifficulty = 'facile'),
+                      theme: theme,
+                      isDark: isDark,
+                    ),
+                    _buildModalChip(
+                      label: 'Moyen',
+                      isSelected: tempDifficulty == 'moyen',
+                      onSelected: () =>
+                          setModalState(() => tempDifficulty = 'moyen'),
+                      theme: theme,
+                      isDark: isDark,
+                    ),
+                    _buildModalChip(
+                      label: 'Difficile',
+                      isSelected: tempDifficulty == 'difficile',
+                      onSelected: () =>
+                          setModalState(() => tempDifficulty = 'difficile'),
+                      theme: theme,
+                      isDark: isDark,
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // 3. SECTION TRANCHE D'ÂGE
+                Text(
+                  'Tranche d\'âge',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _buildModalChip(
+                      label: 'Tous les âges',
+                      isSelected: tempAgeGroup == 'all',
+                      onSelected: () =>
+                          setModalState(() => tempAgeGroup = 'all'),
+                      theme: theme,
+                      isDark: isDark,
+                    ),
+                    _buildModalChip(
+                      label: '3 - 5 ans',
+                      isSelected: tempAgeGroup == '3-5',
+                      onSelected: () =>
+                          setModalState(() => tempAgeGroup = '3-5'),
+                      theme: theme,
+                      isDark: isDark,
+                    ),
+                    _buildModalChip(
+                      label: '6 - 8 ans',
+                      isSelected: tempAgeGroup == '6-8',
+                      onSelected: () =>
+                          setModalState(() => tempAgeGroup = '6-8'),
+                      theme: theme,
+                      isDark: isDark,
+                    ),
+                    _buildModalChip(
+                      label: '9 - 12 ans',
+                      isSelected: tempAgeGroup == '9-12',
+                      onSelected: () =>
+                          setModalState(() => tempAgeGroup = '9-12'),
+                      theme: theme,
+                      isDark: isDark,
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                // 4. BOUTONS D'ACTION (RÉINITIALISER / APPLIQUER)
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          setModalState(() {
+                            tempCategory = 'all';
+                            tempDifficulty = 'all';
+                            tempAgeGroup = 'all';
+                          });
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: theme.colorScheme.onSurfaceVariant,
+                          side: BorderSide(
+                            color: theme.dividerColor.withValues(
+                              alpha: isDark ? 0.3 : 0.2,
+                            ),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text('Réinitialiser'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            _selectedCategoryId = tempCategory;
+                            _selectedDifficulty = tempDifficulty;
+                            _selectedAgeGroup = tempAgeGroup;
+                          });
+                          Navigator.pop(bottomSheetContext);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.colorScheme.primary,
+                          foregroundColor: theme.colorScheme.onPrimary,
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text('Appliquer'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
-  void _applyFilters() {
-    setState(() {
-      _isFiltered = _selectedStatus != null ||
-          _selectedAgeMin != null ||
-          _selectedAgeMax != null;
-    });
+  Widget _buildModalChip({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onSelected,
+    required ThemeData theme,
+    required bool isDark,
+  }) {
+    return ChoiceChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (_) => onSelected(),
+      showCheckmark: false,
+      selectedColor: theme.colorScheme.primary.withValues(
+        alpha: isDark ? 0.25 : 0.12,
+      ),
+      backgroundColor: isDark
+          ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4)
+          : theme.colorScheme.surface,
+      labelStyle: TextStyle(
+        fontSize: 12.5,
+        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+        color: isSelected
+            ? theme.colorScheme.primary
+            : theme.colorScheme.onSurface,
+      ),
+      side: BorderSide(
+        color: isSelected
+            ? theme.colorScheme.primary
+            : theme.dividerColor.withValues(alpha: isDark ? 0.3 : 0.15),
+        width: isSelected ? 1.4 : 1.0,
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+    );
   }
 
-  void _confirmDelete(Activite activity) {
+  List<Activite> _getFilteredActivities(List<Activite> list) {
+    final query = _searchQuery.trim().toLowerCase();
+
+    return list.where((activity) {
+      // Filtre d'onglet (statut)
+      if (_tabController.index == 1 &&
+          activity.statut != PublicationStatus.publie) {
+        return false;
+      }
+      if (_tabController.index == 2 &&
+          activity.statut != PublicationStatus.brouillon) {
+        return false;
+      }
+      if (_tabController.index == 3 &&
+          activity.statut != PublicationStatus.archive) {
+        return false;
+      }
+
+      // Filtre catégorie
+      if (_selectedCategoryId != 'all' &&
+          activity.categorieId != _selectedCategoryId) {
+        return false;
+      }
+
+      // Filtre difficulté
+      if (_selectedDifficulty != 'all' &&
+          activity.difficulte.toLowerCase() != _selectedDifficulty) {
+        return false;
+      }
+
+      // Filtre tranche d'âge
+      if (_selectedAgeGroup != 'all') {
+        switch (_selectedAgeGroup) {
+          case '3-5':
+            if (activity.ageMaximum < 3 || activity.ageMinimum > 5)
+              return false;
+            break;
+          case '6-8':
+            if (activity.ageMaximum < 6 || activity.ageMinimum > 8)
+              return false;
+            break;
+          case '9-12':
+            if (activity.ageMaximum < 9 || activity.ageMinimum > 12)
+              return false;
+            break;
+        }
+      }
+
+      // Recherche texte
+      if (query.isNotEmpty) {
+        final matchesTitle = activity.titre.toLowerCase().contains(query);
+        final matchesDesc = activity.description.toLowerCase().contains(query);
+        if (!matchesTitle && !matchesDesc) return false;
+      }
+
+      return true;
+    }).toList();
+  }
+
+  Future<void> _togglePublicationStatus(
+    Activite activity,
+    PublicationStatus newStatus,
+  ) async {
+    if (activity.id == null) return;
+    try {
+      final notifier = ref.read(activityNotifierProvider.notifier);
+      if (newStatus == PublicationStatus.publie) {
+        await notifier.publierActivity(activity.id!);
+      } else {
+        await notifier.depublierActivity(activity.id!);
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              newStatus == PublicationStatus.publie
+                  ? 'Activité publiée avec succès'
+                  : 'Activité passée en brouillon',
+            ),
+            backgroundColor: newStatus == PublicationStatus.publie
+                ? const Color(0xFF16A34A)
+                : const Color(0xFFD97706),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
+
+  void _confirmDeleteActivity(Activite activity) {
     showDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text(
-            'Supprimer l\'activité',
-            style: TextStyle(fontWeight: FontWeight.bold),
+      builder: (dialogCtx) => AlertDialog(
+        title: const Text('Supprimer l\'activité'),
+        content: Text(
+          'Êtes-vous sûr de vouloir supprimer "${activity.titre}" ?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx),
+            child: const Text('Annuler'),
           ),
-          content: Text(
-            'Êtes-vous sûr de vouloir supprimer "${activity.titre}" ?\nCette action est irréversible.',
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.pop(dialogCtx);
+              try {
+                final notifier = ref.read(activityNotifierProvider.notifier);
+                await notifier.deleteActivity(activity.id!);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Activité supprimée avec succès'),
+                      backgroundColor: Color(0xFF16A34A),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Erreur: $e'),
+                      backgroundColor: Theme.of(context).colorScheme.error,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Supprimer'),
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                if (Navigator.canPop(dialogContext)) {
-                  Navigator.pop(dialogContext);
-                }
-              },
-              child: const Text('Annuler'),
-            ),
-            TextButton(
-              onPressed: () async {
-                if (Navigator.canPop(dialogContext)) {
-                  Navigator.pop(dialogContext);
-                }
-                await Future.delayed(const Duration(milliseconds: 100));
-                try {
-                  final notifier = ref.read(activityNotifierProvider.notifier);
-                  await notifier.deleteActivity(activity.id!);
-                  if (mounted) {
-                    _scaffoldMessengerKey.currentState?.showSnackBar(
-                      const SnackBar(
-                        content: Text('✅ Activité supprimée avec succès'),
-                        backgroundColor: AppColors.childPrimary,
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  if (mounted) {
-                    _scaffoldMessengerKey.currentState?.showSnackBar(
-                      SnackBar(
-                        content: Text('❌ Erreur: $e'),
-                        backgroundColor: AppColors.danger,
-                        duration: Duration(seconds: 3),
-                      ),
-                    );
-                  }
-                }
-              },
-              style: TextButton.styleFrom(foregroundColor: AppColors.danger),
-              child: const Text('Supprimer'),
-            ),
-          ],
-        );
-      },
+        ],
+      ),
     );
-  }
-
-  Future<void> _publishActivity(Activite activity) async {
-    try {
-      final repository = ref.read(activityRepositoryProvider);
-      await repository.publierActivite(activity.id!);
-      ref.invalidate(adminActivitesProvider);
-      if (mounted) {
-        _scaffoldMessengerKey.currentState?.showSnackBar(
-          const SnackBar(
-            content: Text('✅ Activité publiée avec succès'),
-            backgroundColor: AppColors.childPrimary,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        _scaffoldMessengerKey.currentState?.showSnackBar(
-          SnackBar(
-            content: Text('❌ Erreur: $e'),
-            backgroundColor: AppColors.danger,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _unpublishActivity(Activite activity) async {
-    try {
-      final repository = ref.read(activityRepositoryProvider);
-      await repository.depublierActivite(activity.id!);
-      ref.invalidate(adminActivitesProvider);
-      if (mounted) {
-        _scaffoldMessengerKey.currentState?.showSnackBar(
-          const SnackBar(
-            content: Text('📄 Activité dépubliée'),
-            backgroundColor: AppColors.warning,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        _scaffoldMessengerKey.currentState?.showSnackBar(
-          SnackBar(
-            content: Text('❌ Erreur: $e'),
-            backgroundColor: AppColors.danger,
-          ),
-        );
-      }
-    }
   }
 }

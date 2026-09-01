@@ -184,3 +184,65 @@ class AppSkeletonLoader extends StatelessWidget {
     );
   }
 }
+
+/// Indicateur de chargement propre et réutilisable adapté au thème
+class AppLoadingIndicator extends StatelessWidget {
+  final String? message;
+  final bool isCompact;
+
+  const AppLoadingIndicator({
+    super.key,
+    this.message,
+    this.isCompact = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    if (isCompact) {
+      return SizedBox(
+        width: 24,
+        height: 24,
+        child: CircularProgressIndicator(
+          strokeWidth: 2.2,
+          valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+        ),
+      );
+    }
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 36,
+              height: 36,
+              child: CircularProgressIndicator(
+                strokeWidth: 3,
+                valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+              ),
+            ),
+            if (message != null) ...[
+              const SizedBox(height: 14),
+              Text(
+                message!,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontSize: 13.5,
+                ) ??
+                TextStyle(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontSize: 13.5,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+

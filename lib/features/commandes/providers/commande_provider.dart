@@ -31,9 +31,20 @@ class CommandeState {
   }
 }
 
-// 2. Le Provider global (c'est celui-ci qui s'appellera "commandeProvider")
+// 2. Repository Provider
+final commandeRepositoryProvider = Provider<CommandeRepository>((ref) {
+  return CommandeRepository();
+});
+
+// 3. Le Provider global pour le client (commandeProvider)
 final commandeProvider = NotifierProvider<CommandeNotifier, CommandeState>(() {
   return CommandeNotifier();
+});
+
+// 4. Provider d'administration pour la liste des commandes
+final adminCommandesProvider = FutureProvider<List<CommandeModel>>((ref) async {
+  final repository = ref.watch(commandeRepositoryProvider);
+  return repository.recupererToutesLesCommandes();
 });
 
 class CommandeNotifier extends Notifier<CommandeState> {
@@ -67,20 +78,20 @@ class CommandeNotifier extends Notifier<CommandeState> {
   }
 
   // Créer une commande
-  Future<bool> passerCommande(CommandeModel commande) async {
+  Future<CommandeModel?> passerCommande(CommandeModel commande) async {
     state = state.copyWith(estEnChargement: true, messageErreur: null);
     try {
-      await _depot.creerCommande(commande);
-      final nouvellesCommandes = [commande, ...state.commandes];
+      final commandeEnregistree = await _depot.creerCommande(commande);
+      final nouvellesCommandes = [commandeEnregistree, ...state.commandes];
       state = state.copyWith(
         commandes: nouvellesCommandes,
-        commandeSelectionnee: commande,
+        commandeSelectionnee: commandeEnregistree,
         estEnChargement: false,
       );
-      return true;
+      return commandeEnregistree;
     } catch (e) {
       state = state.copyWith(messageErreur: e.toString(), estEnChargement: false);
-      return false;
+      return null;
     }
   }
 

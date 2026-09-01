@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:eveilkid/core/router/app_routes.dart';
 import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/features/admin/users/providers/admin_user_provider.dart';
 import 'package:eveilkid/shared/widgets/app_button.dart';
@@ -71,27 +72,43 @@ class _AdminManagerFormPageState extends ConsumerState<AdminManagerFormPage> {
     final textSecondary = theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
         (isDark ? Colors.white70 : AppColors.textSecondary);
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text(
-          "Nouveau Manager",
-          style: TextStyle(
-            color: theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface,
-            fontWeight: FontWeight.w800,
-            fontSize: 18,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        } else if (context.mounted) {
+          context.go(AppRoutes.adminStaff);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        appBar: AppBar(
+          title: Text(
+            "Nouveau Manager",
+            style: TextStyle(
+              color: theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface,
+              fontWeight: FontWeight.w800,
+              fontSize: 18,
+            ),
+          ),
+          backgroundColor: theme.colorScheme.surface,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(
+              Icons.arrow_back_rounded,
+              color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
+            ),
+            onPressed: () {
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              } else {
+                context.go(AppRoutes.adminStaff);
+              }
+            },
           ),
         ),
-        backgroundColor: theme.colorScheme.surface,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_rounded,
-            color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
-          ),
-          onPressed: () => context.pop(),
-        ),
-      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -248,6 +265,7 @@ class _AdminManagerFormPageState extends ConsumerState<AdminManagerFormPage> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

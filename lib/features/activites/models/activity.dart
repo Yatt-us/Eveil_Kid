@@ -38,33 +38,107 @@ class Activite {
     this.ordreAffichage = 0,
   });
 
-  factory Activite.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
-    final data = doc.data() ?? {};
-    
-    PublicationStatus parseStatus(String? statusStr) {
-      return PublicationStatus.values.firstWhere(
-        (e) => e.name == statusStr,
-        orElse: () => PublicationStatus.brouillon,
-      );
-    }
+  // Construction d'une instance depuis un DocumentSnapshot Firestore
+  factory Activite.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> snapshot, [
+    SnapshotOptions? options,
+  ]) {
+    final data = snapshot.data() ?? {};
 
     return Activite(
-      id: doc.id,
+      id: snapshot.id,
       titre: data['titre'] ?? '',
       description: data['description'] ?? '',
       categorieId: data['categorieId'] ?? '',
       difficulte: data['difficulte'] ?? 'facile',
-      ageMinimum: data['ageMinimum'] ?? 3,
-      ageMaximum: data['ageMaximum'] ?? 6,
-      dureeEnMinutes: data['dureeEnMinutes'] ?? 5,
+      ageMinimum: (data['ageMinimum'] as num?)?.toInt() ?? 3,
+      ageMaximum: (data['ageMaximum'] as num?)?.toInt() ?? 6,
+      dureeEnMinutes: (data['dureeEnMinutes'] as num?)?.toInt() ?? 5,
       materiels: List<String>.from(data['materiels'] ?? []),
       objectifsApprentissage: List<String>.from(data['objectifsApprentissage'] ?? []),
-      statut: parseStatus(data['statut']),
+      statut: PublicationStatus.values.firstWhere(
+        (e) => e.name == data['statut'],
+        orElse: () => PublicationStatus.brouillon,
+      ),
       imageUrl: data['imageUrl'],
-      points: data['points'] ?? 30,
+      points: (data['points'] as num?)?.toInt() ?? 0,
       dateCreation: (data['dateCreation'] as Timestamp?)?.toDate() ?? DateTime.now(),
       dateModification: (data['dateModification'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      ordreAffichage: data['ordreAffichage'] ?? 0,
+      ordreAffichage: (data['ordreAffichage'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  // Conversion de l'objet en Map pour l'enregistrement Firestore
+  Map<String, dynamic> toFirestore() {
+    return {
+      'titre': titre,
+      'description': description,
+      'categorieId': categorieId,
+      'difficulte': difficulte,
+      'ageMinimum': ageMinimum,
+      'ageMaximum': ageMaximum,
+      'dureeEnMinutes': dureeEnMinutes,
+      'materiels': materiels,
+      'objectifsApprentissage': objectifsApprentissage,
+      'statut': statut.name,
+      if (imageUrl != null) 'imageUrl': imageUrl,
+      'points': points,
+      'dateCreation': Timestamp.fromDate(dateCreation),
+      'dateModification': Timestamp.fromDate(dateModification),
+      'ordreAffichage': ordreAffichage,
+    };
+  }
+
+  static Activite empty() {
+    return Activite(
+      titre: '',
+      description: '',
+      categorieId: '',
+      difficulte: 'facile',
+      ageMinimum: 3,
+      ageMaximum: 6,
+      dureeEnMinutes: 5,
+      points: 30,
+      dateCreation: DateTime.now(),
+      dateModification: DateTime.now(),
+    );
+  }
+
+  Activite copyWith({
+    String? id,
+    String? titre,
+    String? description,
+    String? categorieId,
+    String? difficulte,
+    int? ageMinimum,
+    int? ageMaximum,
+    int? dureeEnMinutes,
+    List<String>? materiels,
+    List<String>? objectifsApprentissage,
+    PublicationStatus? statut,
+    String? imageUrl,
+    int? points,
+    DateTime? dateCreation,
+    DateTime? dateModification,
+    int? ordreAffichage,
+  }) {
+    return Activite(
+      id: id ?? this.id,
+      titre: titre ?? this.titre,
+      description: description ?? this.description,
+      categorieId: categorieId ?? this.categorieId,
+      difficulte: difficulte ?? this.difficulte,
+      ageMinimum: ageMinimum ?? this.ageMinimum,
+      ageMaximum: ageMaximum ?? this.ageMaximum,
+      dureeEnMinutes: dureeEnMinutes ?? this.dureeEnMinutes,
+      materiels: materiels ?? this.materiels,
+      objectifsApprentissage: objectifsApprentissage ?? this.objectifsApprentissage,
+      statut: statut ?? this.statut,
+      imageUrl: imageUrl ?? this.imageUrl,
+      points: points ?? this.points,
+      dateCreation: dateCreation ?? this.dateCreation,
+      dateModification: dateModification ?? this.dateModification,
+      ordreAffichage: ordreAffichage ?? this.ordreAffichage,
     );
   }
 }

@@ -304,6 +304,55 @@ class DashboardPage extends ConsumerWidget {
               ),
             ),
 
+            // Carte Accès Commandes
+            AppCard(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(16),
+              onTap: () => context.push(AppRoutes.adminCommandes),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF3B82F6).withValues(alpha: isDark ? 0.2 : 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.shopping_bag_outlined, color: Color(0xFF3B82F6)),
+                  ),
+                  AppSpacing.horizontalMd,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Gestion des Commandes",
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: titleColor,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          "Suivi, expéditions, statuts et livraisons",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: theme.iconTheme.color?.withValues(alpha: 0.5) ??
+                        AppColors.icon,
+                  ),
+                ],
+              ),
+            ),
+
             // Carte Gestion des Utilisateurs (Réservée exclusivement à l'Admin)
             if (currentRole.canManageUsers)
               AppCard(

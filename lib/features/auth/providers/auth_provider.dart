@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:eveilkid/core/errors/auth_error_handler.dart';
+import 'package:eveilkid/core/services/parental_pin_service.dart';
 import 'package:eveilkid/features/auth/repository/auth_repository.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -75,6 +76,9 @@ class AuthNotifier extends Notifier<AuthState> {
     _authSubscription = _repository.authStateChanges.listen(
       (user) async {
         if (user == null) {
+          try {
+            await ref.read(parentalPinServiceProvider).clearPin();
+          } catch (_) {}
           state = state.copyWith(
             clearUtilisateur: true,
             isLoading: false,
@@ -103,7 +107,6 @@ class AuthNotifier extends Notifier<AuthState> {
           );
         } catch (e) {
           state = state.copyWith(
-            clearUtilisateur: true,
             isLoading: false,
             isInitialized: true,
             isEmailVerified: false,
@@ -189,6 +192,9 @@ class AuthNotifier extends Notifier<AuthState> {
 
     try {
       await _repository.logout();
+      try {
+        await ref.read(parentalPinServiceProvider).clearPin();
+      } catch (_) {}
 
       state = state.copyWith(
         clearUtilisateur: true,

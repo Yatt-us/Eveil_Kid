@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:eveilkid/core/constants/app_colors.dart';
+import 'package:eveilkid/core/router/app_routes.dart';
 import 'package:eveilkid/features/auth/providers/auth_provider.dart';
 import 'package:eveilkid/features/categories/providers/categorie_provider.dart';
 import 'package:eveilkid/features/favoris/models/favoris.dart';
 import 'package:eveilkid/features/favoris/providers/favoris_providers.dart';
 import 'package:eveilkid/features/panier/presentation/widgets/panier_app_bar_action.dart';
+import 'package:eveilkid/features/tutoriels/enums/tutoriel_status.enum.dart';
 import 'package:eveilkid/features/tutoriels/models/tutoriel.dart';
-import 'package:eveilkid/features/tutoriels/presentation/pages/video_player_page.dart';
 import 'package:eveilkid/features/tutoriels/presentation/widgets/jouets_suggestion_card.dart';
 import 'package:eveilkid/features/tutoriels/presentation/widgets/tutoriel_card.dart';
+import 'package:eveilkid/features/tutoriels/presentation/widgets/video_player_widget.dart';
+import 'package:eveilkid/features/tutoriels/providers/cloudinary_duration_provider.dart';
 import 'package:eveilkid/features/tutoriels/providers/progression_provider.dart';
 import 'package:eveilkid/features/tutoriels/providers/tutoriel_provider.dart';
+import 'package:eveilkid/features/tutoriels/utils/duration_utils.dart';
 import 'package:eveilkid/shared/widgets/app_button.dart';
 import 'package:eveilkid/shared/widgets/app_card.dart';
 import 'package:eveilkid/shared/widgets/app_states.dart';
@@ -28,74 +34,161 @@ class TutorielDetailPage extends ConsumerStatefulWidget {
 }
 
 class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
+  final ScrollController _scrollController = ScrollController();
+  final TutorielVideoPlayerController _playerController =
+      TutorielVideoPlayerController();
+
   bool _isDescriptionExpanded = false;
+  bool _isPlaying = false;
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _playerController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToTopAndPlay({Duration? seekTo}) {
+    if (_scrollController.hasClients && _scrollController.offset > 50) {
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutCubic,
+      );
+    }
+    if (seekTo != null) {
+      _playerController.seekTo(seekTo);
+    }
+    _playerController.play();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final tutorielAsync = ref.watch(tutorielByIdProvider(widget.tutorielId));
+    final tutorielAsync = ref.watch(tutorielStreamByIdProvider(widget.tutorielId));
     final progressionAsync = ref.watch(progressionProvider(widget.tutorielId));
     final tutorielsAsync = ref.watch(tutorielsProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
+    final authState = ref.watch(authProvider);
     final theme = Theme.of(context);
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_rounded,
-            color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
+    final currentUser = authState.utilisateur;
+    final roleString = currentUser?.role.toString().toLowerCase() ?? '';
+    final isAdminOrStaff = roleString.contains('admin') ||
+        roleString.contains('staff') ||
+        roleString.contains('manager');
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        } else if (context.mounted) {
+          if (isAdminOrStaff) {
+            context.go(AppRoutes.adminTutoriels);
+          } else {
+            context.go(AppRoutes.tutoriels);
+          }
+        }
+      },
+      child: Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(
+              Icons.arrow_back_rounded,
+              color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
+            ),
+            tooltip: 'Retour',
+            onPressed: () {
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              } else {
+                if (isAdminOrStaff) {
+                  context.go(AppRoutes.adminTutoriels);
+                } else {
+                  context.go(AppRoutes.tutoriels);
+                }
+              }
+            },
           ),
-          tooltip: 'Retour',
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
         title: Text(
           'Détail du tutoriel',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface,
+            color: theme.textTheme.titleMedium?.color ??
+                theme.colorScheme.onSurface,
           ),
         ),
         centerTitle: true,
         actions: [
-          Consumer(
-            builder: (context, ref, _) {
-              final isFav = ref.watch(isElementFavoriProvider(widget.tutorielId));
-              final authState = ref.watch(authProvider);
-              final userId = authState.utilisateur?.utilisateurId ?? '';
+          // Bouton d'édition rapide pour l'administrateur / staff
+          if (isAdminOrStaff)
+            tutorielAsync.maybeWhen(
+              data: (tutoriel) {
+                if (tutoriel == null) return const SizedBox.shrink();
+                return IconButton(
+                  icon: const Icon(Icons.edit_outlined),
+                  tooltip: 'Modifier ce tutoriel',
+                  color: AppColors.primary,
+                  onPressed: () {
+                    context.push(
+                      AppRoutes.adminEditTutorielPath(
+                          tutoriel.tutorielId ?? ''),
+                      extra: tutoriel,
+                    );
+                  },
+                );
+              },
+              orElse: () => const SizedBox.shrink(),
+            ),
 
-              return tutorielAsync.maybeWhen(
-                data: (tutoriel) {
-                  if (tutoriel == null) return const SizedBox.shrink();
-                  return IconButton(
-                    icon: Icon(
-                      isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                      color: isFav
-                          ? Colors.redAccent
-                          : (theme.iconTheme.color ?? theme.colorScheme.onSurface),
-                    ),
-                    tooltip: isFav ? 'Retirer des favoris' : 'Ajouter aux favoris',
-                    onPressed: () {
-                      if (userId.isEmpty) return;
-                      ref.read(favoriServiceProvider).toggleFavori(
-                            utilisateurId: userId,
-                            elementId: tutoriel.tutorielId!,
-                            typeElement: TypeElement.tutoriel,
-                            titre: tutoriel.titre,
-                            miniatureUrl: tutoriel.miniatureUrl,
-                            prix: 0.0,
-                          );
-                    },
-                  );
-                },
-                orElse: () => const SizedBox.shrink(),
-              );
-            },
-          ),
-          const PanierAppBarAction(),
+          // Bouton favoris (pour parents / utilisateurs)
+          if (!isAdminOrStaff)
+            Consumer(
+              builder: (context, ref, _) {
+                final isFav =
+                    ref.watch(isElementFavoriProvider(widget.tutorielId));
+                final userId = currentUser?.utilisateurId ?? '';
+
+                return tutorielAsync.maybeWhen(
+                  data: (tutoriel) {
+                    if (tutoriel == null) return const SizedBox.shrink();
+                    return IconButton(
+                      icon: Icon(
+                        isFav
+                            ? Icons.favorite_rounded
+                            : Icons.favorite_border_rounded,
+                        color: isFav
+                            ? Colors.redAccent
+                            : (theme.iconTheme.color ??
+                                theme.colorScheme.onSurface),
+                      ),
+                      tooltip: isFav
+                          ? 'Retirer des favoris'
+                          : 'Ajouter aux favoris',
+                      onPressed: () {
+                        if (userId.isEmpty) return;
+                        ref.read(favoriServiceProvider).toggleFavori(
+                              utilisateurId: userId,
+                              elementId: tutoriel.tutorielId!,
+                              typeElement: TypeElement.tutoriel,
+                              titre: tutoriel.titre,
+                              miniatureUrl: tutoriel.miniatureUrl,
+                              prix: 0.0,
+                            );
+                      },
+                    );
+                  },
+                  orElse: () => const SizedBox.shrink(),
+                );
+              },
+            ),
+
+          if (!isAdminOrStaff) const PanierAppBarAction(),
           const SizedBox(width: 8),
         ],
       ),
@@ -130,14 +223,19 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
               final sameCategory = list
                   .where((item) =>
                       item.tutorielId != tutoriel.tutorielId &&
-                      item.categorieId == tutoriel.categorieId)
+                      item.categorieId == tutoriel.categorieId &&
+                      (isAdminOrStaff ||
+                          item.statut == TutorielStatus.publie))
                   .take(4)
                   .toList();
 
               if (sameCategory.isNotEmpty) return sameCategory;
 
               return list
-                  .where((item) => item.tutorielId != tutoriel.tutorielId)
+                  .where((item) =>
+                      item.tutorielId != tutoriel.tutorielId &&
+                      (isAdminOrStaff ||
+                          item.statut == TutorielStatus.publie))
                   .take(4)
                   .toList();
             },
@@ -145,8 +243,16 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
           );
 
           final currentPosition = progression?.position.toInt() ?? 0;
-          final totalDuration = (progression?.duree ?? tutoriel.duree).toInt();
-          final hasProgress = currentPosition > 0 && !(progression?.termine == true);
+          final totalDuration = tutoriel.duree > 0
+              ? tutoriel.duree
+              : (ref
+                      .watch(cloudinaryVideoDurationProvider(tutoriel.videoUrl))
+                      .asData
+                      ?.value
+                      .round() ??
+                  0);
+          final hasProgress =
+              currentPosition > 0 && !(progression?.termine == true);
           final progressRatio = totalDuration > 0
               ? (currentPosition / totalDuration).clamp(0.0, 1.0)
               : 0.0;
@@ -161,16 +267,32 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
           return Stack(
             children: [
               SingleChildScrollView(
+                controller: _scrollController,
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── BANNIÈRE VIDÉO HERO ──
-                    _buildVideoHero(context, tutoriel),
-                    const SizedBox(height: 16),
+                    // ── LECTEUR VIDÉO INLINE (DIRECT SUR LA PAGE) ──
+                    TutorielInlineVideoPlayer(
+                      tutoriel: tutoriel,
+                      controller: _playerController,
+                      autoPlay: false,
+                      initialPositionSeconds:
+                          hasProgress ? currentPosition : null,
+                      onPlayStateChanged: (playing) {
+                        if (mounted) setState(() => _isPlaying = playing);
+                      },
+                    ),
+                    const SizedBox(height: 22),
+
+                    // ── BANDEAU STATUS ADMIN (SI ADMIN) ──
+                    if (isAdminOrStaff) ...[
+                      _buildAdminBanner(context, tutoriel),
+                      const SizedBox(height: 14),
+                    ],
 
                     // ── REPRENDRE LA LECTURE (SI EN COURS) ──
-                    if (hasProgress) ...[
+                    if (hasProgress && !_isPlaying) ...[
                       _buildResumeCard(
                         context,
                         tutoriel,
@@ -187,7 +309,8 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
-                        color: theme.textTheme.titleLarge?.color ?? theme.colorScheme.onSurface,
+                        color: theme.textTheme.titleLarge?.color ??
+                            theme.colorScheme.onSurface,
                         letterSpacing: -0.3,
                         height: 1.25,
                       ),
@@ -199,21 +322,26 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
                         Icon(
                           Icons.play_circle_outline_rounded,
                           size: 15,
-                          color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.65) ??
+                          color: theme.textTheme.bodySmall?.color
+                                  ?.withValues(alpha: 0.65) ??
                               theme.colorScheme.onSurfaceVariant,
                         ),
                         const SizedBox(width: 5),
                         Expanded(
                           child: Text(
                             [
-                              if (categoryName != null && categoryName.isNotEmpty) categoryName,
+                              if (categoryName != null &&
+                                  categoryName.isNotEmpty)
+                                categoryName,
                               tutoriel.ageRangeLabel,
-                              tutoriel.dureeFormatee,
+                              if (totalDuration > 0)
+                                formatDurationSeconds(totalDuration.toDouble()),
                             ].join(' • '),
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
-                              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.65) ??
+                              color: theme.textTheme.bodySmall?.color
+                                      ?.withValues(alpha: 0.65) ??
                                   theme.colorScheme.onSurfaceVariant,
                             ),
                           ),
@@ -257,7 +385,8 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: relatedTutoriels.length,
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
                           crossAxisSpacing: 12,
                           mainAxisSpacing: 14,
@@ -268,7 +397,8 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
                           return TutorielCard(
                             tutoriel: item,
                             isHorizontal: false,
-                            onTap: () => _openOtherDetail(context, item.tutorielId!),
+                            onTap: () =>
+                                _openOtherDetail(context, item.tutorielId!),
                           );
                         },
                       ),
@@ -283,10 +413,26 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
                 right: 16,
                 bottom: 16,
                 child: AppButton(
-                  text: hasProgress ? 'Reprendre le tutoriel' : 'Regarder le tutoriel',
-                  icon: Icons.play_arrow_rounded,
+                  text: _isPlaying
+                      ? 'Mettre en pause'
+                      : (hasProgress
+                          ? 'Reprendre le tutoriel'
+                          : 'Regarder le tutoriel'),
+                  icon: _isPlaying
+                      ? Icons.pause_rounded
+                      : Icons.play_arrow_rounded,
                   size: AppButtonSize.large,
-                  onPressed: () => _openVideoPlayer(context, tutoriel),
+                  onPressed: () {
+                    if (_isPlaying) {
+                      _playerController.pause();
+                    } else {
+                      _scrollToTopAndPlay(
+                        seekTo: hasProgress
+                            ? Duration(seconds: currentPosition)
+                            : null,
+                      );
+                    }
+                  },
                 ),
               ),
             ],
@@ -298,112 +444,44 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
           onRetry: () => ref.invalidate(tutorielByIdProvider(widget.tutorielId)),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
-  Widget _buildVideoHero(BuildContext context, Tutoriel tutoriel) {
-    final theme = Theme.of(context);
-    final imageUrl = tutoriel.miniatureUrl.isNotEmpty
-        ? tutoriel.miniatureUrl
-        : 'https://images.unsplash.com/photo-1516627145497-ae6968895b74?auto=format&fit=crop&w=900&q=80';
+  /// Bandeau d'information Admin sur le statut du tutoriel
+  Widget _buildAdminBanner(BuildContext context, Tutoriel tutoriel) {
+    final isPublie = tutoriel.statut == TutorielStatus.publie;
 
-    return GestureDetector(
-      onTap: () => _openVideoPlayer(context, tutoriel),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: (isPublie ? AppColors.success : AppColors.warning)
+            .withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: (isPublie ? AppColors.success : AppColors.warning)
+              .withValues(alpha: 0.35),
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(18),
-          child: AspectRatio(
-            aspectRatio: 16 / 9.5,
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: Image.network(
-                    imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => Container(
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      child: const Center(
-                        child: Icon(Icons.video_library_rounded, size: 48),
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned.fill(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withValues(alpha: 0.6),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                Center(
-                  child: Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: theme.colorScheme.primary.withValues(alpha: 0.5),
-                          blurRadius: 16,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.play_arrow_rounded,
-                      size: 36,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                Positioned(
-                  right: 12,
-                  bottom: 10,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.75),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.timer_outlined, size: 12, color: Colors.white),
-                        const SizedBox(width: 4),
-                        Text(
-                          tutoriel.dureeFormatee,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isPublie ? Icons.check_circle_outline : Icons.pending_outlined,
+            size: 18,
+            color: isPublie ? AppColors.success : AppColors.warning,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Statut : ${tutoriel.statutLabel}',
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: isPublie ? AppColors.success : AppColors.warning,
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -418,7 +496,9 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
     final theme = Theme.of(context);
 
     return AppCard(
-      onTap: () => _openVideoPlayer(context, tutoriel),
+      onTap: () => _scrollToTopAndPlay(
+        seekTo: Duration(seconds: currentPosition),
+      ),
       padding: const EdgeInsets.all(14),
       child: Row(
         children: [
@@ -466,8 +546,10 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
                   child: LinearProgressIndicator(
                     value: progressRatio,
                     minHeight: 6,
-                    backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.15),
-                    valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+                    backgroundColor:
+                        theme.colorScheme.primary.withValues(alpha: 0.15),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                        theme.colorScheme.primary),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -499,7 +581,8 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
           Text(
             description,
             maxLines: isLong && !_isDescriptionExpanded ? 4 : null,
-            overflow: isLong && !_isDescriptionExpanded ? TextOverflow.ellipsis : null,
+            overflow:
+                isLong && !_isDescriptionExpanded ? TextOverflow.ellipsis : null,
             style: TextStyle(
               fontSize: 13.5,
               height: 1.45,
@@ -510,7 +593,8 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
           if (isLong) ...[
             const SizedBox(height: 6),
             InkWell(
-              onTap: () => setState(() => _isDescriptionExpanded = !_isDescriptionExpanded),
+              onTap: () => setState(
+                  () => _isDescriptionExpanded = !_isDescriptionExpanded),
               child: Text(
                 _isDescriptionExpanded ? 'Voir moins' : 'Lire la suite',
                 style: TextStyle(
@@ -541,7 +625,8 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
           style: TextStyle(
             fontSize: 16.5,
             fontWeight: FontWeight.w800,
-            color: theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface,
+            color:
+                theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface,
             letterSpacing: -0.3,
           ),
         ),
@@ -562,15 +647,6 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
     final minutes = (seconds ~/ 60).toString().padLeft(2, '0');
     final rest = (seconds % 60).toString().padLeft(2, '0');
     return '$minutes:$rest';
-  }
-
-  void _openVideoPlayer(BuildContext context, Tutoriel tutoriel) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => VideoPlayerPage(tutoriel: tutoriel),
-      ),
-    );
   }
 
   void _openOtherDetail(BuildContext context, String newTutorielId) {

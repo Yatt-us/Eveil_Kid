@@ -14,37 +14,60 @@ class QuestionFormWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final dividerColor = theme.dividerColor.withValues(alpha: isDark ? 0.3 : 0.15);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Question',
+        Text(
+          'Énoncé de la question',
           style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: theme.colorScheme.onSurface,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         TextField(
           controller: controller,
+          style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 14.5),
           decoration: InputDecoration(
             hintText: hintText,
-            hintStyle: TextStyle(color: Colors.grey.shade400),
-            border: const OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(8)),
+            hintStyle: TextStyle(
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+              fontSize: 14,
+            ),
+            filled: true,
+            fillColor: isDark
+                ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)
+                : theme.colorScheme.surface,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: dividerColor),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: dividerColor),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.5),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: theme.colorScheme.error, width: 1.2),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: theme.colorScheme.error, width: 1.5),
             ),
             errorText: errorText,
             errorMaxLines: 2,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 14,
-            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           ),
           maxLines: 2,
-          onChanged: (_) {
-            // Le controller gère la validation
-          },
         ),
       ],
     );

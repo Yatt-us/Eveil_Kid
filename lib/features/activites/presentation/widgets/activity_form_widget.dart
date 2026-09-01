@@ -1,4 +1,3 @@
-import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class ActivityFormWidget extends StatelessWidget {
@@ -21,15 +20,19 @@ class ActivityFormWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final dividerColor = theme.dividerColor.withValues(alpha: isDark ? 0.3 : 0.15);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: theme.colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 6),
@@ -37,40 +40,43 @@ class ActivityFormWidget extends StatelessWidget {
           controller: controller,
           maxLines: maxLines,
           keyboardType: keyboardType,
+          style: TextStyle(
+            color: theme.colorScheme.onSurface,
+            fontSize: 14,
+          ),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(
-              color: Colors.grey.shade400,
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
               fontSize: 14,
             ),
-            border: const OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(8)),
-              borderSide: BorderSide(color: Colors.grey),
+            filled: true,
+            fillColor: isDark
+                ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)
+                : theme.colorScheme.surface,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: dividerColor),
             ),
-            enabledBorder: const OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(8)),
-              borderSide: BorderSide(color: Colors.grey),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: dividerColor),
             ),
-            focusedBorder: const OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(8)),
-              borderSide: BorderSide(color: AppColors.primary, width: 2),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.5),
             ),
-            errorBorder: const OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(8)),
-              borderSide: BorderSide(color: Colors.red, width: 2),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: theme.colorScheme.error, width: 1.2),
             ),
-            focusedErrorBorder: const OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(8)),
-              borderSide: BorderSide(color: Colors.red, width: 2),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: theme.colorScheme.error, width: 1.5),
             ),
             errorText: errorText,
             errorMaxLines: 2,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 14,
-            ),
-            filled: true,
-            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           ),
         ),
       ],

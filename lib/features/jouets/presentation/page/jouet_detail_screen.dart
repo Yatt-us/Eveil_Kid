@@ -4,12 +4,15 @@ import '../../../../core/constants/AppRadius.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
+import '../../../categories/providers/categorie_provider.dart';
 import '../../../panier/models/panier.dart';
 import '../../../panier/presentation/widgets/panier_app_bar_action.dart';
 import '../../../panier/providers/panier_provider.dart';
 import '../../../favoris/models/favoris.dart';
 import '../../../favoris/providers/favoris_providers.dart';
 import '../../models/jouet.dart';
+import '../../providers/jouet_provider.dart';
+import '../widgets/jouet_avis_section.dart';
 
 class JouetDetailScreen extends ConsumerStatefulWidget {
   final Jouet jouet;
@@ -29,22 +32,26 @@ class JouetDetailScreen extends ConsumerStatefulWidget {
 
 class _JouetDetailScreenState extends ConsumerState<JouetDetailScreen> {
   bool _isLoading = false;
-
   int _quantite = 1;
+  int _selectedImageIndex = 0;
+  final PageController _imagePageController = PageController();
 
-  void _incrementerQuantite() {
-    final maxStock = widget.jouet.stockDisponible > 0
-        ? widget.jouet.stockDisponible
-        : 99;
+  @override
+  void dispose() {
+    _imagePageController.dispose();
+    super.dispose();
+  }
 
-    if (_quantite < maxStock) {
+  void _incrementerQuantite(int maxStock) {
+    final effectiveMax = maxStock > 0 ? maxStock : 1;
+    if (_quantite < effectiveMax) {
       setState(() {
         _quantite++;
       });
     } else {
       AppDialogs.showSnackBar(
         context: context,
-        message: 'Stock maximum atteint ($maxStock disponible(s))',
+        message: 'Stock maximum disponible atteint ($effectiveMax)',
         isWarning: true,
       );
     }
@@ -58,11 +65,20 @@ class _JouetDetailScreenState extends ConsumerState<JouetDetailScreen> {
     }
   }
 
-  Future<void> _ajouterAuPanier() async {
+  Future<void> _ajouterAuPanier(Jouet currentJouet) async {
     if (widget.utilisateurId.isEmpty) {
       AppDialogs.showSnackBar(
         context: context,
         message: 'Veuillez vous connecter pour ajouter au panier',
+        isWarning: true,
+      );
+      return;
+    }
+
+    if (currentJouet.stockDisponible <= 0) {
+      AppDialogs.showSnackBar(
+        context: context,
+        message: 'Ce produit est actuellement en rupture de stock.',
         isWarning: true,
       );
       return;
@@ -77,11 +93,11 @@ class _JouetDetailScreenState extends ConsumerState<JouetDetailScreen> {
       final article = ArticlePanier(
         articlePanierId: '',
         utilisateurId: widget.utilisateurId,
-        jouetId: widget.jouet.jouetId,
-        nomJouet: widget.jouet.nom,
-        prixUnitaire: widget.jouet.prix,
-        miniatureUrl: widget.jouet.imagePrincipaleUrl,
-        stockDispo: widget.jouet.stockDisponible,
+        jouetId: currentJouet.jouetId,
+        nomJouet: currentJouet.nom,
+        prixUnitaire: currentJouet.prix,
+        miniatureUrl: currentJouet.imagePrincipaleUrl,
+        stockDispo: currentJouet.stockDisponible,
         quantite: _quantite,
         dateCreation: now,
         dateModification: now,
@@ -108,12 +124,12 @@ class _JouetDetailScreenState extends ConsumerState<JouetDetailScreen> {
     }
   }
 
-  String _formatPrice(double price) {
+  String _formatPrice(double price, String devise) {
     final formatted = price.toStringAsFixed(0).replaceAllMapped(
           RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
           (Match m) => '${m[1]} ',
         );
-    return '$formatted ${widget.jouet.devise.isNotEmpty ? widget.jouet.devise : "FCFA"}';
+    return '$formatted ${devise.isNotEmpty ? devise : "FCFA"}';
   }
 
   @override
@@ -121,10 +137,36 @@ class _JouetDetailScreenState extends ConsumerState<JouetDetailScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final primaryColor = theme.colorScheme.primary;
-    final textPrimary = theme.textTheme.titleLarge?.color ?? theme.colorScheme.onSurface;
-    final textSecondary = theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
-        (isDark ? Colors.white70 : AppColors.textSecondary);
+    final textPrimary =
+        theme.textTheme.titleLarge?.color ?? theme.colorScheme.onSurface;
+    final textSecondary =
+        theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+            (isDark ? Colors.white70 : AppColors.textSecondary);
     final dividerColor = theme.dividerColor.withValues(alpha: 0.2);
+
+    // 1. ÉCOUTE RÉACTIVE DU JOUET DEPUIS LA BASE DE DONNÉES FIRESTORE
+    final liveJouetAsync = ref.watch(jouetStreamProvider(widget.jouet.jouetId));
+    final currentJouet = liveJouetAsync.value ?? widget.jouet;
+
+    // 2. RÉCUPÉRATION DU NOM DE LA CATÉGORIE EN BASE DE DONNÉES
+    final categoriesAsync = ref.watch(categoriesProvider);
+    String nomCategorie = currentJouet.nomCategorieDenormalise;
+    categoriesAsync.whenData((cats) {
+      final found = cats.where((c) => c.categorieId == currentJouet.categorieId);
+      if (found.isNotEmpty) {
+        nomCategorie = found.first.nom;
+      }
+    });
+
+    // Liste des images
+    final allImages = currentJouet.images.isNotEmpty
+        ? currentJouet.images
+        : (currentJouet.imagePrincipaleUrl.isNotEmpty
+            ? [currentJouet.imagePrincipaleUrl]
+            : <String>[]);
+
+    final isEnRupture = currentJouet.stockDisponible <= 0;
+    final isStockFaible = currentJouet.stockDisponible > 0 && currentJouet.stockDisponible <= 3;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -140,7 +182,7 @@ class _JouetDetailScreenState extends ConsumerState<JouetDetailScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'Détails jouet',
+          'Détails du produit',
           style: TextStyle(
             color: textPrimary,
             fontSize: 18,
@@ -151,7 +193,7 @@ class _JouetDetailScreenState extends ConsumerState<JouetDetailScreen> {
         actions: [
           Consumer(
             builder: (context, ref, _) {
-              final isFav = ref.watch(isElementFavoriProvider(widget.jouet.jouetId));
+              final isFav = ref.watch(isElementFavoriProvider(currentJouet.jouetId));
               return IconButton(
                 icon: Icon(
                   isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
@@ -161,11 +203,11 @@ class _JouetDetailScreenState extends ConsumerState<JouetDetailScreen> {
                 onPressed: () {
                   ref.read(favoriServiceProvider).toggleFavori(
                         utilisateurId: widget.utilisateurId,
-                        elementId: widget.jouet.jouetId,
+                        elementId: currentJouet.jouetId,
                         typeElement: TypeElement.jouet,
-                        titre: widget.jouet.nom,
-                        miniatureUrl: widget.jouet.imagePrincipaleUrl,
-                        prix: widget.jouet.prix,
+                        titre: currentJouet.nom,
+                        miniatureUrl: currentJouet.imagePrincipaleUrl,
+                        prix: currentJouet.prix,
                       );
                 },
               );
@@ -183,100 +225,222 @@ class _JouetDetailScreenState extends ConsumerState<JouetDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // IMAGE PRINCIPALE
-                    Center(
-                      child: Container(
-                        height: 240,
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          borderRadius: AppRadius.card,
-                          color: isDark
-                              ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4)
-                              : theme.colorScheme.surface,
-                          border: Border.all(color: dividerColor),
-                          boxShadow: [
-                            BoxShadow(
-                              color: (isDark ? Colors.black : Colors.black).withValues(alpha: isDark ? 0.25 : 0.04),
-                              blurRadius: 10,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: widget.jouet.imagePrincipaleUrl.isNotEmpty
-                            ? Image.network(
-                                widget.jouet.imagePrincipaleUrl,
-                                fit: BoxFit.contain,
-                                errorBuilder: (ctx, error, stackTrace) => Icon(
-                                  Icons.toys_outlined,
-                                  size: 80,
-                                  color: primaryColor.withValues(alpha: 0.3),
-                                ),
-                              )
-                            : Icon(
+                    // 1. CARROUSEL D'IMAGES DU PRODUIT
+                    Container(
+                      height: 250,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        borderRadius: AppRadius.card,
+                        color: isDark
+                            ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4)
+                            : theme.colorScheme.surface,
+                        border: Border.all(color: dividerColor),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Stack(
+                        children: [
+                          if (allImages.isNotEmpty)
+                            PageView.builder(
+                              controller: _imagePageController,
+                              itemCount: allImages.length,
+                              onPageChanged: (index) {
+                                setState(() => _selectedImageIndex = index);
+                              },
+                              itemBuilder: (ctx, idx) {
+                                return Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Image.network(
+                                    allImages[idx],
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (ctx, error, stackTrace) => Icon(
+                                      Icons.toys_outlined,
+                                      size: 80,
+                                      color: primaryColor.withValues(alpha: 0.3),
+                                    ),
+                                  ),
+                                );
+                              },
+                            )
+                          else
+                            Center(
+                              child: Icon(
                                 Icons.toys_outlined,
                                 size: 80,
                                 color: primaryColor.withValues(alpha: 0.3),
                               ),
+                            ),
+
+                          // Indicateurs de pagination du carrousel
+                          if (allImages.length > 1)
+                            Positioned(
+                              bottom: 12,
+                              left: 0,
+                              right: 0,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: List.generate(allImages.length, (idx) {
+                                  final isCurrent = idx == _selectedImageIndex;
+                                  return AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                                    width: isCurrent ? 18 : 6,
+                                    height: 6,
+                                    decoration: BoxDecoration(
+                                      color: isCurrent
+                                          ? primaryColor
+                                          : primaryColor.withValues(alpha: 0.2),
+                                      borderRadius: BorderRadius.circular(3),
+                                    ),
+                                  );
+                                }),
+                              ),
+                            ),
+
+                          // Badges d'état (Populaire / Âge)
+                          Positioned(
+                            top: 12,
+                            left: 12,
+                            child: Row(
+                              children: [
+                                if (currentJouet.estPopulaire) ...[
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF59E0B),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.star_rounded, size: 13, color: Colors.white),
+                                        SizedBox(width: 4),
+                                        Text(
+                                          'Populaire',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 10.5,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                ],
+                                if (currentJouet.ageMinimum > 0)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: isDark
+                                          ? Colors.white.withValues(alpha: 0.15)
+                                          : Colors.black.withValues(alpha: 0.07),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      currentJouet.ageMaximum > currentJouet.ageMinimum
+                                          ? '${currentJouet.ageMinimum}-${currentJouet.ageMaximum} ans'
+                                          : 'Dès ${currentJouet.ageMinimum} ans',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: textPrimary,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 18),
 
-                    // NOM DU JOUET
+                    // 2. NOM DU PRODUIT & CATÉGORIE
+                    if (nomCategorie.isNotEmpty) ...[
+                      Text(
+                        nomCategorie.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w800,
+                          color: primaryColor,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                    ],
                     Text(
-                      widget.jouet.nom,
+                      currentJouet.nom,
                       style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 21,
+                        fontWeight: FontWeight.w800,
                         color: textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
 
-                    // NOTE + PRIX
+                    // 3. BADGE DE STOCK + PRIX
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        const Icon(
-                          Icons.star_rounded,
-                          color: Color(0xFFF59E0B),
-                          size: 20,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${widget.jouet.noteMoyenneDenormalise.toStringAsFixed(1)} (${widget.jouet.nombreAvisDenormalise} avis)',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: textSecondary,
-                            fontWeight: FontWeight.w500,
+                        // Badge de Stock
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: isEnRupture
+                                ? AppColors.danger.withValues(alpha: isDark ? 0.2 : 0.1)
+                                : (isStockFaible
+                                    ? const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.2 : 0.1)
+                                    : const Color(0xFF10B981).withValues(alpha: isDark ? 0.2 : 0.1)),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: isEnRupture
+                                  ? AppColors.danger.withValues(alpha: 0.4)
+                                  : (isStockFaible
+                                      ? const Color(0xFFF59E0B).withValues(alpha: 0.4)
+                                      : const Color(0xFF10B981).withValues(alpha: 0.4)),
+                            ),
+                          ),
+                          child: Text(
+                            isEnRupture
+                                ? 'Rupture de stock'
+                                : (isStockFaible
+                                    ? 'Plus que ${currentJouet.stockDisponible} en stock'
+                                    : 'En stock'),
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: isEnRupture
+                                  ? AppColors.danger
+                                  : (isStockFaible
+                                      ? const Color(0xFFF59E0B)
+                                      : const Color(0xFF10B981)),
+                            ),
                           ),
                         ),
                         const Spacer(),
+
+                        // Prix
                         Text(
-                          _formatPrice(widget.jouet.prix),
+                          _formatPrice(currentJouet.prix, currentJouet.devise),
                           style: TextStyle(
-                            fontSize: 19,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
                             color: primaryColor,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 16),
 
-                    // DESCRIPTION
+                    // 4. DESCRIPTION
                     Text(
-                      widget.jouet.description,
-                      style: TextStyle(
-                        fontSize: 13.5,
-                        color: textSecondary,
-                        height: 1.45,
-                      ),
-                    ),
-                    const SizedBox(height: 22),
-
-                    // SKILLS / COMPETENCES
-                    Text(
-                      'COMPÉTENCES DÉVELOPPÉES',
+                      'DESCRIPTION',
                       style: TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w700,
@@ -284,44 +448,21 @@ class _JouetDetailScreenState extends ConsumerState<JouetDetailScreen> {
                         color: textSecondary,
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _buildSkillBadge(
-                          icon: Icons.edit_outlined,
-                          label: 'Créativité',
-                          theme: theme,
-                          isDark: isDark,
-                          badgeColor: primaryColor,
-                        ),
-                        _buildSkillBadge(
-                          icon: Icons.crop_free_outlined,
-                          label: 'Logique',
-                          theme: theme,
-                          isDark: isDark,
-                          badgeColor: const Color(0xFF10B981),
-                        ),
-                        _buildSkillBadge(
-                          icon: Icons.gesture_outlined,
-                          label: 'Motricité',
-                          theme: theme,
-                          isDark: isDark,
-                          badgeColor: const Color(0xFFF59E0B),
-                        ),
-                        _buildSkillBadge(
-                          icon: Icons.psychology_outlined,
-                          label: 'Concentration',
-                          theme: theme,
-                          isDark: isDark,
-                          badgeColor: const Color(0xFF3B82F6),
-                        ),
-                      ],
+                    const SizedBox(height: 6),
+                    Text(
+                      currentJouet.description.isNotEmpty
+                          ? currentJouet.description
+                          : 'Aucune description détaillée disponible pour ce produit.',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        color: textSecondary,
+                        height: 1.5,
+                      ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 22),
 
-                    // BANNIERE TUTORIELS
-                    if (widget.jouet.nbTutorielsAssocies > 0)
+                    // 5. BANNIÈRE TUTORIELS ASSOCIÉS
+                    if (currentJouet.nbTutorielsAssocies > 0) ...[
                       Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
@@ -347,78 +488,37 @@ class _JouetDetailScreenState extends ConsumerState<JouetDetailScreen> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Apprenez à votre enfant à construire et à explorer de nouvelles idées.',
+                                    'Accédez aux guides et activités vidéo associés à ce jouet.',
                                     style: TextStyle(
                                       fontSize: 11.5,
                                       color: textSecondary,
                                     ),
                                   ),
-                                  const SizedBox(height: 10),
-                                  SizedBox(
-                                    height: 32,
-                                    child: ElevatedButton(
-                                      onPressed: () {},
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: primaryColor,
-                                        foregroundColor: Colors.white,
-                                        elevation: 0,
-                                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: AppRadius.circularRadius,
-                                        ),
-                                      ),
-                                      child: Text(
-                                        'Voir les vidéos (${widget.jouet.nbTutorielsAssocies})',
-                                        style: const TextStyle(
-                                          fontSize: 11.5,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 10),
-                            ClipRRect(
-                              borderRadius: AppRadius.card,
-                              child: widget.jouet.imagePrincipaleUrl.isNotEmpty
-                                  ? Image.network(
-                                      widget.jouet.imagePrincipaleUrl,
-                                      width: 80,
-                                      height: 80,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (ctx, error, stackTrace) => Container(
-                                        width: 80,
-                                        height: 80,
-                                        color: primaryColor.withValues(alpha: 0.1),
-                                        child: Icon(
-                                          Icons.play_circle_outline_rounded,
-                                          size: 40,
-                                          color: primaryColor,
-                                        ),
-                                      ),
-                                    )
-                                  : Container(
-                                      width: 80,
-                                      height: 80,
-                                      color: primaryColor.withValues(alpha: 0.1),
-                                      child: Icon(
-                                        Icons.play_circle_outline_rounded,
-                                        size: 40,
-                                        color: primaryColor,
-                                      ),
-                                    ),
+                            Icon(
+                              Icons.play_circle_outline_rounded,
+                              size: 32,
+                              color: primaryColor,
                             ),
                           ],
                         ),
                       ),
+                      const SizedBox(height: 22),
+                    ],
+
+                    // 6. SECTION NOTES ET AVIS GOOGLE PLAY
+                    JouetAvisSection(
+                      jouet: currentJouet,
+                      utilisateurId: widget.utilisateurId,
+                    ),
                   ],
                 ),
               ),
             ),
 
-            // BARRE D'ACTION (COMPTEUR ET BOUTON D'AJOUT AU PANIER)
+            // 7. BARRE D'ACTION INFÉRIEURE (SÉLECTEUR DE QUANTITÉ & BOUTON D'AJOUT)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
@@ -428,7 +528,7 @@ class _JouetDetailScreenState extends ConsumerState<JouetDetailScreen> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: (isDark ? Colors.black : Colors.black).withValues(alpha: isDark ? 0.3 : 0.05),
+                    color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, -3),
                   ),
@@ -436,7 +536,7 @@ class _JouetDetailScreenState extends ConsumerState<JouetDetailScreen> {
               ),
               child: Row(
                 children: [
-                  // SELECTEUR DE QUANTITE
+                  // Sélecteur de quantité
                   Container(
                     height: 48,
                     decoration: BoxDecoration(
@@ -450,7 +550,7 @@ class _JouetDetailScreenState extends ConsumerState<JouetDetailScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         InkWell(
-                          onTap: _decrementerQuantite,
+                          onTap: isEnRupture ? null : _decrementerQuantite,
                           borderRadius: const BorderRadius.horizontal(
                             left: Radius.circular(24),
                           ),
@@ -459,7 +559,9 @@ class _JouetDetailScreenState extends ConsumerState<JouetDetailScreen> {
                             child: Icon(
                               Icons.remove_rounded,
                               size: 18,
-                              color: textPrimary,
+                              color: isEnRupture
+                                  ? textSecondary.withValues(alpha: 0.3)
+                                  : textPrimary,
                             ),
                           ),
                         ),
@@ -470,12 +572,16 @@ class _JouetDetailScreenState extends ConsumerState<JouetDetailScreen> {
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
-                              color: textPrimary,
+                              color: isEnRupture
+                                  ? textSecondary.withValues(alpha: 0.3)
+                                  : textPrimary,
                             ),
                           ),
                         ),
                         InkWell(
-                          onTap: _incrementerQuantite,
+                          onTap: isEnRupture
+                              ? null
+                              : () => _incrementerQuantite(currentJouet.stockDisponible),
                           borderRadius: const BorderRadius.horizontal(
                             right: Radius.circular(24),
                           ),
@@ -484,7 +590,9 @@ class _JouetDetailScreenState extends ConsumerState<JouetDetailScreen> {
                             child: Icon(
                               Icons.add_rounded,
                               size: 18,
-                              color: textPrimary,
+                              color: isEnRupture
+                                  ? textSecondary.withValues(alpha: 0.3)
+                                  : textPrimary,
                             ),
                           ),
                         ),
@@ -493,13 +601,15 @@ class _JouetDetailScreenState extends ConsumerState<JouetDetailScreen> {
                   ),
                   const SizedBox(width: 12),
 
-                  // BOUTON AJOUTER AU PANIER
+                  // Bouton Ajouter au panier
                   Expanded(
                     child: AppButton(
-                      text: 'Ajouter au panier',
-                      icon: Icons.shopping_bag_outlined,
+                      text: isEnRupture ? 'Rupture de stock' : 'Ajouter au panier',
+                      icon: isEnRupture ? Icons.block_rounded : Icons.shopping_bag_outlined,
                       isLoading: _isLoading,
-                      onPressed: _isLoading ? null : _ajouterAuPanier,
+                      onPressed: isEnRupture || _isLoading
+                          ? null
+                          : () => _ajouterAuPanier(currentJouet),
                     ),
                   ),
                 ],
@@ -508,39 +618,6 @@ class _JouetDetailScreenState extends ConsumerState<JouetDetailScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildSkillBadge({
-    required IconData icon,
-    required String label,
-    required ThemeData theme,
-    required bool isDark,
-    required Color badgeColor,
-  }) {
-    return Column(
-      children: [
-        Container(
-          width: 52,
-          height: 52,
-          decoration: BoxDecoration(
-            color: badgeColor.withValues(alpha: isDark ? 0.22 : 0.12),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: badgeColor.withValues(alpha: 0.3), width: 1),
-          ),
-          child: Icon(icon, color: badgeColor, size: 24),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11.5,
-            fontWeight: FontWeight.w500,
-            color: theme.textTheme.bodySmall?.color ??
-                (isDark ? Colors.white70 : AppColors.textSecondary),
-          ),
-        ),
-      ],
     );
   }
 }

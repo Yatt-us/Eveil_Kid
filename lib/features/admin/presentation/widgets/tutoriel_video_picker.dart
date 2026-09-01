@@ -217,7 +217,7 @@ class TutorielVideoPicker extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'MP4, MOV, MKV ou WebM (sera hébergé sur Cloudinary)',
+            'Formats supportés : MP4, MOV, MKV ou WebM',
             style: TextStyle(
               color: Colors.grey.shade500,
               fontSize: 12,
