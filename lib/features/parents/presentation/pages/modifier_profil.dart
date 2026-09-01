@@ -577,7 +577,7 @@ class _ModifierProfilPageState extends ConsumerState<ModifierProfilPage> {
               ],
             ),
           ),
-          ?trailing,
+          if (trailing != null) trailing!,
         ],
       ),
     );

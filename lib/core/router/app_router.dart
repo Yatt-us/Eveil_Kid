@@ -19,6 +19,8 @@ import 'package:eveilkid/features/tutoriels/models/tutoriel.dart';
 import 'package:eveilkid/features/admin/presentation/pages/admin/admin_tutoriel_detail_page.dart';
 import 'package:eveilkid/features/admin/presentation/pages/admin/admin_tutoriel_form_page.dart';
 import 'package:eveilkid/features/admin/presentation/pages/admin/tutoriels_list_screen.dart';
+import 'package:eveilkid/features/commandes/presentation/pages/detail_commande_page.dart';
+import 'package:eveilkid/features/commandes/presentation/pages/mes_commandes_page.dart';
 import 'package:eveilkid/features/favoris/presentation/pages/favoris_page.dart';
 import 'package:eveilkid/features/panier/presentation/pages/panier_page.dart';
 import 'package:eveilkid/features/commandes/models/commande_model.dart';
@@ -306,6 +308,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'favoris',
             builder: (context, state) => const FavorisPage(),
+          ),
+          GoRoute(
+            path: 'commandes',
+            builder: (context, state) {
+              final authState = ref.watch(authProvider);
+              final parentId = authState.utilisateur?.utilisateurId ?? '';
+              return MesCommandesPage(parentId: parentId);
+            },
+          ),
+          GoRoute(
+            path: 'commandes/:commandeId',
+            builder: (context, state) {
+              final commandeId = state.pathParameters['commandeId']!;
+              return DetailCommandePage(commandeId: commandeId);
+            },
           ),
         ],
       ),

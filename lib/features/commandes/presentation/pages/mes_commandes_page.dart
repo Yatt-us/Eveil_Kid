@@ -427,12 +427,7 @@ class _MesCommandesPageState extends ConsumerState<MesCommandesPage>
                   padding: const EdgeInsets.symmetric(vertical: 11),
                 ),
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => DetailCommandePage(commandeId: item.id),
-                    ),
-                  );
+                  context.push(AppRoutes.parentDetailCommandePath(item.id));
                 },
                 icon: const Icon(Icons.receipt_long_rounded, size: 16),
                 label: const Text(
