@@ -1,3 +1,12 @@
+import 'package:eveilkid/features/activites/presentation/pages/admin/activites_liste.dart';
+import 'package:eveilkid/features/activites/presentation/pages/admin/add_activity_screen.dart';
+import 'package:eveilkid/features/activites/presentation/pages/admin/edit_activity_screen.dart';
+import 'package:eveilkid/features/questions/enums/question_type.enum.dart';
+import 'package:eveilkid/features/questions/options_questions/choose_question_type_screen.dart';
+import 'package:eveilkid/features/questions/presentation/pages/add_question_screen.dart';
+import 'package:eveilkid/features/questions/presentation/pages/edit_question_screen.dart';
+import 'package:eveilkid/features/questions/presentation/pages/question_detail_screen.dart';
+import 'package:eveilkid/features/questions/presentation/pages/questions_list_screen.dart';
 import 'package:eveilkid/features/admin/presentation/widgets/admin_drawer.dart';
 import 'package:eveilkid/features/enfant/presentation/pages/acceuil_enfant_page.dart';
 import 'package:eveilkid/features/tutoriels/presentation/pages/tutoriel_page.dart';
@@ -6,20 +15,31 @@ import 'package:eveilkid/features/parents/presentation/pages/accueil_parent.dart
 import 'package:eveilkid/features/parents/presentation/pages/aide_support_page.dart';
 import 'package:eveilkid/features/parents/presentation/pages/detail_enfant.dart';
 import 'package:eveilkid/features/parents/presentation/pages/profil_parent.dart';
+import 'package:eveilkid/features/tutoriels/models/tutoriel.dart';
+import 'package:eveilkid/features/admin/presentation/pages/admin/admin_tutoriel_detail_page.dart';
+import 'package:eveilkid/features/admin/presentation/pages/admin/admin_tutoriel_form_page.dart';
+import 'package:eveilkid/features/admin/presentation/pages/admin/tutoriels_list_screen.dart';
+import 'package:eveilkid/features/favoris/presentation/pages/favoris_page.dart';
 import 'package:eveilkid/features/panier/presentation/pages/panier_page.dart';
+import 'package:eveilkid/features/commandes/models/commande_model.dart';
+import 'package:eveilkid/features/admin/presentation/pages/commandes/admin_commandes_screen.dart';
+import 'package:eveilkid/features/admin/presentation/pages/commandes/admin_detail_commande_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:eveilkid/core/constants/AppTextStyles.dart';
 import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/core/router/app_routes.dart';
-
+import 'package:eveilkid/core/themes/kid_theme.dart';
+import 'package:eveilkid/features/admin/presentation/pages/admin_profile_page.dart';
 import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_catalog_page.dart';
 import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_category_detail_page.dart';
 import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_category_list_page.dart';
 import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_product_form_page.dart';
 import 'package:eveilkid/features/admin/presentation/pages/catalog/admin_product_list_page.dart';
 import 'package:eveilkid/features/admin/presentation/pages/dashboard_page.dart';
+import 'package:eveilkid/features/admin/users/presentation/pages/admin_manager_form_page.dart';
+import 'package:eveilkid/features/admin/users/presentation/pages/admin_staff_list_page.dart';
 import 'package:eveilkid/features/admin/users/presentation/pages/admin_user_list_page.dart';
 import 'package:eveilkid/features/auth/models/utilisateur.dart';
 import 'package:eveilkid/features/auth/presentation/pages/auth_action_page.dart';
@@ -35,6 +55,7 @@ import 'package:eveilkid/features/jouets/models/jouet.dart';
 //import 'package:eveilkid/features/activites/presentation/pages/client/activites_corrige_page.dart';
 import 'package:eveilkid/features/jouets/presentation/page/jouet_detail_screen.dart';
 import 'package:eveilkid/features/jouets/presentation/page/jouets_screen.dart';
+import 'package:eveilkid/features/enfant/providers/child_mode_provider.dart';
 //import 'package:eveilkid/features/tutoriels/presentations/pages/tutorielPage.dart';
 
 /// Notifier pour déclencher les rafraîchissements de GoRouter lors des changements d'état d'authentification Riverpod
@@ -42,7 +63,33 @@ class _RouterRefreshNotifier extends ChangeNotifier {
   final Ref _ref;
   _RouterRefreshNotifier(this._ref) {
     _ref.listen<AuthState>(authProvider, (_, next) => notifyListeners());
+    _ref.listen<ChildModeState>(
+      childModeProvider,
+      (_, next) => notifyListeners(),
+    );
   }
+}
+
+/// Animation fluide avec fondu subtil pour les changements d'onglets principaux
+CustomTransitionPage<void> _buildFadePage({
+  required GoRouterState state,
+  required Widget child,
+}) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 220),
+    reverseTransitionDuration: const Duration(milliseconds: 180),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      return FadeTransition(
+        opacity: CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeInOutCubic,
+        ),
+        child: child,
+      );
+    },
+  );
 }
 
 /// Provider de configuration globale de GoRouter
@@ -55,9 +102,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     debugLogDiagnostics: false,
     redirect: (BuildContext context, GoRouterState state) {
       final authState = ref.read(authProvider);
+      final childMode = ref.read(childModeProvider);
 
-      // 1. Initialisation Firebase en cours -> afficher l'écran splash
-      if (!authState.isInitialized) {
+      // 1. Initialisation Firebase ou ChildMode en cours -> afficher l'écran splash
+      if (!authState.isInitialized || !childMode.isInitialized) {
         return state.matchedLocation == AppRoutes.splash
             ? null
             : AppRoutes.splash;
@@ -76,7 +124,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         }
       }
 
-      if (host == 'auth' && (path == '/action' || path == 'action' || path.isEmpty)) {
+      if (host == 'auth' &&
+          (path == '/action' || path == 'action' || path.isEmpty)) {
         final query = uri.query.isNotEmpty ? '?${uri.query}' : '';
         if (state.matchedLocation != AppRoutes.authAction) {
           return '${AppRoutes.authAction}$query';
@@ -110,7 +159,25 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return null;
       }
 
-      // 3. Utilisateur non authentifié (mode visiteur)
+      // 3. Mode Enfant Actif & Persistant -> Redirection directe & confinement prioritaire
+      if (childMode.isChildModeActive && isAuthenticated) {
+        final activeChildId = childMode.activeChildId ?? '';
+        final childDestination = activeChildId.isNotEmpty
+            ? AppRoutes.espaceEnfantFor(activeChildId)
+            : AppRoutes.espaceEnfant;
+
+        // Si l'utilisateur arrive du splash, de l'auth ou d'une route parent -> envoi direct
+        if (!state.matchedLocation.startsWith(AppRoutes.espaceEnfant) ||
+            isSplash ||
+            isGoingToAuth) {
+          return childDestination;
+        }
+
+        // Autoriser la navigation dans l'espace enfant
+        return null;
+      }
+
+      // 4. Utilisateur non authentifié (mode visiteur)
       if (!isAuthenticated) {
         // Rediriger le splash vers la page d'accueil par défaut (mode visiteur)
         if (isSplash) {
@@ -133,11 +200,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final isAdminOrManager =
           role == UserRole.admin || role == UserRole.manager;
 
-      // 3. Utilisateur Administrateur / Manager -> dirigé par défaut vers l'espace Admin
+      // 5. Utilisateur Administrateur / Manager -> dirigé par défaut vers l'espace Admin
       if (isAdminOrManager) {
-        // Un Manager n'a pas accès à la gestion des utilisateurs -> redirection vers /admin
+        // Un Manager n'a pas accès à la gestion des utilisateurs / staff -> redirection vers /admin
         if (role == UserRole.manager &&
-            state.matchedLocation.startsWith(AppRoutes.adminUsers)) {
+            (state.matchedLocation.startsWith(AppRoutes.adminUsers) ||
+                state.matchedLocation.startsWith(AppRoutes.adminStaff))) {
           return AppRoutes.admin;
         }
 
@@ -150,7 +218,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return null;
       }
 
-      // 4. Utilisateur Parent / Client -> confiné à l'espace Parent
+      // 6. Utilisateur Parent / Client -> confiné à l'espace Parent
       // Redirection vers la racine / accueil depuis splash ou auth
       if (isSplash || isGoingToAuth) {
         return AppRoutes.home;
@@ -227,21 +295,28 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ── Accueil & Fonctionnalités Utilisateur ──
       GoRoute(
         path: AppRoutes.home,
-        pageBuilder: (context, state) {
-          return const NoTransitionPage(child: AccueilParentPage());
-        },
+        pageBuilder: (context, state) =>
+            _buildFadePage(state: state, child: const AccueilParentPage()),
       ),
       GoRoute(
         path: AppRoutes.profile,
-        pageBuilder: (context, state) {
-          return const NoTransitionPage(child: ProfilParentPage());
-        },
+        pageBuilder: (context, state) =>
+            _buildFadePage(state: state, child: const ProfilParentPage()),
+        routes: [
+          GoRoute(
+            path: 'favoris',
+            builder: (context, state) => const FavorisPage(),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/favoris',
+        redirect: (context, state) => AppRoutes.favoris,
       ),
       GoRoute(
         path: AppRoutes.tutoriels,
-        pageBuilder: (context, state) {
-          return const NoTransitionPage(child: TutorielPage());
-        },
+        pageBuilder: (context, state) =>
+            _buildFadePage(state: state, child: const TutorielPage()),
       ),
       GoRoute(
         path: AppRoutes.panier,
@@ -281,7 +356,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          // 3. Utilisateurs
+          // 3. Parents (Clients)
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -290,12 +365,30 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          // 4. Catalogue global
+          // 4. Équipe & Staff
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.adminStaff,
+                builder: (context, state) => const AdminStaffListPage(),
+              ),
+            ],
+          ),
+          // 5. Catalogue global
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: AppRoutes.adminCatalog,
                 builder: (context, state) => const AdminCatalogPage(),
+              ),
+            ],
+          ),
+          // 5. Profil Administrateur
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.adminProfile,
+                builder: (context, state) => const AdminProfilePage(),
               ),
             ],
           ),
@@ -309,10 +402,128 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
+        path: AppRoutes.adminActivites,
+        builder: (context, state) => const ActivitiesListScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.adminAddActivity,
+        builder: (context, state) => const AddActivityScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.adminEditActivity,
+
+        builder: (context, state) {
+          final activityId = state.pathParameters['activityId']!;
+
+          return EditActivityLoader(activityId: activityId);
+        },
+      ),
+
+      GoRoute(
+        path: AppRoutes.adminActivityQuestions,
+        builder: (context, state) {
+          final activityId = state.pathParameters['activityId']!;
+          return QuestionsListScreen(activityId: activityId);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.adminActivityTypeQuestions,
+        builder: (context, state) {
+          final activityId = state.pathParameters['activityId']!;
+          return ChooseQuestionTypeScreen(activityId: activityId);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.adminActivityAddQuestions,
+        builder: (context, state) {
+          final activityId = state.pathParameters['activityId']!;
+          final type = state.uri.queryParameters['type'] ?? 'choixMultiple';
+          final questionType = QuestionTypeExtension.fromString(type);
+          return AddQuestionScreen(activityId: activityId, type: questionType);
+        },
+      ),
+
+      GoRoute(
+        path: AppRoutes.adminActivityEditQuestions,
+        builder: (context, state) {
+          final activityId = state.pathParameters['activityId']!;
+          final questionId = state.pathParameters['questionId']!;
+          return EditQuestionScreen(
+            activityId: activityId,
+            questionId: questionId,
+          );
+        },
+      ),
+
+      GoRoute(
+        path: AppRoutes.adminActivityDetailQuestions,
+        builder: (context, state) {
+          final activityId = state.pathParameters['activityId']!;
+          final questionId = state.pathParameters['questionId']!;
+          return QuestionDetailScreen(
+            activityId: activityId,
+            questionId: questionId,
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.adminTutoriels,
+        builder: (context, state) => const TutorielsListScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.adminAddTutoriel,
+        builder: (context, state) => const AdminTutorielFormPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.adminEditTutoriel,
+        builder: (context, state) {
+          final tutorielId = state.pathParameters['tutorielId'];
+          final tutoriel = state.extra as Tutoriel?;
+          return AdminTutorielFormPage(
+            tutorielId: tutorielId,
+            tutorielToEdit: tutoriel,
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.adminDetailTutoriel,
+        builder: (context, state) {
+          final tutorielId = state.pathParameters['tutorielId']!;
+          final tutoriel = state.extra as Tutoriel?;
+          return AdminTutorielDetailPage(
+            tutorielId: tutorielId,
+            initialTutoriel: tutoriel,
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.adminTutorielForm,
+        redirect: (context, state) => AppRoutes.adminAddTutoriel,
+      ),
+      GoRoute(
         path: AppRoutes.adminCategoryForm,
         builder: (context, state) {
           final cat = state.extra as Categorie?;
           return AdminCategoryDetailPage(categorieToEdit: cat);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.adminManagerForm,
+        builder: (context, state) => const AdminManagerFormPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.adminCommandes,
+        builder: (context, state) => const AdminCommandesScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.adminDetailCommande,
+        builder: (context, state) {
+          final commandeId = state.pathParameters['commandeId']!;
+          final commande = state.extra as CommandeModel?;
+          return AdminDetailCommandePage(
+            commandeId: commandeId,
+            initialCommande: commande,
+          );
         },
       ),
 
@@ -326,10 +537,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) {
           final authState = ref.watch(authProvider);
 
-          final utilisateurId =
-              authState.utilisateur?.utilisateurId ?? '';
+          final utilisateurId = authState.utilisateur?.utilisateurId ?? '';
 
-          return NoTransitionPage(
+          return _buildFadePage(
+            state: state,
             child: JouetsScreen(utilisateurId: utilisateurId),
           );
         },
@@ -339,13 +550,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final jouet = state.extra as Jouet;
           final authState = ref.watch(authProvider);
-          final utilisateurId =
-              authState.utilisateur?.utilisateurId ?? '';
+          final utilisateurId = authState.utilisateur?.utilisateurId ?? '';
 
-          return JouetDetailScreen(
-            jouet: jouet,
-            utilisateurId: utilisateurId,
-          );
+          return JouetDetailScreen(jouet: jouet, utilisateurId: utilisateurId);
         },
       ),
       GoRoute(
@@ -358,10 +565,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       // ── Espace Enfant ──
       GoRoute(
+        path: AppRoutes.espaceEnfant,
+        builder: (context, state) {
+          final activeChildId = ref.read(childModeProvider).activeChildId;
+          return KidThemeScope(
+            child: AccueilEnfantPage(initialEnfantId: activeChildId),
+          );
+        },
+      ),
+      GoRoute(
         path: '${AppRoutes.espaceEnfant}/:enfantId',
         builder: (context, state) {
           final enfantId = state.pathParameters['enfantId'];
-          return AccueilEnfantPage(initialEnfantId: enfantId);
+          return KidThemeScope(
+            child: AccueilEnfantPage(initialEnfantId: enfantId),
+          );
         },
       ),
 

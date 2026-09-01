@@ -55,21 +55,25 @@ class DashboardPage extends ConsumerWidget {
         ),
         actions: [
           Tooltip(
-            message: "Rôle : ${currentRole.label}",
-            child: Container(
-              margin: const EdgeInsets.only(right: 14),
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: roleColor.withValues(alpha: isDark ? 0.22 : 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                currentRole == AdminRole.admin
-                    ? Icons.admin_panel_settings_rounded
-                    : Icons.storefront_rounded,
-                size: 19,
-                color: roleColor,
+            message: "Mon Profil (${currentRole.label})",
+            child: InkWell(
+              onTap: () => context.go(AppRoutes.adminProfile),
+              borderRadius: BorderRadius.circular(18),
+              child: Container(
+                margin: const EdgeInsets.only(right: 14),
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: roleColor.withValues(alpha: isDark ? 0.22 : 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  currentRole == AdminRole.admin
+                      ? Icons.admin_panel_settings_rounded
+                      : Icons.storefront_rounded,
+                  size: 19,
+                  color: roleColor,
+                ),
               ),
             ),
           ),
@@ -283,6 +287,55 @@ class DashboardPage extends ConsumerWidget {
                         const SizedBox(height: 2),
                         Text(
                           "Catégories mères, sous-catégories et liaisons",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: theme.iconTheme.color?.withValues(alpha: 0.5) ??
+                        AppColors.icon,
+                  ),
+                ],
+              ),
+            ),
+
+            // Carte Accès Commandes
+            AppCard(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(16),
+              onTap: () => context.push(AppRoutes.adminCommandes),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF3B82F6).withValues(alpha: isDark ? 0.2 : 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.shopping_bag_outlined, color: Color(0xFF3B82F6)),
+                  ),
+                  AppSpacing.horizontalMd,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Gestion des Commandes",
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: titleColor,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          "Suivi, expéditions, statuts et livraisons",
                           style: TextStyle(
                             fontSize: 12,
                             color: textSecondary,

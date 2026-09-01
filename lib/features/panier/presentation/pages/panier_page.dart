@@ -162,10 +162,7 @@ class PanierPage extends ConsumerWidget {
                   final total = ref
                       .read(panierServiceProvider)
                       .calculerTotal(articles);
-                  final totalQuantite = articles.fold<int>(
-                    0,
-                    (sum, item) => sum + item.quantite,
-                  );
+                  final nbArticles = articles.length;
 
                   return Column(
                     children: [
@@ -219,7 +216,7 @@ class PanierPage extends ConsumerWidget {
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    'Total ($totalQuantite article${totalQuantite > 1 ? 's' : ''})',
+                                    'Total ($nbArticles article${nbArticles > 1 ? 's' : ''})',
                                     style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w600,

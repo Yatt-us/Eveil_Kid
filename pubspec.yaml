@@ -44,8 +44,12 @@ dependencies:
   flutter_svg: ^2.3.0
   google_sign_in: ^7.2.0
   image_picker: ^1.1.2
+  cloudinary_api: ^1.1.1
+  cloudinary_url_gen: ^1.1.1
+  http: ^1.2.2
   shared_preferences: ^2.5.5
   intl: ^0.20.3
+  geolocator: ^14.0.3
 
 dev_dependencies:
   flutter_test:

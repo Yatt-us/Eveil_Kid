@@ -1,36 +1,103 @@
 import 'package:flutter/material.dart';
+import 'package:eveilkid/core/constants/app_colors.dart';
 
 class StatutCommandeWidget extends StatelessWidget {
   final String statut;
 
-  const StatutCommandeWidget({Key? key, required this.statut}) : super(key: key);
+  const StatutCommandeWidget({super.key, required this.statut});
 
-  static const Map<String, Map<String, dynamic>> _infoStatut = {
-    'en_attente': {'libelle': 'En attente', 'couleur': Colors.orange},
-    'confirmee': {'libelle': 'Confirmée', 'couleur': Colors.blue},
-    'en_preparation': {'libelle': 'En préparation', 'couleur': Colors.purple},
-    'expediee': {'libelle': 'Expédiée', 'couleur': Colors.indigo},
-    'livree': {'libelle': 'Livrée', 'couleur': Colors.green},
-    'annulee': {'libelle': 'Annulée', 'couleur': Colors.red},
-  };
+  static Color getStatusColor(String statut) {
+    final s = statut.trim().toLowerCase();
+    switch (s) {
+      case 'livree':
+      case 'livrée':
+      case 'delivered':
+        return AppColors.success;
+      case 'expediee':
+      case 'expédiée':
+      case 'en livraison':
+      case 'shipped':
+        return AppColors.info;
+      case 'en preparation':
+      case 'en préparation':
+      case 'en_preparation':
+      case 'confirmee':
+      case 'confirmée':
+        return AppColors.primary;
+      case 'en attente':
+      case 'en_attente':
+      case 'en cours':
+      case 'en_cours':
+      case 'pending':
+        return AppColors.warning;
+      case 'annulee':
+      case 'annulée':
+      case 'cancelled':
+        return AppColors.danger;
+      default:
+        return AppColors.textSecondary;
+    }
+  }
+
+  static String getStatusLabel(String statut) {
+    final s = statut.trim().toLowerCase();
+    switch (s) {
+      case 'livree':
+      case 'livrée':
+      case 'delivered':
+        return 'Livrée';
+      case 'expediee':
+      case 'expédiée':
+      case 'en livraison':
+      case 'shipped':
+        return 'Expédiée';
+      case 'en preparation':
+      case 'en préparation':
+      case 'en_preparation':
+        return 'En préparation';
+      case 'confirmee':
+      case 'confirmée':
+        return 'Confirmée';
+      case 'en attente':
+      case 'en_attente':
+      case 'pending':
+        return 'En attente';
+      case 'en cours':
+      case 'en_cours':
+        return 'En cours';
+      case 'annulee':
+      case 'annulée':
+      case 'cancelled':
+        return 'Annulée';
+      default:
+        return statut;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final info = _infoStatut[statut] ?? {'libelle': statut, 'couleur': Colors.grey};
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final color = getStatusColor(statut);
+    final label = getStatusLabel(statut);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: (info['couleur'] as Color).withOpacity(0.15),
+        color: color.withValues(alpha: isDark ? 0.22 : 0.12),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: info['couleur'] as Color),
+        border: Border.all(
+          color: color.withValues(alpha: isDark ? 0.5 : 0.35),
+          width: 1.0,
+        ),
       ),
       child: Text(
-        info['libelle'] as String,
+        label,
         style: TextStyle(
-          color: info['couleur'] as Color,
-          fontWeight: FontWeight.bold,
-          fontSize: 12,
+          color: color,
+          fontWeight: FontWeight.w700,
+          fontSize: 11.5,
+          letterSpacing: 0.2,
         ),
       ),
     );
@@ -40,60 +107,149 @@ class StatutCommandeWidget extends StatelessWidget {
 class SuiviCommandeChronologie extends StatelessWidget {
   final String statutActuel;
 
-  const SuiviCommandeChronologie({Key? key, required this.statutActuel})
-      : super(key: key);
+  const SuiviCommandeChronologie({super.key, required this.statutActuel});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textSecondary = theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+        (isDark ? AppColors.darkTextSecondary : AppColors.textSecondary);
+    final dividerColor = theme.dividerColor.withValues(alpha: isDark ? 0.3 : 0.15);
+
     final etapes = [
-      {'cle': 'en_attente', 'libelle': 'Commandée'},
-      {'cle': 'confirmee', 'libelle': 'Confirmée'},
-      {'cle': 'en_preparation', 'libelle': 'En préparation'},
-      {'cle': 'expediee', 'libelle': 'Expédiée'},
-      {'cle': 'livree', 'libelle': 'Livrée'},
+      {'cle': 'en_attente', 'libelle': 'Commande validée', 'icon': Icons.receipt_long_rounded},
+      {'cle': 'confirmee', 'libelle': 'Confirmée', 'icon': Icons.verified_rounded},
+      {'cle': 'en_preparation', 'libelle': 'En préparation', 'icon': Icons.inventory_2_rounded},
+      {'cle': 'expediee', 'libelle': 'En cours de livraison', 'icon': Icons.local_shipping_rounded},
+      {'cle': 'livree', 'libelle': 'Livrée avec succès', 'icon': Icons.task_alt_rounded},
     ];
 
-    int indexActuel = etapes.indexWhere((e) => e['cle'] == statutActuel);
-    if (indexActuel == -1 && statutActuel == 'annulee') {
-      return const Center(
-        child: Text(
-          'Cette commande a été annulée.',
-          style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+    final s = statutActuel.trim().toLowerCase();
+    int indexActuel = 0;
+    if (s == 'confirmee' || s == 'confirmée') {
+      indexActuel = 1;
+    } else if (s == 'en preparation' || s == 'en préparation' || s == 'en_preparation') {
+      indexActuel = 2;
+    } else if (s == 'expediee' || s == 'expédiée' || s == 'en livraison') {
+      indexActuel = 3;
+    } else if (s == 'livree' || s == 'livrée' || s == 'delivered') {
+      indexActuel = 4;
+    } else if (s == 'annulee' || s == 'annulée' || s == 'cancelled') {
+      indexActuel = -1;
+    }
+
+    if (indexActuel == -1) {
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.danger.withValues(alpha: isDark ? 0.18 : 0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.danger.withValues(alpha: 0.3)),
+        ),
+        child: const Row(
+          children: [
+            Icon(Icons.cancel_rounded, color: AppColors.danger, size: 22),
+            SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Cette commande a été annulée.',
+                style: TextStyle(
+                  color: AppColors.danger,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ],
         ),
       );
     }
 
     return Column(
       children: List.generate(etapes.length, (index) {
-        bool estFait = index <= indexActuel;
-        bool estEnCours = index == indexActuel;
+        final bool estFait = index <= indexActuel;
+        final bool estEnCours = index == indexActuel;
+        final item = etapes[index];
 
-        return Row(
-          children: [
-            Column(
-              children: [
-                Icon(
-                  estFait ? Icons.check_circle : Icons.radio_button_unchecked,
-                  color: estFait ? Colors.green : Colors.grey,
-                  size: 24,
-                ),
-                if (index < etapes.length - 1)
+        final Color stepColor = estFait
+            ? (index == 4 ? AppColors.success : theme.colorScheme.primary)
+            : textSecondary.withValues(alpha: 0.4);
+
+        return IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Column(
+                children: [
                   Container(
-                    width: 2,
-                    height: 24,
-                    color: index < indexActuel ? Colors.green : Colors.grey.shade300,
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: estFait
+                          ? stepColor.withValues(alpha: isDark ? 0.25 : 0.12)
+                          : Colors.transparent,
+                      border: Border.all(
+                        color: stepColor,
+                        width: estEnCours ? 2.0 : 1.5,
+                      ),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        estFait ? (item['icon'] as IconData) : Icons.circle,
+                        color: stepColor,
+                        size: estFait ? 16 : 8,
+                      ),
+                    ),
                   ),
-              ],
-            ),
-            const SizedBox(width: 12),
-            Text(
-              etapes[index]['libelle']!,
-              style: TextStyle(
-                fontWeight: estEnCours ? FontWeight.bold : FontWeight.normal,
-                color: estFait ? Colors.black87 : Colors.grey,
+                  if (index < etapes.length - 1)
+                    Expanded(
+                      child: Container(
+                        width: 2,
+                        margin: const EdgeInsets.symmetric(vertical: 4),
+                        color: index < indexActuel ? stepColor : dividerColor,
+                      ),
+                    ),
+                ],
               ),
-            ),
-          ],
+              const SizedBox(width: 14),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 3, bottom: 18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item['libelle'] as String,
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: estEnCours
+                              ? FontWeight.w800
+                              : (estFait ? FontWeight.w600 : FontWeight.w500),
+                          color: estFait
+                              ? (theme.textTheme.titleSmall?.color ?? theme.colorScheme.onSurface)
+                              : textSecondary,
+                        ),
+                      ),
+                      if (estEnCours)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            'Étape en cours',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         );
       }),
     );

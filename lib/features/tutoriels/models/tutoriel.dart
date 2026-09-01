@@ -1,93 +1,108 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../enums/tutoriel_status.enum.dart';
+import '../utils/duration_utils.dart';
 
 class Tutoriel {
-  final String tutorielId;
+  final String? tutorielId;
   final String categorieId;
-  final String jouetLieId;
+  final String? jouetLieId;
   final String createurId;
   final String titre;
   final String description;
   final List<String> jouetsSuggeres;
   final String videoUrl;
   final String miniatureUrl;
-  final num duree;
-  final num ageMinimum;
-  final num ageMaximum;
-  final bool estPublie;
+  final int duree; // Durée de la vidéo en secondes stockée dans Firestore
+  final int ageMinimum;
+  final int ageMaximum;
+  final TutorielStatus statut;
   final DateTime dateCreation;
   final DateTime dateModification;
 
   const Tutoriel({
-    required this.tutorielId,
+    this.tutorielId,
     required this.categorieId,
-    required this.jouetLieId,
+    this.jouetLieId,
     required this.createurId,
     required this.titre,
     required this.description,
-    required this.jouetsSuggeres,
+    this.jouetsSuggeres = const [],
     required this.videoUrl,
     required this.miniatureUrl,
-    required this.duree,
+    this.duree = 0,
     required this.ageMinimum,
     required this.ageMaximum,
-    required this.estPublie,
+    this.statut = TutorielStatus.brouillon,
     required this.dateCreation,
     required this.dateModification,
   });
 
-  factory Tutoriel.fromFirestore(
-    DocumentSnapshot<Map<String, dynamic>> doc,
-  ) {
-    final data = doc.data() ?? const {};
+  /// Retourne la durée formatée en chaîne lisible (ex: "03:45" ou "01:12:30")
+  String get dureeFormatted => formatDurationSeconds(duree.toDouble());
+
+  factory Tutoriel.fromFirestore(DocumentSnapshot doc) {
+    final data = (doc.data() as Map<String, dynamic>?) ?? {};
+
+    DateTime parseDate(dynamic val) {
+      if (val is Timestamp) return val.toDate();
+      if (val is DateTime) return val;
+      if (val is String) return DateTime.tryParse(val) ?? DateTime.now();
+      return DateTime.now();
+    }
+
+    TutorielStatus parseStatut(dynamic statutVal, dynamic estPublieVal) {
+      if (statutVal != null && statutVal.toString().trim().isNotEmpty) {
+        return TutorielStatusExtension.fromString(statutVal.toString());
+      }
+      if (estPublieVal == true) {
+        return TutorielStatus.publie;
+      }
+      return TutorielStatus.publie;
+    }
 
     return Tutoriel(
-      tutorielId: data['tutorielId']?.toString() ?? doc.id,
+      tutorielId: doc.id,
       categorieId: data['categorieId']?.toString() ?? '',
-      jouetLieId: data['jouetLieId']?.toString() ?? '',
+      jouetLieId: data['jouetLieId']?.toString(),
       createurId: data['createurId']?.toString() ?? '',
-      titre: data['titre']?.toString() ?? 'Tutoriel',
+      titre: data['titre']?.toString() ?? '',
       description: data['description']?.toString() ?? '',
-      jouetsSuggeres: data['jouetsSuggeres'] is List
-          ? List<String>.from((data['jouetsSuggeres'] as List).map((e) => e.toString()))
-          : const [],
+      jouetsSuggeres: List<String>.from(data['jouetsSuggeres'] ?? []),
       videoUrl: data['videoUrl']?.toString() ?? '',
       miniatureUrl: data['miniatureUrl']?.toString() ?? '',
-      duree: data['duree'] ?? 0,
-      ageMinimum: data['ageMinimum'] ?? 0,
-      ageMaximum: data['ageMaximum'] ?? 0,
-      estPublie: data['estPublie'] is bool ? data['estPublie'] : true,
-      dateCreation: _parseDate(data['dateCreation']),
-      dateModification: _parseDate(data['dateModification']),
+      duree: (data['duree'] is num)
+          ? (data['duree'] as num).toInt()
+          : int.tryParse(data['duree']?.toString() ?? '0') ?? 0,
+      ageMinimum: (data['ageMinimum'] is num)
+          ? (data['ageMinimum'] as num).toInt()
+          : int.tryParse(data['ageMinimum']?.toString() ?? '0') ?? 0,
+      ageMaximum: (data['ageMaximum'] is num)
+          ? (data['ageMaximum'] as num).toInt()
+          : int.tryParse(data['ageMaximum']?.toString() ?? '0') ?? 0,
+      statut: parseStatut(data['statut'], data['estPublie']),
+      dateCreation: parseDate(data['dateCreation']),
+      dateModification: parseDate(data['dateModification']),
     );
   }
 
-  factory Tutoriel.fromMap(Map<String, dynamic> map, {String? id}) {
-    return Tutoriel(
-      tutorielId: id ?? map['tutorielId']?.toString() ?? '',
-      categorieId: map['categorieId']?.toString() ?? '',
-      jouetLieId: map['jouetLieId']?.toString() ?? '',
-      createurId: map['createurId']?.toString() ?? '',
-      titre: map['titre']?.toString() ?? 'Tutoriel',
-      description: map['description']?.toString() ?? '',
-      jouetsSuggeres: map['jouetsSuggeres'] is List
-          ? List<String>.from((map['jouetsSuggeres'] as List).map((e) => e.toString()))
-          : const [],
-      videoUrl: map['videoUrl']?.toString() ?? '',
-      miniatureUrl: map['miniatureUrl']?.toString() ?? '',
-      duree: map['duree'] ?? 0,
-      ageMinimum: map['ageMinimum'] ?? 0,
-      ageMaximum: map['ageMaximum'] ?? 0,
-      estPublie: map['estPublie'] is bool ? map['estPublie'] : true,
-      dateCreation: _parseDate(map['dateCreation']),
-      dateModification: _parseDate(map['dateModification']),
-    );
-  }
-
-  static DateTime _parseDate(dynamic value) {
-    if (value is Timestamp) return value.toDate();
-    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
-    if (value is DateTime) return value;
-    return DateTime.now();
+  Map<String, dynamic> toFirestore() {
+    return {
+      'categorieId': categorieId,
+      'jouetLieId': jouetLieId,
+      'createurId': createurId,
+      'titre': titre,
+      'description': description,
+      'jouetsSuggeres': jouetsSuggeres,
+      'videoUrl': videoUrl,
+      'miniatureUrl': miniatureUrl,
+      'duree': duree,
+      'ageMinimum': ageMinimum,
+      'ageMaximum': ageMaximum,
+      'statut': statut.value,
+      'estPublie': statut == TutorielStatus.publie,
+      'dateCreation': Timestamp.fromDate(dateCreation),
+      'dateModification': Timestamp.fromDate(dateModification),
+    };
   }
 
   Tutoriel copyWith({
@@ -100,10 +115,10 @@ class Tutoriel {
     List<String>? jouetsSuggeres,
     String? videoUrl,
     String? miniatureUrl,
-    num? duree,
-    num? ageMinimum,
-    num? ageMaximum,
-    bool? estPublie,
+    int? duree,
+    int? ageMinimum,
+    int? ageMaximum,
+    TutorielStatus? statut,
     DateTime? dateCreation,
     DateTime? dateModification,
   }) {
@@ -120,34 +135,21 @@ class Tutoriel {
       duree: duree ?? this.duree,
       ageMinimum: ageMinimum ?? this.ageMinimum,
       ageMaximum: ageMaximum ?? this.ageMaximum,
-      estPublie: estPublie ?? this.estPublie,
+      statut: statut ?? this.statut,
       dateCreation: dateCreation ?? this.dateCreation,
       dateModification: dateModification ?? this.dateModification,
     );
   }
 
-  Map<String, dynamic> toFirestore() {
-    return {
-      'tutorielId': tutorielId,
-      'categorieId': categorieId,
-      'jouetLieId': jouetLieId,
-      'createurId': createurId,
-      'titre': titre,
-      'description': description,
-      'jouetsSuggeres': jouetsSuggeres,
-      'videoUrl': videoUrl,
-      'miniatureUrl': miniatureUrl,
-      'duree': duree,
-      'ageMinimum': ageMinimum,
-      'ageMaximum': ageMaximum,
-      'estPublie': estPublie,
-      'dateCreation': Timestamp.fromDate(dateCreation),
-      'dateModification': Timestamp.fromDate(dateModification),
-    };
+  bool get estPublie => statut == TutorielStatus.publie;
+  bool get estBrouillon => statut == TutorielStatus.brouillon;
+
+  String get statutLabel => statut.label;
+
+  String get ageRangeLabel {
+    if (ageMinimum == ageMaximum) return '$ageMinimum ans';
+    return '$ageMinimum - $ageMaximum ans';
   }
 
-  String get ageRangeLabel =>
-      ageMinimum == ageMaximum ? '$ageMinimum ans' : '$ageMinimum-$ageMaximum ans';
-
-  String get durationLabel => '${duree.toString()} sec';
+  bool isTargetedForAge(int age) => age >= ageMinimum && age <= ageMaximum;
 }

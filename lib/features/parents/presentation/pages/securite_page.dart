@@ -6,6 +6,9 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/AppPadding.dart';
 import '../../../../core/constants/AppSpacing.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
+import '../../../../shared/widgets/parental_pin_dialog.dart';
+import '../../../../core/services/parental_pin_service.dart';
+import '../../../../core/utils/parental_pin_helper.dart';
 import '../../../auth/providers/auth_provider.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -232,6 +235,104 @@ class SecuritePage extends ConsumerWidget {
     });
   }
 
+  void _manageParentalPin(BuildContext context, WidgetRef ref) async {
+    final pinService = ref.read(parentalPinServiceProvider);
+    final hasPin = await pinService.hasPin();
+
+    if (!context.mounted) return;
+
+    if (!hasPin) {
+      final success = await ParentalPinDialog.show(
+        context,
+        mode: ParentalPinMode.setup,
+      );
+      if (success == true && context.mounted) {
+        AppDialogs.showSnackBar(
+          context: context,
+          message: 'Code PIN configuré avec succès.',
+        );
+      }
+    } else {
+      showModalBottomSheet<void>(
+        context: context,
+        backgroundColor: Colors.transparent,
+        builder: (sheetCtx) {
+          final theme = Theme.of(context);
+          return Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: theme.scaffoldBackgroundColor,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: theme.dividerColor.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Code PIN de contrôle parental',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ) ??
+                    const TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+                  ),
+                  const SizedBox(height: 16),
+                  ListTile(
+                    leading: const Icon(Icons.edit_outlined),
+                    title: const Text('Modifier le code PIN'),
+                    onTap: () async {
+                      Navigator.pop(sheetCtx);
+                      await ParentalPinHelper.changePin(
+                        context: context,
+                        ref: ref,
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.delete_outline, color: theme.colorScheme.error),
+                    title: Text(
+                      'Supprimer le code PIN',
+                      style: TextStyle(color: theme.colorScheme.error),
+                    ),
+                    onTap: () async {
+                      Navigator.pop(sheetCtx);
+                      final confirmed = await AppDialogs.showConfirmDialog(
+                        context: context,
+                        title: 'Supprimer le code PIN ?',
+                        message:
+                            'L\'espace enfant ne sera plus verrouillé par un code PIN.',
+                        confirmText: 'Supprimer',
+                        cancelText: 'Annuler',
+                        isDanger: true,
+                      );
+                      if (confirmed == true) {
+                        await pinService.clearPin();
+                        if (context.mounted) {
+                          AppDialogs.showSnackBar(
+                            context: context,
+                            message: 'Code PIN supprimé.',
+                          );
+                        }
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
@@ -287,6 +388,16 @@ class SecuritePage extends ConsumerWidget {
               ),
               child: Column(
                 children: [
+                  _buildSecurityTile(
+                    theme: theme,
+                    icon: Icons.pin_outlined,
+                    title: 'Code PIN de contrôle parental',
+                    onTap: () => _manageParentalPin(context, ref),
+                  ),
+                  Divider(
+                    height: 1,
+                    color: theme.dividerColor.withValues(alpha: 0.2),
+                  ),
                   _buildSecurityTile(
                     theme: theme,
                     icon: Icons.lock_outline_rounded,

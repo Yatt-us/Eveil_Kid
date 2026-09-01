@@ -1,10 +1,12 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:eveilkid/core/cloudinary/cloudinary_service.dart';
 import 'package:eveilkid/core/constants/app_colors.dart';
-import 'package:eveilkid/shared/widgets/app_button.dart';
 import 'package:eveilkid/shared/widgets/app_card.dart';
-import 'package:eveilkid/shared/widgets/app_text_field.dart';
 
-/// Composant pour la gestion de l'image principale et de la galerie d'images secondaires.
+/// Composant moderne pour la gestion des photos de produits
+/// avec téléversement direct sans saisie manuelle d'URL.
 class AdminMultiImageInput extends StatefulWidget {
   final List<String> initialImages;
   final String initialMainImageUrl;
@@ -22,11 +24,14 @@ class AdminMultiImageInput extends StatefulWidget {
 }
 
 class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
+  final CloudinaryService _cloudinary = CloudinaryService();
+  final ImagePicker _picker = ImagePicker();
+
   late List<String> _images;
   late String _mainImageUrl;
-  final TextEditingController _mainUrlController = TextEditingController();
-  final TextEditingController _secondaryUrlController = TextEditingController();
-  bool _isAddingSecondary = false;
+
+  bool _isUploadingMain = false;
+  bool _isUploadingSecondary = false;
 
   @override
   void initState() {
@@ -35,54 +40,89 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
     _mainImageUrl = widget.initialMainImageUrl.trim().isNotEmpty
         ? widget.initialMainImageUrl.trim()
         : (_images.isNotEmpty ? _images.first : '');
-
-    _mainUrlController.text = _mainImageUrl;
-    _mainUrlController.addListener(_onMainUrlChanged);
   }
 
-  @override
-  void dispose() {
-    _mainUrlController.removeListener(_onMainUrlChanged);
-    _mainUrlController.dispose();
-    _secondaryUrlController.dispose();
-    super.dispose();
-  }
+  Future<void> _pickAndUploadMainImage() async {
+    try {
+      final picked = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+      if (picked == null) return;
 
-  void _onMainUrlChanged() {
-    final text = _mainUrlController.text.trim();
-    if (text != _mainImageUrl) {
+      setState(() => _isUploadingMain = true);
+
+      final uploadedUrl = await _cloudinary.uploadImage(
+        File(picked.path),
+        folder: 'jouets',
+      );
+
+      if (!mounted) return;
+
       setState(() {
-        _mainImageUrl = text;
-        if (text.isNotEmpty && !_images.contains(text)) {
-          _images.insert(0, text);
+        _isUploadingMain = false;
+        _mainImageUrl = uploadedUrl;
+        if (!_images.contains(uploadedUrl)) {
+          _images.insert(0, uploadedUrl);
         }
       });
+
       widget.onChanged(_images, _mainImageUrl);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isUploadingMain = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur lors du téléversement : $e'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
     }
   }
 
-  void _addSecondaryImage() {
-    final url = _secondaryUrlController.text.trim();
-    if (url.isEmpty) return;
+  Future<void> _pickAndUploadSecondaryImage() async {
+    try {
+      final picked = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+      if (picked == null) return;
 
-    setState(() {
-      if (!_images.contains(url)) {
-        _images.add(url);
-        if (_mainImageUrl.isEmpty) {
-          _mainImageUrl = url;
-          _mainUrlController.text = url;
+      setState(() => _isUploadingSecondary = true);
+
+      final uploadedUrl = await _cloudinary.uploadImage(
+        File(picked.path),
+        folder: 'jouets/galerie',
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _isUploadingSecondary = false;
+        if (!_images.contains(uploadedUrl)) {
+          _images.add(uploadedUrl);
+          if (_mainImageUrl.isEmpty) {
+            _mainImageUrl = uploadedUrl;
+          }
         }
-      }
-      _secondaryUrlController.clear();
-      _isAddingSecondary = false;
-    });
-    widget.onChanged(_images, _mainImageUrl);
+      });
+
+      widget.onChanged(_images, _mainImageUrl);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isUploadingSecondary = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur lors du téléversement : $e'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    }
   }
 
   void _setAsMainImage(String url) {
     setState(() {
       _mainImageUrl = url;
-      _mainUrlController.text = url;
       if (!_images.contains(url)) {
         _images.insert(0, url);
       }
@@ -90,12 +130,11 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
     widget.onChanged(_images, _mainImageUrl);
   }
 
-  void _removeSecondaryImage(String url) {
+  void _removeImage(String url) {
     setState(() {
       _images.remove(url);
       if (_mainImageUrl == url) {
         _mainImageUrl = _images.isNotEmpty ? _images.first : '';
-        _mainUrlController.text = _mainImageUrl;
       }
     });
     widget.onChanged(_images, _mainImageUrl);
@@ -108,14 +147,15 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final textSecondary = theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+    final textSecondary = theme.textTheme.bodySmall?.color
+            ?.withValues(alpha: 0.7) ??
         (isDark ? Colors.white70 : AppColors.textSecondary);
     final dividerColor = theme.dividerColor.withValues(alpha: 0.2);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── 1. CARTE IMAGE PRINCIPALE ──
+        // ── 1. IMAGE PRINCIPALE ──
         AppCard(
           padding: const EdgeInsets.all(14),
           child: Column(
@@ -126,7 +166,8 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.2 : 0.1),
+                      color: theme.colorScheme.primary
+                          .withValues(alpha: isDark ? 0.2 : 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
@@ -154,7 +195,8 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
                         vertical: 2.5,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF10B981).withValues(alpha: isDark ? 0.25 : 0.12),
+                        color: const Color(0xFF10B981)
+                            .withValues(alpha: isDark ? 0.25 : 0.12),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: const Text(
@@ -170,8 +212,38 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
               ),
               const SizedBox(height: 12),
 
-              // Aperçu de l'image principale
-              if (_mainImageUrl.isNotEmpty) ...[
+              if (_isUploadingMain)
+                Container(
+                  height: 150,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? theme.colorScheme.surfaceContainerHighest
+                        : Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: dividerColor),
+                  ),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(
+                          color: AppColors.primary,
+                          strokeWidth: 3,
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          "Téléversement de l'image...",
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else if (_mainImageUrl.isNotEmpty) ...[
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
@@ -191,24 +263,12 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
                           _mainImageUrl,
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) => Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.broken_image_rounded,
-                                  size: 36,
-                                  color: theme.iconTheme.color?.withValues(alpha: 0.5) ??
-                                      AppColors.icon,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  "URL d'image invalide ou inaccessible",
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: textSecondary,
-                                  ),
-                                ),
-                              ],
+                            child: Icon(
+                              Icons.broken_image_rounded,
+                              size: 36,
+                              color: theme.iconTheme.color
+                                      ?.withValues(alpha: 0.5) ??
+                                  AppColors.icon,
                             ),
                           ),
                         ),
@@ -216,15 +276,7 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
                           top: 8,
                           right: 8,
                           child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _images.remove(_mainImageUrl);
-                                _mainImageUrl =
-                                    _images.isNotEmpty ? _images.first : '';
-                                _mainUrlController.text = _mainImageUrl;
-                              });
-                              widget.onChanged(_images, _mainImageUrl);
-                            },
+                            onTap: () => _removeImage(_mainImageUrl),
                             child: Container(
                               padding: const EdgeInsets.all(6),
                               decoration: BoxDecoration(
@@ -244,21 +296,84 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
                   ),
                 ),
                 const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: _pickAndUploadMainImage,
+                  icon: const Icon(Icons.edit_outlined, size: 16),
+                  label: const Text(
+                    "Changer l'image principale",
+                    style: TextStyle(fontSize: 12.5),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(40),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ] else ...[
+                GestureDetector(
+                  onTap: _pickAndUploadMainImage,
+                  child: Container(
+                    height: 140,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? theme.colorScheme.surfaceContainerHighest
+                          : Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.4),
+                        style: BorderStyle.solid,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary
+                                  .withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.add_photo_alternate_rounded,
+                              size: 26,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "Sélectionner l'image principale",
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            "Depuis votre galerie photo",
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ],
-
-              // Champ d'URL de l'image principale
-              AppTextField(
-                controller: _mainUrlController,
-                hintText: "URL de l'image principale (https://...)",
-                prefixIcon: Icons.link_rounded,
-              ),
             ],
           ),
         ),
 
         const SizedBox(height: 14),
 
-        // ── 2. CARTE IMAGES SECONDAIRES ──
+        // ── 2. IMAGES SECONDAIRES ──
         AppCard(
           padding: const EdgeInsets.all(14),
           child: Column(
@@ -269,7 +384,8 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: AppColors.teal.withValues(alpha: isDark ? 0.2 : 0.1),
+                      color:
+                          AppColors.teal.withValues(alpha: isDark ? 0.2 : 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
@@ -321,7 +437,8 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: _secondaryImages.length,
-                    separatorBuilder: (context, index) => const SizedBox(width: 10),
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(width: 10),
                     itemBuilder: (context, index) {
                       final url = _secondaryImages[index];
 
@@ -339,14 +456,17 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
                               child: Image.network(
                                 url,
                                 fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    Container(
+                                errorBuilder:
+                                    (context, error, stackTrace) =>
+                                        Container(
                                   color: isDark
-                                      ? theme.colorScheme.surfaceContainerHighest
+                                      ? theme
+                                          .colorScheme.surfaceContainerHighest
                                       : AppColors.surfaceVariant,
                                   child: Icon(
                                     Icons.broken_image_rounded,
-                                    color: theme.iconTheme.color?.withValues(alpha: 0.5) ??
+                                    color: theme.iconTheme.color
+                                            ?.withValues(alpha: 0.5) ??
                                         AppColors.icon,
                                     size: 24,
                                   ),
@@ -365,7 +485,8 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
                                     vertical: 3,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.75),
+                                    color:
+                                        Colors.black.withValues(alpha: 0.75),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: const Text(
@@ -385,7 +506,7 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
                               top: 4,
                               right: 4,
                               child: GestureDetector(
-                                onTap: () => _removeSecondaryImage(url),
+                                onTap: () => _removeImage(url),
                                 child: Container(
                                   padding: const EdgeInsets.all(3),
                                   decoration: BoxDecoration(
@@ -409,62 +530,47 @@ class _AdminMultiImageInputState extends State<AdminMultiImageInput> {
                 const SizedBox(height: 12),
               ],
 
-              // Champ d'ajout d'image secondaire
-              if (_isAddingSecondary) ...[
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: AppTextField(
-                        controller: _secondaryUrlController,
-                        hintText: "URL de l'image secondaire (https://...)",
-                        prefixIcon: Icons.add_link_rounded,
-                        onSubmitted: (_) => _addSecondaryImage(),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    SizedBox(
-                      height: 46,
-                      child: AppButton(
-                        text: "Valider",
-                        onPressed: _addSecondaryImage,
-                        isFullWidth: false,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () => setState(() => _isAddingSecondary = false),
-                    style: TextButton.styleFrom(
-                      visualDensity: VisualDensity.compact,
-                    ),
-                    child: Text(
-                      "Annuler",
-                      style: TextStyle(fontSize: 12, color: textSecondary),
+              if (_isUploadingSecondary)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        SizedBox(width: 10),
+                        Text(
+                          "Téléversement de l'image secondaire...",
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ] else ...[
+                )
+              else
                 OutlinedButton.icon(
-                  onPressed: () => setState(() => _isAddingSecondary = true),
-                  icon: const Icon(Icons.add_photo_alternate_rounded, size: 18),
+                  onPressed: _pickAndUploadSecondaryImage,
+                  icon: const Icon(Icons.add_photo_alternate_rounded,
+                      size: 18),
                   label: const Text(
                     "Ajouter une image secondaire",
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                    style:
+                        TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                   ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: theme.colorScheme.primary,
-                    side: BorderSide(color: theme.colorScheme.primary, width: 1.0),
+                    side: BorderSide(
+                        color: theme.colorScheme.primary, width: 1.0),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     minimumSize: const Size.fromHeight(44),
                   ),
                 ),
-              ],
             ],
           ),
         ),

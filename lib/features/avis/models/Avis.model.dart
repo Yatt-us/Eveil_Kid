@@ -28,8 +28,16 @@ class Avis {
     required this.dateModification,
   });
 
+  static DateTime _parseDate(dynamic val) {
+    if (val is Timestamp) return val.toDate();
+    if (val is DateTime) return val;
+    if (val is String) return DateTime.tryParse(val) ?? DateTime.now();
+    if (val is int) return DateTime.fromMillisecondsSinceEpoch(val);
+    return DateTime.now();
+  }
+
   factory Avis.fromFirestore(DocumentSnapshot doc) {
-    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    Map<String, dynamic> data = (doc.data() as Map<String, dynamic>?) ?? {};
     
     return Avis(
       id: doc.id,
@@ -39,9 +47,9 @@ class Avis {
       nomUtilisateur: data['nomUtilisateur'] ?? 'Utilisateur',
       note: (data['note'] ?? 0.0).toDouble(),
       commentaire: data['commentaire'] ?? '',
-      statut: _getStatutFromString(data['statut']),
-      dateCreation: (data['dateCreation'] as Timestamp).toDate(),
-      dateModification: (data['dateModification'] as Timestamp).toDate(),
+      statut: _getStatutFromString(data['statut'] ?? ''),
+      dateCreation: _parseDate(data['dateCreation']),
+      dateModification: _parseDate(data['dateModification']),
     );
   }
 

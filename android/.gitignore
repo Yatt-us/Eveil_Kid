@@ -14,3 +14,6 @@ key.properties
 **/*.jks
 gradle.properties
 
+gradle-wrapper.properties
+
+settings.gradle.kts

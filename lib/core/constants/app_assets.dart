@@ -7,4 +7,7 @@ class AppAssets {
 
   /// Icône officielle Google SVG
   static const String googleIcon = 'assets/icons/google.svg';
+
+  /// Icône de basculement d'espace
+  static const String spaceSwitchIcon = 'assets/icons/space-switch.png';
 }

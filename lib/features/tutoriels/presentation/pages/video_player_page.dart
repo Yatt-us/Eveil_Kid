@@ -1,23 +1,15 @@
-import 'dart:async';
-
-import 'package:eveilkid/features/tutoriels/models/tutoriel.dart';
-import 'package:eveilkid/features/tutoriels/providers/progression_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:video_player/video_player.dart';
+import 'package:eveilkid/features/categories/providers/categorie_provider.dart';
+import 'package:eveilkid/features/tutoriels/models/tutoriel.dart';
+import 'package:eveilkid/features/tutoriels/presentation/widgets/jouets_suggestion_card.dart';
+import 'package:eveilkid/features/tutoriels/presentation/widgets/video_player_widget.dart';
+import 'package:eveilkid/features/tutoriels/providers/cloudinary_duration_provider.dart';
+import 'package:eveilkid/features/tutoriels/utils/duration_utils.dart';
+import 'package:eveilkid/shared/widgets/app_card.dart';
 
-
-/// Page permettant de lire la vidéo d'un tutoriel
-///
-/// Cette page gère :
-/// - la lecture de la vidéo
-/// - la pause
-/// - la reprise
-/// - la progression
-/// - la sauvegarde de la progression dans Firebase
-/// - la reprise de la vidéo à la dernière position
-class VideoPlayerPage extends ConsumerStatefulWidget {
-  /// Tutoriel dont on veut lire la vidéo
+/// Page de lecture vidéo immersive pour les tutoriels
+class VideoPlayerPage extends ConsumerWidget {
   final Tutoriel tutoriel;
 
   const VideoPlayerPage({
@@ -26,337 +18,151 @@ class VideoPlayerPage extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<VideoPlayerPage> createState() =>
-      _VideoPlayerPageState();
-}
-
-
-/// État de la page VideoPlayerPage
-class _VideoPlayerPageState
-    extends ConsumerState<VideoPlayerPage> {
-
-  /// Contrôleur permettant de contrôler la vidéo
-  ///
-  /// Il permet notamment de :
-  /// - lire la vidéo
-  /// - mettre en pause
-  /// - récupérer la position
-  /// - récupérer la durée
-  /// - déplacer la position
-  late VideoPlayerController _videoController;
-
-
-  /// Timer utilisé pour sauvegarder
-  /// régulièrement la progression
-  ///
-  /// Exemple :
-  /// toutes les 15 secondes
-  Timer? _progressTimer;
-
-
-  /// Indique si le contrôleur vidéo
-  /// a terminé son initialisation
-  bool _isInitialized = false;
-
-
-  /// Initialisation de la page
-  @override
-  void initState() {
-    super.initState();
-
-    // Initialiser le lecteur vidéo
-    _initializeVideo();
-  }
-
-
-  /// Initialise le lecteur vidéo
-  ///
-  /// Cette méthode :
-  /// 1. crée le contrôleur vidéo
-  /// 2. initialise la vidéo
-  /// 3. récupère la progression précédente
-  /// 4. écoute les changements de la vidéo
-  /// 5. démarre la sauvegarde automatique
-  Future<void> _initializeVideo() async {
-
-    // Création du contrôleur à partir de l'URL
-    // présente dans le modèle Tutoriel
-    _videoController =
-        VideoPlayerController.networkUrl(
-      Uri.parse(widget.tutoriel.videoUrl),
-    );
-
-
-    // Initialisation du lecteur vidéo
-    await _videoController.initialize();
-
-
-    // Informer Flutter que la vidéo est prête
-    setState(() {
-      _isInitialized = true;
-    });
-
-
-    // Charger la dernière progression
-    await _loadProgression();
-
-
-    // Ajouter un listener pour surveiller
-    // l'état et la position de la vidéo
-    _videoController.addListener(_videoListener);
-
-
-    // Sauvegarder automatiquement la progression
-    // toutes les 15 secondes
-    _progressTimer = Timer.periodic(
-      const Duration(seconds: 15),
-      (_) {
-        _saveProgression();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final categoriesAsync = ref.watch(categoriesProvider);
+    final categoryName = categoriesAsync.maybeWhen(
+      data: (categories) {
+        for (final cat in categories) {
+          if (cat.categorieId == tutoriel.categorieId) return cat.nom;
+        }
+        return null;
       },
-    );
-  }
-
-
-  /// Récupère la dernière progression
-  /// enregistrée dans Firebase
-  Future<void> _loadProgression() async {
-
-    // Appeler le Provider avec l'ID du tutoriel
-    final progression = await ref.read(
-      progressionProvider(
-        widget.tutoriel.tutorielId,
-      ).future,
+      orElse: () => null,
     );
 
+    final toyIds = <String>{
+      if (tutoriel.jouetLieId != null && tutoriel.jouetLieId!.isNotEmpty)
+        tutoriel.jouetLieId!,
+      ...tutoriel.jouetsSuggeres.where((id) => id.isNotEmpty),
+    }.toList();
 
-    // Si aucune progression n'existe,
-    // on laisse la vidéo commencer au début
-    if (progression == null) {
-      return;
-    }
-
-
-    // Convertir la position enregistrée
-    // en Duration
-    final position = Duration(
-      seconds: progression.position.toInt(),
-    );
-
-
-    // Positionner la vidéo à la dernière position
-    await _videoController.seekTo(position);
-  }
-
-
-  /// Écoute les changements de la vidéo
-  ///
-  /// Cette méthode permet notamment de détecter
-  /// lorsque la vidéo arrive à la fin.
-  void _videoListener() {
-
-    // Vérifier que le lecteur est bien initialisé
-    if (!_videoController.value.isInitialized) {
-      return;
-    }
-
-
-    // Vérifier si la vidéo est terminée
-    if (_videoController.value.position >=
-        _videoController.value.duration) {
-
-      // Sauvegarder la progression finale
-      _saveProgression();
-    }
-  }
-
-
-  /// Sauvegarde la progression actuelle
-  /// dans Firebase
-  Future<void> _saveProgression() async {
-
-    // Si la vidéo n'est pas encore initialisée,
-    // on ne fait rien
-    if (!_isInitialized) {
-      return;
-    }
-
-
-    // Récupérer la position actuelle
-    // de la vidéo en secondes
-    final position =
-        _videoController.value.position.inSeconds;
-
-
-    // Récupérer la durée totale
-    // de la vidéo en secondes
-    final duree =
-        _videoController.value.duration.inSeconds;
-
-
-    // Appeler le Controller du Provider
-    // pour sauvegarder la progression
-    await ref.read(
-      progressionControllerProvider,
-    ).saveProgression(
-      tutorielId: widget.tutoriel.tutorielId,
-      position: position,
-      duree: duree,
-    );
-  }
-
-
-  /// Libération des ressources
-  ///
-  /// Cette méthode est appelée lorsque
-  /// l'utilisateur quitte la page.
-  @override
-  void dispose() {
-
-    // Arrêter le Timer
-    _progressTimer?.cancel();
-
-
-    // Sauvegarder une dernière fois
-    // la position actuelle
-    _saveProgression();
-
-
-    // Supprimer le listener
-    _videoController.removeListener(
-      _videoListener,
-    );
-
-
-    // Libérer le contrôleur vidéo
-    _videoController.dispose();
-
-
-    // Appeler dispose() du parent
-    super.dispose();
-  }
-
-
-  /// Construction de l'interface
-  @override
-  Widget build(BuildContext context) {
-
-    // Si la vidéo n'est pas encore prête,
-    // afficher un indicateur de chargement
-    if (!_isInitialized) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
-
-    // Interface principale
     return Scaffold(
-
-      // Barre supérieure
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_rounded,
+            color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
+          ),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
         title: Text(
-          widget.tutoriel.titre,
+          tutoriel.titre,
+          style: TextStyle(
+            fontSize: 16.5,
+            fontWeight: FontWeight.w700,
+            color: theme.textTheme.titleMedium?.color ??
+                theme.colorScheme.onSurface,
+          ),
         ),
       ),
-
-
-      // Contenu de la page
-      body: Column(
-        children: [
-
-          // =========================================
-          // LECTEUR VIDÉO
-          // =========================================
-
-          AspectRatio(
-            // Conserver les proportions originales
-            // de la vidéo
-            aspectRatio:
-                _videoController.value.aspectRatio,
-
-            // Widget permettant d'afficher la vidéo
-            child: VideoPlayer(
-              _videoController,
-            ),
-          ),
-
-
-          // =========================================
-          // BARRE DE PROGRESSION
-          // =========================================
-
-          VideoProgressIndicator(
-            _videoController,
-
-            // Autoriser l'utilisateur à déplacer
-            // manuellement la position de la vidéo
-            allowScrubbing: true,
-
-            // Espacement autour de la barre
-            padding: const EdgeInsets.all(16),
-          ),
-
-
-          // =========================================
-          // BOUTON PLAY / PAUSE
-          // =========================================
-
-          Row(
-            mainAxisAlignment:
-                MainAxisAlignment.center,
-
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
-              IconButton(
-
-                // Changer l'icône selon l'état
-                // actuel de la vidéo
-                icon: Icon(
-                  _videoController.value.isPlaying
-                      ? Icons.pause
-                      : Icons.play_arrow,
-                ),
-
-                // Action lorsqu'on appuie
-                onPressed: () {
-
-                  setState(() {
-
-                    // Si la vidéo est en lecture
-                    if (_videoController
-                        .value
-                        .isPlaying) {
-
-                      // Mettre en pause
-                      _videoController.pause();
-
-                    } else {
-
-                      // Sinon démarrer/reprendre
-                      // la lecture
-                      _videoController.play();
-                    }
-                  });
-                },
+              // Lecteur universel
+              TutorielInlineVideoPlayer(
+                tutoriel: tutoriel,
+                autoPlay: true,
               ),
+              const SizedBox(height: 18),
+
+              // Titre & Métadonnées
+              Text(
+                tutoriel.titre,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: theme.textTheme.titleMedium?.color ??
+                      theme.colorScheme.onSurface,
+                  letterSpacing: -0.3,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Icon(
+                    Icons.play_circle_outline_rounded,
+                    size: 14,
+                    color: theme.textTheme.bodySmall?.color
+                            ?.withValues(alpha: 0.65) ??
+                        theme.colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 5),
+                  Expanded(
+                    child: Text(
+                      [
+                        if (categoryName != null && categoryName.isNotEmpty)
+                          categoryName,
+                        tutoriel.ageRangeLabel,
+                        if (tutoriel.duree > 0)
+                          tutoriel.dureeFormatted
+                        else
+                          ref.watch(cloudinaryVideoDurationProvider(tutoriel.videoUrl)).when(
+                            data: (secs) => secs > 0 ? formatDurationSeconds(secs) : null,
+                            loading: () => null,
+                            error: (_, _) => null,
+                          ),
+                      ].join(' • '),
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w500,
+                        color: theme.textTheme.bodySmall?.color
+                                ?.withValues(alpha: 0.65) ??
+                            theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Description
+              if (tutoriel.description.isNotEmpty) ...[
+                AppCard(
+                  title: 'Description',
+                  padding: const EdgeInsets.all(14),
+                  child: Text(
+                    tutoriel.description,
+                    style: TextStyle(
+                      fontSize: 13,
+                      height: 1.45,
+                      color: theme.textTheme.bodyMedium?.color
+                              ?.withValues(alpha: 0.8) ??
+                          theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // Matériel & Jouets recommandés
+              if (toyIds.isNotEmpty) ...[
+                Text(
+                  'Matériel & Jouets recommandés',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: theme.textTheme.titleMedium?.color ??
+                        theme.colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ...toyIds.map(
+                  (toyId) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: JouetSuggestionCard(jouetId: toyId),
+                  ),
+                ),
+              ],
             ],
           ),
-
-
-          // =========================================
-          // DESCRIPTION DU TUTORIEL
-          // =========================================
-
-          Padding(
-            padding: const EdgeInsets.all(16),
-
-            child: Text(
-              widget.tutoriel.description,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

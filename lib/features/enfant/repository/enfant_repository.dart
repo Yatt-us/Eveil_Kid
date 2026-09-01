@@ -72,7 +72,7 @@ class EnfantRepository {
     try {
       await _enfantsCollection(parentId)
           .doc(enfant.enfantId)
-          .update(enfant.toMap());
+          .set(enfant.toMap(), SetOptions(merge: true));
     } catch (e) {
       rethrow;
     }
