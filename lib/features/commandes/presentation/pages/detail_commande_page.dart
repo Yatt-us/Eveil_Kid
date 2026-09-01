@@ -6,6 +6,7 @@ import 'package:eveilkid/core/constants/AppRadius.dart';
 import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/features/commandes/models/commande_model.dart';
 import 'package:eveilkid/features/commandes/providers/commande_provider.dart';
+import 'package:eveilkid/shared/widgets/app_dialogs.dart';
 import 'package:eveilkid/shared/widgets/app_states.dart';
 import '../widgets/adresse_livraison.dart';
 import '../widgets/article_commande.dart';
@@ -313,6 +314,50 @@ class _DetailCommandePageState extends ConsumerState<DetailCommandePage> {
                 total: commande.montantTotal,
               ),
             ),
+
+            // ── 6. BOUTON D'ANNULATION (SI ÉLIGIBLE) ──
+            if (['en cours', 'en_cours', 'en attente', 'en_attente', 'pending'].contains(commande.statut.trim().toLowerCase())) ...[
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    final confirmed = await AppDialogs.showConfirmDialog(
+                      context: context,
+                      title: 'Annuler la commande',
+                      message: 'Êtes-vous sûr de vouloir annuler cette commande ? Cette action est irréversible.',
+                      confirmText: 'Oui, annuler',
+                      cancelText: 'Non, garder',
+                      isDanger: true,
+                    );
+
+                    if (confirmed == true && context.mounted) {
+                      await ref.read(commandeProvider.notifier).annulerCommande(commande!.id);
+                      if (context.mounted) {
+                        AppDialogs.showSnackBar(
+                          context: context,
+                          message: 'La commande a été annulée.',
+                          isWarning: true,
+                        );
+                      }
+                    }
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: theme.colorScheme.error,
+                    side: BorderSide(color: theme.colorScheme.error.withValues(alpha: 0.5)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: AppRadius.button,
+                    ),
+                  ),
+                  icon: const Icon(Icons.cancel_outlined, size: 20),
+                  label: const Text(
+                    'Annuler ma commande',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

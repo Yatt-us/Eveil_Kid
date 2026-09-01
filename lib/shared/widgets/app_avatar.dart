@@ -40,17 +40,18 @@ class AppAvatar extends StatelessWidget {
     final trimmed = source.trim();
     if (trimmed.isEmpty) return null;
 
-    // 1. Data URI ou Base64 (ex: data:image/jpeg;base64,....)
+    // 1. Data URI ou Base64 avec préfixe (ex: data:image/jpeg;base64,....)
     if (trimmed.startsWith('data:image') || trimmed.contains(';base64,')) {
       try {
         final commaIndex = trimmed.indexOf(',');
         final base64String =
             commaIndex != -1 ? trimmed.substring(commaIndex + 1) : trimmed;
-        final cleanBase64 = base64String.replaceAll(RegExp(r'\s+'), '');
+        // Nettoyage plus rigoureux des caractères non-base64 potentiels
+        final cleanBase64 = base64String.replaceAll(RegExp(r'[^a-zA-Z0-9+/=]'), '');
         final Uint8List bytes = base64Decode(cleanBase64);
         return MemoryImage(bytes);
       } catch (e) {
-        debugPrint('Erreur décodage Base64 avatar: $e');
+        debugPrint('Erreur décodage Base64 (URI) avatar: $e');
         return null;
       }
     }
@@ -72,14 +73,17 @@ class AppAvatar extends StatelessWidget {
       }
     }
 
-    // 4. Base64 pur sans préfixe
-    if (trimmed.length > 50 && !trimmed.contains('/')) {
+    // 4. Base64 pur sans préfixe (longueur importante et caractères base64 probables)
+    if (trimmed.length > 32) {
       try {
-        final cleanBase64 = trimmed.replaceAll(RegExp(r'\s+'), '');
-        final Uint8List bytes = base64Decode(cleanBase64);
-        return MemoryImage(bytes);
+        // On tente de décoder si ça ressemble à du base64
+        final cleanBase64 = trimmed.replaceAll(RegExp(r'[^a-zA-Z0-9+/=]'), '');
+        if (cleanBase64.length > 32) {
+           final Uint8List bytes = base64Decode(cleanBase64);
+           return MemoryImage(bytes);
+        }
       } catch (_) {
-        return null;
+        // Pas du base64, on laisse tomber
       }
     }
 

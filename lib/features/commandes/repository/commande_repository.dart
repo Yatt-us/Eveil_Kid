@@ -23,7 +23,23 @@ class CommandeRepository {
               CommandeModel.fromMap(doc.data() as Map<String, dynamic>, doc.id))
           .toList();
     } catch (e) {
-      throw Exception('Erreur lors de la récupération des commandes : $e');
+      try {
+        // Fallback si l'index n'est pas encore prêt ou en cas d'erreur composite
+        QuerySnapshot instantane = await _collectionCommandes
+            .where('parentId', isEqualTo: parentId)
+            .get();
+
+        final list = instantane.docs
+            .map((doc) => CommandeModel.fromMap(
+                doc.data() as Map<String, dynamic>, doc.id))
+            .toList();
+
+        // Tri manuel
+        list.sort((a, b) => b.dateCreation.compareTo(a.dateCreation));
+        return list;
+      } catch (e2) {
+        throw Exception('Erreur lors de la récupération des commandes : $e2');
+      }
     }
   }
 

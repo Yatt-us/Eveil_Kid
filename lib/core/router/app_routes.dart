@@ -19,6 +19,10 @@ class AppRoutes {
   static const String panier = '/panier';
   static const String profile = '/profile';
   static const String favoris = '/profile/favoris';
+  static const String parentCommandes = '/profile/commandes';
+  static const String parentDetailCommande = '/profile/commandes/:commandeId';
+  static String parentDetailCommandePath(String commandeId) =>
+      '/profile/commandes/$commandeId';
   static const String activitesPlay = '/activites/play';
   static const String activitesResultat = '/activites/resultat';
   static const String activitesCorrige = '/activites/corrige';

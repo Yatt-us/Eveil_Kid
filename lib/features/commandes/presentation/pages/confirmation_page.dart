@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/AppSpacing.dart';
+import '../../../../core/router/app_routes.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../models/commande_model.dart';
 import '../widgets/checkout_stepper.dart';
@@ -183,12 +185,7 @@ class ConfirmationPage extends StatelessWidget {
                     text: 'Voir mes commandes',
                     icon: Icons.receipt_long_rounded,
                     onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => MesCommandesPage(parentId: commande.parentId),
-                        ),
-                      );
+                      context.go(AppRoutes.parentCommandes);
                     },
                   ),
                   AppSpacing.verticalSm,
