@@ -11,6 +11,7 @@ import '../../../../core/constants/AppRadius.dart';
 import '../../../../core/constants/AppSpacing.dart';
 import '../../../../core/constants/AppTextStyles.dart';
 import '../../../../core/router/app_routes.dart';
+import '../../../../shared/widgets/app_avatar.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
 import '../../../../shared/widgets/app_bottom_nav_bar.dart';
 import '../../../../shared/widgets/app_states.dart';
@@ -285,7 +286,9 @@ class AccueilParentPage extends ConsumerWidget {
             child: TextButton.icon(
               onPressed: () => context.go(AppRoutes.login),
               style: TextButton.styleFrom(
-                backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                backgroundColor: theme.colorScheme.primary.withValues(
+                  alpha: 0.1,
+                ),
                 foregroundColor: theme.colorScheme.primary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
@@ -321,7 +324,9 @@ class AccueilParentPage extends ConsumerWidget {
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.w800,
-            color: theme.textTheme.titleLarge?.color ?? theme.colorScheme.onSurface,
+            color:
+                theme.textTheme.titleLarge?.color ??
+                theme.colorScheme.onSurface,
             letterSpacing: -0.5,
           ),
         ),
@@ -332,7 +337,8 @@ class AccueilParentPage extends ConsumerWidget {
               : 'Ajoutez votre enfant pour personnaliser son expérience et ses recommandations.',
           style: TextStyle(
             fontSize: 14,
-            color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7) ??
+            color:
+                theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7) ??
                 AppColors.textSecondary,
             height: 1.35,
           ),
@@ -541,7 +547,8 @@ class AccueilParentPage extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
-                    color: theme.textTheme.titleMedium?.color ??
+                    color:
+                        theme.textTheme.titleMedium?.color ??
                         (isDark ? Colors.white : AppColors.textPrimary),
                   ),
                 ),
@@ -657,7 +664,10 @@ class AccueilParentPage extends ConsumerWidget {
                 'Personnalisez son catalogue et ses défis',
                 style: TextStyle(
                   fontSize: 12,
-                  color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7) ??
+                  color:
+                      theme.textTheme.bodySmall?.color?.withValues(
+                        alpha: 0.7,
+                      ) ??
                       AppColors.textSecondary,
                 ),
               ),
@@ -708,21 +718,13 @@ class AccueilParentPage extends ConsumerWidget {
           final child = displayChildren[index];
           final isGirl = child.genre.toLowerCase() == 'fille';
 
-          final Color avatarBg = isGirl
-              ? (isDark
-                  ? const Color(0xFF880E4F).withValues(alpha: 0.25)
-                  : const Color(0xFFFCE4EC))
-              : (isDark
-                  ? const Color(0xFF0D47A1).withValues(alpha: 0.25)
-                  : const Color(0xFFE3F2FD));
-
           final Color badgeBg = isGirl
               ? (isDark
-                  ? const Color(0xFF880E4F).withValues(alpha: 0.35)
-                  : const Color(0xFFFCE4EC))
+                    ? const Color(0xFF880E4F).withValues(alpha: 0.35)
+                    : const Color(0xFFFCE4EC))
               : (isDark
-                  ? const Color(0xFF0D47A1).withValues(alpha: 0.35)
-                  : const Color(0xFFE3F2FD));
+                    ? const Color(0xFF0D47A1).withValues(alpha: 0.35)
+                    : const Color(0xFFE3F2FD));
 
           final Color badgeText = isGirl
               ? (isDark ? const Color(0xFFF48FB1) : const Color(0xFFD81B60))
@@ -739,8 +741,9 @@ class AccueilParentPage extends ConsumerWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: (isDark ? Colors.black : Colors.black)
-                      .withValues(alpha: isDark ? 0.2 : 0.03),
+                  color: (isDark ? Colors.black : Colors.black).withValues(
+                    alpha: isDark ? 0.2 : 0.03,
+                  ),
                   blurRadius: 6,
                   offset: const Offset(0, 2),
                 ),
@@ -764,33 +767,13 @@ class AccueilParentPage extends ConsumerWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    CircleAvatar(
+                    AppAvatar(
+                      imageUrl: child.avatarUrl,
+                      name: child.nom,
                       radius: 28,
-                      backgroundColor: avatarBg,
-                      child: ClipOval(
-                        child: child.avatarUrl != null &&
-                                child.avatarUrl!.isNotEmpty
-                            ? Image.network(
-                                child.avatarUrl!,
-                                fit: BoxFit.cover,
-                                width: 56,
-                                height: 56,
-                                errorBuilder: (_, _, _) => Icon(
-                                  isGirl
-                                      ? Icons.face_3_rounded
-                                      : Icons.face_rounded,
-                                  color: badgeText,
-                                  size: 34,
-                                ),
-                              )
-                            : Icon(
-                                isGirl
-                                    ? Icons.face_3_rounded
-                                    : Icons.face_rounded,
-                                color: badgeText,
-                                size: 34,
-                              ),
-                      ),
+                      defaultIcon: isGirl
+                          ? Icons.face_3_rounded
+                          : Icons.face_rounded,
                     ),
                     AppSpacing.verticalSm,
                     Text(
@@ -798,7 +781,8 @@ class AccueilParentPage extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: theme.textTheme.titleSmall?.color ??
+                        color:
+                            theme.textTheme.titleSmall?.color ??
                             theme.colorScheme.onSurface,
                       ),
                       maxLines: 1,
@@ -808,8 +792,10 @@ class AccueilParentPage extends ConsumerWidget {
                       '${child.age} an${child.age > 1 ? 's' : ''}',
                       style: TextStyle(
                         fontSize: 12,
-                        color: theme.textTheme.bodySmall?.color
-                                ?.withValues(alpha: 0.7) ??
+                        color:
+                            theme.textTheme.bodySmall?.color?.withValues(
+                              alpha: 0.7,
+                            ) ??
                             AppColors.textSecondary,
                         fontWeight: FontWeight.w500,
                       ),
@@ -852,9 +838,7 @@ class AccueilParentPage extends ConsumerWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: AppRadius.card,
-        border: Border.all(
-          color: theme.dividerColor.withValues(alpha: 0.2),
-        ),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.2)),
       ),
       child: InkWell(
         onTap: () {
@@ -873,7 +857,11 @@ class AccueilParentPage extends ConsumerWidget {
                 color: theme.colorScheme.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.add, size: 24, color: theme.colorScheme.primary),
+              child: Icon(
+                Icons.add,
+                size: 24,
+                color: theme.colorScheme.primary,
+              ),
             ),
             AppSpacing.verticalSm,
             Text(
@@ -881,7 +869,8 @@ class AccueilParentPage extends ConsumerWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12,
-                color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.8) ??
+                color:
+                    theme.textTheme.bodySmall?.color?.withValues(alpha: 0.8) ??
                     AppColors.textSecondary,
                 fontWeight: FontWeight.w600,
               ),
@@ -1036,7 +1025,9 @@ class AccueilParentPage extends ConsumerWidget {
                   : (defaultPalettes[0]['bgGradientLight'] as List<Color>),
               'iconColor': defaultPalettes[0]['iconColor'] as Color,
               'borderColor': isDark
-                  ? (defaultPalettes[0]['iconColor'] as Color).withValues(alpha: 0.25)
+                  ? (defaultPalettes[0]['iconColor'] as Color).withValues(
+                      alpha: 0.25,
+                    )
                   : (defaultPalettes[0]['borderColor'] as Color),
             },
             {
@@ -1048,7 +1039,9 @@ class AccueilParentPage extends ConsumerWidget {
                   : (defaultPalettes[1]['bgGradientLight'] as List<Color>),
               'iconColor': defaultPalettes[1]['iconColor'] as Color,
               'borderColor': isDark
-                  ? (defaultPalettes[1]['iconColor'] as Color).withValues(alpha: 0.25)
+                  ? (defaultPalettes[1]['iconColor'] as Color).withValues(
+                      alpha: 0.25,
+                    )
                   : (defaultPalettes[1]['borderColor'] as Color),
             },
             {
@@ -1060,7 +1053,9 @@ class AccueilParentPage extends ConsumerWidget {
                   : (defaultPalettes[2]['bgGradientLight'] as List<Color>),
               'iconColor': defaultPalettes[2]['iconColor'] as Color,
               'borderColor': isDark
-                  ? (defaultPalettes[2]['iconColor'] as Color).withValues(alpha: 0.25)
+                  ? (defaultPalettes[2]['iconColor'] as Color).withValues(
+                      alpha: 0.25,
+                    )
                   : (defaultPalettes[2]['borderColor'] as Color),
             },
             {
@@ -1072,7 +1067,9 @@ class AccueilParentPage extends ConsumerWidget {
                   : (defaultPalettes[3]['bgGradientLight'] as List<Color>),
               'iconColor': defaultPalettes[3]['iconColor'] as Color,
               'borderColor': isDark
-                  ? (defaultPalettes[3]['iconColor'] as Color).withValues(alpha: 0.25)
+                  ? (defaultPalettes[3]['iconColor'] as Color).withValues(
+                      alpha: 0.25,
+                    )
                   : (defaultPalettes[3]['borderColor'] as Color),
             },
             {
@@ -1084,7 +1081,9 @@ class AccueilParentPage extends ConsumerWidget {
                   : (defaultPalettes[4]['bgGradientLight'] as List<Color>),
               'iconColor': defaultPalettes[4]['iconColor'] as Color,
               'borderColor': isDark
-                  ? (defaultPalettes[4]['iconColor'] as Color).withValues(alpha: 0.25)
+                  ? (defaultPalettes[4]['iconColor'] as Color).withValues(
+                      alpha: 0.25,
+                    )
                   : (defaultPalettes[4]['borderColor'] as Color),
             },
             {
@@ -1096,7 +1095,9 @@ class AccueilParentPage extends ConsumerWidget {
                   : (defaultPalettes[5]['bgGradientLight'] as List<Color>),
               'iconColor': defaultPalettes[5]['iconColor'] as Color,
               'borderColor': isDark
-                  ? (defaultPalettes[5]['iconColor'] as Color).withValues(alpha: 0.25)
+                  ? (defaultPalettes[5]['iconColor'] as Color).withValues(
+                      alpha: 0.25,
+                    )
                   : (defaultPalettes[5]['borderColor'] as Color),
             },
             {
@@ -1108,7 +1109,9 @@ class AccueilParentPage extends ConsumerWidget {
                   : (defaultPalettes[6]['bgGradientLight'] as List<Color>),
               'iconColor': defaultPalettes[6]['iconColor'] as Color,
               'borderColor': isDark
-                  ? (defaultPalettes[6]['iconColor'] as Color).withValues(alpha: 0.25)
+                  ? (defaultPalettes[6]['iconColor'] as Color).withValues(
+                      alpha: 0.25,
+                    )
                   : (defaultPalettes[6]['borderColor'] as Color),
             },
             {
@@ -1120,7 +1123,9 @@ class AccueilParentPage extends ConsumerWidget {
                   : (defaultPalettes[7]['bgGradientLight'] as List<Color>),
               'iconColor': defaultPalettes[7]['iconColor'] as Color,
               'borderColor': isDark
-                  ? (defaultPalettes[7]['iconColor'] as Color).withValues(alpha: 0.25)
+                  ? (defaultPalettes[7]['iconColor'] as Color).withValues(
+                      alpha: 0.25,
+                    )
                   : (defaultPalettes[7]['borderColor'] as Color),
             },
             {
@@ -1132,7 +1137,9 @@ class AccueilParentPage extends ConsumerWidget {
                   : (defaultPalettes[8]['bgGradientLight'] as List<Color>),
               'iconColor': defaultPalettes[8]['iconColor'] as Color,
               'borderColor': isDark
-                  ? (defaultPalettes[8]['iconColor'] as Color).withValues(alpha: 0.25)
+                  ? (defaultPalettes[8]['iconColor'] as Color).withValues(
+                      alpha: 0.25,
+                    )
                   : (defaultPalettes[8]['borderColor'] as Color),
             },
           ];
@@ -1171,16 +1178,24 @@ class AccueilParentPage extends ConsumerWidget {
                 ),
                 decoration: BoxDecoration(
                   color: isDark
-                      ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4)
-                      : (gradientColors.isNotEmpty ? gradientColors.first : theme.colorScheme.surface),
+                      ? theme.colorScheme.surfaceContainerHighest.withValues(
+                          alpha: 0.4,
+                        )
+                      : (gradientColors.isNotEmpty
+                            ? gradientColors.first
+                            : theme.colorScheme.surface),
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(
-                    color: isDark ? theme.dividerColor.withValues(alpha: 0.25) : borderColor,
+                    color: isDark
+                        ? theme.dividerColor.withValues(alpha: 0.25)
+                        : borderColor,
                     width: 1.2,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+                      color: Colors.black.withValues(
+                        alpha: isDark ? 0.25 : 0.04,
+                      ),
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
@@ -1198,7 +1213,9 @@ class AccueilParentPage extends ConsumerWidget {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                            color: Colors.black.withValues(
+                              alpha: isDark ? 0.2 : 0.04,
+                            ),
                             blurRadius: 4,
                             offset: const Offset(0, 1),
                           ),
@@ -1386,13 +1403,12 @@ class AccueilParentPage extends ConsumerWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: AppRadius.card,
-        border: Border.all(
-          color: theme.dividerColor.withValues(alpha: 0.2),
-        ),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.2)),
         boxShadow: [
           BoxShadow(
-            color: (isDark ? Colors.black : AppColors.textPrimary)
-                .withValues(alpha: isDark ? 0.25 : 0.03),
+            color: (isDark ? Colors.black : AppColors.textPrimary).withValues(
+              alpha: isDark ? 0.25 : 0.03,
+            ),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -1457,7 +1473,8 @@ class AccueilParentPage extends ConsumerWidget {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: theme.textTheme.titleSmall?.color ??
+                      color:
+                          theme.textTheme.titleSmall?.color ??
                           theme.colorScheme.onSurface,
                     ),
                     maxLines: 1,
@@ -1486,13 +1503,17 @@ class AccueilParentPage extends ConsumerWidget {
                           const SizedBox(width: 2),
                           Text(
                             jouet.noteMoyenneDenormalise > 0
-                                ? jouet.noteMoyenneDenormalise.toStringAsFixed(1)
+                                ? jouet.noteMoyenneDenormalise.toStringAsFixed(
+                                    1,
+                                  )
                                 : '4.8',
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
-                              color: theme.textTheme.bodySmall?.color
-                                      ?.withValues(alpha: 0.7) ??
+                              color:
+                                  theme.textTheme.bodySmall?.color?.withValues(
+                                    alpha: 0.7,
+                                  ) ??
                                   AppColors.textSecondary,
                             ),
                           ),
@@ -1525,7 +1546,8 @@ class AccueilParentPage extends ConsumerWidget {
           style: TextStyle(
             fontSize: 17,
             fontWeight: FontWeight.w800,
-            color: theme.textTheme.titleMedium?.color ??
+            color:
+                theme.textTheme.titleMedium?.color ??
                 theme.colorScheme.onSurface,
             letterSpacing: -0.3,
           ),

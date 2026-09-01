@@ -1,4 +1,4 @@
-// lib/features/parent/presentation/pages/controle_parental_page.dart
+// lib/features/parents/presentation/pages/controle_parental_page.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

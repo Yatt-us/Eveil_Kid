@@ -1,4 +1,4 @@
-// lib/features/parent/presentation/pages/securite_page.dart
+// lib/features/parents/presentation/pages/securite_page.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,59 +11,226 @@ import '../../../../core/services/parental_pin_service.dart';
 import '../../../../core/utils/parental_pin_helper.dart';
 import '../../../auth/providers/auth_provider.dart';
 
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/provider/bottom_nav_bar_provider.dart';
+import '../../../../core/router/app_routes.dart';
+import '../../../enfant/providers/enfant_providers.dart';
+import '../../providers/parent_provider.dart';
+
+import '../../../../core/constants/AppRadius.dart';
+
 class SecuritePage extends ConsumerWidget {
   const SecuritePage({super.key});
 
   void _showChangePasswordDialog(BuildContext context, WidgetRef ref) {
     final authState = ref.read(authProvider);
-    final email = authState.utilisateur?.email ?? '';
+    final initialEmail = FirebaseAuth.instance.currentUser?.email ??
+        authState.utilisateur?.email ??
+        ref.read(parentNotifierProvider).value?.email ??
+        '';
 
-    AppDialogs.showConfirmDialog(
+    final emailController = TextEditingController(text: initialEmail);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    showDialog(
       context: context,
-      title: 'Changer le mot de passe',
-      message:
-          'Un email de réinitialisation sera envoyé à $email. Voulez-vous continuer ?',
-      confirmText: 'Envoyer',
-      cancelText: 'Annuler',
-    ).then((confirmed) async {
-      if (confirmed == true && context.mounted) {
-        final success = await ref
-            .read(authProvider.notifier)
-            .resetPassword(email: email);
-        if (context.mounted) {
-          if (success) {
-            AppDialogs.showSnackBar(
-              context: context,
-              message: 'Email de réinitialisation envoyé avec succès.',
-            );
-          } else {
-            AppDialogs.showSnackBar(
-              context: context,
-              message: 'Erreur lors de l\'envoi de l\'email.',
-              isError: true,
-            );
-          }
-        }
-      }
-    });
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: const RoundedRectangleBorder(borderRadius: AppRadius.dialog),
+          backgroundColor: theme.colorScheme.surface,
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.mail_lock_rounded,
+                  color: AppColors.primary,
+                  size: 24,
+                ),
+              ),
+              AppSpacing.horizontalMd,
+              Expanded(
+                child: Text(
+                  'Réinitialiser le mot de passe',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: theme.textTheme.titleMedium?.color ??
+                        (isDark ? AppColors.darkTextPrimary : AppColors.textPrimary),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppSpacing.verticalSm,
+              Text(
+                'Un lien de réinitialisation sécurisé sera envoyé à votre adresse email :',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8) ??
+                      (isDark ? AppColors.darkTextSecondary : AppColors.textSecondary),
+                  height: 1.4,
+                ),
+              ),
+              AppSpacing.verticalMd,
+              TextField(
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: theme.textTheme.bodyLarge?.color ??
+                      (isDark ? AppColors.darkTextPrimary : AppColors.textPrimary),
+                ),
+                decoration: InputDecoration(
+                  labelText: 'Adresse Email',
+                  hintText: 'exemple@domaine.com',
+                  prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primary),
+                  filled: true,
+                  fillColor: isDark
+                      ? AppColors.darkSurfaceVariant
+                      : AppColors.surfaceVariant.withValues(alpha: 0.5),
+                  border: OutlineInputBorder(
+                    borderRadius: AppRadius.input,
+                    borderSide: BorderSide(
+                      color: theme.dividerColor.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: AppRadius.input,
+                    borderSide: BorderSide(
+                      color: theme.dividerColor.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  focusedBorder: const OutlineInputBorder(
+                    borderRadius: AppRadius.input,
+                    borderSide: BorderSide(color: AppColors.primary, width: 1.5),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                foregroundColor: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.textSecondary,
+              ),
+              child: const Text('Annuler', style: TextStyle(fontWeight: FontWeight.w600)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final email = emailController.text.trim();
+                if (email.isEmpty || !email.contains('@')) {
+                  AppDialogs.showSnackBar(
+                    context: context,
+                    message: 'Veuillez saisir une adresse email valide.',
+                    isError: true,
+                  );
+                  return;
+                }
+
+                Navigator.pop(dialogContext);
+
+                final success = await ref
+                    .read(authProvider.notifier)
+                    .resetPassword(email: email);
+
+                if (context.mounted) {
+                  if (success) {
+                    AppDialogs.showSnackBar(
+                      context: context,
+                      message:
+                          'Lien envoyé à $email ! Vérifiez votre boîte de réception et vos spams.',
+                    );
+                  } else {
+                    final err = ref.read(authProvider).errorMessage;
+                    AppDialogs.showSnackBar(
+                      context: context,
+                      message: err ?? 'Erreur lors de l\'envoi de l\'email.',
+                      isError: true,
+                    );
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: const RoundedRectangleBorder(borderRadius: AppRadius.button),
+                elevation: 0,
+              ),
+              child: const Text(
+                'Envoyer le lien',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _showDeleteAccountDialog(BuildContext context, WidgetRef ref) {
     AppDialogs.showConfirmDialog(
       context: context,
-      title: 'Supprimer définitivement le compte ?',
+      title: 'Archiver et désactiver le compte ?',
       message:
-          'Attention : Cette action est irréversible. Toutes vos données seront supprimées.',
-      confirmText: 'Supprimer le compte',
+          'Votre compte ainsi que toutes vos données (profils enfants, favoris, historique) seront archivés et désactivés en toute sécurité. Vous serez automatiquement déconnecté.',
+      confirmText: 'Archiver mon compte',
       cancelText: 'Annuler',
       isDanger: true,
-    ).then((confirmed) {
+    ).then((confirmed) async {
       if (confirmed == true && context.mounted) {
-        AppDialogs.showSnackBar(
+        // Afficher indicateur de chargement
+        showDialog(
           context: context,
-          message: 'Demande de suppression prise en compte.',
-          isError: true,
+          barrierDismissible: false,
+          builder: (_) => const Center(
+            child: CircularProgressIndicator(color: AppColors.primary),
+          ),
         );
+
+        final success = await ref.read(authProvider.notifier).archiverCompte();
+
+        if (context.mounted) {
+          Navigator.pop(context); // Fermer le loader
+
+          if (success) {
+            ref.invalidate(parentNotifierProvider);
+            ref.invalidate(enfantNotifierProvider);
+            ref.read(bottomIndexProvider.notifier).setIndex(0);
+            context.go(AppRoutes.home);
+
+            AppDialogs.showSnackBar(
+              context: context,
+              message: 'Votre compte a été archivé et désactivé avec succès.',
+            );
+          } else {
+            final err = ref.read(authProvider).errorMessage;
+            AppDialogs.showSnackBar(
+              context: context,
+              message: err ?? 'Erreur lors de l\'archivage du compte.',
+              isError: true,
+            );
+          }
+        }
       }
     });
   }
