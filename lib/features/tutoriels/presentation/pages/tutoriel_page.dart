@@ -5,6 +5,7 @@ import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/core/constants/AppTextStyles.dart';
 import 'package:eveilkid/core/provider/bottom_nav_bar_provider.dart';
 import 'package:eveilkid/core/router/app_routes.dart';
+import 'package:eveilkid/core/utils/video_route_helper.dart';
 import 'package:eveilkid/features/categories/models/categorie.dart';
 import 'package:eveilkid/features/categories/providers/categorie_provider.dart';
 import 'package:eveilkid/features/panier/presentation/widgets/panier_app_bar_action.dart';
@@ -617,11 +618,9 @@ class _TutorielPageState extends ConsumerState<TutorielPage> {
   }
 
   void _openDetail(BuildContext context, String tutorielId) {
-    Navigator.push(
+    openYouTubeStyleVideo(
       context,
-      MaterialPageRoute(
-        builder: (_) => TutorielDetailPage(tutorielId: tutorielId),
-      ),
+      TutorielDetailPage(tutorielId: tutorielId),
     );
   }
 }

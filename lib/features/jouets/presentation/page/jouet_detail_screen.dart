@@ -10,6 +10,11 @@ import '../../../panier/presentation/widgets/panier_app_bar_action.dart';
 import '../../../panier/providers/panier_provider.dart';
 import '../../../favoris/models/favoris.dart';
 import '../../../favoris/providers/favoris_providers.dart';
+import '../../../../core/utils/video_route_helper.dart';
+import '../../../tutoriels/enums/tutoriel_status.enum.dart';
+import '../../../tutoriels/models/tutoriel.dart';
+import '../../../tutoriels/presentation/pages/tutoriel_detail_page.dart';
+import '../../../tutoriels/providers/tutoriel_provider.dart';
 import '../../models/jouet.dart';
 import '../../providers/jouet_provider.dart';
 import '../widgets/jouet_avis_section.dart';
@@ -157,6 +162,18 @@ class _JouetDetailScreenState extends ConsumerState<JouetDetailScreen> {
         nomCategorie = found.first.nom;
       }
     });
+
+    // 3. RÉCUPÉRATION DYNAMIQUE DES TUTORIELS ASSOCIÉS AU JOUET
+    final tutorielsAsync = ref.watch(tutorielsProvider);
+    final tutorielsDuJouet = tutorielsAsync.maybeWhen(
+      data: (tuts) => tuts.where((t) {
+        final isLie = t.jouetLieId == currentJouet.jouetId;
+        final isSuggere = t.jouetsSuggeres.contains(currentJouet.jouetId);
+        final isPublie = t.statut == TutorielStatus.publie;
+        return (isLie || isSuggere) && isPublie;
+      }).toList(),
+      orElse: () => <Tutoriel>[],
+    );
 
     // Liste des images
     final allImages = currentJouet.images.isNotEmpty
@@ -384,52 +401,14 @@ class _JouetDetailScreenState extends ConsumerState<JouetDetailScreen> {
                     ),
                     const SizedBox(height: 10),
 
-                    // 3. BADGE DE STOCK + PRIX
+                    // 3. PRIX DU PRODUIT
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // Badge de Stock
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: isEnRupture
-                                ? AppColors.danger.withValues(alpha: isDark ? 0.2 : 0.1)
-                                : (isStockFaible
-                                    ? const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.2 : 0.1)
-                                    : const Color(0xFF10B981).withValues(alpha: isDark ? 0.2 : 0.1)),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
-                              color: isEnRupture
-                                  ? AppColors.danger.withValues(alpha: 0.4)
-                                  : (isStockFaible
-                                      ? const Color(0xFFF59E0B).withValues(alpha: 0.4)
-                                      : const Color(0xFF10B981).withValues(alpha: 0.4)),
-                            ),
-                          ),
-                          child: Text(
-                            isEnRupture
-                                ? 'Rupture de stock'
-                                : (isStockFaible
-                                    ? 'Plus que ${currentJouet.stockDisponible} en stock'
-                                    : 'En stock'),
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: isEnRupture
-                                  ? AppColors.danger
-                                  : (isStockFaible
-                                      ? const Color(0xFFF59E0B)
-                                      : const Color(0xFF10B981)),
-                            ),
-                          ),
-                        ),
-                        const Spacer(),
-
-                        // Prix
                         Text(
                           _formatPrice(currentJouet.prix, currentJouet.devise),
                           style: TextStyle(
-                            fontSize: 20,
+                            fontSize: 22,
                             fontWeight: FontWeight.w900,
                             color: primaryColor,
                           ),
@@ -461,48 +440,52 @@ class _JouetDetailScreenState extends ConsumerState<JouetDetailScreen> {
                     ),
                     const SizedBox(height: 22),
 
-                    // 5. BANNIÈRE TUTORIELS ASSOCIÉS
-                    if (currentJouet.nbTutorielsAssocies > 0) ...[
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: primaryColor.withValues(alpha: isDark ? 0.16 : 0.08),
-                          borderRadius: AppRadius.card,
-                          border: Border.all(
-                            color: primaryColor.withValues(alpha: isDark ? 0.3 : 0.2),
+                    // 5. SECTION TUTORIELS VIDÉO INCLUS DYNAMIQUES
+                    if (tutorielsDuJouet.isNotEmpty) ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'TUTORIELS VIDÉO INCLUS',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                              color: textSecondary,
+                            ),
                           ),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Vidéos tutoriels incluses',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
-                                      color: primaryColor,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Accédez aux guides et activités vidéo associés à ce jouet.',
-                                    style: TextStyle(
-                                      fontSize: 11.5,
-                                      color: textSecondary,
-                                    ),
-                                  ),
-                                ],
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: primaryColor.withValues(
+                                alpha: isDark ? 0.2 : 0.1,
+                              ),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              '${tutorielsDuJouet.length} vidéo${tutorielsDuJouet.length > 1 ? "s" : ""}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: primaryColor,
                               ),
                             ),
-                            Icon(
-                              Icons.play_circle_outline_rounded,
-                              size: 32,
-                              color: primaryColor,
-                            ),
-                          ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      ...tutorielsDuJouet.map(
+                        (tut) => _buildTutorielTile(
+                          context,
+                          tut,
+                          theme,
+                          isDark,
+                          primaryColor,
+                          textPrimary,
+                          textSecondary,
                         ),
                       ),
                       const SizedBox(height: 22),
@@ -616,6 +599,139 @@ class _JouetDetailScreenState extends ConsumerState<JouetDetailScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTutorielTile(
+    BuildContext context,
+    Tutoriel tut,
+    ThemeData theme,
+    bool isDark,
+    Color primaryColor,
+    Color textPrimary,
+    Color textSecondary,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
+        color: isDark
+            ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35)
+            : theme.colorScheme.surface,
+        borderRadius: AppRadius.card,
+        elevation: isDark ? 0 : 1,
+        child: InkWell(
+          onTap: () {
+            if (tut.tutorielId != null && tut.tutorielId!.isNotEmpty) {
+              openYouTubeStyleVideo(
+                context,
+                TutorielDetailPage(tutorielId: tut.tutorielId!),
+              );
+            }
+          },
+          borderRadius: AppRadius.card,
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              borderRadius: AppRadius.card,
+              border: Border.all(
+                color:
+                    theme.dividerColor.withValues(alpha: isDark ? 0.2 : 0.12),
+              ),
+            ),
+            child: Row(
+              children: [
+                // Miniature avec bouton play
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        width: 72,
+                        height: 52,
+                        color: primaryColor.withValues(alpha: 0.1),
+                        child: tut.miniatureUrl.isNotEmpty
+                            ? Image.network(
+                                tut.miniatureUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Icon(
+                                  Icons.play_circle_fill_rounded,
+                                  color: primaryColor,
+                                  size: 32,
+                                ),
+                              )
+                            : Icon(
+                                Icons.play_circle_fill_rounded,
+                                color: primaryColor,
+                                size: 32,
+                              ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.5),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.play_arrow_rounded,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 12),
+                // Titre & Âge / Durée
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        tut.titre,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w700,
+                          color: textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          if (tut.ageRangeLabel.isNotEmpty) ...[
+                            Text(
+                              tut.ageRangeLabel,
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                color: textSecondary,
+                              ),
+                            ),
+                            if (tut.duree > 0)
+                              Text(
+                                ' • ${tut.dureeFormatted}',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  color: textSecondary,
+                                ),
+                              ),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: textSecondary.withValues(alpha: 0.6),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

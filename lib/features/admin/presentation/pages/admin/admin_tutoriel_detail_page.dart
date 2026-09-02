@@ -185,10 +185,13 @@ class _AdminTutorielDetailPageState extends ConsumerState<AdminTutorielDetailPag
           const SizedBox(width: 6),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1100),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ── 1. LECTEUR VIDÉO INLINE SANS DISTRACTION ──
             if (tutoriel.videoUrl.isNotEmpty) ...[
@@ -386,8 +389,10 @@ class _AdminTutorielDetailPageState extends ConsumerState<AdminTutorielDetailPag
           ],
         ),
       ),
-    );
-  }
+    ),
+  ),
+);
+}
 
   Widget _buildStatusBadge(bool isPublie) {
     return Container(

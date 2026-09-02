@@ -4,6 +4,8 @@ import 'package:eveilkid/core/themes/kid_theme.dart';
 import 'package:eveilkid/core/utils/parental_pin_helper.dart';
 import 'package:eveilkid/features/enfant/presentation/pages/liste_souhaits_enfant_page.dart';
 import 'package:eveilkid/features/enfant/presentation/pages/progression_enfant_page.dart';
+import 'package:eveilkid/features/enfant/presentation/widgets/duolingo_button.dart';
+import 'package:eveilkid/features/enfant/presentation/widgets/duolingo_card.dart';
 import 'package:eveilkid/features/enfant/providers/child_mode_provider.dart';
 import 'package:eveilkid/features/enfant/providers/enfant_providers.dart';
 
@@ -30,9 +32,9 @@ class ProfilEnfantPages extends ConsumerWidget {
 
     final wishesCount =
         enfant.souhait.where((s) => !s.contains(' ') && s.isNotEmpty).length;
-    final activitiesCount = enfant.resultatsActivite.length;
-    final starsCount = (activitiesCount * 15) + 30;
-    final level = (enfant.age + (activitiesCount ~/ 5)).clamp(1, 10);
+    final activitiesCount = enfant.totalActivitesTerminees;
+    final starsCount = enfant.totalPoints;
+    final level = enfant.niveau;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -71,27 +73,14 @@ class ProfilEnfantPages extends ConsumerWidget {
                   ),
                   const SizedBox(width: 14),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Mon Profil',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w900,
-                            color: theme.colorScheme.onSurface,
-                            letterSpacing: -0.3,
-                          ),
-                        ),
-                        Text(
-                          'Ton espace personnel',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      'Profil',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        color: theme.colorScheme.onSurface,
+                        letterSpacing: -0.3,
+                      ),
                     ),
                   ),
                   Container(
@@ -116,35 +105,20 @@ class ProfilEnfantPages extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(16, 6, 16, 30),
                 child: Column(
                   children: [
-                    // ── HERO AVATAR & INFOS ──
-                    Container(
-                      width: double.infinity,
+                    // ── HERO AVATAR & INFOS 3D DUOLINGO ──
+                    DuolingoCard(
+                      borderRadius: 28,
+                      bottomThickness: 4.5,
                       padding: const EdgeInsets.all(22),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: isDark
-                              ? [const Color(0xFF14532D), const Color(0xFF064E3B)]
-                              : [const Color(0xFFDCFCE7), const Color(0xFFBBF7D0)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(28),
-                        border: Border.all(
-                          color: isDark
-                              ? theme.dividerColor.withValues(alpha: 0.25)
-                              : KidTheme.primaryGreen.withValues(alpha: 0.3),
-                          width: 1.5,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(
-                              alpha: isDark ? 0.25 : 0.08,
-                            ),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
+                      gradientColors: isDark
+                          ? [const Color(0xFF14532D), const Color(0xFF064E3B)]
+                          : [const Color(0xFFDCFCE7), const Color(0xFFBBF7D0)],
+                      borderColor: isDark
+                          ? const Color(0xFF22C55E).withValues(alpha: 0.4)
+                          : KidTheme.primaryGreen.withValues(alpha: 0.4),
+                      bottomBorderColor: isDark
+                          ? const Color(0xFF064E3B)
+                          : KidTheme.primaryGreenDark,
                       child: Column(
                         children: [
                           Container(
@@ -195,7 +169,7 @@ class ProfilEnfantPages extends ConsumerWidget {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.8),
+                              color: Colors.white.withValues(alpha: 0.85),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
@@ -213,7 +187,7 @@ class ProfilEnfantPages extends ConsumerWidget {
 
                     const SizedBox(height: 20),
 
-                    // ── STATS GRID LUDIQUE ──
+                    // ── STATS GRID LUDIQUE 3D ──
                     Row(
                       children: [
                         _buildStatBox(
@@ -221,6 +195,7 @@ class ProfilEnfantPages extends ConsumerWidget {
                           '$starsCount',
                           const Color(0xFFFEF3C7),
                           const Color(0xFFD97706),
+                          const Color(0xFFB45309),
                           theme,
                           isDark,
                         ),
@@ -230,6 +205,7 @@ class ProfilEnfantPages extends ConsumerWidget {
                           '$activitiesCount',
                           const Color(0xFFF3E8FF),
                           const Color(0xFF9333EA),
+                          const Color(0xFF7E22CE),
                           theme,
                           isDark,
                         ),
@@ -239,6 +215,7 @@ class ProfilEnfantPages extends ConsumerWidget {
                           '$wishesCount',
                           const Color(0xFFFCE7F3),
                           const Color(0xFFDB2777),
+                          const Color(0xFFBE185D),
                           theme,
                           isDark,
                         ),
@@ -247,7 +224,7 @@ class ProfilEnfantPages extends ConsumerWidget {
 
                     const SizedBox(height: 20),
 
-                    // ── ACTIONS RAPIDES ENFANT ──
+                    // ── ACTIONS RAPIDES ENFANT 3D DUOLINGO ──
                     _buildMenuCard(
                       icon: Icons.stars_rounded,
                       iconColor: const Color(0xFFD97706),
@@ -267,7 +244,7 @@ class ProfilEnfantPages extends ConsumerWidget {
                       },
                     ),
 
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
 
                     _buildMenuCard(
                       icon: Icons.favorite_rounded,
@@ -290,34 +267,15 @@ class ProfilEnfantPages extends ConsumerWidget {
 
                     const SizedBox(height: 24),
 
-                    // ── BOUTON SORTIE CONTRÔLE PARENTAL ──
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: OutlinedButton.icon(
-                        onPressed: () => ParentalPinHelper.exitChildSpace(
-                          context: context,
-                          ref: ref,
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: theme.colorScheme.onSurface,
-                          side: BorderSide(
-                            color: theme.dividerColor.withValues(
-                              alpha: isDark ? 0.3 : 0.2,
-                            ),
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                        ),
-                        icon: const Icon(Icons.lock_outline_rounded, size: 20),
-                        label: const Text(
-                          'Quitter l’espace enfant 🔒',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
+                    // ── BOUTON SORTIE CONTRÔLE PARENTAL 3D ──
+                    DuolingoButton(
+                      text: 'Quitter l’espace enfant 🔒',
+                      icon: Icons.lock_outline_rounded,
+                      colorType: DuolingoButtonColor.neutral,
+                      isFullWidth: true,
+                      onPressed: () => ParentalPinHelper.exitChildSpace(
+                        context: context,
+                        ref: ref,
                       ),
                     ),
                   ],
@@ -335,26 +293,18 @@ class ProfilEnfantPages extends ConsumerWidget {
     String value,
     Color bg,
     Color textColor,
+    Color bottomBorderColor,
     ThemeData theme,
     bool isDark,
   ) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: isDark ? theme.colorScheme.surfaceContainerHighest : bg,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isDark ? theme.dividerColor.withValues(alpha: 0.2) : bg,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
+      child: DuolingoCard(
+        borderRadius: 20,
+        bottomThickness: 3.5,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        backgroundColor: isDark ? theme.colorScheme.surfaceContainerHighest : bg,
+        borderColor: isDark ? theme.dividerColor.withValues(alpha: 0.2) : bg,
+        bottomBorderColor: isDark ? const Color(0xFF1E293B) : bottomBorderColor.withValues(alpha: 0.5),
         child: Column(
           children: [
             Text(
@@ -389,72 +339,51 @@ class ProfilEnfantPages extends ConsumerWidget {
     required bool isDark,
     required VoidCallback onTap,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: theme.dividerColor.withValues(alpha: isDark ? 0.25 : 0.15),
-          width: 1.2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
+    return DuolingoCard(
+      onTap: onTap,
+      borderRadius: 22,
+      bottomThickness: 4.0,
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(icon, color: iconColor, size: 24),
           ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(22),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(22),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: iconColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Icon(icon, color: iconColor, size: 24),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w800,
-                          color: theme.colorScheme.onSurface,
-                        ),
-                      ),
-                      Text(
-                        subtitle,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w900,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 16,
-                  color: theme.colorScheme.onSurfaceVariant,
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
           ),
-        ),
+          Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: 16,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ],
       ),
     );
   }

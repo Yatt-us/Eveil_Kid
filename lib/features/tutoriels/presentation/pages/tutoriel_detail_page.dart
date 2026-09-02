@@ -14,7 +14,6 @@ import 'package:eveilkid/features/tutoriels/presentation/widgets/jouets_suggesti
 import 'package:eveilkid/features/tutoriels/presentation/widgets/tutoriel_card.dart';
 import 'package:eveilkid/features/tutoriels/presentation/widgets/video_player_widget.dart';
 import 'package:eveilkid/features/tutoriels/providers/cloudinary_duration_provider.dart';
-import 'package:eveilkid/features/tutoriels/providers/progression_provider.dart';
 import 'package:eveilkid/features/tutoriels/providers/tutoriel_provider.dart';
 import 'package:eveilkid/features/tutoriels/utils/duration_utils.dart';
 import 'package:eveilkid/shared/widgets/app_button.dart';
@@ -65,7 +64,6 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
   @override
   Widget build(BuildContext context) {
     final tutorielAsync = ref.watch(tutorielStreamByIdProvider(widget.tutorielId));
-    final progressionAsync = ref.watch(progressionProvider(widget.tutorielId));
     final tutorielsAsync = ref.watch(tutorielsProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
     final authState = ref.watch(authProvider);
@@ -97,11 +95,11 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back_rounded,
-              color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
+            icon: const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 28,
             ),
-            tooltip: 'Retour',
+            tooltip: 'Fermer',
             onPressed: () {
               if (Navigator.of(context).canPop()) {
                 Navigator.of(context).pop();
@@ -213,11 +211,6 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
             orElse: () => null,
           );
 
-          final progression = progressionAsync.maybeWhen(
-            data: (value) => value,
-            orElse: () => null,
-          );
-
           final relatedTutoriels = tutorielsAsync.maybeWhen(
             data: (list) {
               final sameCategory = list
@@ -242,21 +235,6 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
             orElse: () => <Tutoriel>[],
           );
 
-          final currentPosition = progression?.position.toInt() ?? 0;
-          final totalDuration = tutoriel.duree > 0
-              ? tutoriel.duree
-              : (ref
-                      .watch(cloudinaryVideoDurationProvider(tutoriel.videoUrl))
-                      .asData
-                      ?.value
-                      .round() ??
-                  0);
-          final hasProgress =
-              currentPosition > 0 && !(progression?.termine == true);
-          final progressRatio = totalDuration > 0
-              ? (currentPosition / totalDuration).clamp(0.0, 1.0)
-              : 0.0;
-
           // Jouets suggérés
           final toyIds = <String>{
             if (tutoriel.jouetLieId != null && tutoriel.jouetLieId!.isNotEmpty)
@@ -277,8 +255,6 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
                       tutoriel: tutoriel,
                       controller: _playerController,
                       autoPlay: false,
-                      initialPositionSeconds:
-                          hasProgress ? currentPosition : null,
                       onPlayStateChanged: (playing) {
                         if (mounted) setState(() => _isPlaying = playing);
                       },
@@ -289,18 +265,6 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
                     if (isAdminOrStaff) ...[
                       _buildAdminBanner(context, tutoriel),
                       const SizedBox(height: 14),
-                    ],
-
-                    // ── REPRENDRE LA LECTURE (SI EN COURS) ──
-                    if (hasProgress && !_isPlaying) ...[
-                      _buildResumeCard(
-                        context,
-                        tutoriel,
-                        currentPosition,
-                        totalDuration,
-                        progressRatio,
-                      ),
-                      const SizedBox(height: 16),
                     ],
 
                     // ── TITRE & INFORMATIONS ÉPURÉES ──
@@ -334,8 +298,8 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
                                   categoryName.isNotEmpty)
                                 categoryName,
                               tutoriel.ageRangeLabel,
-                              if (totalDuration > 0)
-                                formatDurationSeconds(totalDuration.toDouble()),
+                              if (tutoriel.duree > 0)
+                                tutoriel.dureeFormatted,
                             ].join(' • '),
                             style: TextStyle(
                               fontSize: 13,
@@ -415,9 +379,7 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
                 child: AppButton(
                   text: _isPlaying
                       ? 'Mettre en pause'
-                      : (hasProgress
-                          ? 'Reprendre le tutoriel'
-                          : 'Regarder le tutoriel'),
+                      : 'Regarder le tutoriel',
                   icon: _isPlaying
                       ? Icons.pause_rounded
                       : Icons.play_arrow_rounded,
@@ -426,11 +388,7 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
                     if (_isPlaying) {
                       _playerController.pause();
                     } else {
-                      _scrollToTopAndPlay(
-                        seekTo: hasProgress
-                            ? Duration(seconds: currentPosition)
-                            : null,
-                      );
+                      _scrollToTopAndPlay();
                     }
                   },
                 ),
@@ -479,88 +437,6 @@ class _TutorielDetailPageState extends ConsumerState<TutorielDetailPage> {
                 fontWeight: FontWeight.w600,
                 color: isPublie ? AppColors.success : AppColors.warning,
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildResumeCard(
-    BuildContext context,
-    Tutoriel tutoriel,
-    int currentPosition,
-    int totalDuration,
-    double progressRatio,
-  ) {
-    final theme = Theme.of(context);
-
-    return AppCard(
-      onTap: () => _scrollToTopAndPlay(
-        seekTo: Duration(seconds: currentPosition),
-      ),
-      padding: const EdgeInsets.all(14),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.play_arrow_rounded,
-              color: Colors.white,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Reprendre la lecture',
-                      style: TextStyle(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w700,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                    ),
-                    Text(
-                      '${(progressRatio * 100).toInt()}%',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: LinearProgressIndicator(
-                    value: progressRatio,
-                    minHeight: 6,
-                    backgroundColor:
-                        theme.colorScheme.primary.withValues(alpha: 0.15),
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                        theme.colorScheme.primary),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${_formatDuration(currentPosition)} / ${_formatDuration(totalDuration)}',
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
             ),
           ),
         ],

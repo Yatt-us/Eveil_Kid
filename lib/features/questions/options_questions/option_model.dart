@@ -9,11 +9,39 @@ class OptionQuestion {
     this.imageUrl,
   });
 
-  factory OptionQuestion.fromMap(Map<String, dynamic> map) {
+  factory OptionQuestion.fromMap(dynamic data, {int index = 0}) {
+    if (data is String) {
+      return OptionQuestion(
+        id: 'opt_${index + 1}',
+        texte: data,
+      );
+    }
+    if (data is Map) {
+      final map = Map<String, dynamic>.from(data);
+      final id = map['id']?.toString() ??
+          map['optionId']?.toString() ??
+          map['code']?.toString() ??
+          'opt_${index + 1}';
+      final texte = map['texte']?.toString() ??
+          map['libelle']?.toString() ??
+          map['text']?.toString() ??
+          map['valeur']?.toString() ??
+          map['titre']?.toString() ??
+          map['label']?.toString() ??
+          '';
+      final imageUrl = map['imageUrl']?.toString() ??
+          map['image']?.toString() ??
+          map['photoUrl']?.toString();
+
+      return OptionQuestion(
+        id: id.isNotEmpty ? id : 'opt_${index + 1}',
+        texte: texte,
+        imageUrl: imageUrl,
+      );
+    }
     return OptionQuestion(
-      id: map['id'] ?? '',
-      texte: map['texte'] ?? '',
-      imageUrl: map['imageUrl'],
+      id: 'opt_${index + 1}',
+      texte: data?.toString() ?? '',
     );
   }
 
@@ -21,6 +49,7 @@ class OptionQuestion {
     return {
       'id': id,
       'texte': texte,
+      'libelle': texte,
       if (imageUrl != null) 'imageUrl': imageUrl,
     };
   }

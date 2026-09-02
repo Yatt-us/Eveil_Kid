@@ -32,8 +32,6 @@ import 'liste_enfants.dart';
 import 'notification_settings_page.dart';
 import '../../../panier/presentation/widgets/panier_app_bar_action.dart';
 import '../../../panier/presentation/widgets/panier_floating_button.dart';
-import '../../../commandes/providers/commande_provider.dart';
-import '../../../commandes/presentation/widgets/statut_commande.dart';
 
 class AccueilParentPage extends ConsumerWidget {
   final ValueChanged<int>? onNavigateTab;
@@ -57,7 +55,6 @@ class AccueilParentPage extends ConsumerWidget {
         onRefresh: () async {
           if (isAuthenticated) {
             ref.invalidate(parentNotifierProvider);
-            ref.invalidate(commandeProvider);
             ref.read(authProvider.notifier).reloadAndCheckEmailVerified();
           }
           ref.invalidate(jouetsProvider);
@@ -135,17 +132,6 @@ class AccueilParentPage extends ConsumerWidget {
                   loading: () => _buildChildrenSkeleton(context),
                   error: (_, _) => const SizedBox.shrink(),
                 ),
-
-                // ── SECTION MES COMMANDES (Accès rapide) ──
-                _buildSectionHeader(
-                  context: context,
-                  title: 'Mes commandes',
-                  actionText: 'Voir tout',
-                  onActionPressed: () => context.push(AppRoutes.parentCommandes),
-                ),
-                AppSpacing.verticalMd,
-                _buildRecentOrdersSummary(context, ref),
-                AppSpacing.verticalXxl,
               ],
 
               // ── CATÉGORIES DE JOUETS (Rendu réaliste et coloré) ──
@@ -1582,149 +1568,4 @@ class AccueilParentPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildRecentOrdersSummary(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final commandeState = ref.watch(commandeProvider);
-    final authState = ref.read(authProvider);
-    final parentId = authState.utilisateur?.utilisateurId ?? '';
-
-    // Déclencher le chargement si vide et non en chargement
-    if (commandeState.commandes.isEmpty &&
-        !commandeState.estEnChargement &&
-        parentId.isNotEmpty) {
-      Future.microtask(() {
-        ref.read(commandeProvider.notifier).chargerCommandes(parentId);
-      });
-    }
-
-    if (commandeState.estEnChargement && commandeState.commandes.isEmpty) {
-      return const AppSkeletonLoader(
-        width: double.infinity,
-        height: 100,
-        borderRadius: 18,
-      );
-    }
-
-    if (commandeState.commandes.isEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: AppRadius.card,
-          border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              Icons.shopping_bag_outlined,
-              size: 40,
-              color: theme.colorScheme.primary.withValues(alpha: 0.5),
-            ),
-            AppSpacing.verticalSm,
-            const Text(
-              'Vous n\'avez pas encore de commande',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-            ),
-            AppSpacing.verticalXs,
-            Text(
-              'Découvrez nos jouets éducatifs !',
-              style: TextStyle(
-                fontSize: 12,
-                color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    final derniereCommande = commandeState.commandes.first;
-    final String displayId = derniereCommande.id.isNotEmpty
-        ? '#CMD-${derniereCommande.id.length > 6 ? derniereCommande.id.substring(0, 6).toUpperCase() : derniereCommande.id}'
-        : '#CMD-000000';
-
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: AppRadius.card,
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.2)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: InkWell(
-        onTap: () {
-          context.push(AppRoutes.parentDetailCommandePath(derniereCommande.id));
-        },
-        borderRadius: AppRadius.card,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Dernière commande',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: theme.textTheme.bodySmall?.color?.withValues(
-                            alpha: 0.7,
-                          ),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Text(
-                        displayId,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  StatutCommandeWidget(statut: derniereCommande.statut),
-                ],
-              ),
-              AppSpacing.verticalMd,
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      '${derniereCommande.articles.length} article(s) • ${DateFormat('dd MMM yyyy').format(derniereCommande.dateCreation)}',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: theme.textTheme.bodySmall?.color?.withValues(
-                          alpha: 0.8,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Text(
-                    '${derniereCommande.montantTotal.toInt()} FCFA',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }

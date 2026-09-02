@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:eveilkid/core/themes/kid_theme.dart';
+import 'package:eveilkid/features/activites/enums/publication_status.enum.dart';
 import 'package:eveilkid/features/activites/models/activity.dart';
 import 'package:eveilkid/features/activites/providers/admin/activity_provider.dart';
 import 'package:eveilkid/features/categories/models/categorie.dart';
 import 'package:eveilkid/features/categories/providers/categorie_provider.dart';
 import 'package:eveilkid/features/enfant/model/enfant_model.dart';
 import 'package:eveilkid/features/enfant/presentation/pages/questions_enfant_page.dart';
+import 'package:eveilkid/features/enfant/presentation/widgets/duolingo_button.dart';
+import 'package:eveilkid/features/enfant/presentation/widgets/duolingo_card.dart';
 import 'package:eveilkid/features/enfant/presentation/widgets/kid_filter_chip.dart';
 import 'package:eveilkid/features/enfant/providers/child_mode_provider.dart';
 import 'package:eveilkid/features/enfant/providers/enfant_providers.dart';
@@ -83,27 +86,14 @@ class _ActivitesEnfantPageState extends ConsumerState<ActivitesEnfantPage> {
                   ),
                   const SizedBox(width: 14),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Jeux et Activités',
-                          style: TextStyle(
-                            fontSize: 19,
-                            fontWeight: FontWeight.w900,
-                            color: theme.colorScheme.onSurface,
-                            letterSpacing: -0.3,
-                          ),
-                        ),
-                        Text(
-                          'Défis et apprentissage ludique',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      'Activités',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        color: theme.colorScheme.onSurface,
+                        letterSpacing: -0.3,
+                      ),
                     ),
                   ),
                   Container(
@@ -297,7 +287,13 @@ class _ActivitesEnfantPageState extends ConsumerState<ActivitesEnfantPage> {
   }
 
   List<Activite> _filterActivities(List<Activite> allActivities, EnfantModel? enfant) {
+    final childAge = enfant?.age ?? 0;
     return allActivities.where((act) {
+      if (act.statut != PublicationStatus.publie) return false;
+
+      // L'enfant ne voit jamais les activités destinées à un âge supérieur au sien
+      if (childAge > 0 && act.ageMinimum > childAge) return false;
+
       if (_selectedCategorieId != null && act.categorieId != _selectedCategorieId) {
         return false;
       }
@@ -332,19 +328,8 @@ class _ActivitesEnfantPageState extends ConsumerState<ActivitesEnfantPage> {
   }
 
   int _calculateTotalStars(EnfantModel? enfant) {
-    if (enfant == null) return 30;
-    int total = 30;
-    for (final res in enfant.resultatsActivite) {
-      if (res is Map) {
-        final points = res['pointsGagnes'];
-        if (points is num) {
-          total += points.toInt();
-        } else {
-          total += 15;
-        }
-      }
-    }
-    return total;
+    if (enfant == null) return 0;
+    return enfant.totalPoints;
   }
 
   Widget _buildActivityCard({
@@ -356,194 +341,190 @@ class _ActivitesEnfantPageState extends ConsumerState<ActivitesEnfantPage> {
   }) {
     final progress = _getActivityProgress(activite.id, enfant);
     final isCompleted = progress >= 1.0;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: isCompleted
-              ? (isDark
-                  ? KidTheme.primaryGreenLight.withValues(alpha: 0.35)
-                  : KidTheme.primaryGreen.withValues(alpha: 0.5))
-              : theme.dividerColor.withValues(alpha: isDark ? 0.25 : 0.12),
-          width: isCompleted ? 1.5 : 1.0,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
+    return DuolingoCard(
+      onTap: () => _showPlayActivitySheet(activite, categorieNom, isCompleted),
+      borderRadius: 24,
+      bottomThickness: 4.5,
+      padding: const EdgeInsets.all(14),
+      borderColor: isCompleted
+          ? (isDark
+              ? const Color(0xFF22C55E).withValues(alpha: 0.4)
+              : KidTheme.primaryGreen.withValues(alpha: 0.5))
+          : null,
+      bottomBorderColor: isCompleted
+          ? (isDark ? const Color(0xFF14532D) : KidTheme.primaryGreenDark)
+          : null,
+      child: Row(
+        children: [
+          // 1. Illustration / Badge Icône 3D
+          ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: Container(
+              width: 68,
+              height: 68,
+              decoration: BoxDecoration(
+                color: isDark
+                    ? KidTheme.primaryGreen.withValues(alpha: 0.2)
+                    : const Color(0xFFDCFCE7),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: activite.imageUrl != null && activite.imageUrl!.isNotEmpty
+                  ? Image.network(
+                      activite.imageUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => _buildDefaultActivityIcon(isDark),
+                    )
+                  : _buildDefaultActivityIcon(isDark),
+            ),
           ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(22),
-        child: InkWell(
-          onTap: () => _showPlayActivitySheet(activite, categorieNom, isCompleted),
-          borderRadius: BorderRadius.circular(22),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
+
+          const SizedBox(width: 14),
+
+          // 2. Informations de l'activité
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // 1. Illustration / Badge Icône
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    width: 68,
-                    height: 68,
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? KidTheme.primaryGreen.withValues(alpha: 0.2)
-                          : const Color(0xFFDCFCE7),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: activite.imageUrl != null && activite.imageUrl!.isNotEmpty
-                        ? Image.network(
-                            activite.imageUrl!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => _buildDefaultActivityIcon(isDark),
-                          )
-                        : _buildDefaultActivityIcon(isDark),
-                  ),
-                ),
-
-                const SizedBox(width: 14),
-
-                // 2. Informations de l'activité
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              activite.titre,
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w800,
-                                color: theme.colorScheme.onSurface,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          if (isCompleted) ...[
-                            const SizedBox(width: 6),
-                            const Icon(
-                              Icons.check_circle_rounded,
-                              color: KidTheme.primaryGreen,
-                              size: 18,
-                            ),
-                          ],
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        categorieNom,
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        activite.titre,
                         style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                          color: KidTheme.primaryGreenDark,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
+                          color: theme.colorScheme.onSurface,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.schedule_rounded,
-                                size: 13,
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                              const SizedBox(width: 3),
-                              Text(
-                                '${activite.dureeEnMinutes} min',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ],
+                    ),
+                    if (isCompleted) ...[
+                      const SizedBox(width: 6),
+                      const Icon(
+                        Icons.check_circle_rounded,
+                        color: KidTheme.primaryGreen,
+                        size: 18,
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  categorieNom,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: KidTheme.primaryGreenDark,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.schedule_rounded,
+                          size: 13,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 3),
+                        Text(
+                          '${activite.dureeEnMinutes} min',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
-                          const SizedBox(width: 10),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? const Color(0xFF78350F).withValues(alpha: 0.4)
-                                  : const Color(0xFFFEF3C7),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.star_rounded,
-                                  size: 13,
-                                  color: Color(0xFFD97706),
-                                ),
-                                const SizedBox(width: 3),
-                                Text(
-                                  '+${activite.points} pts',
-                                  style: const TextStyle(
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w800,
-                                    color: Color(0xFFB45309),
-                                  ),
-                                ),
-                              ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF78350F).withValues(alpha: 0.4)
+                            : const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.star_rounded,
+                            size: 13,
+                            color: Color(0xFFD97706),
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            '+${activite.points} pts',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFFB45309),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      // Barre de progression
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
-                        child: LinearProgressIndicator(
-                          value: isCompleted ? 1.0 : progress,
-                          minHeight: 5,
-                          backgroundColor: KidTheme.primaryGreen.withValues(alpha: 0.12),
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            isCompleted ? KidTheme.primaryGreen : KidTheme.playfulSky,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-
-                const SizedBox(width: 10),
-
-                // 3. Bouton Lancer / Rejouer
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: isCompleted
-                        ? (isDark ? KidTheme.primaryGreen.withValues(alpha: 0.2) : const Color(0xFFDCFCE7))
-                        : KidTheme.primaryGreen,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    isCompleted ? Icons.replay_rounded : Icons.play_arrow_rounded,
-                    color: isCompleted ? KidTheme.primaryGreenDark : Colors.white,
-                    size: 22,
+                const SizedBox(height: 8),
+                // Barre de progression
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(
+                    value: isCompleted ? 1.0 : progress,
+                    minHeight: 6,
+                    backgroundColor: KidTheme.primaryGreen.withValues(alpha: 0.15),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      isCompleted ? KidTheme.primaryGreen : KidTheme.playfulSky,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-        ),
+
+          const SizedBox(width: 10),
+
+          // 3. Bouton rond 3D style Duolingo
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: isCompleted
+                  ? KidTheme.primaryGreen
+                  : (isDark ? const Color(0xFF334155) : const Color(0xFFDCFCE7)),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isCompleted
+                    ? KidTheme.primaryGreenDark
+                    : (isDark ? const Color(0xFF475569) : const Color(0xFFBBF7D0)),
+                width: 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: isCompleted
+                      ? KidTheme.primaryGreenDark.withValues(alpha: 0.4)
+                      : Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 0,
+                  offset: const Offset(0, 2.5),
+                ),
+              ],
+            ),
+            child: Icon(
+              isCompleted ? Icons.replay_rounded : Icons.play_arrow_rounded,
+              color: isCompleted ? Colors.white : KidTheme.primaryGreenDark,
+              size: 24,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -677,39 +658,23 @@ class _ActivitesEnfantPageState extends ConsumerState<ActivitesEnfantPage> {
                   ),
                   const SizedBox(height: 14),
                 ],
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => QuestionsEnfantPage(activite: act),
+                const SizedBox(height: 14),
+                DuolingoButton(
+                  text: isCompleted ? 'Rejouer l\'activité' : 'Commencer le défi',
+                  icon: isCompleted ? Icons.replay_rounded : Icons.play_arrow_rounded,
+                  isFullWidth: true,
+                  colorType: DuolingoButtonColor.green,
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => KidThemeScope(
+                          child: QuestionsEnfantPage(activite: act),
                         ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: KidTheme.primaryGreen,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
                       ),
-                    ),
-                    icon: Icon(
-                      isCompleted ? Icons.replay_rounded : Icons.play_arrow_rounded,
-                      size: 22,
-                    ),
-                    label: Text(
-                      isCompleted ? 'Rejouer l\'activité' : 'Commencer le défi',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
               ],
             ),

@@ -175,283 +175,250 @@ class _AdminTutorielFormPageState extends ConsumerState<AdminTutorielFormPage> {
             const SizedBox(width: 8),
           ],
         ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (controller.errorMessage != null) ...[
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.error.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: theme.colorScheme.error.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.error_outline_rounded,
-                        color: theme.colorScheme.error,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          controller.errorMessage!,
-                          style: TextStyle(
-                            color: theme.colorScheme.error,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                          ),
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 960),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (controller.errorMessage != null) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.error.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: theme.colorScheme.error.withValues(alpha: 0.3),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
-
-              // Section 1: Informations Principales
-              _buildSectionCard(
-                title: 'Informations générales',
-                icon: Icons.article_rounded,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AppTextField(
-                      label: 'Titre du tutoriel *',
-                      hintText: 'Ex: Découverte des formes et couleurs',
-                      controller: controller.titreController,
-                      errorText: controller.titreError,
-                      prefixIcon: Icons.title_rounded,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Catégorie via AppDropdown
-                    if (controller.isLoadingCategories)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 8),
-                        child: LinearProgressIndicator(minHeight: 2),
-                      )
-                    else ...[
-                      AppDropdown<String>(
-                        label: 'Catégorie *',
-                        value: controller.selectedCategorieId.isNotEmpty
-                            ? controller.selectedCategorieId
-                            : null,
-                        hintText: 'Sélectionnez une catégorie',
-                        prefixIcon: Icons.category_rounded,
-                        items: controller.categories.map((categorie) {
-                          return AppDropdownItem<String>(
-                            value: categorie.categorieId,
-                            label: categorie.nom,
-                            icon: Icons.category_outlined,
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          if (value != null) {
-                            controller.updateCategorie(value);
-                          }
-                        },
-                      ),
-                      if (controller.categorieError != null) ...[
-                        const SizedBox(height: 6),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 12),
-                          child: Text(
-                            controller.categorieError!,
-                            style: TextStyle(
-                              color: theme.colorScheme.error,
-                              fontSize: 12,
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.error_outline_rounded,
+                            color: theme.colorScheme.error,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              controller.errorMessage!,
+                              style: TextStyle(
+                                color: theme.colorScheme.error,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ],
-                    const SizedBox(height: 16),
-
-                    // Description
-                    AppTextField(
-                      label: 'Description du tutoriel *',
-                      hintText:
-                          'Décrivez les étapes et les objectifs pédagogiques...',
-                      controller: controller.descriptionController,
-                      errorText: controller.descriptionError,
-                      maxLines: 4,
+                        ],
+                      ),
                     ),
+                    const SizedBox(height: 16),
                   ],
-                ),
-              ),
-              const SizedBox(height: 20),
 
-              // Section 2: Tranche d'Âge (Public cible)
-              _buildSectionCard(
-                title: 'Public cible (Tranche d\'âge)',
-                icon: Icons.child_care_rounded,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+                  // Section 1: Informations Principales
+                  _buildSectionCard(
+                    title: 'Informations générales',
+                    icon: Icons.article_rounded,
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: AppTextField(
-                            label: 'Âge min (ans)',
-                            hintText: '3',
-                            controller: controller.ageMinController,
-                            keyboardType: TextInputType.number,
-                            prefixIcon: Icons.child_care_rounded,
-                          ),
+                        AppTextField(
+                          label: 'Titre du tutoriel *',
+                          hintText: 'Ex: Découverte des formes et couleurs',
+                          controller: controller.titreController,
+                          errorText: controller.titreError,
+                          prefixIcon: Icons.title_rounded,
                         ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: AppTextField(
-                            label: 'Âge max (ans)',
-                            hintText: '8',
-                            controller: controller.ageMaxController,
-                            keyboardType: TextInputType.number,
-                            prefixIcon: Icons.child_care_rounded,
+                        const SizedBox(height: 16),
+
+                        // Catégorie via AppDropdown
+                        if (controller.isLoadingCategories)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8),
+                            child: LinearProgressIndicator(minHeight: 2),
+                          )
+                        else ...[
+                          AppDropdown<String>(
+                            label: 'Catégorie *',
+                            value: controller.selectedCategorieId.isNotEmpty
+                                ? controller.selectedCategorieId
+                                : null,
+                            hintText: 'Sélectionnez une catégorie',
+                            prefixIcon: Icons.category_rounded,
+                            items: controller.categories.map((categorie) {
+                              return AppDropdownItem<String>(
+                                value: categorie.categorieId,
+                                label: categorie.nom,
+                              );
+                            }).toList(),
+                            onChanged: (val) {
+                              if (val != null) {
+                                controller.updateCategorie(val);
+                              }
+                            },
                           ),
+                          if (controller.categorieError != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 6, left: 4),
+                              child: Text(
+                                controller.categorieError!,
+                                style: TextStyle(
+                                  color: theme.colorScheme.error,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                        ],
+                        const SizedBox(height: 16),
+
+                        AppTextField(
+                          label: 'Description du tutoriel *',
+                          hintText: 'Expliquez brièvement l\'objectif de ce vidéo-guide...',
+                          controller: controller.descriptionController,
+                          errorText: controller.descriptionError,
+                          maxLines: 4,
+                          prefixIcon: Icons.description_rounded,
                         ),
                       ],
                     ),
-                    if (controller.ageError != null) ...[
-                      const SizedBox(height: 6),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 12),
-                        child: Text(
-                          controller.ageError!,
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Section 2: Jouets associés
+                  _buildJouetsSection(context, controller),
+                  const SizedBox(height: 20),
+
+                  // Section 3: Miniature / Image de couverture
+                  _buildSectionCard(
+                    title: 'Image de couverture',
+                    icon: Icons.image_rounded,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Choisissez une belle vignette représentative (recommandé 16:9)',
                           style: TextStyle(
-                            color: theme.colorScheme.error,
-                            fontSize: 12,
+                            color: textSecondary,
+                            fontSize: 13,
+                            height: 1.35,
                           ),
                         ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Section 3: Miniature / Visuel
-              _buildSectionCard(
-                title: 'Miniature de couverture',
-                icon: Icons.image_rounded,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Ajoutez une image attractive au format 16:9 qui sera affichée sur la carte vidéo.',
-                      style: TextStyle(
-                        color: textSecondary,
-                        fontSize: 13,
-                        height: 1.35,
-                      ),
+                        const SizedBox(height: 14),
+                        TutorielImagePicker(
+                          selectedImage: controller.selectedImage,
+                          imageUrl: controller.imageUrl,
+                          onImageSelected: controller.selectImage,
+                          onImageRemoved: controller.removeImage,
+                          errorText: controller.imageError,
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 14),
-                    TutorielImagePicker(
-                      selectedImage: controller.selectedImage,
-                      imageUrl: controller.imageUrl,
-                      onImageSelected: controller.selectImage,
-                      onImageRemoved: controller.removeImage,
-                      errorText: controller.imageError,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Section 4: Vidéo du tutoriel
-              _buildSectionCard(
-                title: 'Vidéo du tutoriel',
-                icon: Icons.video_library_rounded,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Sélectionnez le fichier vidéo du tutoriel depuis votre galerie.',
-                      style: TextStyle(
-                        color: textSecondary,
-                        fontSize: 13,
-                        height: 1.35,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    TutorielVideoPicker(
-                      selectedVideo: controller.selectedVideoFile,
-                      videoUrl: controller.videoUrl,
-                      onVideoSelected: controller.selectVideoFile,
-                      onVideoRemoved: controller.removeVideoFile,
-                      errorText: controller.videoError,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Section 5: Jouets Associés
-              _buildJouetsSection(context, controller),
-              const SizedBox(height: 20),
-
-              // Section 6: Statut de Publication
-              _buildSectionCard(
-                title: 'Statut de publication',
-                icon: Icons.publish_rounded,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _buildStatusOption(
-                        title: 'Publié',
-                        subtitle: 'Visible immédiatement par tous les utilisateurs',
-                        isSelected: controller.statut == TutorielStatus.publie,
-                        color: AppColors.success,
-                        icon: Icons.visibility_rounded,
-                        onTap: () => controller.setStatut(TutorielStatus.publie),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildStatusOption(
-                        title: 'Brouillon',
-                        subtitle: 'Invisible pour les utilisateurs standards',
-                        isSelected: controller.statut == TutorielStatus.brouillon,
-                        color: AppColors.warning,
-                        icon: Icons.visibility_off_rounded,
-                        onTap: () => controller.setStatut(TutorielStatus.brouillon),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 32),
-
-              // Bouton Enregistrer Principal
-              AppButton(
-                text: isEditing ? 'Mettre à jour le tutoriel' : 'Enregistrer le tutoriel',
-                icon: Icons.save_rounded,
-                isLoading: controller.isLoading,
-                onPressed: () => _saveTutoriel(controller, isEditing),
-              ),
-              if (controller.uploadStatusText != null) ...[
-                const SizedBox(height: 12),
-                Center(
-                  child: Text(
-                    controller.uploadStatusText!,
-                    style: TextStyle(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                    ),
-                    textAlign: TextAlign.center,
                   ),
-                ),
-              ],
-              const SizedBox(height: 32),
-            ],
+                  const SizedBox(height: 20),
+
+                  // Section 4: Vidéo du tutoriel
+                  _buildSectionCard(
+                    title: 'Vidéo du tutoriel',
+                    icon: Icons.video_collection_rounded,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Importez un fichier vidéo depuis votre appareil ou renseignez l\'URL Cloudinary',
+                          style: TextStyle(
+                            color: textSecondary,
+                            fontSize: 13,
+                            height: 1.35,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        TutorielVideoPicker(
+                          selectedVideo: controller.selectedVideoFile,
+                          videoUrl: controller.videoUrl,
+                          onVideoSelected: controller.selectVideoFile,
+                          onVideoRemoved: controller.removeVideoFile,
+                          errorText: controller.videoError,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Section 5: Statut de publication
+                  _buildSectionCard(
+                    title: 'Publication & Visibilité',
+                    icon: Icons.publish_rounded,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Définissez la visibilité pour les utilisateurs',
+                          style: TextStyle(
+                            color: textSecondary,
+                            fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildStatusOption(
+                                title: 'Brouillon',
+                                subtitle: 'Invisible pour les parents',
+                                isSelected: controller.statut == TutorielStatus.brouillon,
+                                color: AppColors.warning,
+                                icon: Icons.edit_note_rounded,
+                                onTap: () => controller.setStatut(TutorielStatus.brouillon),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildStatusOption(
+                                title: 'Publié',
+                                subtitle: 'Visible dans l\'application',
+                                isSelected: controller.statut == TutorielStatus.publie,
+                                color: AppColors.success,
+                                icon: Icons.check_circle_rounded,
+                                onTap: () => controller.setStatut(TutorielStatus.publie),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Bouton Enregistrer Principal
+                  AppButton(
+                    text: isEditing ? 'Mettre à jour le tutoriel' : 'Enregistrer le tutoriel',
+                    icon: Icons.save_rounded,
+                    isLoading: controller.isLoading,
+                    onPressed: () => _saveTutoriel(controller, isEditing),
+                  ),
+                  if (controller.uploadStatusText != null) ...[
+                    const SizedBox(height: 12),
+                    Center(
+                      child: Text(
+                        controller.uploadStatusText!,
+                        style: TextStyle(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 32),
+                ],
+              ),
+            ),
           ),
         ),
       ),

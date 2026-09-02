@@ -157,4 +157,46 @@ class EnfantModel {
 
     return resultat < 0 ? 0 : resultat;
   }
+
+  /// Calcul dynamique du total de points / étoiles gagnés par l'enfant.
+  int get totalPoints {
+    int total = 0;
+    for (final item in resultatsActivite) {
+      if (item is Map) {
+        final pts = item['pointsGagnes'] ?? item['score'];
+        if (pts is num) {
+          total += pts.toInt();
+        }
+      }
+    }
+    return total;
+  }
+
+  /// Étoiles gagnées (équivalent aux points cumulés).
+  int get etoiles => totalPoints;
+
+  /// Nombre total d'activités terminées.
+  int get totalActivitesTerminees {
+    int count = 0;
+    for (final item in resultatsActivite) {
+      if (item is Map) {
+        final isDone = item['termine'] == true ||
+            item['estTerminee'] == true ||
+            item['estReussi'] == true ||
+            (item['score'] != null && (item['score'] as num) > 0);
+        if (isDone) count++;
+      }
+    }
+    return count;
+  }
+
+  /// Niveau dynamique de l'enfant (50 points par niveau).
+  int get niveau => (1 + (totalPoints ~/ 50)).clamp(1, 100);
+
+  /// Progression vers le prochain niveau (entre 0.05 et 1.0).
+  double get progressionNiveau =>
+      ((totalPoints % 50) / 50.0).clamp(0.05, 1.0);
+
+  /// Points nécessaires pour atteindre le niveau suivant.
+  int get pointsPourProchainNiveau => 50 - (totalPoints % 50);
 }
