@@ -1,9 +1,7 @@
 
 // lib/features/commandes/presentation/pages/paiement_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../models/commande_model.dart';
 import '../../providers/commande_provider.dart';
 import 'confirmation_page.dart';
@@ -61,9 +59,7 @@ class _PaiementPageState extends ConsumerState<PaiementPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // =========================
-            // STEPPER
-            // =========================
+            // Stepper
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -88,12 +84,8 @@ class _PaiementPageState extends ConsumerState<PaiementPage> {
                 ),
               ],
             ),
-
             const SizedBox(height: 24),
-
-            // =========================
-            // MODE DE PAIEMENT
-            // =========================
+            // Mode de paiement
             const Text(
               'Methode de paiement',
               style: TextStyle(
@@ -104,7 +96,6 @@ class _PaiementPageState extends ConsumerState<PaiementPage> {
             ),
 
             const SizedBox(height: 12),
-
             _buildCustomPaymentCard(
               value: 'Mobile Money',
               title: 'Mobile Money',
@@ -134,7 +125,6 @@ class _PaiementPageState extends ConsumerState<PaiementPage> {
             ),
 
             const SizedBox(height: 10),
-
             _buildCustomPaymentCard(
               value: 'Carte bancaire',
               title: 'Carte bancaire',
@@ -157,7 +147,6 @@ class _PaiementPageState extends ConsumerState<PaiementPage> {
             ),
 
             const SizedBox(height: 10),
-
             _buildCustomPaymentCard(
               value: 'Paiement à la livraison',
               title: 'Paiement a la livraison',
@@ -166,10 +155,7 @@ class _PaiementPageState extends ConsumerState<PaiementPage> {
             ),
 
             const SizedBox(height: 20),
-
-            // =========================
-            // RESUME
-            // =========================
+            // Resume
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -192,14 +178,12 @@ class _PaiementPageState extends ConsumerState<PaiementPage> {
                   ),
 
                   const SizedBox(height: 12),
-
                   _buildSummaryRow(
                     'Sous-total',
                     '${sousTotal.toStringAsFixed(2)} XOF',
                   ),
 
                   const SizedBox(height: 8),
-
                   _buildSummaryRow(
                     'Livraison',
                     fraisLivraison == 0
@@ -210,7 +194,6 @@ class _PaiementPageState extends ConsumerState<PaiementPage> {
                   ),
 
                   const Divider(height: 20),
-
                   _buildSummaryRow(
                     'Total',
                     '${montant.toStringAsFixed(2)} XOF',
@@ -221,10 +204,7 @@ class _PaiementPageState extends ConsumerState<PaiementPage> {
             ),
 
             const SizedBox(height: 30),
-
-            // =========================
-            // CONFIRMER
-            // =========================
+            // Confirmer
             SizedBox(
               width: double.infinity,
               height: 52,
@@ -249,13 +229,9 @@ class _PaiementPageState extends ConsumerState<PaiementPage> {
                     );
                     return;
                   }
-
-                  // =====================================================
-                  // IMPORTANT :
                   // On crée une NOUVELLE liste indépendante des articles.
                   // Cela évite qu'une modification du panier puisse
                   // modifier les articles d'une ancienne commande.
-                  // =====================================================
                   final articlesCommande =
                       widget.brouillonCommande.articles
                           .map(
@@ -268,35 +244,25 @@ class _PaiementPageState extends ConsumerState<PaiementPage> {
                             ),
                           )
                           .toList();
-
                   // Création de la commande définitive
                   final nouvelleCommande = CommandeModel(
                     id: DateTime.now()
                         .millisecondsSinceEpoch
                         .toString(),
-
                     parentId: widget.brouillonCommande.parentId,
 
-                    // On utilise la COPIE indépendante
+                    // On utilise la copie indépendante
                     articles: articlesCommande,
-
                     montantTotal: montant,
-
                     fraisLivraison: fraisLivraison,
-
                     adresseLivraison:
                         widget.adresseLivraison,
-
                     modePaiement: _modePaiement!,
-
                     dateCreation: DateTime.now(),
-
                     statut: 'En cours',
                   );
 
-                  // =====================================================
-                  // ENREGISTREMENT DANS FIRESTORE
-                  // =====================================================
+                  // Enregistrement dans firebase
                   final succes = await ref
                       .read(commandeProvider.notifier)
                       .passerCommande(nouvelleCommande);
@@ -314,10 +280,7 @@ class _PaiementPageState extends ConsumerState<PaiementPage> {
                     );
                     return;
                   }
-
-                  // =====================================================
-                  // COMMANDE ENREGISTREE AVEC SUCCES
-                  // =====================================================
+                  // Commande enregistrée avec succès
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
@@ -342,10 +305,7 @@ class _PaiementPageState extends ConsumerState<PaiementPage> {
       ),
     );
   }
-
-  // ============================================================
-  // ETAPE DU CHECKOUT
-  // ============================================================
+  // Etape du checkout
 
   Widget _buildStepItem({
     String? textNumber,
@@ -393,7 +353,6 @@ class _PaiementPageState extends ConsumerState<PaiementPage> {
         ),
 
         const SizedBox(height: 4),
-
         Text(
           label,
           style: TextStyle(
@@ -408,7 +367,6 @@ class _PaiementPageState extends ConsumerState<PaiementPage> {
       ],
     );
   }
-
   Widget _buildStepDivider() {
     return Container(
       width: 35,
@@ -420,11 +378,7 @@ class _PaiementPageState extends ConsumerState<PaiementPage> {
       ),
     );
   }
-
-  // ============================================================
-  // CARTE PAIEMENT
-  // ============================================================
-
+  // Carte paiement
   Widget _buildCustomPaymentCard({
     required String value,
     required String title,
@@ -474,7 +428,6 @@ class _PaiementPageState extends ConsumerState<PaiementPage> {
             ),
 
             const SizedBox(width: 12),
-
             Expanded(
               child: Text(
                 title,
@@ -513,10 +466,7 @@ class _PaiementPageState extends ConsumerState<PaiementPage> {
       ),
     );
   }
-
-  // ============================================================
-  // LIGNE DU RESUME
-  // ============================================================
+  // Ligne de resume
 
   Widget _buildSummaryRow(
     String label,

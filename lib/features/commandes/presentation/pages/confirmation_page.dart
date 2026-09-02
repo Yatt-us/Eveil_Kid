@@ -38,7 +38,7 @@ class ConfirmationPage extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Image de confirmation avec taille augmentée
+                  // Image de confirmation 
                   Image.asset(
                     'assets/images/confirmation.PNG',
                     height: 220,

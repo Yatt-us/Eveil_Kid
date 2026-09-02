@@ -11,7 +11,6 @@ class DetailCommandePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final commandeState = ref.watch(commandeProvider);
-    
     final commande = commandeState.commandes.firstWhere(
       (c) => c.id == commandeId,
       orElse: () => throw Exception("Commande introuvable"),

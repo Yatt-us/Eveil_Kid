@@ -96,7 +96,6 @@ class _AdressePageState extends ConsumerState<AdressePage> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final Utilisateur? utilisateur = authState.utilisateur;
-    
     final nomParent = utilisateur?.nom ?? '';
     final affichageNom = nomParent.isNotEmpty ? nomParent : 'Parent';
 
@@ -192,7 +191,6 @@ class _AdressePageState extends ConsumerState<AdressePage> {
               ),
               
               const Spacer(flex: 2),
-
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -205,7 +203,7 @@ class _AdressePageState extends ConsumerState<AdressePage> {
                     elevation: 2,
                   ),
                   onPressed: () {
-                    // 1. Récupération de l'ID du parent connecté depuis l'objet utilisateur
+                    // Récupération de l'ID du parent connecté depuis l'objet utilisateur
                     final String? parentId = utilisateur?.uid; 
                     if (parentId == null || parentId.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -217,13 +215,13 @@ class _AdressePageState extends ConsumerState<AdressePage> {
                       return;
                     }
 
-                    // 2. Injection du parentId et de l'adresse dans le modèle via copyWith
+                    // Injection du parentId et de l'adresse dans le modèle via copyWith
                     final commandeMiseAJour = widget.brouillonCommande.copyWith(
                       parentId: parentId,
                       adresseLivraison: _adresseLivraison,
                     );
 
-                    // 3. Navigation vers l'écran de paiement avec le modèle complété
+                    // Navigation vers l'écran de paiement avec le modèle complété
                     Navigator.push(
                       context,
                       MaterialPageRoute(
