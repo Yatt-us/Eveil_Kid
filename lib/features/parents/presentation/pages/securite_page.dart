@@ -1,4 +1,4 @@
-// lib/features/parent/presentation/pages/securite_page.dart
+// lib/features/parents/presentation/pages/securite_page.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,37 +6,227 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/AppPadding.dart';
 import '../../../../core/constants/AppSpacing.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
+import '../../../../shared/widgets/parental_pin_dialog.dart';
+import '../../../../core/services/parental_pin_service.dart';
+import '../../../../core/utils/parental_pin_helper.dart';
 import '../../../auth/providers/auth_provider.dart';
+
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/provider/bottom_nav_bar_provider.dart';
+import '../../../../core/router/app_routes.dart';
+import '../../../enfant/providers/enfant_providers.dart';
+import '../../providers/parent_provider.dart';
+
+import '../../../../core/constants/AppRadius.dart';
 
 class SecuritePage extends ConsumerWidget {
   const SecuritePage({super.key});
 
   void _showChangePasswordDialog(BuildContext context, WidgetRef ref) {
     final authState = ref.read(authProvider);
-    final email = authState.utilisateur?.email ?? '';
+    final initialEmail = FirebaseAuth.instance.currentUser?.email ??
+        authState.utilisateur?.email ??
+        ref.read(parentNotifierProvider).value?.email ??
+        '';
 
+    final emailController = TextEditingController(text: initialEmail);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: const RoundedRectangleBorder(borderRadius: AppRadius.dialog),
+          backgroundColor: theme.colorScheme.surface,
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.mail_lock_rounded,
+                  color: AppColors.primary,
+                  size: 24,
+                ),
+              ),
+              AppSpacing.horizontalMd,
+              Expanded(
+                child: Text(
+                  'Réinitialiser le mot de passe',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: theme.textTheme.titleMedium?.color ??
+                        (isDark ? AppColors.darkTextPrimary : AppColors.textPrimary),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppSpacing.verticalSm,
+              Text(
+                'Un lien de réinitialisation sécurisé sera envoyé à votre adresse email :',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8) ??
+                      (isDark ? AppColors.darkTextSecondary : AppColors.textSecondary),
+                  height: 1.4,
+                ),
+              ),
+              AppSpacing.verticalMd,
+              TextField(
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: theme.textTheme.bodyLarge?.color ??
+                      (isDark ? AppColors.darkTextPrimary : AppColors.textPrimary),
+                ),
+                decoration: InputDecoration(
+                  labelText: 'Adresse Email',
+                  hintText: 'exemple@domaine.com',
+                  prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primary),
+                  filled: true,
+                  fillColor: isDark
+                      ? AppColors.darkSurfaceVariant
+                      : AppColors.surfaceVariant.withValues(alpha: 0.5),
+                  border: OutlineInputBorder(
+                    borderRadius: AppRadius.input,
+                    borderSide: BorderSide(
+                      color: theme.dividerColor.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: AppRadius.input,
+                    borderSide: BorderSide(
+                      color: theme.dividerColor.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  focusedBorder: const OutlineInputBorder(
+                    borderRadius: AppRadius.input,
+                    borderSide: BorderSide(color: AppColors.primary, width: 1.5),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                foregroundColor: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.textSecondary,
+              ),
+              child: const Text('Annuler', style: TextStyle(fontWeight: FontWeight.w600)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final email = emailController.text.trim();
+                if (email.isEmpty || !email.contains('@')) {
+                  AppDialogs.showSnackBar(
+                    context: context,
+                    message: 'Veuillez saisir une adresse email valide.',
+                    isError: true,
+                  );
+                  return;
+                }
+
+                Navigator.pop(dialogContext);
+
+                final success = await ref
+                    .read(authProvider.notifier)
+                    .resetPassword(email: email);
+
+                if (context.mounted) {
+                  if (success) {
+                    AppDialogs.showSnackBar(
+                      context: context,
+                      message:
+                          'Lien envoyé à $email ! Vérifiez votre boîte de réception et vos spams.',
+                    );
+                  } else {
+                    final err = ref.read(authProvider).errorMessage;
+                    AppDialogs.showSnackBar(
+                      context: context,
+                      message: err ?? 'Erreur lors de l\'envoi de l\'email.',
+                      isError: true,
+                    );
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: const RoundedRectangleBorder(borderRadius: AppRadius.button),
+                elevation: 0,
+              ),
+              child: const Text(
+                'Envoyer le lien',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showDeleteAccountDialog(BuildContext context, WidgetRef ref) {
     AppDialogs.showConfirmDialog(
       context: context,
-      title: 'Changer le mot de passe',
+      title: 'Archiver et désactiver le compte ?',
       message:
-          'Un email de réinitialisation sera envoyé à $email. Voulez-vous continuer ?',
-      confirmText: 'Envoyer',
+          'Votre compte ainsi que toutes vos données (profils enfants, favoris, historique) seront archivés et désactivés en toute sécurité. Vous serez automatiquement déconnecté.',
+      confirmText: 'Archiver mon compte',
       cancelText: 'Annuler',
+      isDanger: true,
     ).then((confirmed) async {
       if (confirmed == true && context.mounted) {
-        final success = await ref
-            .read(authProvider.notifier)
-            .resetPassword(email: email);
+        // Afficher indicateur de chargement
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => const Center(
+            child: CircularProgressIndicator(color: AppColors.primary),
+          ),
+        );
+
+        final success = await ref.read(authProvider.notifier).archiverCompte();
+
         if (context.mounted) {
+          Navigator.pop(context); // Fermer le loader
+
           if (success) {
+            ref.invalidate(parentNotifierProvider);
+            ref.invalidate(enfantNotifierProvider);
+            ref.read(bottomIndexProvider.notifier).setIndex(0);
+            context.go(AppRoutes.home);
+
             AppDialogs.showSnackBar(
               context: context,
-              message: 'Email de réinitialisation envoyé avec succès.',
+              message: 'Votre compte a été archivé et désactivé avec succès.',
             );
           } else {
+            final err = ref.read(authProvider).errorMessage;
             AppDialogs.showSnackBar(
               context: context,
-              message: 'Erreur lors de l\'envoi de l\'email.',
+              message: err ?? 'Erreur lors de l\'archivage du compte.',
               isError: true,
             );
           }
@@ -45,24 +235,102 @@ class SecuritePage extends ConsumerWidget {
     });
   }
 
-  void _showDeleteAccountDialog(BuildContext context, WidgetRef ref) {
-    AppDialogs.showConfirmDialog(
-      context: context,
-      title: 'Supprimer définitivement le compte ?',
-      message:
-          'Attention : Cette action est irréversible. Toutes vos données seront supprimées.',
-      confirmText: 'Supprimer le compte',
-      cancelText: 'Annuler',
-      isDanger: true,
-    ).then((confirmed) {
-      if (confirmed == true && context.mounted) {
+  void _manageParentalPin(BuildContext context, WidgetRef ref) async {
+    final pinService = ref.read(parentalPinServiceProvider);
+    final hasPin = await pinService.hasPin();
+
+    if (!context.mounted) return;
+
+    if (!hasPin) {
+      final success = await ParentalPinDialog.show(
+        context,
+        mode: ParentalPinMode.setup,
+      );
+      if (success == true && context.mounted) {
         AppDialogs.showSnackBar(
           context: context,
-          message: 'Demande de suppression prise en compte.',
-          isError: true,
+          message: 'Code PIN configuré avec succès.',
         );
       }
-    });
+    } else {
+      showModalBottomSheet<void>(
+        context: context,
+        backgroundColor: Colors.transparent,
+        builder: (sheetCtx) {
+          final theme = Theme.of(context);
+          return Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: theme.scaffoldBackgroundColor,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: theme.dividerColor.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Code PIN de contrôle parental',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ) ??
+                    const TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+                  ),
+                  const SizedBox(height: 16),
+                  ListTile(
+                    leading: const Icon(Icons.edit_outlined),
+                    title: const Text('Modifier le code PIN'),
+                    onTap: () async {
+                      Navigator.pop(sheetCtx);
+                      await ParentalPinHelper.changePin(
+                        context: context,
+                        ref: ref,
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.delete_outline, color: theme.colorScheme.error),
+                    title: Text(
+                      'Supprimer le code PIN',
+                      style: TextStyle(color: theme.colorScheme.error),
+                    ),
+                    onTap: () async {
+                      Navigator.pop(sheetCtx);
+                      final confirmed = await AppDialogs.showConfirmDialog(
+                        context: context,
+                        title: 'Supprimer le code PIN ?',
+                        message:
+                            'L\'espace enfant ne sera plus verrouillé par un code PIN.',
+                        confirmText: 'Supprimer',
+                        cancelText: 'Annuler',
+                        isDanger: true,
+                      );
+                      if (confirmed == true) {
+                        await pinService.clearPin();
+                        if (context.mounted) {
+                          AppDialogs.showSnackBar(
+                            context: context,
+                            message: 'Code PIN supprimé.',
+                          );
+                        }
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    }
   }
 
   @override
@@ -120,6 +388,16 @@ class SecuritePage extends ConsumerWidget {
               ),
               child: Column(
                 children: [
+                  _buildSecurityTile(
+                    theme: theme,
+                    icon: Icons.pin_outlined,
+                    title: 'Code PIN de contrôle parental',
+                    onTap: () => _manageParentalPin(context, ref),
+                  ),
+                  Divider(
+                    height: 1,
+                    color: theme.dividerColor.withValues(alpha: 0.2),
+                  ),
                   _buildSecurityTile(
                     theme: theme,
                     icon: Icons.lock_outline_rounded,

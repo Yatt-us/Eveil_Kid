@@ -1,6 +1,5 @@
-import 'package:eveilkid/core/constants/app_colors.dart';
-import 'package:flutter/material.dart';
 import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ActivityImagePicker extends StatelessWidget {
@@ -19,40 +18,48 @@ class ActivityImagePicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final dividerColor = theme.dividerColor.withValues(alpha: isDark ? 0.3 : 0.15);
+
     return Container(
       width: double.infinity,
-      height: 150,
+      height: 160,
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300, width: 1),
-        borderRadius: BorderRadius.circular(8),
-        color: Colors.grey.shade50,
+        border: Border.all(color: dividerColor, width: 1.2),
+        borderRadius: BorderRadius.circular(16),
+        color: isDark
+            ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4)
+            : theme.colorScheme.surface,
       ),
-      child: _buildImageContent(context),
+      child: _buildImageContent(context, theme),
     );
   }
 
-  Widget _buildImageContent(BuildContext context) {
+  Widget _buildImageContent(BuildContext context, ThemeData theme) {
     if (selectedImage != null) {
       return Stack(
         fit: StackFit.expand,
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(16),
             child: Image.file(
               selectedImage!,
               fit: BoxFit.cover,
             ),
           ),
           Positioned(
-            top: 8,
-            right: 8,
-            child: CircleAvatar(
-              backgroundColor: Colors.black.withValues(alpha: 0.6),
-              radius: 16,
+            top: 10,
+            right: 10,
+            child: Material(
+              color: Colors.black.withValues(alpha: 0.65),
+              shape: const CircleBorder(),
               child: IconButton(
-                icon: const Icon(Icons.close, color: Colors.white, size: 16),
+                icon: const Icon(Icons.close_rounded, color: Colors.white, size: 18),
                 onPressed: onImageRemoved,
-                padding: EdgeInsets.zero,
+                padding: const EdgeInsets.all(6),
+                constraints: const BoxConstraints(),
+                tooltip: 'Supprimer l\'image',
               ),
             ),
           ),
@@ -65,23 +72,25 @@ class ActivityImagePicker extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(16),
             child: Image.network(
               imageUrl!,
               fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => _buildPlaceholder(),
+              errorBuilder: (_, _, _) => _buildPlaceholder(theme),
             ),
           ),
           Positioned(
-            top: 8,
-            right: 8,
-            child: CircleAvatar(
-              backgroundColor: Colors.black.withValues(alpha: 0.6),
-              radius: 16,
+            top: 10,
+            right: 10,
+            child: Material(
+              color: Colors.black.withValues(alpha: 0.65),
+              shape: const CircleBorder(),
               child: IconButton(
-                icon: const Icon(Icons.close, color: Colors.white, size: 16),
+                icon: const Icon(Icons.close_rounded, color: Colors.white, size: 18),
                 onPressed: onImageRemoved,
-                padding: EdgeInsets.zero,
+                padding: const EdgeInsets.all(6),
+                constraints: const BoxConstraints(),
+                tooltip: 'Supprimer l\'image',
               ),
             ),
           ),
@@ -89,28 +98,42 @@ class ActivityImagePicker extends StatelessWidget {
       );
     }
 
-    return InkWell(
-      onTap: () => _pickImage(context),
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
-        ),
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: () => _pickImage(context),
+        borderRadius: BorderRadius.circular(16),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.add_photo_alternate,
-              size: 40,
-              color: Colors.grey.shade400,
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.add_photo_alternate_rounded,
+                size: 32,
+                color: theme.colorScheme.primary,
+              ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text(
-              'Ajouter une image',
+              'Choisir une illustration',
               style: TextStyle(
-                color: Colors.grey.shade600,
-                fontSize: 14,
+                color: theme.colorScheme.onSurface,
+                fontSize: 13.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'Format 16:9 recommandé (PNG, JPG)',
+              style: TextStyle(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontSize: 11.5,
               ),
             ),
           ],
@@ -119,15 +142,12 @@ class ActivityImagePicker extends StatelessWidget {
     );
   }
 
-  Widget _buildPlaceholder() {
-    return Container(
-      color: Colors.grey.shade200,
-      child: const Center(
-        child: Icon(
-          Icons.broken_image,
-          size: 40,
-          color: Colors.grey,
-        ),
+  Widget _buildPlaceholder(ThemeData theme) {
+    return Center(
+      child: Icon(
+        Icons.image_not_supported_rounded,
+        size: 36,
+        color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
       ),
     );
   }
@@ -137,9 +157,9 @@ class ActivityImagePicker extends StatelessWidget {
       final picker = ImagePicker();
       final pickedFile = await picker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 800,
-        maxHeight: 600,
-        imageQuality: 80,
+        maxWidth: 1200,
+        maxHeight: 900,
+        imageQuality: 85,
       );
       if (pickedFile != null) {
         onImageSelected(File(pickedFile.path));
@@ -148,8 +168,8 @@ class ActivityImagePicker extends StatelessWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erreur: $e'),
-            backgroundColor: AppColors.danger,
+            content: Text('Erreur : $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }

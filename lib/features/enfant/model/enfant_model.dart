@@ -79,6 +79,8 @@ class EnfantModel {
       avatarUrl: map['avatarUrl']?.toString(),
       souhait: map['souhait'] != null
           ? List<String>.from(map['souhait'].map((e) => e.toString()))
+              .where((s) => !s.contains(' ') && s.isNotEmpty)
+              .toList()
           : [],
       resultatsActivite: map['resultatsActivite'] != null
           ? List<dynamic>.from(map['resultatsActivite'])

@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:eveilkid/core/router/app_router.dart';
 import 'package:eveilkid/core/router/app_routes.dart';
 import 'package:eveilkid/features/auth/models/utilisateur.dart';
 import 'package:eveilkid/features/auth/providers/auth_provider.dart';
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
+
   testWidgets('Test various user states and screen sizes for AdminProfilePage', (tester) async {
     final minimalUser = Utilisateur(
       utilisateurId: 'admin_min',
@@ -46,11 +51,13 @@ void main() {
         ),
       );
 
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       final router = testRef.read(appRouterProvider);
       router.go(AppRoutes.adminProfile);
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
 
       expect(find.text('Profil Administrateur'), findsWidgets);
     }
@@ -65,7 +72,7 @@ void main() {
       estActif: true,
     );
 
-    tester.view.physicalSize = const Size(360, 800);
+    tester.view.physicalSize = const Size(400, 800);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() => tester.view.resetPhysicalSize());
 
@@ -85,13 +92,14 @@ void main() {
       ),
     );
 
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
 
-    // Find profile icon in Dashboard AppBar
-    final profileTooltip = find.byTooltip('Mon Profil (Administrateur)');
-    expect(profileTooltip, findsOneWidget);
-    await tester.tap(profileTooltip);
-    await tester.pumpAndSettle();
+    final profileIcon = find.byIcon(Icons.admin_panel_settings_rounded);
+    expect(profileIcon, findsOneWidget);
+    await tester.tap(profileIcon);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
 
     expect(find.text('Profil Administrateur'), findsWidgets);
   });

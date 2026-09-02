@@ -119,7 +119,7 @@ class TutorielImagePicker extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'JPG ou PNG (sera hébergé sur Cloudinary)',
+            'Formats supportés : JPG ou PNG',
             style: TextStyle(
               color: Colors.grey.shade500,
               fontSize: 12,

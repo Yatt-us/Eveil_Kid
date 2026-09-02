@@ -1,36 +1,36 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:eveilkid/core/cloudinary/cloudinary_service.dart';
 import 'package:eveilkid/features/categories/models/categorie.dart';
 import 'package:eveilkid/features/categories/providers/categorie_provider.dart';
 import 'package:eveilkid/features/tutoriels/enums/tutoriel_status.enum.dart';
 import 'package:eveilkid/features/tutoriels/models/tutoriel.dart';
+import 'package:eveilkid/features/tutoriels/providers/cloudinary_duration_provider.dart';
 import 'package:eveilkid/features/tutoriels/providers/tutoriel_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:eveilkid/features/categories/models/categorie.dart';
 import 'package:eveilkid/features/categories/providers/categorie_provider.dart';
 
-enum VideoSourceType { file, url }
-
 class TutorielFormController extends ChangeNotifier {
   final Ref ref;
-  final Tutoriel? initialTutoriel;
+  Tutoriel? initialTutoriel;
 
   final TextEditingController titreController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
-  final TextEditingController dureeController = TextEditingController();
-  final TextEditingController videoUrlController = TextEditingController();
-  final TextEditingController ageMinController = TextEditingController(text: '3');
-  final TextEditingController ageMaxController = TextEditingController(text: '10');
+  final TextEditingController ageMinController =
+      TextEditingController(text: '3');
+  final TextEditingController ageMaxController =
+      TextEditingController(text: '10');
 
   String selectedCategorieId = '';
   List<String> selectedJouetsIds = [];
 
-  // Media
-  VideoSourceType videoSourceType = VideoSourceType.url;
+  // Media (Fichiers uniquement)
   File? selectedVideoFile;
   String? videoUrl;
+  int duree = 0;
 
   File? selectedImage;
   String? imageUrl;
@@ -48,7 +48,6 @@ class TutorielFormController extends ChangeNotifier {
   String? titreError;
   String? descriptionError;
   String? categorieError;
-  String? dureeError;
   String? videoError;
   String? imageError;
   String? ageError;
@@ -65,14 +64,25 @@ class TutorielFormController extends ChangeNotifier {
     _loadCategories();
   }
 
+  void initFromTutoriel(Tutoriel tutoriel) {
+    initialTutoriel = tutoriel;
+    _loadExistingData();
+    notifyListeners();
+  }
+
   Future<void> _loadCategories() async {
     try {
       isLoadingCategories = true;
       notifyListeners();
 
-      final result = await ref.read(categoriesProvider.future);
-      categories = result.where((c) => c.estActive).toList();
+      List<Categorie> result = [];
+      try {
+        result = await ref.read(categoriesAdminProvider.future);
+      } catch (_) {
+        result = await ref.read(categoriesProvider.future);
+      }
 
+      categories = result;
       isLoadingCategories = false;
       errorMessage = null;
 
@@ -91,43 +101,14 @@ class TutorielFormController extends ChangeNotifier {
     final tutoriel = initialTutoriel!;
     titreController.text = tutoriel.titre;
     descriptionController.text = tutoriel.description;
-    dureeController.text = _formatDuree(tutoriel.duree);
-    videoUrlController.text = tutoriel.videoUrl;
     videoUrl = tutoriel.videoUrl;
+    duree = tutoriel.duree;
     ageMinController.text = tutoriel.ageMinimum.toString();
     ageMaxController.text = tutoriel.ageMaximum.toString();
     selectedCategorieId = tutoriel.categorieId;
     selectedJouetsIds = List.from(tutoriel.jouetsSuggeres);
     imageUrl = tutoriel.miniatureUrl;
     statut = tutoriel.statut;
-    videoSourceType = (tutoriel.videoUrl.contains('res.cloudinary.com') ||
-            tutoriel.videoUrl.endsWith('.mp4'))
-        ? VideoSourceType.file
-        : VideoSourceType.url;
-  }
-
-  String _formatDuree(int dureeEnSecondes) {
-    final minutes = dureeEnSecondes ~/ 60;
-    final secondes = dureeEnSecondes % 60;
-    return '${minutes.toString().padLeft(2, '0')}:${secondes.toString().padLeft(2, '0')}';
-  }
-
-  int _parseDuree(String duree) {
-    final parts = duree.split(':');
-    if (parts.length == 2) {
-      final minutes = int.tryParse(parts[0]) ?? 0;
-      final secondes = int.tryParse(parts[1]) ?? 0;
-      return minutes * 60 + secondes;
-    }
-    final directSeconds = int.tryParse(duree);
-    if (directSeconds != null) return directSeconds;
-    return 0;
-  }
-
-  void setVideoSourceType(VideoSourceType type) {
-    videoSourceType = type;
-    videoError = null;
-    notifyListeners();
   }
 
   void updateCategorie(String categorieId) {
@@ -159,6 +140,7 @@ class TutorielFormController extends ChangeNotifier {
   void removeImage() {
     selectedImage = null;
     imageUrl = null;
+    imageError = null;
     notifyListeners();
   }
 
@@ -170,6 +152,9 @@ class TutorielFormController extends ChangeNotifier {
 
   void removeVideoFile() {
     selectedVideoFile = null;
+    videoUrl = null;
+    duree = 0;
+    videoError = null;
     notifyListeners();
   }
 
@@ -177,7 +162,6 @@ class TutorielFormController extends ChangeNotifier {
     titreError = null;
     descriptionError = null;
     categorieError = null;
-    dureeError = null;
     videoError = null;
     imageError = null;
     ageError = null;
@@ -189,27 +173,29 @@ class TutorielFormController extends ChangeNotifier {
     bool isValid = true;
 
     if (titreController.text.trim().isEmpty) {
-      titreError = 'Veuillez saisir un titre';
+      titreError = 'Le titre est obligatoire';
+      isValid = false;
+    } else if (titreController.text.trim().length < 3) {
+      titreError = 'Le titre doit contenir au moins 3 caractères';
       isValid = false;
     }
 
     if (descriptionController.text.trim().isEmpty) {
-      descriptionError = 'Veuillez saisir une description';
+      descriptionError = 'La description est obligatoire';
+      isValid = false;
+    } else if (descriptionController.text.trim().length < 10) {
+      descriptionError =
+          'La description doit contenir au moins 10 caractères';
       isValid = false;
     }
 
     if (selectedCategorieId.isEmpty) {
-      categorieError = 'Veuillez sélectionner une catégorie';
-      isValid = false;
-    }
-
-    if (dureeController.text.trim().isEmpty) {
-      dureeError = 'Veuillez saisir une durée (ex: 05:24)';
-      isValid = false;
-    } else {
-      final duree = _parseDuree(dureeController.text.trim());
-      if (duree <= 0) {
-        dureeError = 'Format invalide (ex: 05:24)';
+      if (initialTutoriel != null && initialTutoriel!.categorieId.isNotEmpty) {
+        selectedCategorieId = initialTutoriel!.categorieId;
+      } else if (categories.isNotEmpty) {
+        selectedCategorieId = categories.first.categorieId;
+      } else {
+        categorieError = 'Veuillez sélectionner une catégorie';
         isValid = false;
       }
     }
@@ -221,31 +207,20 @@ class TutorielFormController extends ChangeNotifier {
       isValid = false;
     }
 
-    // Validation Vidéo
-    if (videoSourceType == VideoSourceType.file) {
-      if (selectedVideoFile == null && (videoUrl == null || videoUrl!.isEmpty)) {
-        videoError = 'Veuillez sélectionner un fichier vidéo';
-        isValid = false;
-      }
-    } else {
-      final url = videoUrlController.text.trim();
-      if (url.isEmpty) {
-        videoError = 'Veuillez saisir l\'URL de la vidéo';
-        isValid = false;
-      } else if (!Uri.tryParse(url)!.hasScheme) {
-        videoError = 'URL invalide (doit commencer par https://)';
-        isValid = false;
-      }
+    // Validation Vidéo (Fichier ou URL existante)
+    if (selectedVideoFile == null && (videoUrl == null || videoUrl!.isEmpty)) {
+      videoError = 'Veuillez sélectionner un fichier vidéo';
+      isValid = false;
     }
 
-    // Validation Miniature
+    // Validation Miniature (Fichier ou URL existante)
     if (selectedImage == null && (imageUrl == null || imageUrl!.isEmpty)) {
-      imageError = 'Veuillez ajouter une miniature / image de couverture';
+      imageError = 'Veuillez ajouter une miniature';
       isValid = false;
     }
 
     if (!isValid) {
-      errorMessage = 'Veuillez corriger les erreurs ci-dessous';
+      errorMessage = 'Veuillez corriger les erreurs dans le formulaire ci-dessous';
     }
 
     notifyListeners();
@@ -255,25 +230,23 @@ class TutorielFormController extends ChangeNotifier {
   Tutoriel buildTutoriel({
     String? finalImageUrl,
     String? finalVideoUrl,
+    int? finalDuree,
   }) {
-    final dureeEnSecondes = _parseDuree(dureeController.text.trim());
     final ageMin = int.tryParse(ageMinController.text.trim()) ?? 3;
     final ageMax = int.tryParse(ageMaxController.text.trim()) ?? 10;
 
     return Tutoriel(
       tutorielId: initialTutoriel?.tutorielId,
       categorieId: selectedCategorieId,
-      jouetLieId: selectedJouetsIds.isNotEmpty ? selectedJouetsIds.first : null,
+      jouetLieId:
+          selectedJouetsIds.isNotEmpty ? selectedJouetsIds.first : null,
       createurId: initialTutoriel?.createurId ?? 'admin',
       titre: titreController.text.trim(),
       description: descriptionController.text.trim(),
       jouetsSuggeres: selectedJouetsIds,
-      videoUrl: finalVideoUrl ??
-          (videoSourceType == VideoSourceType.url
-              ? videoUrlController.text.trim()
-              : (videoUrl ?? '')),
+      videoUrl: finalVideoUrl ?? videoUrl ?? '',
       miniatureUrl: finalImageUrl ?? imageUrl ?? '',
-      duree: dureeEnSecondes,
+      duree: finalDuree ?? duree,
       ageMinimum: ageMin,
       ageMaximum: ageMax,
       statut: statut,
@@ -294,10 +267,10 @@ class TutorielFormController extends ChangeNotifier {
       final repository = ref.read(tutorielRepositoryProvider);
       final existingId = initialTutoriel?.tutorielId;
 
-      // 1. Upload de la miniature sur Cloudinary SI une nouvelle image est sélectionnée
+      // 1. Upload de la miniature SI une nouvelle image est sélectionnée
       String finalMiniatureUrl = imageUrl ?? '';
       if (selectedImage != null) {
-        uploadStatusText = 'Téléversement de la miniature sur Cloudinary...';
+        uploadStatusText = 'Téléversement de la miniature...';
         notifyListeners();
 
         finalMiniatureUrl = await repository.uploadMiniatureDirect(
@@ -307,30 +280,47 @@ class TutorielFormController extends ChangeNotifier {
         imageUrl = finalMiniatureUrl;
       }
 
-      // 2. Upload du fichier vidéo sur Cloudinary SI un nouveau fichier vidéo est sélectionné
-      String finalVideoUrl = videoUrlController.text.trim();
-      if (videoSourceType == VideoSourceType.file) {
-        if (selectedVideoFile != null) {
-          uploadStatusText = 'Téléversement de la vidéo sur Cloudinary (cela peut prendre un instant)...';
-          notifyListeners();
+      // 2. Upload du fichier vidéo SI un nouveau fichier vidéo est sélectionné
+      String finalVideoUrl = videoUrl ?? '';
+      int finalDuree = duree;
 
-          finalVideoUrl = await repository.uploadVideoDirect(
-            selectedVideoFile!,
-            tutorielId: existingId,
-          );
-          videoUrl = finalVideoUrl;
-        } else if (videoUrl != null && videoUrl!.isNotEmpty) {
-          finalVideoUrl = videoUrl!;
+      if (selectedVideoFile != null) {
+        uploadStatusText =
+            'Téléversement du fichier vidéo (cela peut prendre un instant)...';
+        notifyListeners();
+
+        finalVideoUrl = await repository.uploadVideoDirect(
+          selectedVideoFile!,
+          tutorielId: existingId,
+        );
+        videoUrl = finalVideoUrl;
+
+        // Détection et stockage de la durée
+        uploadStatusText = 'Calcul de la durée de la vidéo...';
+        notifyListeners();
+        final durationSec = await ref
+            .read(cloudinaryServiceProvider)
+            .getVideoDuration(finalVideoUrl);
+        finalDuree = durationSec.round();
+        duree = finalDuree;
+      } else if (finalDuree <= 0 && finalVideoUrl.isNotEmpty) {
+        final durationSec = await ref
+            .read(cloudinaryServiceProvider)
+            .getVideoDuration(finalVideoUrl);
+        if (durationSec > 0) {
+          finalDuree = durationSec.round();
+          duree = finalDuree;
         }
       }
 
-      // 3. TOUS les uploads ont réussi avec succès ! On enregistre maintenant dans Firestore
+      // 3. Enregistrement dans Firestore
       uploadStatusText = 'Enregistrement dans la base de données...';
       notifyListeners();
 
       final tutorielToSave = buildTutoriel(
         finalImageUrl: finalMiniatureUrl,
         finalVideoUrl: finalVideoUrl,
+        finalDuree: finalDuree,
       );
 
       if (initialTutoriel == null) {
@@ -342,6 +332,16 @@ class TutorielFormController extends ChangeNotifier {
       // Invalidation des providers
       ref.invalidate(adminTutorielsProvider);
       ref.invalidate(tutorielsProvider);
+      if (existingId != null && existingId.isNotEmpty) {
+        ref.invalidate(tutorielByIdProvider(existingId));
+        ref.invalidate(tutorielStreamByIdProvider(existingId));
+      } else if (tutorielToSave.tutorielId != null && tutorielToSave.tutorielId!.isNotEmpty) {
+        ref.invalidate(tutorielByIdProvider(tutorielToSave.tutorielId!));
+        ref.invalidate(tutorielStreamByIdProvider(tutorielToSave.tutorielId!));
+      }
+      if (finalVideoUrl.isNotEmpty) {
+        ref.invalidate(cloudinaryVideoDurationProvider(finalVideoUrl));
+      }
 
       isLoading = false;
       uploadStatusText = null;
@@ -360,18 +360,17 @@ class TutorielFormController extends ChangeNotifier {
   void resetForm() {
     titreController.clear();
     descriptionController.clear();
-    dureeController.clear();
-    videoUrlController.clear();
     ageMinController.text = '3';
     ageMaxController.text = '10';
-    selectedCategorieId = categories.isNotEmpty ? categories.first.categorieId : '';
+    selectedCategorieId =
+        categories.isNotEmpty ? categories.first.categorieId : '';
     selectedJouetsIds = [];
     selectedImage = null;
     selectedVideoFile = null;
     imageUrl = null;
     videoUrl = null;
+    duree = 0;
     statut = TutorielStatus.publie;
-    videoSourceType = VideoSourceType.url;
     _clearErrors();
     notifyListeners();
   }
@@ -380,8 +379,6 @@ class TutorielFormController extends ChangeNotifier {
   void dispose() {
     titreController.dispose();
     descriptionController.dispose();
-    dureeController.dispose();
-    videoUrlController.dispose();
     ageMinController.dispose();
     ageMaxController.dispose();
     super.dispose();

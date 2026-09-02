@@ -3,14 +3,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class Progression {
   final String tutorielId;
   final num position;
-  final num duree;
   final bool termine;
   final DateTime dateDerniereLecture;
 
   Progression({
     required this.tutorielId,
     required this.position,
-    required this.duree,
     required this.termine,
     required this.dateDerniereLecture,
   });
@@ -31,7 +29,7 @@ class Progression {
     return Progression(
       tutorielId: data['tutorielId'] as String? ?? '',
       position: (data['position'] as num?) ?? 0,
-      duree: (data['duree'] as num?) ?? 0,
+      // 'duree' n'est plus lu depuis Firestore — la durée vient de Cloudinary.
       termine: (data['termine'] as bool?) ?? false,
       dateDerniereLecture: _parseDate(data['dateDerniereLecture']),
     );
@@ -41,10 +39,9 @@ class Progression {
     return {
       'tutorielId': tutorielId,
       'position': position,
-      'duree': duree,
+      // 'duree' n'est plus stockée.
       'termine': termine,
-      'dateDerniereLecture':
-          Timestamp.fromDate(dateDerniereLecture),
+      'dateDerniereLecture': Timestamp.fromDate(dateDerniereLecture),
     };
   }
 }

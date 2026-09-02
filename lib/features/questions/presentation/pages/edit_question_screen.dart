@@ -1,4 +1,7 @@
-import 'package:eveilkid/core/constants/app_colors.dart';
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:eveilkid/features/questions/enums/question_type.enum.dart';
 import 'package:eveilkid/features/questions/formcontroller/add_question_controller.dart';
 import 'package:eveilkid/features/questions/presentation/widgets/association_options.dart';
@@ -11,10 +14,7 @@ import 'package:eveilkid/features/questions/presentation/widgets/question_form_w
 import 'package:eveilkid/features/questions/presentation/widgets/save_button_widget.dart';
 import 'package:eveilkid/features/questions/presentation/widgets/true_false_options.dart';
 import 'package:eveilkid/features/questions/providers/question_provider.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'dart:io';
-import 'package:image_picker/image_picker.dart';
+import 'package:eveilkid/shared/widgets/app_states.dart';
 
 class EditQuestionScreen extends ConsumerStatefulWidget {
   final String activityId;
@@ -31,8 +31,9 @@ class EditQuestionScreen extends ConsumerStatefulWidget {
 }
 
 class _EditQuestionScreenState extends ConsumerState<EditQuestionScreen> {
-  late AddQuestionController _controller;
+  AddQuestionController? _controller;
   bool _isLoading = true;
+  String? _loadError;
 
   @override
   void initState() {
@@ -40,12 +41,23 @@ class _EditQuestionScreenState extends ConsumerState<EditQuestionScreen> {
     _loadQuestion();
   }
 
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadQuestion() async {
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
+
     try {
       final questionAsync = await ref.read(
         questionByIdProvider(
-          (activiteId: widget.activityId, questionId: widget.questionId)
-        ).future
+          (activiteId: widget.activityId, questionId: widget.questionId),
+        ).future,
       );
 
       if (!mounted) return;
@@ -59,26 +71,17 @@ class _EditQuestionScreenState extends ConsumerState<EditQuestionScreen> {
         );
         setState(() => _isLoading = false);
       } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Question non trouvée'),
-              backgroundColor: AppColors.danger
-            ),
-          );
-          Navigator.pop(context);
-        }
+        setState(() {
+          _isLoading = false;
+          _loadError = 'Question introuvable ou supprimée';
+        });
       }
     } catch (e) {
-      print('Erreur lors du chargement: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erreur: $e'),
-            backgroundColor: AppColors.danger
-          ),
-        );
-        Navigator.pop(context);
+        setState(() {
+          _isLoading = false;
+          _loadError = 'Erreur lors du chargement : $e';
+        });
       }
     }
   }
@@ -88,19 +91,19 @@ class _EditQuestionScreenState extends ConsumerState<EditQuestionScreen> {
       final picker = ImagePicker();
       final pickedFile = await picker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 800,
-        maxHeight: 600,
-        imageQuality: 80,
+        maxWidth: 1000,
+        maxHeight: 800,
+        imageQuality: 85,
       );
-      if (pickedFile != null) {
-        _controller.selectImage(File(pickedFile.path));
+      if (pickedFile != null && _controller != null) {
+        _controller!.selectImage(File(pickedFile.path));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erreur: $e'),
-            backgroundColor: AppColors.danger
+            content: Text('Erreur lors de la sélection de l\'image: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -108,180 +111,313 @@ class _EditQuestionScreenState extends ConsumerState<EditQuestionScreen> {
   }
 
   Future<void> _updateQuestion() async {
-    final success = await _controller.update();
+    if (_controller == null) return;
+    final success = await _controller!.update();
     if (success && mounted) {
-      ref.invalidate(questionsByActiviteProvider(widget.activityId));
-      ref.invalidate(
-        questionByIdProvider(
-          (activiteId: widget.activityId, questionId: widget.questionId),
-        ),
-      );
-
-      final notifier = ref.read(questionNotifierProvider.notifier);
-      await notifier.loadQuestions(widget.activityId);
-
-      if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Question mise à jour avec succès !'),
-          backgroundColor: Colors.green,
+          content: Text('Question modifiée avec succès !'),
+          backgroundColor: Color(0xFF16A34A),
         ),
       );
       Navigator.pop(context, true);
     }
   }
 
+  void _showDeleteDialog(BuildContext context) {
+    final theme = Theme.of(context);
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: const Text('Supprimer la question'),
+        content: const Text('Êtes-vous sûr de vouloir supprimer cette question ?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.error,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.pop(dialogCtx);
+              try {
+                final notifier = ref.read(questionNotifierProvider.notifier);
+                notifier.setActiviteId(widget.activityId);
+                await notifier.archiveQuestion(widget.questionId);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Question supprimée avec succès'),
+                      backgroundColor: Color(0xFF16A34A),
+                    ),
+                  );
+                  Navigator.pop(context, true);
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Erreur: $e'),
+                      backgroundColor: theme.colorScheme.error,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Modifier la Question'),
+          backgroundColor: theme.colorScheme.surface,
+          elevation: 0,
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_loadError != null || _controller == null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Modifier la Question'),
+          backgroundColor: theme.colorScheme.surface,
+          elevation: 0,
+        ),
+        body: Center(
+          child: AppErrorState(
+            title: 'Impossible de charger la question',
+            message: _loadError ?? 'Erreur inconnue',
+            onRetry: _loadQuestion,
+          ),
+        ),
       );
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Modifier ${_controller.type.label}',
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-            fontSize: 18,
-          ),
+        title: Column(
+          children: [
+            Text(
+              'Modifier la Question',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                color: theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface,
+                fontSize: 17,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              _controller!.type.label,
+              style: TextStyle(
+                fontSize: 11.5,
+                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        foregroundColor: Colors.black,
+        backgroundColor: theme.colorScheme.surface,
         centerTitle: true,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.delete_outline_rounded, color: theme.colorScheme.error),
+            tooltip: 'Supprimer la question',
+            onPressed: () => _showDeleteDialog(context),
+          ),
+        ],
       ),
-      body: _controller.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : GestureDetector(
-              onTap: () => FocusScope.of(context).unfocus(),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Question avec erreur
-                    QuestionFormWidget(
-                      controller: _controller.questionController,
-                      hintText: 'Modifiez votre question...',
-                      errorText: _controller.questionError,
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Image
-                    ImagePickerWidget(
-                      selectedImage: _controller.selectedImage,
-                      imageUrl: _controller.imageUrl,
-                      onImageRemoved: _controller.removeImage,
-                      onImageTap: _pickImage,
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Options selon le type
-                    _buildOptionsSection(),
-                    const SizedBox(height: 24),
-
-                    // Points avec erreur
-                    PointsWidget(
-                      controller: _controller.pointsController,
-                      errorText: _controller.pointsError,
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Erreur
-                    ErrorMessageWidget(message: _controller.errorMessage),
-
-                    // Bouton Mettre à jour
-                    SaveButtonWidget(
-                      onPressed: _updateQuestion,
-                      label: 'Mettre à jour',
-                    ),
-                    const SizedBox(height: 8),
-
-                    SizedBox(
-                      width: double.infinity,
-                      height: 40,
-                     
-                      child: TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: TextButton.styleFrom(
-                          foregroundColor: AppColors.danger,
-                          side: const BorderSide(
-                            color: AppColors.danger,
-                            width: 1.5,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
-                          ),
+      body: ListenableBuilder(
+        listenable: _controller!,
+        builder: (context, _) {
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 850),
+              child: GestureDetector(
+                onTap: () => FocusScope.of(context).unfocus(),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 1. Énoncé
+                      _buildCardContainer(
+                        theme: theme,
+                        isDark: isDark,
+                        child: QuestionFormWidget(
+                          controller: _controller!.questionController,
+                          hintText: 'Modifiez l\'énoncé de la question...',
+                          errorText: _controller!.questionError,
                         ),
-                        child: const Text(
-                          'Annuler',
-                          style: TextStyle(
-                            fontSize: 16,
-                          ),
-                        ),
-                    ),
+                      ),
 
-                    ),
-                  ],
+                      const SizedBox(height: 16),
+
+                      // 2. Illustration
+                      _buildCardContainer(
+                        theme: theme,
+                        isDark: isDark,
+                        child: ImagePickerWidget(
+                          selectedImage: _controller!.selectedImage,
+                          imageUrl: _controller!.imageUrl,
+                          onImageRemoved: _controller!.removeImage,
+                          onImageTap: _pickImage,
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // 3. Options de réponses
+                      _buildCardContainer(
+                        theme: theme,
+                        isDark: isDark,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.checklist_rounded,
+                                  size: 18,
+                                  color: theme.colorScheme.primary,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Réponses & Propositions',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: theme.colorScheme.onSurface,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            const Divider(height: 1),
+                            const SizedBox(height: 14),
+                            _buildOptionsSection(),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // 4. Points
+                      _buildCardContainer(
+                        theme: theme,
+                        isDark: isDark,
+                        child: PointsWidget(
+                          controller: _controller!.pointsController,
+                          errorText: _controller!.pointsError,
+                        ),
+                      ),
+
+                      if (_controller!.errorMessage != null) ...[
+                        const SizedBox(height: 16),
+                        ErrorMessageWidget(message: _controller!.errorMessage),
+                      ],
+
+                      const SizedBox(height: 24),
+
+                      // 5. Bouton Mettre à jour
+                      SaveButtonWidget(
+                        onPressed: _controller!.isLoading ? null : () => _updateQuestion(),
+                        label: _controller!.isLoading ? 'Enregistrement...' : 'Enregistrer les modifications',
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildCardContainer({
+    required ThemeData theme,
+    required bool isDark,
+    required Widget child,
+  }) {
+    final dividerColor = theme.dividerColor.withValues(alpha: isDark ? 0.25 : 0.12);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: dividerColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: child,
     );
   }
 
   Widget _buildOptionsSection() {
-    switch (_controller.type) {
+    switch (_controller!.type) {
       case QuestionType.choixMultiple:
         return MultipleChoiceOptions(
-          options: _controller.options,
-          controllers: _controller.optionControllers,
-          selectedCorrectOptionId: _controller.selectedCorrectOptionId,
-          onOptionChanged: _controller.updateOptionText,
-          onCorrectAnswerChanged: _controller.updateCorrectAnswer,
-          onAddOption: _controller.addOption,
-          onRemoveOption: _controller.removeOption,
-          optionsError: _controller.optionsError,
-          correctAnswerError: _controller.correctAnswerError,
+          options: _controller!.options,
+          controllers: _controller!.optionControllers,
+          selectedCorrectOptionId: _controller!.selectedCorrectOptionId,
+          onOptionChanged: _controller!.updateOptionText,
+          onCorrectAnswerChanged: _controller!.updateCorrectAnswer,
+          onAddOption: _controller!.addOption,
+          onRemoveOption: _controller!.removeOption,
+          optionsError: _controller!.optionsError,
+          correctAnswerError: _controller!.correctAnswerError,
         );
 
       case QuestionType.vraiFaux:
         return TrueFalseOptions(
-          selectedTrueFalse: _controller.selectedTrueFalse,
-          onChanged: _controller.updateTrueFalse,
-          errorText: _controller.correctAnswerError,
+          selectedTrueFalse: _controller!.selectedTrueFalse,
+          onChanged: _controller!.updateTrueFalse,
+          errorText: _controller!.correctAnswerError,
         );
 
       case QuestionType.association:
         return AssociationOptions(
-          options: _controller.options,
-          controllers: _controller.optionControllers,
-          onOptionChanged: _controller.updateOptionText,
-          onAddOption: _controller.addOption,
-          onRemoveOption: _controller.removeOption,
-          optionsError: _controller.optionsError,
+          options: _controller!.options,
+          controllers: _controller!.optionControllers,
+          onOptionChanged: _controller!.updateOptionText,
+          onAddOption: _controller!.addOption,
+          onRemoveOption: _controller!.removeOption,
+          optionsError: _controller!.optionsError,
         );
 
       case QuestionType.classement:
         return OrderingOptions(
-          options: _controller.options,
-          controllers: _controller.optionControllers,
-          onOptionChanged: _controller.updateOptionText,
-          onAddOption: _controller.addOption,
-          onRemoveOption: _controller.removeOption,
-          optionsError: _controller.optionsError,
+          options: _controller!.options,
+          controllers: _controller!.optionControllers,
+          onOptionChanged: _controller!.updateOptionText,
+          onAddOption: _controller!.addOption,
+          onRemoveOption: _controller!.removeOption,
+          optionsError: _controller!.optionsError,
         );
     }
   }

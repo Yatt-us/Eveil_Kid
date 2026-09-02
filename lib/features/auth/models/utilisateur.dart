@@ -39,6 +39,7 @@ class Utilisateur {
   final String nom;
   final String? photoUrl;
   final String? telephone;
+  final String? adresse;
   final bool estActif;
   final DateTime? dateCreation;
   final DateTime? dateModification;
@@ -53,6 +54,7 @@ class Utilisateur {
     this.nom = '',
     this.photoUrl,
     this.telephone,
+    this.adresse,
     this.estActif = true,
     this.dateCreation,
     this.dateModification,
@@ -71,6 +73,7 @@ class Utilisateur {
       nom: (map['nom'] as String?) ?? '',
       photoUrl: map['photoUrl'] as String?,
       telephone: map['telephone'] as String?,
+      adresse: map['adresse'] as String?,
       estActif: map['estActif'] as bool? ?? true,
       dateCreation: _timestampToDateTime(map['dateCreation']),
       dateModification: _timestampToDateTime(map['dateModification']),
@@ -100,6 +103,7 @@ class Utilisateur {
       'nom': nom,
       'photoUrl': photoUrl,
       'telephone': telephone,
+      'adresse': adresse,
       'estActif': estActif,
       'dateCreation': dateCreation,
       'dateModification': dateModification,
@@ -117,6 +121,7 @@ class Utilisateur {
     String? nom,
     String? photoUrl,
     String? telephone,
+    String? adresse,
     bool? estActif,
     DateTime? dateCreation,
     DateTime? dateModification,
@@ -131,6 +136,7 @@ class Utilisateur {
       nom: nom ?? this.nom,
       photoUrl: photoUrl ?? this.photoUrl,
       telephone: telephone ?? this.telephone,
+      adresse: adresse ?? this.adresse,
       estActif: estActif ?? this.estActif,
       dateCreation: dateCreation ?? this.dateCreation,
       dateModification: dateModification ?? this.dateModification,

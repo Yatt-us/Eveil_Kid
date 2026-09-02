@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:eveilkid/core/constants/AppTextStyles.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/features/tutoriels/enums/tutoriel_status.enum.dart';
 import 'package:eveilkid/features/tutoriels/models/tutoriel.dart';
+import 'package:eveilkid/features/tutoriels/providers/cloudinary_duration_provider.dart';
+import 'package:eveilkid/features/tutoriels/utils/duration_utils.dart';
 import 'package:eveilkid/shared/widgets/app_card.dart';
 
-class TutorielCard extends StatelessWidget {
+class TutorielCard extends ConsumerWidget {
   final Tutoriel tutoriel;
   final String? categorieNom;
   final VoidCallback onTap;
@@ -26,9 +28,16 @@ class TutorielCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final durationSecs = tutoriel.duree > 0
+        ? tutoriel.duree.toDouble()
+        : (ref
+                .watch(cloudinaryVideoDurationProvider(tutoriel.videoUrl))
+                .asData
+                ?.value ??
+            0.0);
 
     final isPublie = tutoriel.statut == TutorielStatus.publie;
     final statusColor = isPublie ? AppColors.success : AppColors.warning;
@@ -111,32 +120,33 @@ class TutorielCard extends StatelessWidget {
                   ),
                 ),
                 // Badge durée en bas à droite
-                Positioned(
-                  bottom: 10,
-                  right: 10,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.75),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 14),
-                        const SizedBox(width: 2),
-                        Text(
-                          tutoriel.dureeFormatee,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
+                if (durationSecs > 0)
+                  Positioned(
+                    bottom: 10,
+                    right: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.75),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 14),
+                          const SizedBox(width: 2),
+                          Text(
+                            formatDurationSeconds(durationSecs),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           ),
@@ -153,8 +163,14 @@ class TutorielCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         tutoriel.titre,
-                        style: AppTextStyles.bodyLarge.copyWith(
+                        style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w700,
+                          color: theme.colorScheme.onSurface,
+                          height: 1.25,
+                        ) ?? TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          color: theme.colorScheme.onSurface,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -165,7 +181,7 @@ class TutorielCard extends StatelessWidget {
                     PopupMenuButton<String>(
                       icon: Icon(
                         Icons.more_vert_rounded,
-                        color: theme.iconTheme.color?.withValues(alpha: 0.6),
+                        color: theme.colorScheme.onSurfaceVariant,
                         size: 22,
                       ),
                       shape: RoundedRectangleBorder(
@@ -239,9 +255,13 @@ class TutorielCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     tutoriel.description,
-                    style: TextStyle(
-                      color: isDark ? Colors.white60 : AppColors.textSecondary,
-                      fontSize: 12,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontSize: 12.5,
+                      height: 1.35,
+                    ) ?? TextStyle(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontSize: 12.5,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -257,13 +277,16 @@ class TutorielCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: AppColors.primary.withValues(alpha: isDark ? 0.2 : 0.1),
                           borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: AppColors.primary.withValues(alpha: isDark ? 0.35 : 0.2),
+                          ),
                         ),
                         child: Text(
                           categorieNom!,
                           style: const TextStyle(
                             color: AppColors.primary,
                             fontSize: 11,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
@@ -272,55 +295,21 @@ class TutorielCard extends StatelessWidget {
                     Icon(
                       Icons.child_care_rounded,
                       size: 15,
-                      color: theme.iconTheme.color?.withValues(alpha: 0.5),
+                      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
                     ),
                     const SizedBox(width: 4),
                     Text(
                       '${tutoriel.ageMinimum}-${tutoriel.ageMaximum} ans',
-                      style: TextStyle(
-                        color: isDark ? Colors.white70 : Colors.grey.shade700,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
                         fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ) ?? TextStyle(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const Spacer(),
-                    if (tutoriel.videoUrl.contains('res.cloudinary.com'))
-                      Tooltip(
-                        message: 'Vidéo hébergée sur Cloudinary',
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.cloud_done_rounded, size: 15, color: AppColors.success),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Cloudinary',
-                              style: TextStyle(
-                                color: AppColors.success,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    else if (tutoriel.videoUrl.isNotEmpty)
-                      Tooltip(
-                        message: 'Vidéo externe',
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.link_rounded, size: 15, color: AppColors.info),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Lien Web',
-                              style: TextStyle(
-                                color: AppColors.info,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                   ],
                 ),
               ],

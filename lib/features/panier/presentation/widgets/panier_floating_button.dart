@@ -39,10 +39,7 @@ class PanierFloatingButton extends ConsumerWidget {
           return const SizedBox.shrink();
         }
 
-        final totalQuantite = articles.fold<int>(
-          0,
-          (sum, item) => sum + item.quantite,
-        );
+        final totalArticles = articles.length;
         final totalPrix =
             ref.read(panierServiceProvider).calculerTotal(articles);
 
@@ -119,7 +116,7 @@ class PanierFloatingButton extends ConsumerWidget {
                                 ),
                                 child: Center(
                                   child: Text(
-                                    '$totalQuantite',
+                                    '$totalArticles',
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 9,
@@ -140,7 +137,7 @@ class PanierFloatingButton extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '$totalQuantite article${totalQuantite > 1 ? 's' : ''}',
+                              '$totalArticles article${totalArticles > 1 ? 's' : ''}',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 13,

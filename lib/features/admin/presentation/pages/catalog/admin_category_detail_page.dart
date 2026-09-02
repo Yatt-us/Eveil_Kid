@@ -164,27 +164,43 @@ class _AdminCategoryDetailPageState
     final titleColor = theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface;
     final dividerColor = theme.dividerColor.withValues(alpha: 0.2);
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text(
-          _isEditing ? "Détails de la catégorie" : "Nouvelle catégorie",
-          style: TextStyle(
-            color: titleColor,
-            fontWeight: FontWeight.w800,
-            fontSize: 18,
-            letterSpacing: -0.3,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        } else if (context.mounted) {
+          context.go(AppRoutes.adminCategories);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        appBar: AppBar(
+          title: Text(
+            _isEditing ? "Détails de la catégorie" : "Nouvelle catégorie",
+            style: TextStyle(
+              color: titleColor,
+              fontWeight: FontWeight.w800,
+              fontSize: 18,
+              letterSpacing: -0.3,
+            ),
           ),
-        ),
-        backgroundColor: theme.colorScheme.surface,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_rounded,
-            color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
+          backgroundColor: theme.colorScheme.surface,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(
+              Icons.arrow_back_rounded,
+              color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
+            ),
+            onPressed: () {
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              } else {
+                context.go(AppRoutes.adminCategories);
+              }
+            },
           ),
-          onPressed: () => context.pop(),
-        ),
         actions: [
           if (_isEditing)
             IconButton(
@@ -423,8 +439,9 @@ class _AdminCategoryDetailPageState
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   /// Carte d'aperçu d'en-tête dynamique
   Widget _buildHeaderPreview(BuildContext context) {

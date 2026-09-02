@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:eveilkid/features/parent/models/parent_model.dart';
+import 'package:eveilkid/features/parents/models/parent_model.dart';
 
 void main() {
   group('Firestore Models Alignment Tests', () {
@@ -11,6 +11,7 @@ void main() {
         email: 'parent@example.com',
         nom: 'Awa Diarra',
         telephone: '+221770000000',
+        adresse: 'Bamako, Hamdallaye ACI 2000',
         nombreFavoris: 5,
         nombreEnfants: 2,
         estActif: true,
@@ -22,12 +23,14 @@ void main() {
       expect(map['nom'], 'Awa Diarra');
       expect(map['email'], 'parent@example.com');
       expect(map['telephone'], '+221770000000');
+      expect(map['adresse'], 'Bamako, Hamdallaye ACI 2000');
       expect(map['estActif'], isTrue);
       expect(map['nombreFavoris'], 5);
 
       final fromMap = UtilisateurModel.fromFirestore(map, 'user_123');
       expect(fromMap.utilisateurId, 'user_123');
       expect(fromMap.nom, 'Awa Diarra');
+      expect(fromMap.adresse, 'Bamako, Hamdallaye ACI 2000');
       expect(fromMap.role, UserRole.PARENT);
     });
 

@@ -1,8 +1,12 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:eveilkid/core/cloudinary/cloudinary_service.dart';
 import 'package:eveilkid/core/constants/AppSpacing.dart';
+import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/features/categories/models/categorie.dart';
 import 'package:eveilkid/features/categories/providers/categorie_provider.dart';
 import 'package:eveilkid/shared/widgets/app_button.dart';
@@ -26,10 +30,13 @@ class _AdminCategoryFormDialogState
     extends ConsumerState<AdminCategoryFormDialog> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nomController;
-  late TextEditingController _iconeUrlController;
-  late TextEditingController _imageUrlController;
+  String? _imageUrl;
   bool _estActive = true;
   bool _isLoading = false;
+  bool _isUploadingImage = false;
+
+  final CloudinaryService _cloudinary = CloudinaryService();
+  final ImagePicker _picker = ImagePicker();
 
   bool get _isEditing => widget.categorieToEdit != null;
 
@@ -38,17 +45,47 @@ class _AdminCategoryFormDialogState
     super.initState();
     final cat = widget.categorieToEdit;
     _nomController = TextEditingController(text: cat?.nom ?? '');
-    _iconeUrlController = TextEditingController(text: cat?.iconeUrl ?? '');
-    _imageUrlController = TextEditingController(text: cat?.imageUrl ?? '');
+    _imageUrl = cat?.imageUrl ?? cat?.iconeUrl;
     _estActive = cat?.estActive ?? true;
   }
 
   @override
   void dispose() {
     _nomController.dispose();
-    _iconeUrlController.dispose();
-    _imageUrlController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final picked = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+      if (picked == null) return;
+
+      setState(() => _isUploadingImage = true);
+
+      final uploadedUrl = await _cloudinary.uploadImage(
+        File(picked.path),
+        folder: 'categories',
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _isUploadingImage = false;
+        _imageUrl = uploadedUrl;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isUploadingImage = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur lors du téléversement : $e'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    }
   }
 
   Future<void> _save() async {
@@ -63,12 +100,8 @@ class _AdminCategoryFormDialogState
       final updatedCategory = Categorie(
         categorieId: id,
         nom: _nomController.text.trim(),
-        iconeUrl: _iconeUrlController.text.trim().isNotEmpty
-            ? _iconeUrlController.text.trim()
-            : null,
-        imageUrl: _imageUrlController.text.trim().isNotEmpty
-            ? _imageUrlController.text.trim()
-            : null,
+        iconeUrl: _imageUrl,
+        imageUrl: _imageUrl,
         nombreJouetsDenormalise:
             widget.categorieToEdit?.nombreJouetsDenormalise ?? 0,
         nbTutoriels: widget.categorieToEdit?.nbTutoriels ?? 0,
@@ -99,8 +132,8 @@ class _AdminCategoryFormDialogState
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            backgroundColor: Theme.of(context).colorScheme.error,
-            content: Text("Erreur : $e"),
+            backgroundColor: AppColors.danger,
+            content: Text("Erreur lors de l'enregistrement : $e"),
           ),
         );
       }
@@ -110,11 +143,14 @@ class _AdminCategoryFormDialogState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final dividerColor = theme.dividerColor.withValues(alpha: 0.2);
 
     return Dialog(
-      backgroundColor: theme.colorScheme.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      backgroundColor:
+          theme.dialogTheme.backgroundColor ?? theme.colorScheme.surface,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
         child: SingleChildScrollView(
@@ -126,12 +162,8 @@ class _AdminCategoryFormDialogState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Icon(
-                      _isEditing ? Icons.edit : Icons.add_circle_outline,
-                      color: theme.colorScheme.primary,
-                    ),
-                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         _isEditing
@@ -171,12 +203,90 @@ class _AdminCategoryFormDialogState
                   },
                 ),
                 AppSpacing.verticalMd,
-                AppTextField(
-                  controller: _iconeUrlController,
-                  labelText: "URL de l'icône (Optionnel)",
-                  hintText: "https://...",
-                  prefixIcon: Icons.image_outlined,
+
+                // Sélecteur d'image de la catégorie
+                Text(
+                  "Image / Icône de la catégorie",
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: theme.textTheme.bodyMedium?.color ??
+                        theme.colorScheme.onSurface,
+                  ),
                 ),
+                const SizedBox(height: 8),
+                if (_isUploadingImage)
+                  Container(
+                    height: 90,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? theme.colorScheme.surfaceContainerHighest
+                          : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Center(
+                      child: CircularProgressIndicator(strokeWidth: 2.5),
+                    ),
+                  )
+                else if (_imageUrl != null && _imageUrl!.isNotEmpty)
+                  Row(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.network(
+                          _imageUrl!,
+                          width: 70,
+                          height: 70,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => Container(
+                            width: 70,
+                            height: 70,
+                            color: Colors.grey.shade200,
+                            child: const Icon(Icons.broken_image),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            OutlinedButton.icon(
+                              onPressed: _pickImage,
+                              icon: const Icon(Icons.edit_outlined, size: 16),
+                              label: const Text("Changer l'image",
+                                  style: TextStyle(fontSize: 12)),
+                            ),
+                            TextButton.icon(
+                              onPressed: () =>
+                                  setState(() => _imageUrl = null),
+                              icon: const Icon(Icons.delete_outline,
+                                  size: 16, color: Colors.redAccent),
+                              label: const Text("Supprimer",
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.redAccent)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
+                else
+                  OutlinedButton.icon(
+                    onPressed: _pickImage,
+                    icon: const Icon(Icons.add_photo_alternate_rounded,
+                        size: 18),
+                    label: const Text("Choisir une image depuis la galerie"),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(44),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+
                 AppSpacing.verticalMd,
                 AppSwitchTile(
                   title: "Catégorie active",

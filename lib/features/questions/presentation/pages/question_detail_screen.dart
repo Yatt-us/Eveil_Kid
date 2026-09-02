@@ -1,12 +1,11 @@
-import 'package:eveilkid/core/constants/app_colors.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:eveilkid/features/activites/providers/admin/activity_provider.dart';
 import 'package:eveilkid/features/questions/models/question_model.dart';
 import 'package:eveilkid/features/questions/options_questions/option_model.dart';
 import 'package:eveilkid/features/questions/providers/question_provider.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-
+import 'package:eveilkid/shared/widgets/app_states.dart';
 
 class QuestionDetailScreen extends ConsumerStatefulWidget {
   final String activityId;
@@ -26,602 +25,503 @@ class _QuestionDetailScreenState extends ConsumerState<QuestionDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final activityAsync = ref.watch(activiteByIdProvider(widget.activityId));
-    
-   
     final questionAsync = ref.watch(
       questionByIdProvider(
-        (activiteId: widget.activityId, questionId: widget.questionId)
-      )
+        (activiteId: widget.activityId, questionId: widget.questionId),
+      ),
     );
+
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
         title: activityAsync.when(
-          loading: () => const Text('Chargement...'),
+          loading: () => const Text('Détail question'),
           error: (_, _) => const Text('Détail question'),
-          data: (activity) => Text(activity?.titre ?? 'Détail question'),
-        ),
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        foregroundColor: const Color.fromARGB(255, 43, 42, 42),
-        centerTitle: true,
-        
-      ),
-      body: questionAsync.when(
-        loading: () => const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+          data: (activity) => Column(
             children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Chargement de la question...'),
+              Text(
+                'Détail Question',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  color: theme.textTheme.titleMedium?.color ?? theme.colorScheme.onSurface,
+                ),
+              ),
+              if (activity != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  activity.titre,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ],
           ),
         ),
-        error: (err, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 64, color: AppColors.danger),
-              const SizedBox(height: 16),
-              Text(
-                'Erreur: $err',
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  ref.invalidate(
-                    questionByIdProvider(
-                      (activiteId: widget.activityId, questionId: widget.questionId),
-                    ),
-                  );
-                },
-                child: const Text('Réessayer'),
-              ),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Retour'),
-              ),
-            ],
+        backgroundColor: theme.colorScheme.surface,
+        centerTitle: true,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: questionAsync.when(
+        loading: () => const Center(
+          child: CircularProgressIndicator(),
+        ),
+        error: (err, _) => Center(
+          child: AppErrorState(
+            title: 'Erreur lors du chargement',
+            message: '$err',
+            onRetry: () {
+              ref.invalidate(
+                questionByIdProvider(
+                  (activiteId: widget.activityId, questionId: widget.questionId),
+                ),
+              );
+            },
           ),
         ),
         data: (question) {
           if (question == null) {
-            return _buildNotFoundWidget();
+            return Center(
+              child: AppEmptyState(
+                icon: Icons.quiz_outlined,
+                title: 'Question introuvable',
+                description: 'Cette question a peut-être été supprimée.',
+                actionText: 'Retour',
+                onActionPressed: () => Navigator.pop(context),
+              ),
+            );
           }
-          return _buildDetailContent(question);
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 850),
+              child: _buildDetailContent(question, theme, isDark),
+            ),
+          );
         },
       ),
     );
   }
 
-  Widget _buildNotFoundWidget() {
-    return Center(
+  Widget _buildDetailContent(Question question, ThemeData theme, bool isDark) {
+    final dividerColor = theme.dividerColor.withValues(alpha: isDark ? 0.25 : 0.12);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.question_mark, size: 64, color: Colors.grey),
-          const SizedBox(height: 16),
-          const Text(
-            'Question non trouvée',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+          // 1. CARTE ÉNONCÉ HERO
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: dividerColor),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        Icons.quiz_rounded,
+                        color: theme.colorScheme.primary,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Énoncé du défi',
+                      style: TextStyle(
+                        color: theme.colorScheme.primary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  question.enonce,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface,
+                    fontSize: 18,
+                    height: 1.4,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'ID: ${widget.questionId}',
-            style: TextStyle(color: Colors.grey.shade500),
+
+          const SizedBox(height: 14),
+
+          // 2. INFOS TYPE & POINTS
+          Row(
+            children: [
+              Expanded(
+                child: _buildInfoCard(
+                  icon: question.typeIcon,
+                  title: 'Type',
+                  value: question.typeLabel,
+                  iconColor: theme.colorScheme.primary,
+                  theme: theme,
+                  isDark: isDark,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildInfoCard(
+                  icon: Icons.star_rounded,
+                  title: 'Récompense',
+                  value: '${question.points} étoiles ⭐',
+                  iconColor: const Color(0xFFD97706),
+                  theme: theme,
+                  isDark: isDark,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Retour'),
+
+          // 3. ILLUSTRATION
+          if (question.imageUrl != null && question.imageUrl!.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            _buildSectionHeader(
+              icon: Icons.image_outlined,
+              title: 'Illustration',
+              theme: theme,
+            ),
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  border: Border.all(color: dividerColor),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Image.network(
+                  question.imageUrl!,
+                  height: 200,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => Container(
+                    height: 150,
+                    color: isDark ? theme.colorScheme.surfaceContainerHighest : Colors.grey.shade100,
+                    child: Center(
+                      child: Icon(
+                        Icons.broken_image_rounded,
+                        color: theme.colorScheme.onSurfaceVariant,
+                        size: 36,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+
+          // 4. OPTIONS DE RÉPONSES
+          if (question.options.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            _buildSectionHeader(
+              icon: Icons.checklist_rounded,
+              title: 'Options de réponses',
+              theme: theme,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'La bonne réponse est mise en évidence en vert.',
+              style: TextStyle(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontSize: 12.5,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ...question.options.asMap().entries.map(
+                  (entry) => _buildOptionItem(
+                    entry.value,
+                    question.idReponseCorrecte,
+                    entry.key,
+                    theme,
+                    isDark,
+                  ),
+                ),
+          ],
+
+          const SizedBox(height: 28),
+
+          // 5. BOUTONS D'ACTIONS (MODIFIER / SUPPRIMER)
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => context.push(
+                    '/admin/activites/${widget.activityId}/questions/edit/${widget.questionId}',
+                  ),
+                  icon: const Icon(Icons.edit_outlined, size: 18),
+                  label: const Text('Modifier'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: theme.colorScheme.primary,
+                    side: BorderSide(color: theme.colorScheme.primary),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => _confirmDelete(question),
+                  icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                  label: const Text('Supprimer'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: theme.colorScheme.error,
+                    side: BorderSide(color: theme.colorScheme.error),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDetailContent(Question question) {
-  return SingleChildScrollView(
-    padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Theme.of(context).scaffoldBackgroundColor,
-                 Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.85),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.20),
-                blurRadius: 15,
-                offset: const Offset(0, 7),
-              ),
-            ],
+  Widget _buildInfoCard({
+    required IconData icon,
+    required String title,
+    required String value,
+    required Color iconColor,
+    required ThemeData theme,
+    required bool isDark,
+  }) {
+    final dividerColor = theme.dividerColor.withValues(alpha: isDark ? 0.25 : 0.12);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: dividerColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.quiz_outlined,
-                      color: Colors.white,
-                      size: 24,
-                    ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: isDark ? 0.25 : 0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: iconColor, size: 20),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
                   ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-                  const SizedBox(width: 12),
+  Widget _buildSectionHeader({
+    required IconData icon,
+    required String title,
+    required ThemeData theme,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, color: theme.colorScheme.primary, size: 18),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
+            color: theme.colorScheme.onSurface,
+            letterSpacing: -0.2,
+          ),
+        ),
+      ],
+    );
+  }
 
-                  const Expanded(
-                    child: Text(
-                      'Détail de la question',
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
+  Widget _buildOptionItem(
+    OptionQuestion option,
+    String correctId,
+    int index,
+    ThemeData theme,
+    bool isDark,
+  ) {
+    final isCorrect = option.id == correctId;
+    final dividerColor = theme.dividerColor.withValues(alpha: isDark ? 0.25 : 0.12);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isCorrect
+            ? (isDark ? const Color(0xFF14532D).withValues(alpha: 0.35) : const Color(0xFFDCFCE7))
+            : theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isCorrect ? const Color(0xFF16A34A) : dividerColor,
+          width: isCorrect ? 1.5 : 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: isCorrect
+                  ? const Color(0xFF16A34A)
+                  : (isDark ? theme.colorScheme.surfaceContainerHighest : const Color(0xFFF1F5F9)),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              String.fromCharCode(65 + index),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: isCorrect ? Colors.white : theme.colorScheme.onSurface,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              option.texte,
+              style: TextStyle(
+                fontSize: 13.5,
+                fontWeight: isCorrect ? FontWeight.w700 : FontWeight.w500,
+                color: isCorrect
+                    ? (isDark ? const Color(0xFF4ADE80) : const Color(0xFF15803D))
+                    : theme.colorScheme.onSurface,
+              ),
+            ),
+          ),
+          if (isCorrect) ...[
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: const Color(0xFF16A34A),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.check_rounded, color: Colors.white, size: 12),
+                  SizedBox(width: 3),
+                  Text(
+                    'Correcte',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ],
               ),
-
-              const SizedBox(height: 20),
-
-              Text(
-                question.enonce,
-                style: const TextStyle(
-                  color: Color.fromARGB(255, 65, 65, 65),
-                  fontSize: 20,
-                  height: 1.4,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 18),
-
-        Row(
-          children: [
-            Expanded(
-              child: _buildInfoCard(
-                icon: question.typeIcon,
-                title: 'Type',
-                value: question.typeLabel,
-                iconColor: AppColors.primary,
-              ),
-            ),
-
-            const SizedBox(width: 12),
-
-            Expanded(
-              child: _buildInfoCard(
-                icon: Icons.star_rounded,
-                title: 'Points',
-                value: '${question.points} pts',
-                iconColor: Colors.orange,
-              ),
             ),
           ],
-        ),
-
-        
-        if (question.imageUrl != null &&
-            question.imageUrl!.isNotEmpty) ...[
-          const SizedBox(height: 18),
-
-          _buildSectionTitle(
-            icon: Icons.image_outlined,
-            title: 'Illustration',
-          ),
-
-          const SizedBox(height: 10),
-
-          Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 12,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(18),
-              child: Image.network(
-                question.imageUrl!,
-                height: 220,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) {
-                  return Container(
-                    height: 220,
-                    color: Colors.grey.shade100,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.broken_image_outlined,
-                          size: 45,
-                          color: Colors.grey.shade400,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Impossible de charger l’image',
-                          style: TextStyle(
-                            color: Colors.grey.shade500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
         ],
-
-        if (question.options.isNotEmpty) ...[
-          const SizedBox(height: 24),
-
-          _buildSectionTitle(
-            icon: Icons.list_alt_rounded,
-            title: 'Réponses possibles',
-          ),
-
-          const SizedBox(height: 6),
-
-          Text(
-            'La réponse correcte est indiquée ci-dessous.',
-            style: TextStyle(
-              color: Colors.grey.shade600,
-              fontSize: 13,
-            ),
-          ),
-
-          const SizedBox(height: 14),
-
-          ...question.options.asMap().entries.map(
-            (entry) => _buildOptionItem(
-              entry.value,
-              question.idReponseCorrecte,
-              entry.key,
-            ),
-          ),
-        ],
-
-      
-        const SizedBox(height: 28),
-
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => context.push(
-                  '/admin/activites/${widget.activityId}/questions/edit/${widget.questionId}',
-                ),
-                icon: const Icon(
-                  Icons.edit_outlined,
-                  size: 19,
-                ),
-                label: const Text(
-                  'Modifier',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.primary,
-                  side: BorderSide(
-                    color: AppColors.primary.withValues(alpha: 0.6),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 14,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(width: 12),
-
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => _confirmDelete(question),
-                icon: const Icon(
-                  Icons.delete_outline,
-                  size: 19,
-                ),
-                label: const Text(
-                  'Supprimer',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.danger,
-                  side: BorderSide(
-                    color: AppColors.danger.withValues(alpha: 0.6),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 14,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
-}
-
-Widget _buildInfoCard({
-  required IconData icon,
-  required String title,
-  required String value,
-  required Color iconColor,
-}) {
-  return Container(
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(
-        color: Colors.grey.shade200,
       ),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.04),
-          blurRadius: 10,
-          offset: const Offset(0, 4),
-        ),
-      ],
-    ),
-    child: Row(
-      children: [
-        Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: iconColor.withValues(alpha: 0.10),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(
-            icon,
-            color: iconColor,
-            size: 22,
-          ),
-        ),
-
-        const SizedBox(width: 10),
-
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.grey.shade500,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-
-              const SizedBox(height: 3),
-
-              Text(
-                value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-Widget _buildSectionTitle({
-  required IconData icon,
-  required String title,
-}) {
-  return Row(
-    children: [
-      Container(
-        width: 34,
-        height: 34,
-        decoration: BoxDecoration(
-          color: AppColors.primary.withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(
-          icon,
-          color: AppColors.primary,
-          size: 19,
-        ),
-      ),
-
-      const SizedBox(width: 10),
-
-      Text(
-        title,
-        style: const TextStyle(
-          fontSize: 17,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    ],
-  );
-}
-  Widget _buildOptionItem(
-  OptionQuestion option,
-  String correctId,
-  int index,
-) {
-  final isCorrect = option.id == correctId;
-
-  return Container(
-    margin: const EdgeInsets.only(bottom: 10),
-    padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: isCorrect
-          ? AppColors.childPrimary.withValues(alpha: 0.08)
-          : Colors.white,
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(
-        color: isCorrect
-            ? AppColors.childPrimary
-            : Colors.grey.shade200,
-        width: isCorrect ? 1.5 : 1,
-      ),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.03),
-          blurRadius: 8,
-          offset: const Offset(0, 3),
-        ),
-      ],
-    ),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-      
-        Container(
-          width: 38,
-          height: 38,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: isCorrect
-                ? AppColors.childPrimary
-                : Colors.grey.shade100,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            String.fromCharCode(65 + index),
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: isCorrect
-                  ? Colors.white
-                  : Colors.grey.shade700,
-            ),
-          ),
-        ),
-
-        const SizedBox(width: 12),
-
-        // Texte
-        Expanded(
-          child: Text(
-            option.texte,
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.35,
-              fontWeight: isCorrect
-                  ? FontWeight.w600
-                  : FontWeight.w400,
-              color: isCorrect
-                  ? AppColors.childPrimary
-                  : Colors.grey.shade800,
-            ),
-          ),
-        ),
-
-        const SizedBox(width: 8),
-
-        // Indicateur réponse correcte
-        if (isCorrect)
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 9,
-              vertical: 6,
-            ),
-            decoration: BoxDecoration(
-              color: AppColors.childPrimary,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.check_rounded,
-                  color: Colors.white,
-                  size: 14,
-                ),
-                SizedBox(width: 4),
-                Text(
-                  'Correcte',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-      ],
-    ),
-  );
-}
+    );
+  }
 
   void _confirmDelete(Question question) {
+    final theme = Theme.of(context);
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Supprimer la question'),
-        content: Text('Supprimer : "${question.enonce}" ?'),
+        content: Text('Êtes-vous sûr de vouloir supprimer :\n"${question.enonce}" ?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Annuler'),
           ),
-          TextButton(
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.error,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () async {
               Navigator.pop(dialogContext);
               try {
                 final notifier = ref.read(questionNotifierProvider.notifier);
+                notifier.setActiviteId(widget.activityId);
                 await notifier.archiveQuestion(question.id!);
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Question supprimée avec succès'),
-                    backgroundColor: AppColors.childPrimary,
+                    backgroundColor: Color(0xFF16A34A),
                   ),
                 );
                 Navigator.pop(context, true);
@@ -630,12 +530,11 @@ Widget _buildSectionTitle({
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Erreur: $e'),
-                    backgroundColor: AppColors.danger,
+                    backgroundColor: theme.colorScheme.error,
                   ),
                 );
               }
             },
-            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
             child: const Text('Supprimer'),
           ),
         ],

@@ -34,7 +34,8 @@ class ParentFirestoreRepository implements ParentRepository {
     final data = userDoc.data();
     if (!userDoc.exists || data == null) {
       final authUser = FirebaseAuth.instance.currentUser;
-      final isCurrentAuthUser = authUser != null && authUser.uid == utilisateurId;
+      final isCurrentAuthUser =
+          authUser != null && authUser.uid == utilisateurId;
       return Utilisateur(
         utilisateurId: utilisateurId,
         role: UserRole.parent,
@@ -73,15 +74,18 @@ class ParentFirestoreRepository implements ParentRepository {
 
   @override
   Future<Utilisateur> updateParentProfile(Utilisateur parent) async {
-    final docRef = _firestore.collection('utilisateurs').doc(parent.utilisateurId);
-    
+    final docRef = _firestore
+        .collection('utilisateurs')
+        .doc(parent.utilisateurId);
+
     // Mettre à jour uniquement les informations personnelles sans écraser le rôle existant dans Firestore
     await docRef.set({
       'utilisateurId': parent.utilisateurId,
       'nom': parent.nom,
       'email': parent.email,
-      if (parent.telephone != null) 'telephone': parent.telephone,
-      if (parent.photoUrl != null) 'photoUrl': parent.photoUrl,
+      'telephone': parent.telephone,
+      'adresse': parent.adresse,
+      'photoUrl': parent.photoUrl,
       'dateModification': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
 

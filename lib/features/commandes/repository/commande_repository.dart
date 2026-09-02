@@ -23,7 +23,23 @@ class CommandeRepository {
               CommandeModel.fromMap(doc.data() as Map<String, dynamic>, doc.id))
           .toList();
     } catch (e) {
-      throw Exception('Erreur lors de la récupération des commandes : $e');
+      try {
+        // Fallback si l'index n'est pas encore prêt ou en cas d'erreur composite
+        QuerySnapshot instantane = await _collectionCommandes
+            .where('parentId', isEqualTo: parentId)
+            .get();
+
+        final list = instantane.docs
+            .map((doc) => CommandeModel.fromMap(
+                doc.data() as Map<String, dynamic>, doc.id))
+            .toList();
+
+        // Tri manuel
+        list.sort((a, b) => b.dateCreation.compareTo(a.dateCreation));
+        return list;
+      } catch (e2) {
+        throw Exception('Erreur lors de la récupération des commandes : $e2');
+      }
     }
   }
 
@@ -41,9 +57,20 @@ class CommandeRepository {
   }
 
   // 3. Créer une nouvelle commande
-  Future<void> creerCommande(CommandeModel commande) async {
+  Future<CommandeModel> creerCommande(CommandeModel commande) async {
     try {
-      await _collectionCommandes.doc(commande.id).set(commande.toMap());
+      final docRef = (commande.id.isNotEmpty)
+          ? _collectionCommandes.doc(commande.id)
+          : _collectionCommandes.doc();
+
+      final commandeFinale = commande.copyWith(
+        id: docRef.id,
+        statut: commande.statut.isEmpty ? 'En cours' : commande.statut,
+        dateCreation: commande.dateCreation,
+      );
+
+      await docRef.set(commandeFinale.toMap());
+      return commandeFinale;
     } catch (e) {
       throw Exception('Erreur lors de la création de la commande : $e');
     }
@@ -66,6 +93,41 @@ class CommandeRepository {
       await _collectionCommandes.doc(commandeId).update({'statut': statut});
     } catch (e) {
       throw Exception('Erreur lors de la mise à jour du statut : $e');
+    }
+  }
+
+  // 6. Récupérer toutes les commandes pour l'administration
+  Future<List<CommandeModel>> recupererToutesLesCommandes() async {
+    try {
+      QuerySnapshot instantane = await _collectionCommandes
+          .orderBy('dateCreation', descending: true)
+          .get();
+
+      return instantane.docs
+          .map((doc) =>
+              CommandeModel.fromMap(doc.data() as Map<String, dynamic>, doc.id))
+          .toList();
+    } catch (e) {
+      try {
+        QuerySnapshot instantane = await _collectionCommandes.get();
+        final list = instantane.docs
+            .map((doc) =>
+                CommandeModel.fromMap(doc.data() as Map<String, dynamic>, doc.id))
+            .toList();
+        list.sort((a, b) => b.dateCreation.compareTo(a.dateCreation));
+        return list;
+      } catch (e2) {
+        throw Exception('Erreur lors de la récupération des commandes : $e2');
+      }
+    }
+  }
+
+  // 7. Supprimer définitivement une commande
+  Future<void> supprimerCommande(String commandeId) async {
+    try {
+      await _collectionCommandes.doc(commandeId).delete();
+    } catch (e) {
+      throw Exception('Erreur lors de la suppression de la commande : $e');
     }
   }
 }

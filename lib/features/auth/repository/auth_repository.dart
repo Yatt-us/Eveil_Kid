@@ -398,6 +398,101 @@ class AuthRepository {
     return utilisateur;
   }
 
+  // MODIFIER LE MOT DE PASSE DIRECTEMENT
+
+  Future<void> updatePassword({required String newPassword}) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('Aucun utilisateur connecté.');
+    }
+    await user.updatePassword(newPassword);
+  }
+
+  // ARCHIVER / DÉSACTIVER LE COMPTE ET LES DONNÉES
+
+  Future<void> archiverCompte() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('Aucun utilisateur connecté.');
+    }
+    final uid = user.uid;
+
+    try {
+      // 1. Marquer le compte principal comme archivé et inactif
+      await _firestore.collection('utilisateurs').doc(uid).update({
+        'estActif': false,
+        'estArchive': true,
+        'dateArchivage': FieldValue.serverTimestamp(),
+        'dateModification': FieldValue.serverTimestamp(),
+      });
+
+      // 2. Désactiver les profils enfants
+      final enfantsSnap = await _firestore
+          .collection('utilisateurs')
+          .doc(uid)
+          .collection('enfants')
+          .get();
+      for (final doc in enfantsSnap.docs) {
+        await doc.reference.update({
+          'estActif': false,
+          'estArchive': true,
+          'dateArchivage': FieldValue.serverTimestamp(),
+        });
+      }
+    } catch (e) {
+      debugPrint('Erreur lors de l\'archivage Firestore: $e');
+    }
+
+    // 3. Déconnexion de la session Firebase Auth
+    await _auth.signOut();
+    if (!kIsWeb) {
+      await GoogleSignInService.signOut();
+    }
+  }
+
+  // SUPPRIMER LE COMPTE DÉFINITIVEMENT
+
+  Future<void> deleteAccount() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('Aucun utilisateur connecté.');
+    }
+    final uid = user.uid;
+
+    try {
+      // 1. Supprimer la sous-collection d'enfants si elle existe
+      final enfantsSnap = await _firestore
+          .collection('utilisateurs')
+          .doc(uid)
+          .collection('enfants')
+          .get();
+      for (final doc in enfantsSnap.docs) {
+        await doc.reference.delete();
+      }
+
+      // 2. Supprimer les favoris éventuels
+      final favorisSnap = await _firestore
+          .collection('favoris')
+          .where('utilisateurId', isEqualTo: uid)
+          .get();
+      for (final doc in favorisSnap.docs) {
+        await doc.reference.delete();
+      }
+
+      // 3. Supprimer le document utilisateur principal dans Firestore
+      await _firestore.collection('utilisateurs').doc(uid).delete();
+    } catch (_) {
+      // Continuer même si une sous-suppression Firestore échoue
+    }
+
+    // 4. Supprimer le compte Firebase Auth
+    await user.delete();
+
+    if (!kIsWeb) {
+      await GoogleSignInService.signOut();
+    }
+  }
+
   // DECONNEXION
 
   Future<void> logout() async {
@@ -408,3 +503,4 @@ class AuthRepository {
     }
   }
 }
+

@@ -1,4 +1,3 @@
-import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class ActivityAgeSelector extends StatelessWidget {
@@ -17,48 +16,67 @@ class ActivityAgeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final dividerColor = theme.dividerColor.withValues(alpha: isDark ? 0.3 : 0.15);
+
     return Row(
       children: [
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'De',
+              Text(
+                'Âge Minimum',
                 style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
-                  borderRadius: BorderRadius.circular(8),
+                  color: isDark
+                      ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)
+                      : theme.colorScheme.surface,
+                  border: Border.all(color: dividerColor),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<int>(
                     value: minAge,
                     isExpanded: true,
+                    dropdownColor: theme.colorScheme.surface,
+                    icon: Icon(
+                      Icons.arrow_drop_down_rounded,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                     items: List.generate(12, (index) => index + 1)
-                        .map((age) => DropdownMenuItem(
-                              value: age,
-                              child: Text('$age ans'),
-                            ))
+                        .map(
+                          (age) => DropdownMenuItem(
+                            value: age,
+                            child: Text(
+                              '$age ans',
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w600,
+                                color: theme.colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        )
                         .toList(),
                     onChanged: (value) {
                       if (value != null) {
-                       
                         if (value <= maxAge) {
                           onMinAgeChanged(value);
                         } else {
-                          // Afficher un message si l'utilisateur essaie de dépasser
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('L\'âge minimum ne peut pas dépasser l\'âge maximum ($maxAge ans)'),
-                              backgroundColor: AppColors.danger,
-                              duration: const Duration(seconds: 2),
+                              content: Text('L\'âge minimum ($value ans) ne peut pas dépasser l\'âge maximum ($maxAge ans)'),
+                              backgroundColor: theme.colorScheme.error,
                             ),
                           );
                         }
@@ -70,46 +88,62 @@ class ActivityAgeSelector extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 14),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'À',
+              Text(
+                'Âge Maximum',
                 style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
-                  borderRadius: BorderRadius.circular(8),
+                  color: isDark
+                      ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)
+                      : theme.colorScheme.surface,
+                  border: Border.all(color: dividerColor),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<int>(
                     value: maxAge,
                     isExpanded: true,
+                    dropdownColor: theme.colorScheme.surface,
+                    icon: Icon(
+                      Icons.arrow_drop_down_rounded,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                     items: List.generate(12, (index) => index + 1)
-                        .map((age) => DropdownMenuItem(
-                              value: age,
-                              child: Text('$age ans'),
-                            ))
+                        .map(
+                          (age) => DropdownMenuItem(
+                            value: age,
+                            child: Text(
+                              '$age ans',
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w600,
+                                color: theme.colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        )
                         .toList(),
                     onChanged: (value) {
                       if (value != null) {
-               
                         if (value >= minAge) {
                           onMaxAgeChanged(value);
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('L\'âge maximum ne peut pas être inférieur à l\'âge minimum ($minAge ans)'),
-                              backgroundColor: AppColors.danger,
-                              duration: const Duration(seconds: 2),
+                              content: Text('L\'âge maximum ($value ans) ne peut pas être inférieur à l\'âge minimum ($minAge ans)'),
+                              backgroundColor: theme.colorScheme.error,
                             ),
                           );
                         }

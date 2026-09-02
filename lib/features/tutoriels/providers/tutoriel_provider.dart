@@ -18,6 +18,13 @@ final tutorielByIdProvider = FutureProvider.family<Tutoriel?, String>(
   },
 );
 
+final tutorielStreamByIdProvider = StreamProvider.family<Tutoriel?, String>(
+  (ref, tutorielId) {
+    final repository = ref.read(tutorielRepositoryProvider);
+    return repository.streamTutorielById(tutorielId);
+  },
+);
+
 final tutorielsRechercheProvider = FutureProvider.family<List<Tutoriel>, String>(
   (ref, query) async {
     final repository = ref.read(tutorielRepositoryProvider);

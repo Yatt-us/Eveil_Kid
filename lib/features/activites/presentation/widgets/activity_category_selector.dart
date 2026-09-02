@@ -1,8 +1,7 @@
-import 'package:eveilkid/core/constants/app_colors.dart';
-import 'package:eveilkid/features/ActivityCategorie/models/activity_category_model.dart';
-import 'package:eveilkid/features/ActivityCategorie/providers/activity_category_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:eveilkid/features/ActivityCategorie/models/activity_category_model.dart';
+import 'package:eveilkid/features/ActivityCategorie/providers/activity_category_provider.dart';
 
 class ActivityCategorySelector extends ConsumerWidget {
   final String selectedCategoryId;
@@ -17,198 +16,115 @@ class ActivityCategorySelector extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final categoriesAsync = ref.watch(categoriesActivesProvider);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return categoriesAsync.when(
-     
       loading: () => const Center(
-        child: SizedBox(
-          height: 50,
-          width: 50,
-          child: CircularProgressIndicator(),
-        ),
-      ),
-
-      
-      error: (err, stack) => Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.red.shade50,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: Colors.red.shade200,
+        child: Padding(
+          padding: EdgeInsets.all(12),
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(strokeWidth: 2),
           ),
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Icon(
-              Icons.error_outline,
-              color: Colors.red,
-              size: 20,
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Erreur lors du chargement des catégories : $err',
-                style: const TextStyle(
-                  color: Colors.red,
-                  fontSize: 13,
-                ),
-              ),
-            ),
-          ],
+      ),
+      error: (err, _) => Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.error.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Text(
+          'Erreur chargement catégories : $err',
+          style: TextStyle(color: theme.colorScheme.error, fontSize: 12),
         ),
       ),
-
       data: (categories) {
         if (categories.isEmpty) {
           return Container(
-            width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.orange.shade50,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: Colors.orange.shade200,
-              ),
+              color: isDark
+                  ? const Color(0xFF78350F).withValues(alpha: 0.3)
+                  : const Color(0xFFFEF3C7),
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: const Row(
-              children: [
-                Icon(
-                  Icons.info_outline,
-                  color: Colors.orange,
-                  size: 20,
-                ),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Aucune catégorie disponible. '
-                    'Veuillez en créer une.',
-                    style: TextStyle(
-                      color: Colors.orange,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-              ],
+            child: const Text(
+              'Aucune catégorie disponible. Veuillez en créer une dans la zone admin.',
+              style: TextStyle(color: Color(0xFFB45309), fontSize: 12.5),
             ),
           );
         }
-
-        return _buildCategoryChips(categories);
+        return _buildCategoryChips(categories, theme, isDark);
       },
     );
   }
 
-
   Widget _buildCategoryChips(
     List<ActiviteCategorie> categories,
+    ThemeData theme,
+    bool isDark,
   ) {
     return Wrap(
       spacing: 8,
-      runSpacing: 10,
+      runSpacing: 8,
       children: categories.map((categorie) {
-        final bool isSelected =
-            selectedCategoryId == categorie.id;
+        final catId = categorie.id ?? '';
+        final isSelected = selectedCategoryId == catId;
+        final iconName = categorie.icon;
 
-        return ChoiceChip(
-       
-          label: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (categorie.icon != null) ...[
-                Icon(
-                  _getIconData(categorie.icon!),
-                  size: 18,
-                  color: isSelected
-                      ? Colors.white
-                      : Colors.grey.shade600,
-                ),
-                const SizedBox(width: 6),
-              ],
-
-              Text(
-                categorie.nom,
-                style: TextStyle(
-                  color: isSelected
-                      ? Colors.white
-                      : Colors.grey.shade700,
-                  fontWeight: isSelected
-                      ? FontWeight.w600
-                      : FontWeight.normal,
-                ),
-              ),
-            ],
-          ),
-
+        return FilterChip(
+          label: Text(categorie.nom),
           selected: isSelected,
-
-          onSelected: (_) {
-            onChanged(categorie.id!);
-          },
-
-
-          backgroundColor: Colors.grey.shade200,
-
-          selectedColor: AppColors.primary,
-
-          checkmarkColor: Colors.white,
-
-       
+          onSelected: (_) => onChanged(catId),
+          backgroundColor: isDark
+              ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)
+              : theme.colorScheme.surface,
+          selectedColor: theme.colorScheme.primary.withValues(alpha: isDark ? 0.3 : 0.15),
+          checkmarkColor: theme.colorScheme.primary,
+          labelStyle: TextStyle(
+            color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+            fontSize: 12.5,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+          ),
           side: BorderSide(
             color: isSelected
-                ? AppColors.primary
-                : Colors.grey.shade300,
-            width: isSelected ? 2 : 1,
+                ? theme.colorScheme.primary
+                : theme.dividerColor.withValues(alpha: isDark ? 0.3 : 0.15),
           ),
-
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-
-          elevation: isSelected ? 3 : 0,
-
-          shadowColor: AppColors.primary.withOpacity(0.3),
-
-          padding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 8,
-          ),
-
-          pressElevation: 1,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          avatar: iconName != null && iconName.isNotEmpty
+              ? Icon(
+                  _getIconData(iconName),
+                  size: 16,
+                  color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+                )
+              : null,
         );
       }).toList(),
     );
   }
 
-
-
   IconData _getIconData(String iconName) {
     switch (iconName) {
       case 'abc':
         return Icons.abc;
-
       case 'numbers':
         return Icons.numbers;
-
       case 'science':
-        return Icons.science;
-
+        return Icons.science_outlined;
       case 'art_track':
-        return Icons.art_track;
-
+        return Icons.palette_outlined;
       case 'music_note':
-        return Icons.music_note;
-
+        return Icons.music_note_outlined;
       case 'psychology':
-        return Icons.psychology;
-
+        return Icons.psychology_outlined;
       case 'sports':
-        return Icons.sports;
-
+        return Icons.sports_basketball_outlined;
       default:
-        return Icons.category;
+        return Icons.category_outlined;
     }
   }
 }

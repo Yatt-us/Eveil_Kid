@@ -1,8 +1,10 @@
 import 'package:eveilkid/core/constants/AppRadius.dart';
 import 'package:eveilkid/core/constants/AppTextStyles.dart';
 import 'package:eveilkid/core/constants/app_colors.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+export 'kid_theme.dart';
 
 class AppTheme {
   AppTheme._();
@@ -12,15 +14,16 @@ class AppTheme {
   // Parent / Visiteur / Manager
   // ============================================================
 
-  static const PageTransitionsTheme _pageTransitionsTheme = PageTransitionsTheme(
-    builders: {
-      TargetPlatform.android: ZoomPageTransitionsBuilder(),
-      TargetPlatform.iOS: ZoomPageTransitionsBuilder(),
-      TargetPlatform.linux: FadeForwardsPageTransitionsBuilder(),
-      TargetPlatform.macOS: FadeForwardsPageTransitionsBuilder(),
-      TargetPlatform.windows: FadeForwardsPageTransitionsBuilder(),
-    },
-  );
+  static const PageTransitionsTheme _pageTransitionsTheme =
+      PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.linux: FadeForwardsPageTransitionsBuilder(),
+          TargetPlatform.windows: FadeForwardsPageTransitionsBuilder(),
+        },
+      );
 
   static ThemeData get light {
     return ThemeData(
@@ -128,38 +131,23 @@ class AppTheme {
         ),
         border: const OutlineInputBorder(
           borderRadius: AppRadius.input,
-          borderSide: BorderSide(
-            color: AppColors.border,
-            width: 1.0,
-          ),
+          borderSide: BorderSide(color: AppColors.border, width: 1.0),
         ),
         enabledBorder: const OutlineInputBorder(
           borderRadius: AppRadius.input,
-          borderSide: BorderSide(
-            color: AppColors.border,
-            width: 1.0,
-          ),
+          borderSide: BorderSide(color: AppColors.border, width: 1.0),
         ),
         focusedBorder: const OutlineInputBorder(
           borderRadius: AppRadius.input,
-          borderSide: BorderSide(
-            color: AppColors.primary,
-            width: 1.2,
-          ),
+          borderSide: BorderSide(color: AppColors.primary, width: 1.2),
         ),
         errorBorder: const OutlineInputBorder(
           borderRadius: AppRadius.input,
-          borderSide: BorderSide(
-            color: AppColors.danger,
-            width: 1.0,
-          ),
+          borderSide: BorderSide(color: AppColors.danger, width: 1.0),
         ),
         focusedErrorBorder: const OutlineInputBorder(
           borderRadius: AppRadius.input,
-          borderSide: BorderSide(
-            color: AppColors.danger,
-            width: 1.2,
-          ),
+          borderSide: BorderSide(color: AppColors.danger, width: 1.2),
         ),
         disabledBorder: OutlineInputBorder(
           borderRadius: AppRadius.input,
@@ -388,38 +376,23 @@ class AppTheme {
         ),
         border: const OutlineInputBorder(
           borderRadius: AppRadius.input,
-          borderSide: BorderSide(
-            color: AppColors.darkBorder,
-            width: 1.0,
-          ),
+          borderSide: BorderSide(color: AppColors.darkBorder, width: 1.0),
         ),
         enabledBorder: const OutlineInputBorder(
           borderRadius: AppRadius.input,
-          borderSide: BorderSide(
-            color: AppColors.darkBorder,
-            width: 1.0,
-          ),
+          borderSide: BorderSide(color: AppColors.darkBorder, width: 1.0),
         ),
         focusedBorder: const OutlineInputBorder(
           borderRadius: AppRadius.input,
-          borderSide: BorderSide(
-            color: AppColors.primaryLight,
-            width: 1.2,
-          ),
+          borderSide: BorderSide(color: AppColors.primaryLight, width: 1.2),
         ),
         errorBorder: const OutlineInputBorder(
           borderRadius: AppRadius.input,
-          borderSide: BorderSide(
-            color: AppColors.danger,
-            width: 1.0,
-          ),
+          borderSide: BorderSide(color: AppColors.danger, width: 1.0),
         ),
         focusedErrorBorder: const OutlineInputBorder(
           borderRadius: AppRadius.input,
-          borderSide: BorderSide(
-            color: AppColors.danger,
-            width: 1.2,
-          ),
+          borderSide: BorderSide(color: AppColors.danger, width: 1.2),
         ),
         disabledBorder: OutlineInputBorder(
           borderRadius: AppRadius.input,

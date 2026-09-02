@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:eveilkid/core/errors/auth_error_handler.dart';
+import 'package:eveilkid/core/services/parental_pin_service.dart';
 import 'package:eveilkid/features/auth/repository/auth_repository.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -75,6 +76,9 @@ class AuthNotifier extends Notifier<AuthState> {
     _authSubscription = _repository.authStateChanges.listen(
       (user) async {
         if (user == null) {
+          try {
+            await ref.read(parentalPinServiceProvider).clearPin();
+          } catch (_) {}
           state = state.copyWith(
             clearUtilisateur: true,
             isLoading: false,
@@ -103,7 +107,6 @@ class AuthNotifier extends Notifier<AuthState> {
           );
         } catch (e) {
           state = state.copyWith(
-            clearUtilisateur: true,
             isLoading: false,
             isInitialized: true,
             isEmailVerified: false,
@@ -189,6 +192,9 @@ class AuthNotifier extends Notifier<AuthState> {
 
     try {
       await _repository.logout();
+      try {
+        await ref.read(parentalPinServiceProvider).clearPin();
+      } catch (_) {}
 
       state = state.copyWith(
         clearUtilisateur: true,
@@ -253,6 +259,12 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
+  // MISE À JOUR LOCALE DU PROFIL
+
+  void updateLocalUtilisateur(Utilisateur utilisateur) {
+    state = state.copyWith(utilisateur: utilisateur);
+  }
+
   // CLEAR ERROR
 
   void clearError() {
@@ -294,6 +306,57 @@ class AuthNotifier extends Notifier<AuthState> {
       state = state.copyWith(isEmailVerified: isVerified);
       return isVerified;
     } catch (e) {
+      return false;
+    }
+  }
+
+  // MODIFICATION DE MOT DE PASSE CONNECTÉ
+
+  Future<bool> updatePassword({required String newPassword}) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      await _repository.updatePassword(newPassword: newPassword);
+      state = state.copyWith(isLoading: false, clearError: true);
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: AuthErrorHandler.getMessage(e),
+      );
+      return false;
+    }
+  }
+
+  // ARCHIVAGE / DÉSACTIVATION DE COMPTE
+
+  Future<bool> archiverCompte() async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      await _repository.archiverCompte();
+      state = const AuthState();
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: AuthErrorHandler.getMessage(e),
+      );
+      return false;
+    }
+  }
+
+  // SUPPRESSION DE COMPTE
+
+  Future<bool> deleteAccount() async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      await _repository.deleteAccount();
+      state = const AuthState();
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: AuthErrorHandler.getMessage(e),
+      );
       return false;
     }
   }
