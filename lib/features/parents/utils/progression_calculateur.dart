@@ -1,5 +1,6 @@
 // lib/features/parents/utils/progression_calculateur.dart
 
+import 'package:flutter/material.dart';
 import 'package:eveilkid/features/enfant/model/enfant_model.dart';
 
 /// Modèle contenant les statistiques calculées de progression d'un enfant
@@ -10,6 +11,10 @@ class ProgressionData {
   final int totalDefis;
   final int tempsApprentissageMinutes;
   final int objectifTempsMinutes;
+  final int etoilesGagnees;
+  final int niveau;
+  final double progressionNiveau;
+  final int pointsPourNiveauSuivant;
 
   const ProgressionData({
     this.activitesCompletees = 0,
@@ -17,7 +22,11 @@ class ProgressionData {
     this.defisReussis = 0,
     this.totalDefis = 20,
     this.tempsApprentissageMinutes = 0,
-    this.objectifTempsMinutes = 300, // 5 heures par défaut
+    this.objectifTempsMinutes = 180, // 3 heures par défaut
+    this.etoilesGagnees = 0,
+    this.niveau = 1,
+    this.progressionNiveau = 0.05,
+    this.pointsPourNiveauSuivant = 50,
   });
 
   /// Ratio global de 0.0 à 1.0
@@ -61,12 +70,34 @@ class ProgressionData {
       ProgressionCalculateur.formaterTemps(tempsApprentissageMinutes);
 }
 
+/// Modèle pour les badges dynamiques calculés depuis les données réelles
+class BadgeProgression {
+  final String title;
+  final String description;
+  final IconData icon;
+  final Color color;
+  final bool isUnlocked;
+  final double progress;
+  final String progressLabel;
+  final String? unlockedDate;
+
+  const BadgeProgression({
+    required this.title,
+    required this.description,
+    required this.icon,
+    required this.color,
+    required this.isUnlocked,
+    required this.progress,
+    required this.progressLabel,
+    this.unlockedDate,
+  });
+}
+
 /// Classe utilitaire contenant les calculs de progression et appréciations
 class ProgressionCalculateur {
   const ProgressionCalculateur._();
 
   /// Calcule le ratio global (0.0 à 1.0) équilibré entre activités et défis.
-  /// Si une seule catégorie a un total > 0, elle est prise à 100%.
   static double calculerRatioGlobal({
     required int activitesCompletees,
     required int totalActivites,
@@ -110,7 +141,7 @@ class ProgressionCalculateur {
   static String obtenirTitreAppreciation(int pourcentage) {
     if (pourcentage >= 80) return 'Excellent !';
     if (pourcentage >= 60) return 'Très bien !';
-    if (pourcentage >= 40) return 'Bon travail !';
+
     if (pourcentage >= 20) return 'En bonne voie !';
     return 'Encourageant !';
   }
@@ -162,12 +193,12 @@ class ProgressionCalculateur {
     return 5;
   }
 
-  /// Extrait automatiquement les données de progression depuis un [EnfantModel]
+  /// Extrait automatiquement les données de progression réelles depuis un [EnfantModel]
   static ProgressionData extraireProgression(
     EnfantModel enfant, {
-    int totalActivites = 40,
-    int totalDefis = 20,
-    int objectifTempsMinutes = 300,
+    int totalActivites = 0,
+    int totalDefis = 0,
+    int objectifTempsMinutes = 180,
   }) {
     final resultats = enfant.resultatsActivite;
 
@@ -179,15 +210,19 @@ class ProgressionCalculateur {
       if (item is Map) {
         final map = Map<String, dynamic>.from(item);
         final type = map['type']?.toString().toLowerCase() ?? '';
+        final isQuiz = type.contains('defi') ||
+            type.contains('challenge') ||
+            map['totalQuestions'] != null;
         final estTermine = map['statut'] == 'termine' ||
-            map['estTermine'] == true ||
-            map['score'] != null;
+            map['termine'] == true ||
+            map['estTerminee'] == true ||
+            map['estReussi'] == true ||
+            (map['score'] != null && (map['score'] as num) > 0);
 
         if (estTermine) {
-          if (type.contains('defi') || type.contains('challenge')) {
+          activites++;
+          if (isQuiz) {
             defis++;
-          } else {
-            activites++;
           }
         }
 
@@ -195,21 +230,118 @@ class ProgressionCalculateur {
             map['tempsMinutes'] ??
             map['duree'] ??
             0;
-        if (duree is num) {
+        if (duree is num && duree > 0) {
           tempsTotalMinutes += duree.toInt();
+        } else if (estTermine) {
+          tempsTotalMinutes += 8; // estimation réaliste de 8 min par activité
         }
       } else {
         activites++;
+        tempsTotalMinutes += 8;
       }
     }
 
+    final calcTotalActivites = totalActivites > 0
+        ? totalActivites
+        : (activites > 0 ? (activites * 1.5).ceil() : 10);
+    final calcTotalDefis = totalDefis > 0
+        ? totalDefis
+        : (defis > 0 ? (defis * 1.5).ceil() : 5);
+
     return ProgressionData(
       activitesCompletees: activites,
-      totalActivites: totalActivites,
+      totalActivites: calcTotalActivites,
       defisReussis: defis,
-      totalDefis: totalDefis,
+      totalDefis: calcTotalDefis,
       tempsApprentissageMinutes: tempsTotalMinutes,
       objectifTempsMinutes: objectifTempsMinutes,
+      etoilesGagnees: enfant.totalPoints,
+      niveau: enfant.niveau,
+      progressionNiveau: enfant.progressionNiveau,
+      pointsPourNiveauSuivant: enfant.pointsPourProchainNiveau,
     );
+  }
+
+  /// Génère dynamiquement les badges et trophées basés sur les vraies statistiques
+  static List<BadgeProgression> genererBadges(EnfantModel enfant) {
+    final prog = extraireProgression(enfant);
+    final activites = prog.activitesCompletees;
+    final defis = prog.defisReussis;
+    final etoiles = enfant.totalPoints;
+    final niveau = enfant.niveau;
+    final souhaits = enfant.souhait.length;
+
+    return [
+      BadgeProgression(
+        title: 'Premier Pas',
+        description: 'Terminer une première activité d\'éveil',
+        icon: Icons.emoji_events_rounded,
+        color: const Color(0xFF10B981),
+        isUnlocked: activites >= 1,
+        progress: (activites / 1.0).clamp(0.0, 1.0),
+        progressLabel: activites >= 1 ? 'Validé ⭐' : '$activites/1 activité',
+        unlockedDate: activites >= 1 ? 'Débloqué' : null,
+      ),
+      BadgeProgression(
+        title: 'Explorateur Curieux',
+        description: 'Compléter 5 activités différentes',
+        icon: Icons.explore_rounded,
+        color: const Color(0xFF3B82F6),
+        isUnlocked: activites >= 5,
+        progress: (activites / 5.0).clamp(0.0, 1.0),
+        progressLabel: activites >= 5 ? 'Validé ⭐' : '$activites/5 activités',
+        unlockedDate: activites >= 5 ? 'Débloqué' : null,
+      ),
+      BadgeProgression(
+        title: 'Étoile Brillante',
+        description: 'Cumuler 50 étoiles dans les jeux',
+        icon: Icons.star_rounded,
+        color: const Color(0xFFF59E0B),
+        isUnlocked: etoiles >= 50,
+        progress: (etoiles / 50.0).clamp(0.0, 1.0),
+        progressLabel: etoiles >= 50 ? 'Validé ⭐' : '$etoiles/50 étoiles',
+        unlockedDate: etoiles >= 50 ? 'Débloqué' : null,
+      ),
+      BadgeProgression(
+        title: 'Génie des Défis',
+        description: 'Réussir avec succès 3 quiz ou défis',
+        icon: Icons.psychology_rounded,
+        color: const Color(0xFF8B5CF6),
+        isUnlocked: defis >= 3,
+        progress: (defis / 3.0).clamp(0.0, 1.0),
+        progressLabel: defis >= 3 ? 'Validé ⭐' : '$defis/3 défis',
+        unlockedDate: defis >= 3 ? 'Débloqué' : null,
+      ),
+      BadgeProgression(
+        title: 'Grand Champion',
+        description: 'Terminer 10 activités complètes',
+        icon: Icons.workspace_premium_rounded,
+        color: const Color(0xFFEC4899),
+        isUnlocked: activites >= 10,
+        progress: (activites / 10.0).clamp(0.0, 1.0),
+        progressLabel: activites >= 10 ? 'Validé ⭐' : '$activites/10 activités',
+        unlockedDate: activites >= 10 ? 'Débloqué' : null,
+      ),
+      BadgeProgression(
+        title: 'Maître Éveilleur',
+        description: 'Atteindre le Niveau 3 d\'apprentissage',
+        icon: Icons.rocket_launch_rounded,
+        color: const Color(0xFF06B6D4),
+        isUnlocked: niveau >= 3,
+        progress: (niveau / 3.0).clamp(0.0, 1.0),
+        progressLabel: niveau >= 3 ? 'Validé ⭐' : 'Niveau $niveau/3',
+        unlockedDate: niveau >= 3 ? 'Débloqué' : null,
+      ),
+      BadgeProgression(
+        title: 'Boîte à Trésors',
+        description: 'Ajouter un jouet coup de cœur aux souhaits',
+        icon: Icons.favorite_rounded,
+        color: const Color(0xFFE11D48),
+        isUnlocked: souhaits >= 1,
+        progress: (souhaits / 1.0).clamp(0.0, 1.0),
+        progressLabel: souhaits >= 1 ? 'Validé ⭐' : '$souhaits/1 souhait',
+        unlockedDate: souhaits >= 1 ? 'Débloqué' : null,
+      ),
+    ];
   }
 }

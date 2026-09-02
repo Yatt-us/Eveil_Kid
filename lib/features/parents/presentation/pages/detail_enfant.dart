@@ -14,6 +14,9 @@ import '../../../../core/router/app_routes.dart';
 import '../../../../shared/widgets/app_avatar.dart';
 import '../../../../shared/widgets/app_dialogs.dart';
 import 'package:eveilkid/core/utils/parental_pin_helper.dart';
+import 'package:eveilkid/features/activites/models/activity.dart';
+import 'package:eveilkid/features/activites/providers/admin/activity_provider.dart';
+import 'package:eveilkid/features/categories/providers/categorie_provider.dart';
 import 'package:eveilkid/features/enfant/model/enfant_model.dart';
 import 'package:eveilkid/features/enfant/providers/enfant_providers.dart';
 import 'package:eveilkid/features/jouets/providers/jouet_provider.dart';
@@ -259,14 +262,6 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
     );
   }
 
-  int _calculateLevel(int age) {
-    if (age <= 3) return 1;
-    if (age <= 5) return 2;
-    if (age <= 7) return 3;
-    if (age <= 9) return 4;
-    return 5;
-  }
-
   @override
   Widget build(BuildContext context) {
     final parentAsync = ref.watch(parentNotifierProvider);
@@ -286,12 +281,17 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
     final EnfantModel currentEnfant =
         enfantFromNotifier ?? enfantFromParent ?? widget.enfant;
 
-    final niveau = _calculateLevel(currentEnfant.age);
+    final activitesAsync = ref.watch(activitesProvider);
+    final totalActivitesCount = activitesAsync.value?.length ?? 0;
+
+    final progression = ProgressionCalculateur.extraireProgression(
+      currentEnfant,
+      totalActivites: totalActivitesCount,
+    );
+
     final cleanWishesCount = currentEnfant.souhait
         .where((s) => !s.contains(' ') && s.isNotEmpty)
         .length;
-    final completedActivitiesCount = currentEnfant.resultatsActivite.length;
-    final starsCount = (completedActivitiesCount * 15) + (currentEnfant.age * 10);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -365,10 +365,8 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
             // ── CARTE HERO PROFIL DE L'ENFANT ──
             _buildProfileHeroCard(
               enfant: currentEnfant,
-              niveau: niveau,
-              starsCount: starsCount,
+              progression: progression,
               cleanWishesCount: cleanWishesCount,
-              completedActivitiesCount: completedActivitiesCount,
               theme: theme,
               isDark: isDark,
             ),
@@ -390,6 +388,7 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
               duration: const Duration(milliseconds: 250),
               child: _buildCurrentTabContent(
                 enfant: currentEnfant,
+                progression: progression,
                 theme: theme,
                 isDark: isDark,
               ),
@@ -402,16 +401,35 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
     );
   }
 
+  // -- DISPATCHER DES ONGLETS --
+  Widget _buildCurrentTabContent({
+    required EnfantModel enfant,
+    required ProgressionData progression,
+    required ThemeData theme,
+    required bool isDark,
+  }) {
+    switch (_selectedTabIndex) {
+      case 0:
+        return _buildProgressionTab(enfant, progression, theme, isDark);
+      case 1:
+        return _buildActivitesTab(enfant, theme, isDark);
+      case 2:
+        return _buildSouhaitsTab(enfant, theme, isDark);
+      case 3:
+        return _buildResultatsTab(enfant, theme, isDark);
+      default:
+        return _buildProgressionTab(enfant, progression, theme, isDark);
+    }
+  }
+
   // ═══════════════════════════════════════════════════════════════════════
   // 1. CARTE HERO PROFIL
   // ═══════════════════════════════════════════════════════════════════════
 
   Widget _buildProfileHeroCard({
     required EnfantModel enfant,
-    required int niveau,
-    required int starsCount,
+    required ProgressionData progression,
     required int cleanWishesCount,
-    required int completedActivitiesCount,
     required ThemeData theme,
     required bool isDark,
   }) {
@@ -541,7 +559,7 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
                     ),
                     _buildInfoBadge(
                       icon: Icons.military_tech_outlined,
-                      label: 'Niveau $niveau',
+                      label: 'Niveau ${progression.niveau}',
                       color: const Color(0xFFF59E0B),
                       theme: theme,
                       isDark: isDark,
@@ -566,7 +584,7 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
             color: theme.dividerColor.withValues(alpha: isDark ? 0.2 : 0.1),
           ),
 
-          // Ligne de statistiques rapides
+          // Ligne de statistiques rapides 100% réelles
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(
@@ -574,7 +592,7 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
                 _buildQuickStatItem(
                   icon: Icons.star_rounded,
                   iconColor: const Color(0xFFF59E0B),
-                  value: '$starsCount',
+                  value: '${progression.etoilesGagnees}',
                   label: 'Étoiles gagnées',
                   theme: theme,
                 ),
@@ -582,7 +600,7 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
                 _buildQuickStatItem(
                   icon: Icons.assignment_turned_in_rounded,
                   iconColor: const Color(0xFF10B981),
-                  value: '$completedActivitiesCount',
+                  value: '${progression.activitesCompletees}',
                   label: 'Activités faites',
                   theme: theme,
                 ),
@@ -834,36 +852,16 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // 3. CONTENU DES ONGLETS
-  // ═══════════════════════════════════════════════════════════════════════
-
-  Widget _buildCurrentTabContent({
-    required EnfantModel enfant,
-    required ThemeData theme,
-    required bool isDark,
-  }) {
-    switch (_selectedTabIndex) {
-      case 0:
-        return _buildProgressionTab(enfant, theme, isDark);
-      case 1:
-        return _buildActivitesTab(enfant, theme, isDark);
-      case 2:
-        return _buildSouhaitsTab(enfant, theme, isDark);
-      case 3:
-      default:
-        return _buildResultatsTab(enfant, theme, isDark);
-    }
-  }
-
+  // ════════════════════════════════
   // ── ONGLET 0 : PROGRESSION ──
-  Widget _buildProgressionTab(EnfantModel enfant, ThemeData theme, bool isDark) {
-    final completedCount = enfant.resultatsActivite.length;
-    final progressFraction = ((completedCount * 12) + 40).clamp(25, 95);
-
+  Widget _buildProgressionTab(
+    EnfantModel enfant,
+    ProgressionData progression,
+    ThemeData theme,
+    bool isDark,
+  ) {
     return Column(
       children: [
-        // Carte circulaire de maîtrise
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(20),
@@ -899,14 +897,19 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF10B981).withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Text(
-                      'En progression',
-                      style: TextStyle(
+                    child: Text(
+                      progression.pourcentageGlobal >= 50
+                          ? 'En progression'
+                          : 'Début de parcours',
+                      style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF10B981),
@@ -916,87 +919,18 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
                 ],
               ),
               const SizedBox(height: 18),
-
-              Row(
-                children: [
-                  SizedBox(
-                    width: 78,
-                    height: 78,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        SizedBox(
-                          width: 78,
-                          height: 78,
-                          child: CircularProgressIndicator(
-                            value: progressFraction / 100.0,
-                            strokeWidth: 8,
-                            strokeCap: StrokeCap.round,
-                            backgroundColor:
-                                theme.colorScheme.primary.withValues(alpha: 0.12),
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              theme.colorScheme.primary,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          '$progressFraction%',
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w900,
-                            color: theme.textTheme.titleMedium?.color ??
-                                theme.colorScheme.onSurface,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 18),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Très bon rythme !',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: theme.textTheme.titleMedium?.color ??
-                                theme.colorScheme.onSurface,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${enfant.nom} acquiert régulièrement de nouvelles compétences d\'éveil.',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: theme.textTheme.bodyMedium?.color
-                                    ?.withValues(alpha: 0.7) ??
-                                theme.colorScheme.onSurfaceVariant,
-                            height: 1.35,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
               Divider(
                 color: theme.dividerColor.withValues(alpha: isDark ? 0.2 : 0.12),
                 thickness: 1,
               ),
               const SizedBox(height: 16),
 
-              // Barres détaillées
               _buildProgressMetricRow(
                 icon: Icons.menu_book_rounded,
                 iconColor: const Color(0xFF10B981),
                 label: 'Activités complétées',
-                score: '${completedCount + 8}/20',
-                progress: ((completedCount + 8) / 20).clamp(0.1, 1.0),
+                score: progression.scoreActivites,
+                progress: progression.ratioActivites,
                 progressColor: const Color(0xFF10B981),
                 theme: theme,
               ),
@@ -1005,8 +939,8 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
                 icon: Icons.quiz_outlined,
                 iconColor: const Color(0xFF3B82F6),
                 label: 'Défis & Quiz réussis',
-                score: '${completedCount + 4}/15',
-                progress: ((completedCount + 4) / 15).clamp(0.1, 1.0),
+                score: progression.scoreDefis,
+                progress: progression.ratioDefis,
                 progressColor: const Color(0xFF3B82F6),
                 theme: theme,
               ),
@@ -1014,10 +948,21 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
               _buildProgressMetricRow(
                 icon: Icons.timer_outlined,
                 iconColor: const Color(0xFFF97316),
-                label: 'Temps d’éveil recommandé',
-                score: '2h 15m / semaine',
-                progress: 0.70,
+                label: "Temps d'apprentissage",
+                score:
+                    '${progression.tempsFormate} / ${ProgressionCalculateur.formaterTemps(progression.objectifTempsMinutes)}',
+                progress: progression.ratioTemps,
                 progressColor: const Color(0xFFF97316),
+                theme: theme,
+              ),
+              const SizedBox(height: 14),
+              _buildProgressMetricRow(
+                icon: Icons.military_tech_rounded,
+                iconColor: const Color(0xFFF59E0B),
+                label: 'Niveau ${progression.niveau} (${progression.etoilesGagnees} ⭐)',
+                score: 'Plus que ${progression.pointsPourNiveauSuivant} pts',
+                progress: progression.progressionNiveau,
+                progressColor: const Color(0xFFF59E0B),
                 theme: theme,
               ),
             ],
@@ -1082,199 +1027,350 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
     );
   }
 
-  // ── ONGLET 1 : ACTIVITÉS ──
+  // ── ONGLET 1 : ACTIVITÉS RÉELLES ET RESPONSIVES ──
   Widget _buildActivitesTab(EnfantModel enfant, ThemeData theme, bool isDark) {
-    final allActivites = [
-      {
-        'title': 'Comptage et chiffres magiques',
-        'category': 'Mathématiques',
-        'status': 'Terminé',
-        'icon': Icons.calculate_outlined,
-        'color': const Color(0xFF10B981),
-        'duration': '10 min',
-      },
-      {
-        'title': 'Reconnaissance des couleurs & formes',
-        'category': 'Éveil visuel',
-        'status': 'En cours',
-        'icon': Icons.palette_outlined,
-        'color': const Color(0xFF3B82F6),
-        'duration': '15 min',
-      },
-      {
-        'title': 'Les animaux de la savane',
-        'category': 'Découverte',
-        'status': 'À commencer',
-        'icon': Icons.pets_outlined,
-        'color': const Color(0xFFF59E0B),
-        'duration': '12 min',
-      },
-      {
-        'title': 'Conte interactif : Le petit explorateur',
-        'category': 'Lecture & Langage',
-        'status': 'Terminé',
-        'icon': Icons.auto_stories_outlined,
-        'color': const Color(0xFF8B5CF6),
-        'duration': '20 min',
-      },
-    ];
+    final activitesAsync = ref.watch(activitesProvider);
+    final categoriesAsync = ref.watch(categoriesProvider);
 
-    final filtered = _activityFilter == 'Toutes'
-        ? allActivites
-        : allActivites.where((a) => a['status'] == _activityFilter).toList();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Filtres de statut
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: ['Toutes', 'Terminé', 'En cours', 'À commencer'].map((filter) {
-              final isSelected = _activityFilter == filter;
-              return Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: FilterChip(
-                  label: Text(filter),
-                  selected: isSelected,
-                  onSelected: (_) => setState(() => _activityFilter = filter),
-                  selectedColor: theme.colorScheme.primary.withValues(alpha: 0.15),
-                  checkmarkColor: theme.colorScheme.primary,
-                  backgroundColor: theme.colorScheme.surface,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    side: BorderSide(
-                      color: isSelected
-                          ? theme.colorScheme.primary
-                          : theme.dividerColor.withValues(alpha: isDark ? 0.25 : 0.15),
-                    ),
-                  ),
-                  labelStyle: TextStyle(
-                    fontSize: 12,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                    color: isSelected
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.onSurface,
-                  ),
-                ),
-              );
-            }).toList(),
+    return activitesAsync.when(
+      loading: () => const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32),
+          child: CircularProgressIndicator(),
+        ),
+      ),
+      error: (err, _) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            'Erreur de chargement des activités : $err',
+            style: TextStyle(color: theme.colorScheme.error),
           ),
         ),
-
-        const SizedBox(height: 14),
-
-        ...filtered.map((act) {
-          final iconColor = act['color'] as Color;
-          final status = act['status'] as String;
-
-          Color statusBg;
-          Color statusFg;
-          if (status == 'Terminé') {
-            statusBg = const Color(0xFF10B981).withValues(alpha: 0.12);
-            statusFg = const Color(0xFF10B981);
-          } else if (status == 'En cours') {
-            statusBg = const Color(0xFF3B82F6).withValues(alpha: 0.12);
-            statusFg = const Color(0xFF3B82F6);
-          } else {
-            statusBg = const Color(0xFFF59E0B).withValues(alpha: 0.12);
-            statusFg = const Color(0xFFF59E0B);
-          }
-
+      ),
+      data: (allActivites) {
+        if (allActivites.isEmpty) {
           return Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(14),
+            width: double.infinity,
+            padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
               color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: theme.dividerColor.withValues(alpha: isDark ? 0.25 : 0.12),
-                width: 1.2,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: (isDark ? Colors.black : AppColors.textPrimary)
-                      .withValues(alpha: isDark ? 0.25 : 0.03),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
             ),
-            child: Row(
+            child: Column(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: iconColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(
-                    act['icon'] as IconData,
-                    color: iconColor,
-                    size: 22,
-                  ),
+                Icon(
+                  Icons.assignment_outlined,
+                  size: 40,
+                  color: theme.colorScheme.primary.withValues(alpha: 0.5),
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        act['title'] as String,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: theme.textTheme.bodyLarge?.color ??
-                              theme.colorScheme.onSurface,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Row(
-                        children: [
-                          Text(
-                            act['category'] as String,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: theme.textTheme.bodySmall?.color
-                                      ?.withValues(alpha: 0.7) ??
-                                  theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '•  ${act['duration']}',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: theme.textTheme.bodySmall?.color
-                                      ?.withValues(alpha: 0.5) ??
-                                  theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: statusBg,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    status,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: statusFg,
-                    ),
+                const SizedBox(height: 12),
+                Text(
+                  'Aucune activité disponible pour l\'instant',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
               ],
             ),
           );
-        }),
-      ],
+        }
+
+        final categoriesMap = <String, String>{};
+        categoriesAsync.whenData((categories) {
+          for (final cat in categories) {
+            categoriesMap[cat.categorieId] = cat.nom;
+          }
+        });
+
+        // Indexation des résultats réels de l'enfant
+        final resultsMap = <String, Map<String, dynamic>>{};
+        for (final item in enfant.resultatsActivite) {
+          if (item is Map) {
+            final map = Map<String, dynamic>.from(item);
+            final id = map['activiteId']?.toString() ?? '';
+            if (id.isNotEmpty) {
+              resultsMap[id] = map;
+            }
+          }
+        }
+
+        final activitiesList = allActivites.map((act) {
+          final res = resultsMap[act.id ?? ''];
+          String status;
+          int? score;
+          int? pointsGagnes;
+
+          if (res != null) {
+            final isCompleted = res['termine'] == true ||
+                res['estTerminee'] == true ||
+                res['estReussi'] == true ||
+                (res['score'] != null && (res['score'] as num) > 0);
+            if (isCompleted) {
+              status = 'Terminé';
+              score = (res['score'] as num?)?.toInt();
+              pointsGagnes = (res['pointsGagnes'] as num?)?.toInt();
+            } else {
+              status = 'En cours';
+            }
+          } else {
+            status = 'À commencer';
+          }
+
+          final categoryName =
+              categoriesMap[act.categorieId] ?? 'Éveil & Découverte';
+
+          return {
+            'id': act.id ?? '',
+            'title': act.titre,
+            'category': categoryName,
+            'status': status,
+            'duration': '${act.dureeEnMinutes} min',
+            'points': pointsGagnes ?? act.points,
+            'score': score,
+            'difficulte': act.difficulte,
+          };
+        }).toList();
+
+        final filtered = _activityFilter == 'Toutes'
+            ? activitiesList
+            : activitiesList
+                .where((a) => a['status'] == _activityFilter)
+                .toList();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Filtres de statut
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: ['Toutes', 'Terminé', 'En cours', 'À commencer'].map((filter) {
+                  final isSelected = _activityFilter == filter;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: FilterChip(
+                      label: Text(filter),
+                      selected: isSelected,
+                      onSelected: (_) => setState(() => _activityFilter = filter),
+                      selectedColor: theme.colorScheme.primary.withValues(alpha: 0.15),
+                      checkmarkColor: theme.colorScheme.primary,
+                      backgroundColor: theme.colorScheme.surface,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        side: BorderSide(
+                          color: isSelected
+                              ? theme.colorScheme.primary
+                              : theme.dividerColor.withValues(alpha: isDark ? 0.25 : 0.15),
+                        ),
+                      ),
+                      labelStyle: TextStyle(
+                        fontSize: 12,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                        color: isSelected
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.onSurface,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+
+            const SizedBox(height: 14),
+
+            if (filtered.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(28),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: theme.dividerColor.withValues(alpha: isDark ? 0.25 : 0.12),
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    'Aucune activité dans le filtre "$_activityFilter"',
+                    style: TextStyle(
+                      color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              )
+            else
+              ...filtered.map((act) {
+                final status = act['status'] as String;
+                Color statusBg;
+                Color statusFg;
+                IconData icon;
+                Color iconColor;
+
+                if (status == 'Terminé') {
+                  statusBg = const Color(0xFF10B981).withValues(alpha: 0.12);
+                  statusFg = const Color(0xFF10B981);
+                  icon = Icons.check_circle_outline_rounded;
+                  iconColor = const Color(0xFF10B981);
+                } else if (status == 'En cours') {
+                  statusBg = const Color(0xFF3B82F6).withValues(alpha: 0.12);
+                  statusFg = const Color(0xFF3B82F6);
+                  icon = Icons.play_circle_outline_rounded;
+                  iconColor = const Color(0xFF3B82F6);
+                } else {
+                  statusBg = const Color(0xFFF59E0B).withValues(alpha: 0.12);
+                  statusFg = const Color(0xFFF59E0B);
+                  icon = Icons.auto_stories_outlined;
+                  iconColor = const Color(0xFFF59E0B);
+                }
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: theme.dividerColor.withValues(alpha: isDark ? 0.25 : 0.12),
+                      width: 1.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: (isDark ? Colors.black : AppColors.textPrimary)
+                            .withValues(alpha: isDark ? 0.25 : 0.03),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: iconColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Icon(
+                          icon,
+                          color: iconColor,
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    act['title'] as String,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: theme.textTheme.bodyLarge?.color ??
+                                          theme.colorScheme.onSurface,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: statusBg,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    status,
+                                    style: TextStyle(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: statusFg,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                Text(
+                                  act['category'] as String,
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: theme.textTheme.bodySmall?.color
+                                            ?.withValues(alpha: 0.7) ??
+                                        theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                                Text(
+                                  '•',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: theme.textTheme.bodySmall?.color
+                                            ?.withValues(alpha: 0.4) ??
+                                        theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                                Text(
+                                  act['duration'] as String,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: theme.textTheme.bodySmall?.color
+                                            ?.withValues(alpha: 0.6) ??
+                                        theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                                if (act['points'] != null &&
+                                    (act['points'] as int) > 0) ...[
+                                  Text(
+                                    '•',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: theme.textTheme.bodySmall?.color
+                                              ?.withValues(alpha: 0.4) ??
+                                          theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                  Text(
+                                    '+${act['points']} ⭐',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFFD97706),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+          ],
+        );
+      },
     );
   }
 
@@ -1614,42 +1710,15 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
     );
   }
 
-  // ── ONGLET 3 : RÉSULTATS / SUCCÈS ──
+  // ── ONGLET 3 : RÉSULTATS / SUCCÈS RÉELS ──
   Widget _buildResultatsTab(EnfantModel enfant, ThemeData theme, bool isDark) {
-    final badges = [
-      {
-        'title': 'Petit Explorateur',
-        'desc': 'A exploré 10 activités d\'éveil différentes',
-        'icon': Icons.explore_rounded,
-        'color': const Color(0xFFF59E0B),
-        'date': 'Débloqué récemment',
-      },
-      {
-        'title': 'Génie des Puzzles & Logique',
-        'desc': 'Score parfait obtenu sur plusieurs défis',
-        'icon': Icons.extension_rounded,
-        'color': const Color(0xFF8B5CF6),
-        'date': 'Niveau 2 validé',
-      },
-      {
-        'title': 'Artiste & Créatif en herbe',
-        'desc': 'Plusieurs créations visuelles enregistrées',
-        'icon': Icons.palette_rounded,
-        'color': const Color(0xFFEC4899),
-        'date': 'Débloqué',
-      },
-      {
-        'title': 'Curieux & Assidu',
-        'desc': 'Actif plus de 3 jours d\'affilée',
-        'icon': Icons.workspace_premium_rounded,
-        'color': const Color(0xFF10B981),
-        'date': 'Débloqué',
-      },
-    ];
+    final badges = ProgressionCalculateur.genererBadges(enfant);
 
     return Column(
       children: badges.map((badge) {
-        final iconColor = badge['color'] as Color;
+        final isUnlocked = badge.isUnlocked;
+        final iconColor = isUnlocked ? badge.color : Colors.grey;
+
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(16),
@@ -1657,7 +1726,9 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
             color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: theme.dividerColor.withValues(alpha: isDark ? 0.25 : 0.12),
+              color: isUnlocked
+                  ? badge.color.withValues(alpha: isDark ? 0.35 : 0.25)
+                  : theme.dividerColor.withValues(alpha: isDark ? 0.25 : 0.12),
               width: 1.2,
             ),
             boxShadow: [
@@ -1669,52 +1740,106 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
               ),
             ],
           ),
-          child: Row(
+          child: Column(
             children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  badge['icon'] as IconData,
-                  color: iconColor,
-                  size: 26,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      badge['title'] as String,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: theme.textTheme.bodyLarge?.color ??
-                            theme.colorScheme.onSurface,
-                      ),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isUnlocked
+                          ? badge.color.withValues(alpha: 0.14)
+                          : (isDark
+                              ? Colors.white10
+                              : Colors.black.withValues(alpha: 0.04)),
+                      shape: BoxShape.circle,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      badge['desc'] as String,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: theme.textTheme.bodySmall?.color
-                                ?.withValues(alpha: 0.7) ??
-                            theme.colorScheme.onSurfaceVariant,
-                      ),
+                    child: Icon(
+                      badge.icon,
+                      color: iconColor,
+                      size: 26,
                     ),
-                  ],
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                badge.title,
+                                style: TextStyle(
+                                  fontSize: 14.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: isUnlocked
+                                      ? (theme.textTheme.bodyLarge?.color ??
+                                          theme.colorScheme.onSurface)
+                                      : theme.textTheme.bodyMedium?.color
+                                          ?.withValues(alpha: 0.7),
+                                ),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isUnlocked
+                                    ? const Color(0xFF10B981)
+                                        .withValues(alpha: 0.12)
+                                    : (isDark
+                                        ? Colors.white10
+                                        : Colors.black
+                                            .withValues(alpha: 0.05)),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                badge.progressLabel,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: isUnlocked
+                                      ? const Color(0xFF10B981)
+                                      : theme.textTheme.bodySmall?.color
+                                          ?.withValues(alpha: 0.7),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          badge.description,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: theme.textTheme.bodySmall?.color
+                                    ?.withValues(alpha: 0.7) ??
+                                theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              if (!isUnlocked) ...[
+                const SizedBox(height: 10),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: badge.progress,
+                    minHeight: 5,
+                    backgroundColor:
+                        theme.dividerColor.withValues(alpha: 0.15),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      badge.color.withValues(alpha: 0.7),
+                    ),
+                  ),
                 ),
-              ),
-              const Icon(
-                Icons.check_circle_rounded,
-                color: Color(0xFF10B981),
-                size: 20,
-              ),
+              ],
             ],
           ),
         );

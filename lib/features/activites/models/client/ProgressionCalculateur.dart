@@ -31,7 +31,7 @@ class ProgressionCalculateur {
   static String obtenirTitreAppreciation(int pourcentage) {
     if (pourcentage >= 80) return 'Excellent !';
     if (pourcentage >= 60) return 'Très bien !';
-    if (pourcentage >= 40) return 'Bon travail !';
+
     if (pourcentage >= 20) return 'En bonne voie !';
     return 'Encourageant !';
   }
