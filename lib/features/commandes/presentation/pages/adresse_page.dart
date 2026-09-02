@@ -436,6 +436,7 @@ class _AdressePageState extends ConsumerState<AdressePage> {
       ),
     );
   }
+
   Widget _buildOptionCard({
     required ModeAdresseLivraison mode,
     required String title,
@@ -489,7 +490,6 @@ class _AdressePageState extends ConsumerState<AdressePage> {
                     icon,
                     color: isSelected ? primaryColor : theme.colorScheme.onSurfaceVariant,
                     size: 20,
-
                   ),
                 ),
                 Icon(
