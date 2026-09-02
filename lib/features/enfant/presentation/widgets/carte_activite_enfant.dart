@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:eveilkid/core/themes/kid_theme.dart';
+import 'package:eveilkid/features/enfant/presentation/widgets/duolingo_card.dart';
 
-class CarteActiviteEnfant extends StatelessWidget {
+/// Carte d'activité 3D tactile style Duolingo pour l'espace enfant
+class CarteActiviteEnfant extends StatefulWidget {
   final String titre;
   final String duree;
   final String imageUrl;
   final double progression;
+  final int points;
   final VoidCallback? onTap;
 
   const CarteActiviteEnfant({
@@ -13,140 +18,177 @@ class CarteActiviteEnfant extends StatelessWidget {
     required this.duree,
     required this.imageUrl,
     required this.progression,
+    this.points = 15,
     this.onTap,
   });
 
   @override
+  State<CarteActiviteEnfant> createState() => _CarteActiviteEnfantState();
+}
+
+class _CarteActiviteEnfantState extends State<CarteActiviteEnfant> {
+  @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            // Image de l'activité
-            Container(
-              width: 58,
-              height: 58,
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final isCompleted = widget.progression >= 0.99;
+
+    return DuolingoCard(
+      onTap: widget.onTap,
+      borderRadius: 22,
+      bottomThickness: 4.0,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          // 1. Vignette Illustration 3D
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              width: 62,
+              height: 62,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(13),
-                color: const Color(0xFFF3EEFF),
+                color: isDark
+                    ? KidTheme.primaryGreen.withValues(alpha: 0.2)
+                    : const Color(0xFFDCFCE7),
+                borderRadius: BorderRadius.circular(16),
               ),
-              clipBehavior: Clip.antiAlias,
-              child: imageUrl.startsWith('http')
+              child: widget.imageUrl.startsWith('http')
                   ? Image.network(
-                      imageUrl,
+                      widget.imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) {
-                        return const Icon(
-                          Icons.extension,
-                          color: Color(0xFF8B5CF6),
-                          size: 30,
-                        );
-                      },
+                      errorBuilder: (_, _, _) => const Icon(
+                        Icons.sports_esports_rounded,
+                        color: KidTheme.primaryGreenDark,
+                        size: 32,
+                      ),
                     )
                   : Center(
                       child: Text(
-                        imageUrl,
-                        style: const TextStyle(
-                          fontSize: 30,
-                        ),
+                        widget.imageUrl.isNotEmpty ? widget.imageUrl : '🎮',
+                        style: const TextStyle(fontSize: 28),
                       ),
                     ),
             ),
+          ),
 
-            const SizedBox(width: 12),
+          const SizedBox(width: 14),
 
-            // Informations
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    titre,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF242424),
-                    ),
+          // 2. Informations & Badges
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.titre,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w900,
+                    color: theme.colorScheme.onSurface,
                   ),
-
-                  const SizedBox(height: 6),
-
-                  Text(
-                    duree,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey.shade600,
+                ),
+                const SizedBox(height: 5),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.schedule_rounded,
+                      size: 13,
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
-                  ),
-
-                  const SizedBox(height: 7),
-
-                  // Barre de progression
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: LinearProgressIndicator(
-                      value: progression,
-                      minHeight: 5,
-                      backgroundColor: const Color(0xFFEDEDED),
-                      valueColor:
-                          const AlwaysStoppedAnimation<Color>(
-                        Color(0xFF8B5CF6),
+                    const SizedBox(width: 4),
+                    Text(
+                      widget.duree,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(width: 10),
-
-            // Cercle de progression
-            SizedBox(
-              width: 43,
-              height: 43,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  CircularProgressIndicator(
-                    value: progression,
-                    strokeWidth: 4,
-                    backgroundColor:
-                        const Color(0xFFE9E9E9),
-                    valueColor:
-                        const AlwaysStoppedAnimation<Color>(
-                      Color(0xFF8B5CF6),
+                    const SizedBox(width: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF78350F).withValues(alpha: 0.4)
+                            : const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.star_rounded,
+                            size: 12,
+                            color: Color(0xFFD97706),
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            '+${widget.points} pts',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFFB45309),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 7),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(
+                    value: widget.progression.clamp(0.0, 1.0),
+                    minHeight: 6,
+                    backgroundColor: isDark
+                        ? Colors.black26
+                        : KidTheme.primaryGreen.withValues(alpha: 0.15),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      KidTheme.primaryGreen,
                     ),
                   ),
-                  Text(
-                    '${(progression * 100).round()}%',
-                    style: const TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF7C3AED),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+
+          const SizedBox(width: 12),
+
+          // 3. Bouton rond 3D style Duolingo
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: isCompleted
+                  ? KidTheme.primaryGreen
+                  : (isDark ? const Color(0xFF334155) : const Color(0xFFDCFCE7)),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isCompleted
+                    ? KidTheme.primaryGreenDark
+                    : (isDark ? const Color(0xFF475569) : const Color(0xFFBBF7D0)),
+                width: 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: isCompleted
+                      ? KidTheme.primaryGreenDark.withValues(alpha: 0.4)
+                      : Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 0,
+                  offset: const Offset(0, 2.5),
+                ),
+              ],
+            ),
+            child: Icon(
+              isCompleted ? Icons.replay_rounded : Icons.play_arrow_rounded,
+              color: isCompleted ? Colors.white : KidTheme.primaryGreenDark,
+              size: 24,
+            ),
+          ),
+        ],
       ),
     );
   }

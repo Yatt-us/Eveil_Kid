@@ -252,224 +252,324 @@ class _AdminCommandesScreenState extends ConsumerState<AdminCommandesScreen> {
 
             final filteredList = _applyFilters(allCommandes);
 
-            return CustomScrollView(
-              slivers: [
-                // 1. STATS CARDS
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
-                    child: Column(
-                      children: [
-                        // Ligne 1 : Chiffre d'affaires à lui seul sur toute la ligne
-                        AdminStatCard(
-                          title: 'Chiffre d\'affaires global',
-                          value: _formatPrice(caTotal),
-                          subtitle: 'Total cumulé des ventes de la boutique',
-                          icon: Icons.payments_rounded,
-                          color: const Color(0xFF3B82F6),
-                          onTap: () {},
-                        ),
-                        const SizedBox(height: 10),
-                        // Ligne 2 : Les autres cartes (Total, En cours, Livrées)
-                        Row(
-                          children: [
-                            Expanded(
-                              child: AdminStatCard(
-                                title: 'Total',
-                                value: '$totalCount',
-                                icon: Icons.shopping_bag_rounded,
-                                color: theme.colorScheme.primary,
-                                onTap: () => setState(() => _selectedStatus = null),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: AdminStatCard(
-                                title: 'En cours',
-                                value: '$enCoursCount',
-                                icon: Icons.pending_actions_rounded,
-                                color: const Color(0xFFF59E0B),
-                                onTap: () => setState(() => _selectedStatus = 'En cours'),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: AdminStatCard(
-                                title: 'Livrées',
-                                value: '$livreesCount',
-                                icon: Icons.check_circle_rounded,
-                                color: AppColors.success,
-                                onTap: () => setState(() => _selectedStatus = 'Livrée'),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth >= 900;
+                final isTablet = constraints.maxWidth >= 600 && constraints.maxWidth < 900;
+                final horizontalPadding = isWide ? 28.0 : (isTablet ? 20.0 : 16.0);
 
-                // 2. BARRE DE RECHERCHE & FILTRES
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: AppSearchBar(
-                                hintText: 'Rechercher par ID, contact, adresse...',
-                                onChanged: (q) => setState(() => _searchQuery = q),
-                              ),
+                return Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1280),
+                    child: CustomScrollView(
+                      slivers: [
+                        // 1. STATS CARDS
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(
+                              horizontalPadding,
+                              12,
+                              horizontalPadding,
+                              14,
                             ),
-                            const SizedBox(width: 8),
-                            InkWell(
-                              onTap: () => _showSortModal(context, theme, isDark),
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
-                                height: 44,
-                                width: 44,
-                                decoration: BoxDecoration(
-                                  color: _hasActiveFilters
-                                      ? theme.colorScheme.primary.withValues(alpha: isDark ? 0.22 : 0.12)
-                                      : theme.colorScheme.surface,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: _hasActiveFilters
-                                        ? theme.colorScheme.primary
-                                        : dividerColor,
-                                    width: _hasActiveFilters ? 1.4 : 1.0,
+                            child: isWide
+                                ? Row(
+                                    children: [
+                                      Expanded(
+                                        flex: 2,
+                                        child: AdminStatCard(
+                                          title: 'Chiffre d\'affaires global',
+                                          value: _formatPrice(caTotal),
+                                          subtitle: 'Total cumulé des ventes',
+                                          icon: Icons.payments_rounded,
+                                          color: const Color(0xFF3B82F6),
+                                          onTap: () {},
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: AdminStatCard(
+                                          title: 'Total',
+                                          value: '$totalCount',
+                                          icon: Icons.shopping_bag_rounded,
+                                          color: theme.colorScheme.primary,
+                                          onTap: () => setState(() => _selectedStatus = null),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: AdminStatCard(
+                                          title: 'En cours',
+                                          value: '$enCoursCount',
+                                          icon: Icons.pending_actions_rounded,
+                                          color: const Color(0xFFF59E0B),
+                                          onTap: () => setState(() => _selectedStatus = 'En cours'),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: AdminStatCard(
+                                          title: 'Livrées',
+                                          value: '$livreesCount',
+                                          icon: Icons.check_circle_rounded,
+                                          color: AppColors.success,
+                                          onTap: () => setState(() => _selectedStatus = 'Livrée'),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : Column(
+                                    children: [
+                                      AdminStatCard(
+                                        title: 'Chiffre d\'affaires global',
+                                        value: _formatPrice(caTotal),
+                                        subtitle: 'Total cumulé des ventes de la boutique',
+                                        icon: Icons.payments_rounded,
+                                        color: const Color(0xFF3B82F6),
+                                        onTap: () {},
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: AdminStatCard(
+                                              title: 'Total',
+                                              value: '$totalCount',
+                                              icon: Icons.shopping_bag_rounded,
+                                              color: theme.colorScheme.primary,
+                                              onTap: () => setState(() => _selectedStatus = null),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: AdminStatCard(
+                                              title: 'En cours',
+                                              value: '$enCoursCount',
+                                              icon: Icons.pending_actions_rounded,
+                                              color: const Color(0xFFF59E0B),
+                                              onTap: () => setState(() => _selectedStatus = 'En cours'),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: AdminStatCard(
+                                              title: 'Livrées',
+                                              value: '$livreesCount',
+                                              icon: Icons.check_circle_rounded,
+                                              color: AppColors.success,
+                                              onTap: () => setState(() => _selectedStatus = 'Livrée'),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                          ),
+                        ),
+
+                        // 2. BARRE DE RECHERCHE & FILTRES
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                            child: Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: AppSearchBar(
+                                        hintText: 'Rechercher par ID, contact, adresse...',
+                                        onChanged: (q) => setState(() => _searchQuery = q),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    InkWell(
+                                      onTap: () => _showSortModal(context, theme, isDark),
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Container(
+                                        height: 44,
+                                        width: 44,
+                                        decoration: BoxDecoration(
+                                          color: _hasActiveFilters
+                                              ? theme.colorScheme.primary.withValues(alpha: isDark ? 0.22 : 0.12)
+                                              : theme.colorScheme.surface,
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(
+                                            color: _hasActiveFilters
+                                                ? theme.colorScheme.primary
+                                                : dividerColor,
+                                            width: _hasActiveFilters ? 1.4 : 1.0,
+                                          ),
+                                        ),
+                                        child: Stack(
+                                          alignment: Alignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.tune_rounded,
+                                              color: _hasActiveFilters
+                                                  ? theme.colorScheme.primary
+                                                  : (isDark ? Colors.white70 : AppColors.textPrimary),
+                                              size: 20,
+                                            ),
+                                            if (_hasActiveFilters)
+                                              Positioned(
+                                                top: 9,
+                                                right: 9,
+                                                child: Container(
+                                                  width: 7,
+                                                  height: 7,
+                                                  decoration: BoxDecoration(
+                                                    color: theme.colorScheme.primary,
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+
+                                // Chips de filtrage par statut
+                                SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    children: [
+                                      _buildFilterChip('Toutes', null, theme, isDark, dividerColor),
+                                      const SizedBox(width: 8),
+                                      _buildFilterChip('En cours', 'En cours', theme, isDark, dividerColor),
+                                      const SizedBox(width: 8),
+                                      _buildFilterChip('En livraison', 'En livraison', theme, isDark, dividerColor),
+                                      const SizedBox(width: 8),
+                                      _buildFilterChip('Livrées', 'Livrée', theme, isDark, dividerColor),
+                                      const SizedBox(width: 8),
+                                      _buildFilterChip('Annulées', 'Annulée', theme, isDark, dividerColor),
+                                    ],
                                   ),
                                 ),
-                                child: Stack(
-                                  alignment: Alignment.center,
+                                const SizedBox(height: 14),
+
+                                // Compteur de résultats
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Icon(
-                                      Icons.tune_rounded,
-                                      color: _hasActiveFilters
-                                          ? theme.colorScheme.primary
-                                          : (isDark ? Colors.white70 : AppColors.textPrimary),
-                                      size: 20,
+                                    Text(
+                                      '${filteredList.length} commande(s) trouvée(s)',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: textSecondary,
+                                      ),
                                     ),
                                     if (_hasActiveFilters)
-                                      Positioned(
-                                        top: 9,
-                                        right: 9,
-                                        child: Container(
-                                          width: 7,
-                                          height: 7,
-                                          decoration: BoxDecoration(
-                                            color: theme.colorScheme.primary,
-                                            shape: BoxShape.circle,
-                                          ),
+                                      TextButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            _searchQuery = '';
+                                            _selectedStatus = null;
+                                            _sortOption = AdminCommandeSortOption.newest;
+                                          });
+                                        },
+                                        style: TextButton.styleFrom(
+                                          visualDensity: VisualDensity.compact,
+                                          foregroundColor: AppColors.danger,
+                                        ),
+                                        child: const Text(
+                                          'Réinitialiser',
+                                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                                         ),
                                       ),
                                   ],
                                 ),
-                              ),
+                                const SizedBox(height: 10),
+                              ],
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-
-                        // Chips de filtrage par statut
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: [
-                              _buildFilterChip('Toutes', null, theme, isDark, dividerColor),
-                              const SizedBox(width: 8),
-                              _buildFilterChip('En cours', 'En cours', theme, isDark, dividerColor),
-                              const SizedBox(width: 8),
-                              _buildFilterChip('En livraison', 'En livraison', theme, isDark, dividerColor),
-                              const SizedBox(width: 8),
-                              _buildFilterChip('Livrées', 'Livrée', theme, isDark, dividerColor),
-                              const SizedBox(width: 8),
-                              _buildFilterChip('Annulées', 'Annulée', theme, isDark, dividerColor),
-                            ],
                           ),
                         ),
-                        const SizedBox(height: 14),
 
-                        // Compteur de résultats
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              '${filteredList.length} commande(s) trouvée(s)',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: textSecondary,
+                        // 3. LISTE DES COMMANDES (Grille sur écran large, Liste sur mobile)
+                        if (filteredList.isEmpty)
+                          SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: AppEmptyState(
+                                title: 'Aucune commande trouvée',
+                                description: _hasActiveFilters
+                                    ? 'Aucune commande ne correspond à vos filtres de recherche.'
+                                    : 'Aucune commande n\'a encore été enregistrée dans la boutique.',
                               ),
                             ),
-                            if (_hasActiveFilters)
-                              TextButton(
-                                onPressed: () {
-                                  setState(() {
-                                    _searchQuery = '';
-                                    _selectedStatus = null;
-                                    _sortOption = AdminCommandeSortOption.newest;
-                                  });
-                                },
-                                style: TextButton.styleFrom(
-                                  visualDensity: VisualDensity.compact,
-                                  foregroundColor: AppColors.danger,
-                                ),
-                                child: const Text(
-                                  'Réinitialiser',
-                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                                ),
+                          )
+                        else if (isWide || isTablet)
+                          SliverPadding(
+                            padding: EdgeInsets.fromLTRB(
+                              horizontalPadding,
+                              0,
+                              horizontalPadding,
+                              24,
+                            ),
+                            sliver: SliverGrid(
+                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: isWide ? 2 : 2,
+                                crossAxisSpacing: 14,
+                                mainAxisSpacing: 14,
+                                mainAxisExtent: 175,
                               ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
+                              delegate: SliverChildBuilderDelegate(
+                                (ctx, idx) {
+                                  final cmd = filteredList[idx];
+                                  return AdminCommandeCard(
+                                    commande: cmd,
+                                    onTap: () {
+                                      context.push(
+                                        AppRoutes.adminDetailCommandePath(cmd.id),
+                                        extra: cmd,
+                                      );
+                                    },
+                                    onStatusChanged: (newStatut) => _updateStatus(cmd.id, newStatut),
+                                  );
+                                },
+                                childCount: filteredList.length,
+                              ),
+                            ),
+                          )
+                        else
+                          SliverPadding(
+                            padding: EdgeInsets.fromLTRB(
+                              horizontalPadding,
+                              0,
+                              horizontalPadding,
+                              24,
+                            ),
+                            sliver: SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                (ctx, idx) {
+                                  final cmd = filteredList[idx];
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child: AdminCommandeCard(
+                                      commande: cmd,
+                                      onTap: () {
+                                        context.push(
+                                          AppRoutes.adminDetailCommandePath(cmd.id),
+                                          extra: cmd,
+                                        );
+                                      },
+                                      onStatusChanged: (newStatut) => _updateStatus(cmd.id, newStatut),
+                                    ),
+                                  );
+                                },
+                                childCount: filteredList.length,
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),
-                ),
-
-                // 3. LISTE DES COMMANDES
-                if (filteredList.isEmpty)
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: AppEmptyState(
-                        title: 'Aucune commande trouvée',
-                        description: _hasActiveFilters
-                            ? 'Aucune commande ne correspond à vos filtres de recherche.'
-                            : 'Aucune commande n\'a encore été enregistrée dans la boutique.',
-                      ),
-                    ),
-                  )
-                else
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (ctx, idx) {
-                          final cmd = filteredList[idx];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: AdminCommandeCard(
-                              commande: cmd,
-                              onTap: () {
-                                context.push(
-                                  AppRoutes.adminDetailCommandePath(cmd.id),
-                                  extra: cmd,
-                                );
-                              },
-                              onStatusChanged: (newStatut) => _updateStatus(cmd.id, newStatut),
-                            ),
-                          );
-                        },
-                        childCount: filteredList.length,
-                      ),
-                    ),
-                  ),
-              ],
+                );
+              },
             );
           },
         ),

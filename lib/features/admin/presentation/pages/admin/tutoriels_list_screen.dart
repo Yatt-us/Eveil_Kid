@@ -119,266 +119,319 @@ class _TutorielsListScreenState extends ConsumerState<TutorielsListScreen> {
 
             final filteredList = _applyFilters(allTutoriels);
 
-            return CustomScrollView(
-              slivers: [
-                // Cartes Statistiques
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: AdminStatCard(
-                            title: 'Total',
-                            value: '$totalCount',
-                            icon: Icons.video_library_rounded,
-                            color: AppColors.primary,
-                            onTap: () => setState(() => _selectedStatus = null),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: AdminStatCard(
-                            title: 'Publiés',
-                            value: '$publishedCount',
-                            icon: Icons.check_circle_rounded,
-                            color: AppColors.success,
-                            onTap: () =>
-                                setState(() => _selectedStatus = 'publie'),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: AdminStatCard(
-                            title: 'Brouillons',
-                            value: '$draftCount',
-                            icon: Icons.edit_note_rounded,
-                            color: AppColors.warning,
-                            onTap: () =>
-                                setState(() => _selectedStatus = 'brouillon'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final isDesktop = constraints.maxWidth >= 950;
+                final isTablet = constraints.maxWidth >= 600 && constraints.maxWidth < 950;
+                final horizontalPadding = isDesktop ? 32.0 : (isTablet ? 24.0 : 16.0);
 
-                // Barre de recherche & Bouton Filtre
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: AppSearchBar(
-                            onChanged: (value) {
-                              setState(() => _searchQuery = value);
-                            },
-                            hintText: 'Rechercher par titre ou description...',
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        // Bouton Filtre modal
-                        GestureDetector(
-                          onTap: () => _showFilterBottomSheet(context),
-                          child: Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: _hasActiveFilters
-                                  ? AppColors.primary
-                                  : (isDark
-                                        ? Colors.white.withValues(alpha: 0.08)
-                                        : Colors.grey.shade100),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: _hasActiveFilters
-                                    ? AppColors.primary
-                                    : (isDark
-                                          ? Colors.white12
-                                          : Colors.grey.shade300),
-                              ),
-                            ),
-                            child: Stack(
-                              alignment: Alignment.center,
+                return Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1280),
+                    child: CustomScrollView(
+                      slivers: [
+                        // Cartes Statistiques
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(horizontalPadding, 12, horizontalPadding, 16),
+                            child: Row(
                               children: [
-                                Icon(
-                                  Icons.tune_rounded,
-                                  color: _hasActiveFilters
-                                      ? Colors.white
-                                      : (isDark
-                                            ? Colors.white70
-                                            : AppColors.textPrimary),
-                                  size: 20,
-                                ),
-                                if (_hasActiveFilters)
-                                  Positioned(
-                                    top: 8,
-                                    right: 8,
-                                    child: Container(
-                                      width: 7,
-                                      height: 7,
-                                      decoration: const BoxDecoration(
-                                        color: Colors.white,
-                                        shape: BoxShape.circle,
-                                      ),
-                                    ),
+                                Expanded(
+                                  child: AdminStatCard(
+                                    title: 'Total',
+                                    value: '$totalCount',
+                                    icon: Icons.video_library_rounded,
+                                    color: AppColors.primary,
+                                    onTap: () => setState(() => _selectedStatus = null),
                                   ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: AdminStatCard(
+                                    title: 'Publiés',
+                                    value: '$publishedCount',
+                                    icon: Icons.check_circle_rounded,
+                                    color: AppColors.success,
+                                    onTap: () =>
+                                        setState(() => _selectedStatus = 'publie'),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: AdminStatCard(
+                                    title: 'Brouillons',
+                                    value: '$draftCount',
+                                    icon: Icons.edit_note_rounded,
+                                    color: AppColors.warning,
+                                    onTap: () =>
+                                        setState(() => _selectedStatus = 'brouillon'),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
                         ),
+
+                        // Barre de recherche & Bouton Filtre
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: AppSearchBar(
+                                    onChanged: (value) {
+                                      setState(() => _searchQuery = value);
+                                    },
+                                    hintText: 'Rechercher par titre ou description...',
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                // Bouton Filtre modal
+                                GestureDetector(
+                                  onTap: () => _showFilterBottomSheet(context),
+                                  child: Container(
+                                    width: 44,
+                                    height: 44,
+                                    decoration: BoxDecoration(
+                                      color: _hasActiveFilters
+                                          ? AppColors.primary
+                                          : (isDark
+                                                ? Colors.white.withValues(alpha: 0.08)
+                                                : Colors.grey.shade100),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: _hasActiveFilters
+                                            ? AppColors.primary
+                                            : (isDark
+                                                  ? Colors.white12
+                                                  : Colors.grey.shade300),
+                                      ),
+                                    ),
+                                    child: Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.tune_rounded,
+                                          color: _hasActiveFilters
+                                              ? Colors.white
+                                              : (isDark
+                                                    ? Colors.white70
+                                                    : AppColors.textPrimary),
+                                          size: 20,
+                                        ),
+                                        if (_hasActiveFilters)
+                                          Positioned(
+                                            top: 8,
+                                            right: 8,
+                                            child: Container(
+                                              width: 7,
+                                              height: 7,
+                                              decoration: const BoxDecoration(
+                                                color: Colors.white,
+                                                shape: BoxShape.circle,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // Chips d'état rapide (Tous, Publiés, Brouillons)
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(horizontalPadding, 14, horizontalPadding, 8),
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
+                                  _buildQuickStatusChip(
+                                    label: 'Tous ($totalCount)',
+                                    statusValue: null,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _buildQuickStatusChip(
+                                    label: 'Publiés ($publishedCount)',
+                                    statusValue: 'publie',
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _buildQuickStatusChip(
+                                    label: 'Brouillons ($draftCount)',
+                                    statusValue: 'brouillon',
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        // Liste / Grille des cartes ou état vide
+                        if (filteredList.isEmpty)
+                          SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(32),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(20),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary.withValues(alpha: 0.1),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.video_library_outlined,
+                                        size: 48,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'Aucun tutoriel trouvé',
+                                      style:
+                                          theme.textTheme.titleMedium?.copyWith(
+                                            fontWeight: FontWeight.w700,
+                                            color: theme.colorScheme.onSurface,
+                                            fontSize: 17,
+                                          ) ??
+                                          TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 17,
+                                            color: theme.colorScheme.onSurface,
+                                          ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      _searchQuery.isNotEmpty || _hasActiveFilters
+                                          ? 'Essayez de modifier vos critères de recherche ou de filtre.'
+                                          : 'Commencez par ajouter votre premier tutoriel vidéo.',
+                                      style:
+                                          theme.textTheme.bodyMedium?.copyWith(
+                                            color: theme.colorScheme.onSurfaceVariant,
+                                            fontSize: 13,
+                                          ) ??
+                                          TextStyle(
+                                            color: theme.colorScheme.onSurfaceVariant,
+                                            fontSize: 13,
+                                          ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 20),
+                                    if (!_hasActiveFilters && _searchQuery.isEmpty)
+                                      AppButton(
+                                        text: 'Créer un tutoriel',
+                                        icon: Icons.add_rounded,
+                                        onPressed: () =>
+                                            context.push(AppRoutes.adminAddTutoriel),
+                                      )
+                                    else
+                                      OutlinedButton.icon(
+                                        onPressed: () {
+                                          setState(() {
+                                            _searchQuery = '';
+                                            _selectedStatus = null;
+                                            _selectedCategoryId = null;
+                                            _sortOption =
+                                                AdminTutorielSortOption.newest;
+                                          });
+                                        },
+                                        icon: const Icon(Icons.clear_all_rounded),
+                                        label: const Text('Réinitialiser les filtres'),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          )
+                        else if (isDesktop || isTablet)
+                          SliverPadding(
+                            padding: EdgeInsets.fromLTRB(horizontalPadding, 12, horizontalPadding, 80),
+                            sliver: SliverGrid(
+                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: isDesktop ? 3 : 2,
+                                crossAxisSpacing: 14,
+                                mainAxisSpacing: 14,
+                                mainAxisExtent: 220,
+                              ),
+                              delegate: SliverChildBuilderDelegate((context, index) {
+                                final tutoriel = filteredList[index];
+                                return TutorielCard(
+                                  tutoriel: tutoriel,
+                                  categorieNom: categoriesMap[tutoriel.categorieId],
+                                  onTap: () {
+                                    if (tutoriel.tutorielId != null) {
+                                      context.push(
+                                        AppRoutes.adminDetailTutorielPath(
+                                          tutoriel.tutorielId!,
+                                        ),
+                                        extra: tutoriel,
+                                      );
+                                    }
+                                  },
+                                  onEdit: () {
+                                    context.push(
+                                      AppRoutes.adminEditTutorielPath(
+                                        tutoriel.tutorielId ?? '',
+                                      ),
+                                      extra: tutoriel,
+                                    );
+                                  },
+                                  onDelete: () => _confirmDelete(tutoriel),
+                                  onPublish: () => _publishTutoriel(tutoriel),
+                                  onUnpublish: () => _unpublishTutoriel(tutoriel),
+                                );
+                              }, childCount: filteredList.length),
+                            ),
+                          )
+                        else
+                          SliverPadding(
+                            padding: EdgeInsets.fromLTRB(horizontalPadding, 12, horizontalPadding, 80),
+                            sliver: SliverList(
+                              delegate: SliverChildBuilderDelegate((context, index) {
+                                final tutoriel = filteredList[index];
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 16),
+                                  child: TutorielCard(
+                                    tutoriel: tutoriel,
+                                    categorieNom: categoriesMap[tutoriel.categorieId],
+                                    onTap: () {
+                                      if (tutoriel.tutorielId != null) {
+                                        context.push(
+                                          AppRoutes.adminDetailTutorielPath(
+                                            tutoriel.tutorielId!,
+                                          ),
+                                          extra: tutoriel,
+                                        );
+                                      }
+                                    },
+                                    onEdit: () {
+                                      context.push(
+                                        AppRoutes.adminEditTutorielPath(
+                                          tutoriel.tutorielId ?? '',
+                                        ),
+                                        extra: tutoriel,
+                                      );
+                                    },
+                                    onDelete: () => _confirmDelete(tutoriel),
+                                    onPublish: () => _publishTutoriel(tutoriel),
+                                    onUnpublish: () => _unpublishTutoriel(tutoriel),
+                                  ),
+                                );
+                              }, childCount: filteredList.length),
+                            ),
+                          ),
                       ],
                     ),
                   ),
-                ),
-
-                // Chips d'état rapide (Tous, Publiés, Brouillons)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _buildQuickStatusChip(
-                            label: 'Tous ($totalCount)',
-                            statusValue: null,
-                          ),
-                          const SizedBox(width: 8),
-                          _buildQuickStatusChip(
-                            label: 'Publiés ($publishedCount)',
-                            statusValue: 'publie',
-                          ),
-                          const SizedBox(width: 8),
-                          _buildQuickStatusChip(
-                            label: 'Brouillons ($draftCount)',
-                            statusValue: 'brouillon',
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Liste des cartes ou état vide
-                if (filteredList.isEmpty)
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(20),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.video_library_outlined,
-                                size: 48,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Aucun tutoriel trouvé',
-                              style:
-                                  theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                    color: theme.colorScheme.onSurface,
-                                    fontSize: 17,
-                                  ) ??
-                                  TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 17,
-                                    color: theme.colorScheme.onSurface,
-                                  ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              _searchQuery.isNotEmpty || _hasActiveFilters
-                                  ? 'Essayez de modifier vos critères de recherche ou de filtre.'
-                                  : 'Commencez par ajouter votre premier tutoriel vidéo.',
-                              style:
-                                  theme.textTheme.bodyMedium?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                    fontSize: 13,
-                                  ) ??
-                                  TextStyle(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                    fontSize: 13,
-                                  ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 20),
-                            if (!_hasActiveFilters && _searchQuery.isEmpty)
-                              AppButton(
-                                text: 'Créer un tutoriel',
-                                icon: Icons.add_rounded,
-                                onPressed: () =>
-                                    context.push(AppRoutes.adminAddTutoriel),
-                              )
-                            else
-                              OutlinedButton.icon(
-                                onPressed: () {
-                                  setState(() {
-                                    _searchQuery = '';
-                                    _selectedStatus = null;
-                                    _selectedCategoryId = null;
-                                    _sortOption =
-                                        AdminTutorielSortOption.newest;
-                                  });
-                                },
-                                icon: const Icon(Icons.clear_all_rounded),
-                                label: const Text('Réinitialiser les filtres'),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  )
-                else
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 80),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate((context, index) {
-                        final tutoriel = filteredList[index];
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: TutorielCard(
-                            tutoriel: tutoriel,
-                            categorieNom: categoriesMap[tutoriel.categorieId],
-                            onTap: () {
-                              if (tutoriel.tutorielId != null) {
-                                context.push(
-                                  AppRoutes.adminDetailTutorielPath(
-                                    tutoriel.tutorielId!,
-                                  ),
-                                  extra: tutoriel,
-                                );
-                              }
-                            },
-                            onEdit: () {
-                              context.push(
-                                AppRoutes.adminEditTutorielPath(
-                                  tutoriel.tutorielId ?? '',
-                                ),
-                                extra: tutoriel,
-                              );
-                            },
-                            onDelete: () => _confirmDelete(tutoriel),
-                            onPublish: () => _publishTutoriel(tutoriel),
-                            onUnpublish: () => _unpublishTutoriel(tutoriel),
-                          ),
-                        );
-                      }, childCount: filteredList.length),
-                    ),
-                  ),
-              ],
+                );
+              },
             );
           },
         ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:eveilkid/core/themes/kid_theme.dart';
+import 'package:eveilkid/features/enfant/presentation/widgets/duolingo_card.dart';
 import 'package:eveilkid/features/enfant/providers/child_mode_provider.dart';
 import 'package:eveilkid/features/enfant/providers/enfant_providers.dart';
 
@@ -18,52 +19,53 @@ class ProgressionEnfantPage extends ConsumerWidget {
           enfantNotifierProvider.select((state) => state.enfantSelectionne),
         );
 
-    final completedCount = enfant?.resultatsActivite.length ?? 3;
-    final level = ((enfant?.age ?? 4) + (completedCount ~/ 5)).clamp(1, 10);
-    final starsCount = (completedCount * 15) + 30;
-    final progressToNextLevel = ((completedCount % 5) / 5.0).clamp(0.2, 1.0);
+    final completedCount = enfant?.totalActivitesTerminees ?? 0;
+    final starsCount = enfant?.totalPoints ?? 0;
+    final level = enfant?.niveau ?? 1;
+    final progressToNextLevel = enfant?.progressionNiveau ?? 0.05;
+    final pointsForNext = enfant?.pointsPourProchainNiveau ?? 50;
 
     final badges = [
       {
         'title': 'Premier Pas',
         'desc': 'Première activité complétée !',
         'icon': Icons.stars_rounded,
-        'unlocked': true,
+        'unlocked': completedCount >= 1,
         'color': const Color(0xFFFEF3C7),
       },
       {
-        'title': 'Ami des Animaux',
-        'desc': '3 défis sur les animaux réussis',
-        'icon': Icons.pets_rounded,
-        'unlocked': true,
+        'title': 'Ami des Jeux',
+        'desc': '3 activités réussies',
+        'icon': Icons.sports_esports_rounded,
+        'unlocked': completedCount >= 3,
         'color': const Color(0xFFFFEDD5),
       },
       {
-        'title': 'As du Calcul',
-        'desc': 'Champion des chiffres jusqu’à 10',
-        'icon': Icons.calculate_rounded,
-        'unlocked': completedCount >= 2,
+        'title': 'Chasseur d’Étoiles',
+        'desc': 'Récolter 30 étoiles',
+        'icon': Icons.auto_awesome_rounded,
+        'unlocked': starsCount >= 30,
         'color': const Color(0xFFE0F2FE),
       },
       {
         'title': 'Artiste Étoilé',
-        'desc': 'Toutes les couleurs maîtrisées',
+        'desc': '5 activités complétées',
         'icon': Icons.palette_rounded,
-        'unlocked': completedCount >= 4,
+        'unlocked': completedCount >= 5,
         'color': const Color(0xFFF3E8FF),
       },
       {
         'title': 'Pilote de l’Espace',
         'desc': 'Atteindre le niveau 5',
         'icon': Icons.rocket_launch_rounded,
-        'unlocked': level >= 5,
+        'unlocked': level >= 5 || starsCount >= 200,
         'color': const Color(0xFFDCFCE7),
       },
       {
         'title': 'Super Champion',
-        'desc': 'Terminer 10 activités avec succès',
+        'desc': '10 activités terminées',
         'icon': Icons.workspace_premium_rounded,
-        'unlocked': completedCount >= 10,
+        'unlocked': completedCount >= 10 || starsCount >= 500,
         'color': const Color(0xFFFCE7F3),
       },
     ];
@@ -105,27 +107,14 @@ class ProgressionEnfantPage extends ConsumerWidget {
                   ),
                   const SizedBox(width: 14),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Ma Progression',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w900,
-                            color: theme.colorScheme.onSurface,
-                            letterSpacing: -0.3,
-                          ),
-                        ),
-                        Text(
-                          'Regarde tous tes beaux trophées !',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      'Progression',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        color: theme.colorScheme.onSurface,
+                        letterSpacing: -0.3,
+                      ),
                     ),
                   ),
                   Container(
@@ -151,35 +140,20 @@ class ProgressionEnfantPage extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── CARTE HERO NIVEAU & ÉTOILES ──
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: isDark
-                              ? [const Color(0xFF14532D), const Color(0xFF064E3B)]
-                              : [const Color(0xFFDCFCE7), const Color(0xFFBBF7D0)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(28),
-                        border: Border.all(
-                          color: isDark
-                              ? theme.dividerColor.withValues(alpha: 0.25)
-                              : KidTheme.primaryGreen.withValues(alpha: 0.3),
-                          width: 1.5,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(
-                              alpha: isDark ? 0.25 : 0.08,
-                            ),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
+                    // ── CARTE HERO NIVEAU & ÉTOILES STYLE DUOLINGO 3D ──
+                    DuolingoCard(
+                      borderRadius: 28,
+                      bottomThickness: 4.5,
+                      padding: const EdgeInsets.all(18),
+                      gradientColors: isDark
+                          ? [const Color(0xFF14532D), const Color(0xFF064E3B)]
+                          : [const Color(0xFFDCFCE7), const Color(0xFFBBF7D0)],
+                      borderColor: isDark
+                          ? const Color(0xFF22C55E).withValues(alpha: 0.4)
+                          : KidTheme.primaryGreen.withValues(alpha: 0.4),
+                      bottomBorderColor: isDark
+                          ? const Color(0xFF064E3B)
+                          : KidTheme.primaryGreenDark,
                       child: Column(
                         children: [
                           Row(
@@ -200,8 +174,7 @@ class ProgressionEnfantPage extends ConsumerWidget {
                                   ),
                                   const SizedBox(width: 12),
                                   Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'Niveau $level',
@@ -308,7 +281,7 @@ class ProgressionEnfantPage extends ConsumerWidget {
 
                     const SizedBox(height: 24),
 
-                    // ── GALERIE DE TROPHÉES & BADGES ──
+                    // ── GALERIE DE TROPHÉES & BADGES STYLE DUOLINGO 3D ──
                     Text(
                       'Mes Badges & Trophées',
                       style: TextStyle(
@@ -336,35 +309,21 @@ class ProgressionEnfantPage extends ConsumerWidget {
                         final isUnlocked = b['unlocked'] as bool;
                         final color = b['color'] as Color;
 
-                        return Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: isUnlocked
-                                ? (isDark
-                                    ? theme.colorScheme.surfaceContainerHighest
-                                    : color)
-                                : theme.colorScheme.surface,
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(
-                              color: isUnlocked
-                                  ? (isDark
-                                      ? KidTheme.primaryGreenLight.withValues(alpha: 0.3)
-                                      : KidTheme.primaryGreen.withValues(alpha: 0.4))
-                                  : theme.dividerColor.withValues(
-                                      alpha: isDark ? 0.25 : 0.15,
-                                    ),
-                              width: 1.5,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(
-                                  alpha: isDark ? 0.2 : 0.04,
-                                ),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
+                        return DuolingoCard(
+                          borderRadius: 22,
+                          bottomThickness: 4.0,
+                          backgroundColor: isUnlocked
+                              ? (isDark ? theme.colorScheme.surfaceContainerHighest : color)
+                              : (isDark ? const Color(0xFF1E1E24) : const Color(0xFFF1F5F9)),
+                          borderColor: isUnlocked
+                              ? (isDark
+                                  ? KidTheme.primaryGreenLight.withValues(alpha: 0.3)
+                                  : KidTheme.primaryGreen.withValues(alpha: 0.35))
+                              : (isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
+                          bottomBorderColor: isUnlocked
+                              ? (isDark ? const Color(0xFF14532D) : KidTheme.primaryGreenDark)
+                              : (isDark ? const Color(0xFF18181C) : const Color(0xFF94A3B8)),
+                          padding: const EdgeInsets.all(12),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -378,8 +337,8 @@ class ProgressionEnfantPage extends ConsumerWidget {
                                     shape: BoxShape.circle,
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.06),
-                                        blurRadius: 6,
+                                        color: Colors.black.withValues(alpha: 0.08),
+                                        blurRadius: 4,
                                         offset: const Offset(0, 2),
                                       ),
                                     ],
@@ -417,7 +376,7 @@ class ProgressionEnfantPage extends ConsumerWidget {
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontSize: 10.5,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.w700,
                                   color: isUnlocked
                                       ? theme.colorScheme.onSurfaceVariant
                                       : Colors.grey,
@@ -432,19 +391,10 @@ class ProgressionEnfantPage extends ConsumerWidget {
                     const SizedBox(height: 24),
 
                     // ── CARTE D'ENCOURAGEMENT ──
-                    Container(
-                      width: double.infinity,
+                    DuolingoCard(
+                      borderRadius: 24,
+                      bottomThickness: 4.0,
                       padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surface,
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(
-                          color: isDark
-                              ? theme.dividerColor.withValues(alpha: 0.25)
-                              : KidTheme.primaryGreen.withValues(alpha: 0.3),
-                          width: 1.2,
-                        ),
-                      ),
                       child: Row(
                         children: [
                           const Text('🎉', style: TextStyle(fontSize: 34)),
@@ -466,6 +416,7 @@ class ProgressionEnfantPage extends ConsumerWidget {
                                   'Continue tes activités pour débloquer le badge "Pilote de l’Espace" !',
                                   style: TextStyle(
                                     fontSize: 12,
+                                    fontWeight: FontWeight.w600,
                                     color: theme.colorScheme.onSurfaceVariant,
                                   ),
                                 ),

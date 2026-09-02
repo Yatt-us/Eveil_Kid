@@ -909,17 +909,23 @@ class AdminShellScaffold extends StatelessWidget {
     final location = GoRouterState.of(context).matchedLocation;
     if (location.startsWith(AppRoutes.adminProfile)) {
       return AdminNavRoute.profile;
-    } else if (location.startsWith(AppRoutes.adminProducts)) {
+    } else if (location.startsWith(AppRoutes.adminProducts) ||
+        location.startsWith(AppRoutes.adminProductForm)) {
       return AdminNavRoute.products;
-    } else if (location.startsWith(AppRoutes.adminCategories)) {
+    } else if (location.startsWith(AppRoutes.adminCategories) ||
+        location.startsWith(AppRoutes.adminCategoryForm)) {
       return AdminNavRoute.categories;
+    } else if (location.startsWith(AppRoutes.adminCommandes)) {
+      return AdminNavRoute.commandes;
+    } else if (location.startsWith(AppRoutes.adminTutoriels) ||
+        location.startsWith(AppRoutes.adminTutorielForm)) {
+      return AdminNavRoute.tutoriels;
     } else if (location.startsWith(AppRoutes.adminActivites)) {
       return AdminNavRoute.activites;
-    } else if (location.startsWith(AppRoutes.adminTutoriels)) {
-      return AdminNavRoute.tutoriels;
     } else if (location.startsWith(AppRoutes.adminUsers)) {
       return AdminNavRoute.utilisateurs;
-    } else if (location.startsWith(AppRoutes.adminStaff)) {
+    } else if (location.startsWith(AppRoutes.adminStaff) ||
+        location.startsWith(AppRoutes.adminManagerForm)) {
       return AdminNavRoute.staff;
     } else if (location.startsWith(AppRoutes.adminCatalog)) {
       return AdminNavRoute.products;

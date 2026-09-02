@@ -362,6 +362,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: AppRoutes.adminProducts,
                 builder: (context, state) => const AdminProductListPage(),
               ),
+              GoRoute(
+                path: AppRoutes.adminProductForm,
+                builder: (context, state) {
+                  final jouet = state.extra as Jouet?;
+                  return AdminProductFormPage(jouetToEdit: jouet);
+                },
+              ),
             ],
           ),
           // 2. Catégories
@@ -371,9 +378,145 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: AppRoutes.adminCategories,
                 builder: (context, state) => const AdminCategoryListPage(),
               ),
+              GoRoute(
+                path: AppRoutes.adminCategoryForm,
+                builder: (context, state) {
+                  final cat = state.extra as Categorie?;
+                  return AdminCategoryDetailPage(categorieToEdit: cat);
+                },
+              ),
             ],
           ),
-          // 3. Parents (Clients)
+          // 3. Commandes
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.adminCommandes,
+                builder: (context, state) => const AdminCommandesScreen(),
+              ),
+              GoRoute(
+                path: AppRoutes.adminDetailCommande,
+                builder: (context, state) {
+                  final commandeId = state.pathParameters['commandeId']!;
+                  final commande = state.extra as CommandeModel?;
+                  return AdminDetailCommandePage(
+                    commandeId: commandeId,
+                    initialCommande: commande,
+                  );
+                },
+              ),
+            ],
+          ),
+          // 4. Tutoriels
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.adminTutoriels,
+                builder: (context, state) => const TutorielsListScreen(),
+              ),
+              GoRoute(
+                path: AppRoutes.adminAddTutoriel,
+                builder: (context, state) => const AdminTutorielFormPage(),
+              ),
+              GoRoute(
+                path: AppRoutes.adminEditTutoriel,
+                builder: (context, state) {
+                  final tutorielId = state.pathParameters['tutorielId'];
+                  final tutoriel = state.extra as Tutoriel?;
+                  return AdminTutorielFormPage(
+                    tutorielId: tutorielId,
+                    tutorielToEdit: tutoriel,
+                  );
+                },
+              ),
+              GoRoute(
+                path: AppRoutes.adminDetailTutoriel,
+                builder: (context, state) {
+                  final tutorielId = state.pathParameters['tutorielId']!;
+                  final tutoriel = state.extra as Tutoriel?;
+                  return AdminTutorielDetailPage(
+                    tutorielId: tutorielId,
+                    initialTutoriel: tutoriel,
+                  );
+                },
+              ),
+              GoRoute(
+                path: AppRoutes.adminTutorielForm,
+                redirect: (context, state) => AppRoutes.adminAddTutoriel,
+              ),
+            ],
+          ),
+          // 5. Activités
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.adminActivites,
+                builder: (context, state) => const ActivitiesListScreen(),
+              ),
+              GoRoute(
+                path: AppRoutes.adminAddActivity,
+                builder: (context, state) => const AddActivityScreen(),
+              ),
+              GoRoute(
+                path: AppRoutes.adminEditActivity,
+                builder: (context, state) {
+                  final activityId = state.pathParameters['activityId']!;
+                  return EditActivityLoader(activityId: activityId);
+                },
+              ),
+              GoRoute(
+                path: AppRoutes.adminActivityQuestions,
+                builder: (context, state) {
+                  final activityId = state.pathParameters['activityId']!;
+                  return QuestionsListScreen(activityId: activityId);
+                },
+              ),
+              GoRoute(
+                path: AppRoutes.adminActivityTypeQuestions,
+                builder: (context, state) {
+                  final activityId = state.pathParameters['activityId']!;
+                  return ChooseQuestionTypeScreen(activityId: activityId);
+                },
+              ),
+              GoRoute(
+                path: AppRoutes.adminActivityAddQuestions,
+                builder: (context, state) {
+                  final activityId = state.pathParameters['activityId']!;
+                  final type =
+                      state.uri.queryParameters['type'] ?? 'choixMultiple';
+                  final questionType =
+                      QuestionTypeExtension.fromString(type);
+                  return AddQuestionScreen(
+                    activityId: activityId,
+                    type: questionType,
+                  );
+                },
+              ),
+              GoRoute(
+                path: AppRoutes.adminActivityEditQuestions,
+                builder: (context, state) {
+                  final activityId = state.pathParameters['activityId']!;
+                  final questionId = state.pathParameters['questionId']!;
+                  return EditQuestionScreen(
+                    activityId: activityId,
+                    questionId: questionId,
+                  );
+                },
+              ),
+              GoRoute(
+                path: AppRoutes.adminActivityDetailQuestions,
+                builder: (context, state) {
+                  final activityId = state.pathParameters['activityId']!;
+                  final questionId = state.pathParameters['questionId']!;
+                  return QuestionDetailScreen(
+                    activityId: activityId,
+                    questionId: questionId,
+                  );
+                },
+              ),
+            ],
+          ),
+          // 6. Parents (Clients)
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -382,16 +525,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          // 4. Équipe & Staff
+          // 7. Équipe & Staff
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: AppRoutes.adminStaff,
                 builder: (context, state) => const AdminStaffListPage(),
               ),
+              GoRoute(
+                path: AppRoutes.adminManagerForm,
+                builder: (context, state) => const AdminManagerFormPage(),
+              ),
             ],
           ),
-          // 5. Catalogue global
+          // 8. Catalogue global
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -400,7 +547,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          // 5. Profil Administrateur
+          // 9. Profil Administrateur
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -410,138 +557,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ],
           ),
         ],
-      ),
-      GoRoute(
-        path: AppRoutes.adminProductForm,
-        builder: (context, state) {
-          final jouet = state.extra as Jouet?;
-          return AdminProductFormPage(jouetToEdit: jouet);
-        },
-      ),
-      GoRoute(
-        path: AppRoutes.adminActivites,
-        builder: (context, state) => const ActivitiesListScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.adminAddActivity,
-        builder: (context, state) => const AddActivityScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.adminEditActivity,
-
-        builder: (context, state) {
-          final activityId = state.pathParameters['activityId']!;
-
-          return EditActivityLoader(activityId: activityId);
-        },
-      ),
-
-      GoRoute(
-        path: AppRoutes.adminActivityQuestions,
-        builder: (context, state) {
-          final activityId = state.pathParameters['activityId']!;
-          return QuestionsListScreen(activityId: activityId);
-        },
-      ),
-      GoRoute(
-        path: AppRoutes.adminActivityTypeQuestions,
-        builder: (context, state) {
-          final activityId = state.pathParameters['activityId']!;
-          return ChooseQuestionTypeScreen(activityId: activityId);
-        },
-      ),
-      GoRoute(
-        path: AppRoutes.adminActivityAddQuestions,
-        builder: (context, state) {
-          final activityId = state.pathParameters['activityId']!;
-          final type = state.uri.queryParameters['type'] ?? 'choixMultiple';
-          final questionType = QuestionTypeExtension.fromString(type);
-          return AddQuestionScreen(activityId: activityId, type: questionType);
-        },
-      ),
-
-      GoRoute(
-        path: AppRoutes.adminActivityEditQuestions,
-        builder: (context, state) {
-          final activityId = state.pathParameters['activityId']!;
-          final questionId = state.pathParameters['questionId']!;
-          return EditQuestionScreen(
-            activityId: activityId,
-            questionId: questionId,
-          );
-        },
-      ),
-
-      GoRoute(
-        path: AppRoutes.adminActivityDetailQuestions,
-        builder: (context, state) {
-          final activityId = state.pathParameters['activityId']!;
-          final questionId = state.pathParameters['questionId']!;
-          return QuestionDetailScreen(
-            activityId: activityId,
-            questionId: questionId,
-          );
-        },
-      ),
-      GoRoute(
-        path: AppRoutes.adminTutoriels,
-        builder: (context, state) => const TutorielsListScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.adminAddTutoriel,
-        builder: (context, state) => const AdminTutorielFormPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.adminEditTutoriel,
-        builder: (context, state) {
-          final tutorielId = state.pathParameters['tutorielId'];
-          final tutoriel = state.extra as Tutoriel?;
-          return AdminTutorielFormPage(
-            tutorielId: tutorielId,
-            tutorielToEdit: tutoriel,
-          );
-        },
-      ),
-      GoRoute(
-        path: AppRoutes.adminDetailTutoriel,
-        builder: (context, state) {
-          final tutorielId = state.pathParameters['tutorielId']!;
-          final tutoriel = state.extra as Tutoriel?;
-          return AdminTutorielDetailPage(
-            tutorielId: tutorielId,
-            initialTutoriel: tutoriel,
-          );
-        },
-      ),
-      GoRoute(
-        path: AppRoutes.adminTutorielForm,
-        redirect: (context, state) => AppRoutes.adminAddTutoriel,
-      ),
-      GoRoute(
-        path: AppRoutes.adminCategoryForm,
-        builder: (context, state) {
-          final cat = state.extra as Categorie?;
-          return AdminCategoryDetailPage(categorieToEdit: cat);
-        },
-      ),
-      GoRoute(
-        path: AppRoutes.adminManagerForm,
-        builder: (context, state) => const AdminManagerFormPage(),
-      ),
-      GoRoute(
-        path: AppRoutes.adminCommandes,
-        builder: (context, state) => const AdminCommandesScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.adminDetailCommande,
-        builder: (context, state) {
-          final commandeId = state.pathParameters['commandeId']!;
-          final commande = state.extra as CommandeModel?;
-          return AdminDetailCommandePage(
-            commandeId: commandeId,
-            initialCommande: commande,
-          );
-        },
       ),
 
       // ── Espace Jouets ──

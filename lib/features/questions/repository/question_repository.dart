@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:eveilkid/features/questions/enums/question_type.enum.dart';
+import 'package:eveilkid/features/questions/mappers/question_mapper.dart';
 import 'package:eveilkid/features/questions/models/question_model.dart';
-import 'package:eveilkid/features/questions/options_questions/option_model.dart';
 
 class QuestionRepository {
   final FirebaseFirestore? _firestore;
@@ -21,12 +20,12 @@ class QuestionRepository {
           .orderBy('ordre')
           .get();
       
-      final list = snapshot.docs.map((doc) => _fromFirestore(doc, activiteId)).toList();
+      final list = snapshot.docs.map((doc) => QuestionMapper.fromFirestore(doc, activiteId)).toList();
       return list.where((q) => !q.estArchive).toList();
     } catch (_) {
       try {
         final snapshot = await _getQuestionsCollection(activiteId).get();
-        final list = snapshot.docs.map((doc) => _fromFirestore(doc, activiteId)).toList();
+        final list = snapshot.docs.map((doc) => QuestionMapper.fromFirestore(doc, activiteId)).toList();
         final activeQuestions = list.where((q) => !q.estArchive).toList();
         activeQuestions.sort((a, b) => a.ordre.compareTo(b.ordre));
         return activeQuestions;
@@ -42,7 +41,7 @@ class QuestionRepository {
           .orderBy('ordre')
           .get();
       
-      return snapshot.docs.map((doc) => _fromFirestore(doc, activiteId)).toList();
+      return snapshot.docs.map((doc) => QuestionMapper.fromFirestore(doc, activiteId)).toList();
     } catch (e) {
       throw Exception('Erreur: $e');
     }
@@ -52,7 +51,7 @@ class QuestionRepository {
     try {
       final doc = await _getQuestionsCollection(activiteId).doc(questionId).get();
       if (doc.exists) {
-        return _fromFirestore(doc, activiteId);
+        return QuestionMapper.fromFirestore(doc, activiteId);
       }
       return null;
     } catch (e) {
@@ -72,7 +71,7 @@ class QuestionRepository {
         estArchive: false,
       );
       
-      await docRef.set(_toFirestore(newQuestion));
+      await docRef.set(QuestionMapper.toFirestore(newQuestion));
       return newQuestion;
     } catch (e) {
       throw Exception('Erreur lors de la création: $e');
@@ -95,7 +94,7 @@ class QuestionRepository {
       
       await _getQuestionsCollection(activiteId)
           .doc(question.id)
-          .update(_toFirestore(updatedQuestion));
+          .update(QuestionMapper.toFirestore(updatedQuestion));
       return updatedQuestion;
     } catch (e) {
       throw Exception('Erreur lors de la mise à jour: $e');
@@ -168,40 +167,5 @@ class QuestionRepository {
     } catch (e) {
       throw Exception('Erreur: $e');
     }
-  }
-
-  Question _fromFirestore(DocumentSnapshot doc, String activiteId) {
-    final data = doc.data() as Map<String, dynamic>;
-    final optionsList = (data['options'] as List? ?? [])
-        .map((e) => OptionQuestion.fromMap(e))
-        .toList();
-    
-    return Question(
-      id: doc.id,
-      activiteId: activiteId,
-      enonce: data['enonce'] ?? '',
-      type: QuestionTypeExtension.fromString(data['type'] ?? 'choixMultiple'),
-      options: optionsList,
-      idReponseCorrecte: data['idReponseCorrecte'] ?? '',
-      points: data['points'] ?? 10,
-      ordre: data['ordre'] ?? 0,
-      imageUrl: data['imageUrl'],
-      estArchive: data['estArchive'] ?? false,
-    );
-  }
-
-  Map<String, dynamic> _toFirestore(Question question) {
-    return {
-      'enonce': question.enonce,
-      'type': question.type.value,
-      'options': question.options.map((e) => e.toMap()).toList(),
-      'idReponseCorrecte': question.idReponseCorrecte,
-      'points': question.points,
-      'ordre': question.ordre,
-      'imageUrl': question.imageUrl,
-      'estArchive': question.estArchive,
-      if (question.estArchive == true) 
-        'dateArchivage': Timestamp.now(),
-    };
   }
 }
