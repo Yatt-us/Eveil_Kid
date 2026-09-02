@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:eveilkid/core/themes/kid_theme.dart';
+import 'package:eveilkid/features/enfant/presentation/widgets/duolingo_button.dart';
+import 'package:eveilkid/features/enfant/presentation/widgets/duolingo_card.dart';
+import 'package:eveilkid/features/enfant/providers/child_mode_provider.dart';
+import 'package:eveilkid/features/enfant/providers/enfant_providers.dart';
 import 'package:eveilkid/features/tutoriels/enums/tutoriel_status.enum.dart';
 import 'package:eveilkid/features/tutoriels/models/tutoriel.dart';
 import 'package:eveilkid/features/tutoriels/presentation/widgets/video_player_widget.dart';
@@ -24,6 +28,11 @@ class TutorielDetailEnfantPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+
+    final childMode = ref.watch(childModeProvider);
+    final enfant = childMode.activeChild ??
+        ref.watch(enfantNotifierProvider.select((state) => state.enfantSelectionne));
+    final childAge = enfant?.age ?? 0;
 
     final tutorielAsync = ref.watch(tutorielStreamByIdProvider(tutorielId));
     final tutorielsAsync = ref.watch(tutorielsProvider);
@@ -53,10 +62,12 @@ class TutorielDetailEnfantPage extends ConsumerWidget {
                           fontWeight: FontWeight.w900,
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
+                      const SizedBox(height: 20),
+                      DuolingoButton(
+                        text: 'Retour aux tutoriels',
+                        icon: Icons.arrow_back_rounded,
+                        colorType: DuolingoButtonColor.green,
                         onPressed: () => Navigator.pop(context),
-                        child: const Text('Retour aux tutoriels'),
                       ),
                     ],
                   ),
@@ -68,7 +79,8 @@ class TutorielDetailEnfantPage extends ConsumerWidget {
               data: (list) => list
                   .where((item) =>
                       item.tutorielId != tutoriel.tutorielId &&
-                      item.statut == TutorielStatus.publie)
+                      item.statut == TutorielStatus.publie &&
+                      (childAge <= 0 || item.ageMinimum <= childAge))
                   .take(4)
                   .toList(),
               orElse: () => <Tutoriel>[],
@@ -99,8 +111,8 @@ class TutorielDetailEnfantPage extends ConsumerWidget {
                               ),
                             ),
                             child: const Icon(
-                              Icons.arrow_back_ios_new_rounded,
-                              size: 18,
+                              Icons.keyboard_arrow_down_rounded,
+                              size: 24,
                               color: KidTheme.primaryGreenDark,
                             ),
                           ),
@@ -109,7 +121,7 @@ class TutorielDetailEnfantPage extends ConsumerWidget {
                       const SizedBox(width: 14),
                       Expanded(
                         child: Text(
-                          'Tutoriel Vidéo',
+                          'Tutoriel',
                           style: TextStyle(
                             fontSize: 19,
                             fontWeight: FontWeight.w900,
@@ -119,33 +131,16 @@ class TutorielDetailEnfantPage extends ConsumerWidget {
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFDCFCE7),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: const Color(0xFFBBF7D0)),
+                          color: const Color(0xFFFFEDD5),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFFED7AA)),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.star_rounded,
-                              size: 16,
-                              color: KidTheme.primaryGreenDark,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '+15 ⭐',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w900,
-                                color: KidTheme.primaryGreenDark,
-                              ),
-                            ),
-                          ],
+                        child: const Icon(
+                          Icons.movie_creation_rounded,
+                          size: 20,
+                          color: Color(0xFFEA580C),
                         ),
                       ),
                     ],
@@ -168,7 +163,7 @@ class TutorielDetailEnfantPage extends ConsumerWidget {
 
                         const SizedBox(height: 18),
 
-                        // 2. TITRE & BADGES SIMPLES
+                        // 2. TITRE & BADGES
                         Row(
                           children: [
                             Container(
@@ -179,12 +174,16 @@ class TutorielDetailEnfantPage extends ConsumerWidget {
                               decoration: BoxDecoration(
                                 color: const Color(0xFFDCFCE7),
                                 borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: const Color(0xFF86EFAC),
+                                  width: 1.5,
+                                ),
                               ),
                               child: Text(
                                 '${tutoriel.ageMinimum} - ${tutoriel.ageMaximum} ans',
                                 style: const TextStyle(
                                   fontSize: 12,
-                                  fontWeight: FontWeight.w800,
+                                  fontWeight: FontWeight.w900,
                                   color: KidTheme.primaryGreenDark,
                                 ),
                               ),
@@ -199,12 +198,16 @@ class TutorielDetailEnfantPage extends ConsumerWidget {
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFFEF3C7),
                                   borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: const Color(0xFFFDE68A),
+                                    width: 1.5,
+                                  ),
                                 ),
                                 child: Text(
                                   '⏱ ${tutoriel.dureeFormatted}',
                                   style: const TextStyle(
                                     fontSize: 12,
-                                    fontWeight: FontWeight.w800,
+                                    fontWeight: FontWeight.w900,
                                     color: Color(0xFFB45309),
                                   ),
                                 ),
@@ -212,7 +215,7 @@ class TutorielDetailEnfantPage extends ConsumerWidget {
                           ],
                         ),
 
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 12),
 
                         Text(
                           tutoriel.titre,
@@ -225,26 +228,43 @@ class TutorielDetailEnfantPage extends ConsumerWidget {
                         ),
 
                         if (tutoriel.description.isNotEmpty) ...[
-                          const SizedBox(height: 10),
-                          Container(
-                            width: double.infinity,
+                          const SizedBox(height: 12),
+                          DuolingoCard(
+                            borderRadius: 22,
+                            bottomThickness: 4.0,
                             padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surface,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: theme.dividerColor.withValues(
-                                  alpha: isDark ? 0.25 : 0.15,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.lightbulb_rounded,
+                                      size: 18,
+                                      color: Color(0xFFF59E0B),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'À propos de cette vidéo',
+                                      style: TextStyle(
+                                        fontSize: 13.5,
+                                        fontWeight: FontWeight.w900,
+                                        color: theme.colorScheme.onSurface,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ),
-                            child: Text(
-                              tutoriel.description,
-                              style: TextStyle(
-                                fontSize: 13.5,
-                                color: theme.colorScheme.onSurfaceVariant,
-                                height: 1.45,
-                              ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  tutoriel.description,
+                                  style: TextStyle(
+                                    fontSize: 13.5,
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                    height: 1.45,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -308,89 +328,72 @@ class TutorielDetailEnfantPage extends ConsumerWidget {
     ThemeData theme,
     bool isDark,
   ) {
-    return Container(
+    return SizedBox(
       width: 140,
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: theme.dividerColor.withValues(alpha: isDark ? 0.25 : 0.15),
-          width: 1.2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(18),
-        child: InkWell(
-          onTap: () {
-            if (item.tutorielId != null && item.tutorielId!.isNotEmpty) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => KidThemeScope(
-                    child: TutorielDetailEnfantPage(
-                      tutorielId: item.tutorielId!,
-                    ),
+      child: DuolingoCard(
+        onTap: () {
+          if (item.tutorielId != null && item.tutorielId!.isNotEmpty) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => KidThemeScope(
+                  child: TutorielDetailEnfantPage(
+                    tutorielId: item.tutorielId!,
                   ),
                 ),
-              );
-            }
-          },
-          borderRadius: BorderRadius.circular(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(18),
-                ),
-                child: SizedBox(
-                  height: 75,
-                  width: double.infinity,
-                  child: item.miniatureUrl.isNotEmpty
-                      ? Image.network(
-                          item.miniatureUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => Container(
-                            color: const Color(0xFFFFEDD5),
-                            child: const Icon(
-                              Icons.movie_rounded,
-                              color: Color(0xFFEA580C),
-                            ),
-                          ),
-                        )
-                      : Container(
+              ),
+            );
+          }
+        },
+        borderRadius: 18,
+        bottomThickness: 3.5,
+        padding: EdgeInsets.zero,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(15),
+              ),
+              child: SizedBox(
+                height: 75,
+                width: double.infinity,
+                child: item.miniatureUrl.isNotEmpty
+                    ? Image.network(
+                        item.miniatureUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => Container(
                           color: const Color(0xFFFFEDD5),
                           child: const Icon(
                             Icons.movie_rounded,
                             color: Color(0xFFEA580C),
                           ),
                         ),
+                      )
+                    : Container(
+                        color: const Color(0xFFFFEDD5),
+                        child: const Icon(
+                          Icons.movie_rounded,
+                          color: Color(0xFFEA580C),
+                        ),
+                      ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
+              child: Text(
+                item.titre,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w800,
+                  color: theme.colorScheme.onSurface,
+                  height: 1.2,
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
-                child: Text(
-                  item.titre,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w800,
-                    color: theme.colorScheme.onSurface,
-                    height: 1.2,
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

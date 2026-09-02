@@ -74,224 +74,225 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         body: ListenableBuilder(
           listenable: _controller,
           builder: (context, child) {
-            return SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 1. SECTION STATUT
-                  _buildSectionCard(
-                    theme: theme,
-                    isDark: isDark,
-                    icon: Icons.flag_outlined,
-                    title: 'Statut de publication',
-                    child: ActivityStatusSelector(
-                      selectedStatus: _controller.selectedStatut,
-                      onChanged: _controller.updateStatut,
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // 2. SECTION IMAGE
-                  _buildSectionCard(
-                    theme: theme,
-                    isDark: isDark,
-                    icon: Icons.image_outlined,
-                    title: 'Illustration de l\'activité',
-                    subtitle: 'Format 16:9 recommandé pour l\'affichage',
-                    child: ActivityImagePicker(
-                      selectedImage: _controller.selectedImage,
-                      imageUrl: _controller.imageUrl,
-                      onImageSelected: _controller.selectImage,
-                      onImageRemoved: _controller.removeImage,
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // 3. SECTION INFOS GÉNÉRALES
-                  _buildSectionCard(
-                    theme: theme,
-                    isDark: isDark,
-                    icon: Icons.edit_note_rounded,
-                    title: 'Informations Générales',
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ActivityFormWidget(
-                          controller: _controller.titreController,
-                          label: 'Titre de l\'activité',
-                          hint: 'Ex : Les animaux de la savane',
-                          errorText: _controller.titreError,
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 960),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 1. SECTION STATUT
+                      _buildSectionCard(
+                        theme: theme,
+                        isDark: isDark,
+                        icon: Icons.flag_outlined,
+                        title: 'Statut de publication',
+                        child: ActivityStatusSelector(
+                          selectedStatus: _controller.selectedStatut,
+                          onChanged: _controller.updateStatut,
                         ),
-                        const SizedBox(height: 14),
-                        ActivityFormWidget(
-                          controller: _controller.descriptionController,
-                          label: 'Description pédagogique',
-                          hint: 'Expliquez l\'objectif et l\'histoire de cette activité...',
-                          maxLines: 3,
-                          errorText: _controller.descriptionError,
-                        ),
-                      ],
-                    ),
-                  ),
+                      ),
 
-                  const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-                  // 4. SECTION CRITÈRES PÉDAGOGIQUES
-                  _buildSectionCard(
-                    theme: theme,
-                    isDark: isDark,
-                    icon: Icons.school_outlined,
-                    title: 'Critères Pédagogiques',
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Catégorie d\'univers',
-                          style: TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w700,
-                            color: theme.colorScheme.onSurface,
-                          ),
+                      // 2. SECTION IMAGE
+                      _buildSectionCard(
+                        theme: theme,
+                        isDark: isDark,
+                        icon: Icons.image_outlined,
+                        title: 'Illustration de l\'activité',
+                        subtitle: 'Format 16:9 recommandé pour l\'affichage',
+                        child: ActivityImagePicker(
+                          selectedImage: _controller.selectedImage,
+                          imageUrl: _controller.imageUrl,
+                          onImageSelected: _controller.selectImage,
+                          onImageRemoved: _controller.removeImage,
                         ),
-                        const SizedBox(height: 8),
-                        ActivityCategorySelector(
-                          selectedCategoryId: _controller.selectedCategorieId,
-                          onChanged: _controller.updateCategorie,
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // 3. SECTION INFOS GÉNÉRALES
+                      _buildSectionCard(
+                        theme: theme,
+                        isDark: isDark,
+                        icon: Icons.edit_note_rounded,
+                        title: 'Informations Générales',
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ActivityFormWidget(
+                              controller: _controller.titreController,
+                              label: 'Titre de l\'activité',
+                              hint: 'Ex : Les animaux de la savane',
+                              errorText: _controller.titreError,
+                            ),
+                            const SizedBox(height: 14),
+                            ActivityFormWidget(
+                              controller: _controller.descriptionController,
+                              label: 'Description pédagogique',
+                              hint: 'Expliquez l\'objectif et l\'histoire de cette activité...',
+                              maxLines: 3,
+                              errorText: _controller.descriptionError,
+                            ),
+                          ],
                         ),
-                        if (_controller.categorieError != null)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 6),
-                            child: Text(
-                              _controller.categorieError!,
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // 4. SECTION CRITÈRES PÉDAGOGIQUES
+                      _buildSectionCard(
+                        theme: theme,
+                        isDark: isDark,
+                        icon: Icons.school_outlined,
+                        title: 'Critères Pédagogiques',
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Catégorie d\'univers',
                               style: TextStyle(
-                                color: theme.colorScheme.error,
-                                fontSize: 12,
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w700,
+                                color: theme.colorScheme.onSurface,
                               ),
                             ),
-                          ),
-                        const SizedBox(height: 16),
-                        ActivityAgeSelector(
-                          minAge: _controller.ageMinimum,
-                          maxAge: _controller.ageMaximum,
-                          onMinAgeChanged: _controller.updateAgeMinimum,
-                          onMaxAgeChanged: _controller.updateAgeMaximum,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Niveau de difficulté',
-                          style: TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w700,
-                            color: theme.colorScheme.onSurface,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        ActivityDifficultySelector(
-                          selectedDifficulty: _controller.selectedDifficulte,
-                          onChanged: _controller.updateDifficulte,
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // 5. SECTION PARAMÈTRES DE JEU
-                  _buildSectionCard(
-                    theme: theme,
-                    isDark: isDark,
-                    icon: Icons.sports_esports_outlined,
-                    title: 'Récompenses & Temps',
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: ActivityFormWidget(
-                            controller: _controller.dureeController,
-                            label: 'Durée estimée',
-                            hint: 'En minutes (ex: 15)',
-                            keyboardType: TextInputType.number,
-                            errorText: _controller.dureeError,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: ActivityFormWidget(
-                            controller: _controller.pointsController,
-                            label: 'Points à gagner',
-                            hint: 'Étoiles (ex: 30)',
-                            keyboardType: TextInputType.number,
-                            errorText: _controller.pointsError,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  if (_controller.errorMessage != null) ...[
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.error.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: theme.colorScheme.error.withValues(alpha: 0.3),
+                            const SizedBox(height: 8),
+                            ActivityCategorySelector(
+                              selectedCategoryId: _controller.selectedCategorieId,
+                              onChanged: _controller.updateCategorie,
+                            ),
+                            if (_controller.categorieError != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 6),
+                                child: Text(
+                                  _controller.categorieError!,
+                                  style: TextStyle(
+                                    color: theme.colorScheme.error,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            const SizedBox(height: 16),
+                            ActivityAgeSelector(
+                              minAge: _controller.ageMinimum,
+                              maxAge: _controller.ageMaximum,
+                              onMinAgeChanged: _controller.updateAgeMinimum,
+                              onMaxAgeChanged: _controller.updateAgeMaximum,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Niveau de difficulté',
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w700,
+                                color: theme.colorScheme.onSurface,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            ActivityDifficultySelector(
+                              selectedDifficulty: _controller.selectedDifficulte,
+                              onChanged: _controller.updateDifficulte,
+                            ),
+                          ],
                         ),
                       ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.error_outline_rounded, color: theme.colorScheme.error, size: 20),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              _controller.errorMessage!,
-                              style: TextStyle(color: theme.colorScheme.error, fontSize: 13),
+
+                      const SizedBox(height: 16),
+
+                      // 5. SECTION PARAMÈTRES DE JEU
+                      _buildSectionCard(
+                        theme: theme,
+                        isDark: isDark,
+                        icon: Icons.sports_esports_outlined,
+                        title: 'Récompenses & Temps',
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: ActivityFormWidget(
+                                controller: _controller.dureeController,
+                                label: 'Durée estimée',
+                                hint: 'En minutes (ex: 15)',
+                                keyboardType: TextInputType.number,
+                                errorText: _controller.dureeError,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: ActivityFormWidget(
+                                controller: _controller.pointsController,
+                                label: 'Points à gagner',
+                                hint: 'Étoiles (ex: 30)',
+                                keyboardType: TextInputType.number,
+                                errorText: _controller.pointsError,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      if (_controller.errorMessage != null) ...[
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.error.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: theme.colorScheme.error.withValues(alpha: 0.3),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ],
-
-                  const SizedBox(height: 28),
-
-                  // BOUTON ENREGISTRER
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton.icon(
-                      onPressed: _controller.isLoading ? null : _saveActivity,
-                      icon: _controller.isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
+                          child: Row(
+                            children: [
+                              Icon(Icons.error_outline_rounded, color: theme.colorScheme.error, size: 20),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  _controller.errorMessage!,
+                                  style: TextStyle(
+                                    color: theme.colorScheme.error,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
                               ),
-                            )
-                          : const Icon(Icons.check_circle_outline_rounded, size: 20),
-                      label: Text(
-                        _controller.isLoading ? 'Enregistrement...' : 'Créer l\'activité',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
+                            ],
+                          ),
+                        ),
+                      ],
+
+                      const SizedBox(height: 24),
+
+                      // BOUTON ENREGISTRER
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton.icon(
+                          onPressed: _controller.isLoading ? null : _saveActivity,
+                          icon: _controller.isLoading
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                )
+                              : const Icon(Icons.check_rounded),
+                          label: Text(
+                            _controller.isLoading ? 'Enregistrement...' : 'Créer l\'activité',
+                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.colorScheme.primary,
+                            foregroundColor: theme.colorScheme.onPrimary,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            elevation: 1,
+                          ),
                         ),
                       ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.colorScheme.primary,
-                        foregroundColor: theme.colorScheme.onPrimary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        elevation: 1,
-                      ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
             );
           },

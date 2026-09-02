@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:eveilkid/core/themes/kid_theme.dart';
 
-/// Puce de filtre ultra-animée, ludique et parfaitement centrée pour l'espace enfant.
+/// Puce de filtre 3D ultra-tactile style Duolingo avec enfoncement physique et bordure 3D.
 class KidFilterChip extends StatefulWidget {
   final String label;
   final bool isSelected;
@@ -27,6 +28,22 @@ class KidFilterChip extends StatefulWidget {
 class _KidFilterChipState extends State<KidFilterChip> {
   bool _isPressed = false;
 
+  void _handleTapDown(TapDownDetails _) {
+    setState(() => _isPressed = true);
+    HapticFeedback.selectionClick();
+  }
+
+  void _handleTapUp(TapUpDetails _) {
+    if (!_isPressed) return;
+    setState(() => _isPressed = false);
+    widget.onTap();
+  }
+
+  void _handleTapCancel() {
+    if (!_isPressed) return;
+    setState(() => _isPressed = false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -35,130 +52,108 @@ class _KidFilterChipState extends State<KidFilterChip> {
     final primaryColor = widget.activeColor ?? KidTheme.primaryGreen;
     final primaryDark = KidTheme.primaryGreenDark;
 
-    // Détermination de l'échelle d'animation
-    final double scale = _isPressed ? 0.92 : (widget.isSelected ? 1.04 : 1.0);
+    Color bg;
+    Color borderColor;
+    Color bottomBorderColor;
+    Color textColor;
+
+    if (widget.isSelected) {
+      bg = primaryColor;
+      borderColor = primaryColor;
+      bottomBorderColor = primaryDark;
+      textColor = Colors.white;
+    } else {
+      bg = isDark ? const Color(0xFF222228) : Colors.white;
+      borderColor = isDark ? const Color(0xFF383842) : const Color(0xFFE2E8F0);
+      bottomBorderColor = isDark ? const Color(0xFF18181C) : const Color(0xFFCBD5E1);
+      textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    }
+
+    const double bottomThickness = 3.0;
+    final double verticalShift = _isPressed ? 2.0 : 0.0;
+    final double activeBottomEdge = _isPressed ? 1.0 : bottomThickness;
 
     return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) {
-        setState(() => _isPressed = false);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _isPressed = false),
-      child: AnimatedScale(
-        scale: scale,
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOutBack,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 260),
-          curve: Curves.easeOutBack,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            gradient: widget.isSelected
-                ? LinearGradient(
-                    colors: [
-                      primaryColor,
-                      primaryColor.withValues(alpha: 0.88),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  )
-                : null,
-            color: widget.isSelected
-                ? null
-                : (isDark
-                    ? theme.colorScheme.surfaceContainerHighest
-                    : Colors.white),
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(
-              color: widget.isSelected
-                  ? (isDark
-                      ? KidTheme.primaryGreenLight.withValues(alpha: 0.6)
-                      : primaryColor)
-                  : theme.dividerColor.withValues(alpha: isDark ? 0.25 : 0.15),
-              width: widget.isSelected ? 1.5 : 1.0,
-            ),
-            boxShadow: [
+      onTapDown: _handleTapDown,
+      onTapUp: _handleTapUp,
+      onTapCancel: _handleTapCancel,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 90),
+        curve: Curves.easeOutQuad,
+        margin: EdgeInsets.only(
+          top: verticalShift,
+          bottom: bottomThickness - verticalShift,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: borderColor, width: 1.5),
+          boxShadow: [
+            if (!_isPressed)
               BoxShadow(
-                color: Colors.black.withValues(
-                  alpha: widget.isSelected
-                      ? (isDark ? 0.25 : 0.1)
-                      : (isDark ? 0.2 : 0.04),
-                ),
-                blurRadius: widget.isSelected ? 8 : 4,
-                offset: widget.isSelected
-                    ? const Offset(0, 3)
-                    : const Offset(0, 2),
+                color: bottomBorderColor,
+                blurRadius: 0,
+                offset: const Offset(0, bottomThickness),
               ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            if (widget.icon != null) ...[
+              Icon(
+                widget.icon,
+                size: 17,
+                color: widget.isSelected
+                    ? Colors.white
+                    : (isDark ? const Color(0xFF86EFAC) : primaryDark),
+              ),
+              const SizedBox(width: 7),
             ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              if (widget.icon != null) ...[
-                AnimatedRotation(
-                  turns: widget.isSelected ? 0.03 : 0.0,
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeOutBack,
-                  child: Icon(
-                    widget.icon,
-                    size: 17,
+            Text(
+              widget.label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w900,
+                color: textColor,
+                letterSpacing: -0.2,
+              ),
+            ),
+            if (widget.count != null) ...[
+              const SizedBox(width: 7),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(
+                  color: widget.isSelected
+                      ? Colors.white.withValues(alpha: 0.28)
+                      : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${widget.count}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
                     color: widget.isSelected
                         ? Colors.white
-                        : (isDark
-                            ? theme.colorScheme.onSurfaceVariant
-                            : primaryDark),
+                        : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569)),
                   ),
-                ),
-                const SizedBox(width: 7),
-              ],
-              Text(
-                widget.label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: widget.isSelected ? FontWeight.w800 : FontWeight.w700,
-                  color: widget.isSelected
-                      ? Colors.white
-                      : theme.colorScheme.onSurface,
-                  letterSpacing: -0.2,
                 ),
               ),
-              if (widget.count != null) ...[
-                const SizedBox(width: 7),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: widget.isSelected
-                        ? Colors.white.withValues(alpha: 0.28)
-                        : (isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '${widget.count}',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w900,
-                      color: widget.isSelected
-                          ? Colors.white
-                          : theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-              ],
             ],
-          ),
+          ],
         ),
       ),
     );
   }
 }
 
-/// Sélecteur segmenté pour enfant avec curseur animé fluide (animated indicator pill)
+/// Sélecteur segmenté pour enfant 3D avec boutons physiques tactiles style Duolingo
 class KidFilterSegmentBar extends StatelessWidget {
   final List<String> items;
   final int selectedIndex;
@@ -182,20 +177,13 @@ class KidFilterSegmentBar extends StatelessWidget {
       padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
         color: isDark
-            ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.7)
+            ? const Color(0xFF1E1E24)
             : const Color(0xFFF1F5F9),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: theme.dividerColor.withValues(alpha: isDark ? 0.3 : 0.15),
-          width: 1.2,
+          color: isDark ? const Color(0xFF383842) : const Color(0xFFE2E8F0),
+          width: 1.5,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.03),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: Row(
         children: List.generate(items.length, (index) {
@@ -244,79 +232,82 @@ class _SegmentItemState extends State<_SegmentItem> {
 
   @override
   Widget build(BuildContext context) {
-    final double scale = _isPressed ? 0.93 : (widget.isSelected ? 1.02 : 1.0);
+    const double bottomThickness = 2.5;
+    final double verticalShift = _isPressed ? 1.5 : 0.0;
+    final double activeBottomEdge = _isPressed ? 1.0 : bottomThickness;
+
+    Color bg;
+    Color bottomBorder;
+    Color textCol;
+
+    if (widget.isSelected) {
+      bg = widget.isDark ? const Color(0xFF2A2A34) : Colors.white;
+      bottomBorder = widget.isDark ? const Color(0xFF16161A) : const Color(0xFFCBD5E1);
+      textCol = widget.isDark ? Colors.white : KidTheme.primaryGreenDark;
+    } else {
+      bg = Colors.transparent;
+      bottomBorder = Colors.transparent;
+      textCol = widget.isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+    }
 
     return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapDown: (_) {
+        setState(() => _isPressed = true);
+        HapticFeedback.selectionClick();
+      },
       onTapUp: (_) {
         setState(() => _isPressed = false);
         widget.onTap();
       },
       onTapCancel: () => setState(() => _isPressed = false),
-      child: AnimatedScale(
-        scale: scale,
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOutBack,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 240),
-          curve: Curves.easeInOutCubic,
-          padding: const EdgeInsets.symmetric(vertical: 9),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: widget.isSelected
-                ? (widget.isDark ? widget.theme.colorScheme.surface : Colors.white)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: widget.isSelected
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withValues(
-                        alpha: widget.isDark ? 0.25 : 0.08,
-                      ),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (widget.icon != null) ...[
-                AnimatedScale(
-                  scale: widget.isSelected ? 1.12 : 1.0,
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeOutBack,
-                  child: Icon(
-                    widget.icon,
-                    size: 16,
-                    color: widget.isSelected
-                        ? (widget.isDark
-                            ? KidTheme.primaryGreenLight
-                            : KidTheme.primaryGreenDark)
-                        : widget.theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(width: 6),
-              ],
-              Text(
-                widget.label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: widget.isSelected ? FontWeight.w900 : FontWeight.w600,
-                  color: widget.isSelected
-                      ? (widget.isDark
-                          ? KidTheme.primaryGreenLight
-                          : KidTheme.primaryGreenDark)
-                      : widget.theme.colorScheme.onSurfaceVariant,
-                  letterSpacing: -0.1,
-                ),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 90),
+        curve: Curves.easeOutQuad,
+        margin: EdgeInsets.only(
+          top: verticalShift,
+          bottom: bottomThickness - verticalShift,
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 9),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(18),
+          border: widget.isSelected
+              ? Border.all(color: bg, width: 1.0)
+              : null,
+          boxShadow: [
+            if (widget.isSelected && !_isPressed)
+              BoxShadow(
+                color: bottomBorder,
+                blurRadius: 0,
+                offset: const Offset(0, bottomThickness),
               ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (widget.icon != null) ...[
+              Icon(
+                widget.icon,
+                size: 16,
+                color: textCol,
+              ),
+              const SizedBox(width: 6),
             ],
-          ),
+            Text(
+              widget.label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: widget.isSelected ? FontWeight.w900 : FontWeight.w700,
+                color: textCol,
+                letterSpacing: -0.1,
+              ),
+            ),
+          ],
         ),
       ),
     );

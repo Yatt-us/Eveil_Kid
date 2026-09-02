@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:eveilkid/core/constants/app_colors.dart';
 import 'package:eveilkid/core/constants/AppSpacing.dart';
+import 'package:eveilkid/core/router/app_routes.dart';
 import 'package:eveilkid/features/commandes/models/commande_model.dart';
 import 'package:eveilkid/features/commandes/providers/commande_provider.dart';
 import 'package:eveilkid/shared/widgets/app_button.dart';
@@ -236,402 +237,444 @@ class _AdminDetailCommandePageState extends ConsumerState<AdminDetailCommandePag
 
     final statuts = ['En cours', 'En livraison', 'Livrée', 'Annulée'];
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 1. CARTE DE STATUT & DATE
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: dividerColor),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'STATUT ACTUEL',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.5,
-                        color: textSecondary,
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: statusColor.withValues(alpha: isDark ? 0.2 : 0.12),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: statusColor.withValues(alpha: 0.4)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: statusColor,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            cmd.statut,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: statusColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Passée le $dateStr',
-                  style: TextStyle(fontSize: 13, color: textSecondary),
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  'Modifier le statut :',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: statuts.map((s) {
-                    final isSelected = cmd.statut.toLowerCase() == s.toLowerCase();
-                    final color = _getStatusColor(s);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 850;
+        final padding = isWide ? 28.0 : 16.0;
 
-                    return ChoiceChip(
-                      label: Text(s),
-                      selected: isSelected,
-                      selectedColor: color.withValues(alpha: isDark ? 0.3 : 0.2),
-                      side: BorderSide(
-                        color: isSelected ? color : dividerColor,
-                        width: isSelected ? 1.5 : 1,
-                      ),
-                      labelStyle: TextStyle(
-                        fontSize: 12,
-                        fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                        color: isSelected ? color : theme.colorScheme.onSurface,
-                      ),
-                      onSelected: (sel) {
-                        if (sel && !isSelected) {
-                          _changerStatut(s);
-                        }
-                      },
-                    );
-                  }).toList(),
-                ),
-              ],
-            ),
+        final statusCard = Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: dividerColor),
           ),
-          const SizedBox(height: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'STATUT ACTUEL',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                      color: textSecondary,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: isDark ? 0.2 : 0.12),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: statusColor.withValues(alpha: 0.4)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: statusColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          cmd.statut,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: statusColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Passée le $dateStr',
+                style: TextStyle(fontSize: 13, color: textSecondary),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                'Modifier le statut :',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: statuts.map((s) {
+                  final isSelected = cmd.statut.toLowerCase() == s.toLowerCase();
+                  final color = _getStatusColor(s);
 
-          // 2. CARTE CLIENT & LIVRAISON
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: dividerColor),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+                  return ChoiceChip(
+                    label: Text(s),
+                    selected: isSelected,
+                    selectedColor: color.withValues(alpha: isDark ? 0.3 : 0.2),
+                    side: BorderSide(
+                      color: isSelected ? color : dividerColor,
+                      width: isSelected ? 1.5 : 1,
+                    ),
+                    labelStyle: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                      color: isSelected ? color : theme.colorScheme.onSurface,
+                    ),
+                    onSelected: (sel) {
+                      if (sel && !isSelected) {
+                        _changerStatut(s);
+                      }
+                    },
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+        );
+
+        final deliveryCard = Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: dividerColor),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    isGps ? Icons.gps_fixed_rounded : Icons.location_on_outlined,
+                    size: 20,
+                    color: isGps ? const Color(0xFF10B981) : theme.colorScheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Informations de livraison',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Divider(height: 1, color: dividerColor),
+              ),
+              Text(
+                'Adresse :',
+                style: TextStyle(fontSize: 11.5, color: textSecondary, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 4),
+              SelectableText(
+                cmd.adresseLivraison.isNotEmpty
+                    ? cmd.adresseLivraison
+                    : 'Non spécifiée',
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (cmd.numeroTelephone != null && cmd.numeroTelephone!.isNotEmpty) ...[
+                Text(
+                  'Téléphone du client :',
+                  style: TextStyle(fontSize: 11.5, color: textSecondary, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 4),
                 Row(
                   children: [
-                    Icon(
-                      isGps ? Icons.gps_fixed_rounded : Icons.location_on_outlined,
-                      size: 20,
-                      color: isGps ? const Color(0xFF10B981) : theme.colorScheme.primary,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Informations de livraison',
+                    Icon(Icons.phone_outlined, size: 16, color: theme.colorScheme.primary),
+                    const SizedBox(width: 6),
+                    SelectableText(
+                      cmd.numeroTelephone!,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
                         color: theme.colorScheme.onSurface,
                       ),
                     ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      visualDensity: VisualDensity.compact,
+                      icon: Icon(Icons.copy_rounded, size: 16, color: theme.colorScheme.primary),
+                      tooltip: 'Copier le numéro',
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: cmd.numeroTelephone!));
+                        AppDialogs.showSnackBar(context: context, message: 'Numéro copié !');
+                      },
+                    ),
                   ],
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  child: Divider(height: 1, color: dividerColor),
-                ),
+              ],
+            ],
+          ),
+        );
 
-                // Adresse / GPS
-                Text(
-                  'Adresse :',
-                  style: TextStyle(fontSize: 11.5, color: textSecondary, fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 4),
-                SelectableText(
-                  cmd.adresseLivraison.isNotEmpty
-                      ? cmd.adresseLivraison
-                      : 'Non spécifiée',
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Téléphone
-                if (cmd.numeroTelephone != null && cmd.numeroTelephone!.isNotEmpty) ...[
+        final articlesCard = Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: dividerColor),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
                   Text(
-                    'Téléphone du client :',
-                    style: TextStyle(fontSize: 11.5, color: textSecondary, fontWeight: FontWeight.w700),
+                    'ARTICLES COMMANDÉS',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                      color: textSecondary,
+                    ),
                   ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.phone_outlined, size: 16, color: theme.colorScheme.primary),
-                      const SizedBox(width: 6),
-                      SelectableText(
-                        cmd.numeroTelephone!,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          color: theme.colorScheme.onSurface,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        visualDensity: VisualDensity.compact,
-                        icon: Icon(Icons.copy_rounded, size: 16, color: theme.colorScheme.primary),
-                        tooltip: 'Copier le numéro',
-                        onPressed: () {
-                          Clipboard.setData(ClipboardData(text: cmd.numeroTelephone!));
-                          AppDialogs.showSnackBar(context: context, message: 'Numéro copié !');
-                        },
-                      ),
-                    ],
+                  Text(
+                    '${cmd.articles.length} article(s)',
+                    style: TextStyle(fontSize: 12, color: textSecondary, fontWeight: FontWeight.w600),
                   ),
                 ],
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Divider(height: 1, color: dividerColor),
+              ),
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: cmd.articles.length,
+                separatorBuilder: (_, _) => Divider(height: 16, color: dividerColor.withValues(alpha: 0.5)),
+                itemBuilder: (ctx, idx) {
+                  final art = cmd.articles[idx];
+                  final ligneTotal = art.prix * art.quantite;
 
-          // 3. CARTE ARTICLES
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: dividerColor),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'ARTICLES COMMANDÉS',
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.5,
-                        color: textSecondary,
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 54,
+                        height: 54,
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white10 : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: dividerColor),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: art.urlImage != null && art.urlImage!.isNotEmpty
+                              ? Image.network(
+                                  art.urlImage!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, _, _) => const Icon(Icons.toys_outlined, size: 24),
+                                )
+                              : const Icon(Icons.toys_outlined, size: 24),
+                        ),
                       ),
-                    ),
-                    Text(
-                      '${cmd.articles.length} article(s)',
-                      style: TextStyle(fontSize: 12, color: textSecondary, fontWeight: FontWeight.w600),
-                    ),
-                  ],
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  child: Divider(height: 1, color: dividerColor),
-                ),
-                ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: cmd.articles.length,
-                  separatorBuilder: (_, _) => Divider(height: 16, color: dividerColor.withValues(alpha: 0.5)),
-                  itemBuilder: (ctx, idx) {
-                    final art = cmd.articles[idx];
-                    final ligneTotal = art.prix * art.quantite;
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              art.titre,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: theme.colorScheme.onSurface,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${art.quantite} x ${_formatPrice(art.prix)}',
+                              style: TextStyle(fontSize: 12, color: textSecondary),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        _formatPrice(ligneTotal),
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w800,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
+        );
 
-                    return Row(
+        final paymentCard = Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: dividerColor),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'PAIEMENT & TOTAL',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
+                  color: textSecondary,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Divider(height: 1, color: dividerColor),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Mode de paiement', style: TextStyle(fontSize: 13, color: textSecondary)),
+                  Text(
+                    cmd.modePaiement,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Frais de livraison', style: TextStyle(fontSize: 13, color: textSecondary)),
+                  Text(
+                    cmd.fraisLivraison == 0 ? 'Gratuite' : _formatPrice(cmd.fraisLivraison),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF10B981),
+                    ),
+                  ),
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Divider(height: 1, color: dividerColor),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Montant Total',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  Text(
+                    _formatPrice(cmd.montantTotal),
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w900,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1100),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(padding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (isWide)
+                    Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          width: 54,
-                          height: 54,
-                          decoration: BoxDecoration(
-                            color: isDark ? Colors.white10 : const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: dividerColor),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: art.urlImage != null && art.urlImage!.isNotEmpty
-                                ? Image.network(
-                                    art.urlImage!,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, _, _) => const Icon(Icons.toys_outlined, size: 24),
-                                  )
-                                : const Icon(Icons.toys_outlined, size: 24),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
                         Expanded(
+                          flex: 5,
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                art.titre,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w800,
-                                  color: theme.colorScheme.onSurface,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${art.quantite} x ${_formatPrice(art.prix)}',
-                                style: TextStyle(fontSize: 12, color: textSecondary),
-                              ),
+                              statusCard,
+                              const SizedBox(height: 16),
+                              articlesCard,
                             ],
                           ),
                         ),
-                        Text(
-                          _formatPrice(ligneTotal),
-                          style: TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w800,
-                            color: theme.colorScheme.primary,
+                        const SizedBox(width: 16),
+                        Expanded(
+                          flex: 4,
+                          child: Column(
+                            children: [
+                              deliveryCard,
+                              const SizedBox(height: 16),
+                              paymentCard,
+                            ],
                           ),
                         ),
                       ],
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // 4. RÉCAPITULATIF FINANCIER & PAIEMENT
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: dividerColor),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'PAIEMENT & TOTAL',
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
-                    color: textSecondary,
+                    )
+                  else ...[
+                    statusCard,
+                    const SizedBox(height: 16),
+                    deliveryCard,
+                    const SizedBox(height: 16),
+                    articlesCard,
+                    const SizedBox(height: 16),
+                    paymentCard,
+                  ],
+                  const SizedBox(height: 24),
+                  AppButton(
+                    text: 'Retour à la liste des commandes',
+                    variant: AppButtonVariant.outlined,
+                    icon: Icons.arrow_back_rounded,
+                    onPressed: () {
+                      if (context.canPop()) {
+                        context.pop();
+                      } else {
+                        context.go(AppRoutes.adminCommandes);
+                      }
+                    },
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  child: Divider(height: 1, color: dividerColor),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Mode de paiement', style: TextStyle(fontSize: 13, color: textSecondary)),
-                    Text(
-                      cmd.modePaiement,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Frais de livraison', style: TextStyle(fontSize: 13, color: textSecondary)),
-                    Text(
-                      cmd.fraisLivraison == 0 ? 'Gratuite' : _formatPrice(cmd.fraisLivraison),
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF10B981),
-                      ),
-                    ),
-                  ],
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  child: Divider(height: 1, color: dividerColor),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Montant Total',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w900,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                    ),
-                    Text(
-                      _formatPrice(cmd.montantTotal),
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w900,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                  AppSpacing.verticalLg,
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 24),
-
-          // Bouton Retour
-          AppButton(
-            text: 'Retour à la liste des commandes',
-            variant: AppButtonVariant.outlined,
-            icon: Icons.arrow_back_rounded,
-            onPressed: () => context.pop(),
-          ),
-          AppSpacing.verticalLg,
-        ],
-      ),
+        );
+      },
     );
   }
 }

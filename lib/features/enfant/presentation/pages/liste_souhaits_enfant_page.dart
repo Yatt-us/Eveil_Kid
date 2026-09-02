@@ -1,8 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:eveilkid/core/themes/kid_theme.dart';
 import 'package:eveilkid/features/enfant/presentation/pages/liste_jouets.dart';
+import 'package:eveilkid/features/enfant/presentation/widgets/duolingo_button.dart';
+import 'package:eveilkid/features/enfant/presentation/widgets/duolingo_card.dart';
 import 'package:eveilkid/features/enfant/providers/child_mode_provider.dart';
 import 'package:eveilkid/features/enfant/providers/enfant_providers.dart';
 import 'package:eveilkid/features/jouets/models/jouet.dart';
@@ -61,27 +64,14 @@ class ListeSouhaitsEnfantPage extends ConsumerWidget {
                   ),
                   const SizedBox(width: 14),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Mes Souhaits',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w900,
-                            color: theme.colorScheme.onSurface,
-                            letterSpacing: -0.3,
-                          ),
-                        ),
-                        Text(
-                          'Les jouets que tu as choisis',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      'Souhaits',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        color: theme.colorScheme.onSurface,
+                        letterSpacing: -0.3,
+                      ),
                     ),
                   ),
                   Builder(
@@ -174,151 +164,128 @@ class ListeSouhaitsEnfantPage extends ConsumerWidget {
     final ageLabel =
         '${jouet.ageMinimum} - ${jouet.ageMaximum > 0 ? jouet.ageMaximum : '+'} ans';
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDark
-              ? theme.dividerColor.withValues(alpha: 0.25)
-              : const Color(0xFFDB2777).withValues(alpha: 0.2),
-          width: 1.2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(18),
-              child: Container(
-                width: 86,
-                height: 86,
-                color: const Color(0xFFFEF3C7),
-                child: jouet.imagePrincipaleUrl.isNotEmpty
-                    ? Image.network(
-                        jouet.imagePrincipaleUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => const Icon(
-                          Icons.smart_toy_rounded,
-                          size: 36,
-                          color: Color(0xFFD97706),
-                        ),
-                      )
-                    : const Icon(
+    return DuolingoCard(
+      borderRadius: 24,
+      bottomThickness: 4.0,
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: Container(
+              width: 86,
+              height: 86,
+              color: const Color(0xFFFEF3C7),
+              child: jouet.imagePrincipaleUrl.isNotEmpty
+                  ? Image.network(
+                      jouet.imagePrincipaleUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => const Icon(
                         Icons.smart_toy_rounded,
                         size: 36,
                         color: Color(0xFFD97706),
                       ),
-              ),
+                    )
+                  : const Icon(
+                      Icons.smart_toy_rounded,
+                      size: 36,
+                      color: Color(0xFFD97706),
+                    ),
             ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Badge Souhait de l'enfant
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2.5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFCE7F3),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.favorite_rounded,
-                          size: 12,
-                          color: Color(0xFFDB2777),
-                        ),
-                        SizedBox(width: 4),
-                        Text(
-                          'Choisi par l’enfant',
-                          style: TextStyle(
-                            color: Color(0xFFBE185D),
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ],
-                    ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Badge Souhait de l'enfant
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2.5,
                   ),
-                  const SizedBox(height: 5),
-                  Text(
-                    jouet.nom,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w900,
-                      color: theme.colorScheme.onSurface,
-                    ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFCE7F3),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFDCFCE7),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      ageLabel,
-                      style: const TextStyle(
-                        color: KidTheme.primaryGreenDark,
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w800,
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.favorite_rounded,
+                        size: 12,
+                        color: Color(0xFFDB2777),
                       ),
+                      SizedBox(width: 4),
+                      Text(
+                        'Choisi par l’enfant',
+                        style: TextStyle(
+                          color: Color(0xFFBE185D),
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  jouet.nom,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w900,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDCFCE7),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    ageLabel,
+                    style: const TextStyle(
+                      color: KidTheme.primaryGreenDark,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    jouet.description.isNotEmpty
-                        ? jouet.description
-                        : 'Un joli trésor pour jouer et rêver !',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  jouet.description.isNotEmpty
+                      ? jouet.description
+                      : 'Un joli trésor pour jouer et rêver !',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            IconButton(
-              onPressed: () {
-                final parentId = FirebaseAuth.instance.currentUser?.uid;
-                if (parentId != null) {
-                  ref.read(childModeProvider.notifier).toggleWishlist(
-                        parentId: parentId,
-                        enfantId: childId,
-                        jouetId: jouet.jouetId,
-                      );
-                }
-              },
-              icon: const Icon(
-                Icons.favorite_rounded,
-                color: Color(0xFFDB2777),
-                size: 26,
-              ),
-              tooltip: 'Retirer des souhaits',
-            ),
-          ],
-        ),
+          ),
+          _DuolingoWishRemoveButton(
+            onTap: () {
+              final parentId = FirebaseAuth.instance.currentUser?.uid;
+              if (parentId != null) {
+                ref.read(childModeProvider.notifier).toggleWishlist(
+                      parentId: parentId,
+                      enfantId: childId,
+                      jouetId: jouet.jouetId,
+                    );
+              }
+            },
+          ),
+        ],
       ),
     );
   }
@@ -362,7 +329,10 @@ class ListeSouhaitsEnfantPage extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 24),
-            ElevatedButton.icon(
+            DuolingoButton(
+              text: 'Découvrir les jouets',
+              icon: Icons.smart_toy_rounded,
+              colorType: DuolingoButtonColor.pink,
               onPressed: () {
                 Navigator.pushReplacement(
                   context,
@@ -371,13 +341,71 @@ class ListeSouhaitsEnfantPage extends ConsumerWidget {
                   ),
                 );
               },
-              icon: const Icon(Icons.search_rounded),
-              label: const Text(
-                'Découvrir les jouets',
-                style: TextStyle(fontWeight: FontWeight.w800),
-              ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Bouton 3D de retrait des souhaits style Duolingo
+class _DuolingoWishRemoveButton extends StatefulWidget {
+  final VoidCallback onTap;
+
+  const _DuolingoWishRemoveButton({required this.onTap});
+
+  @override
+  State<_DuolingoWishRemoveButton> createState() => _DuolingoWishRemoveButtonState();
+}
+
+class _DuolingoWishRemoveButtonState extends State<_DuolingoWishRemoveButton> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    const double bottomThickness = 3.0;
+    final double verticalShift = _isPressed ? 2.0 : 0.0;
+    final double activeBottomEdge = _isPressed ? 1.0 : bottomThickness;
+
+    return GestureDetector(
+      onTapDown: (_) {
+        setState(() => _isPressed = true);
+        HapticFeedback.selectionClick();
+      },
+      onTapUp: (_) {
+        setState(() => _isPressed = false);
+        widget.onTap();
+      },
+      onTapCancel: () => setState(() => _isPressed = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 90),
+        curve: Curves.easeOutQuad,
+        margin: EdgeInsets.only(
+          top: verticalShift,
+          bottom: bottomThickness - verticalShift,
+        ),
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: const Color(0xFFFCE7F3),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFF472B6), width: 1.5),
+          boxShadow: [
+            if (!_isPressed)
+              const BoxShadow(
+                color: Color(0xFFDB2777),
+                blurRadius: 0,
+                offset: Offset(0, 3.0),
+              ),
+          ],
+        ),
+        child: const Center(
+          child: Icon(
+            Icons.favorite_rounded,
+            color: Color(0xFFDB2777),
+            size: 22,
+          ),
         ),
       ),
     );

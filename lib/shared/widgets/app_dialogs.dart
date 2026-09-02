@@ -12,21 +12,28 @@ class AppDialogs {
     bool isDanger = false,
   }) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return showDialog<bool>(
       context: context,
       builder: (context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(24),
           ),
-          backgroundColor: theme.dialogTheme.backgroundColor ?? theme.colorScheme.surface,
+          backgroundColor:
+              theme.dialogTheme.backgroundColor ?? theme.colorScheme.surface,
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+          contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
           title: Text(
             title,
             style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: theme.textTheme.titleLarge?.color ?? theme.colorScheme.onSurface,
-              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: theme.textTheme.titleLarge?.color ??
+                  theme.colorScheme.onSurface,
+              fontSize: 19,
+              letterSpacing: -0.2,
             ),
           ),
           content: Text(
@@ -34,32 +41,70 @@ class AppDialogs {
             style: TextStyle(
               color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8) ??
                   theme.colorScheme.onSurfaceVariant,
-              fontSize: 15,
+              fontSize: 14.5,
+              height: 1.4,
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              style: TextButton.styleFrom(
-                foregroundColor: theme.textTheme.bodyMedium?.color ??
-                    theme.colorScheme.onSurfaceVariant,
-              ),
-              child: Text(cancelText),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: isDanger
-                    ? theme.colorScheme.error
-                    : theme.colorScheme.primary,
-                foregroundColor: isDanger
-                    ? theme.colorScheme.onError
-                    : theme.colorScheme.onPrimary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Bouton Confirmer / Se déconnecter (pleine largeur)
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isDanger
+                          ? theme.colorScheme.error
+                          : theme.colorScheme.primary,
+                      foregroundColor: isDanger
+                          ? theme.colorScheme.onError
+                          : theme.colorScheme.onPrimary,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: Text(
+                      confirmText,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              child: Text(confirmText),
+                const SizedBox(height: 10),
+                // Bouton Annuler (pleine largeur avec fond gris clair)
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: FilledButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: isDark
+                          ? const Color(0xFF2C2C35)
+                          : const Color(0xFFF1F0F5),
+                      foregroundColor: theme.colorScheme.onSurface,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: Text(
+                      cancelText,
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         );

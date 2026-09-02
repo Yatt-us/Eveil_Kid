@@ -82,15 +82,6 @@ class _ActivitiesListScreenState extends ConsumerState<ActivitiesListScreen>
         ),
         backgroundColor: theme.colorScheme.surface,
         elevation: 0,
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: Icon(
-              Icons.menu_rounded,
-              color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
-            ),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
-        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),

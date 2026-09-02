@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:eveilkid/core/themes/kid_theme.dart';
+import 'package:eveilkid/core/utils/video_route_helper.dart';
 import 'package:eveilkid/features/enfant/presentation/pages/tutoriel_detail_enfant_page.dart';
-import 'package:eveilkid/features/enfant/presentation/widgets/kid_filter_chip.dart';
+import 'package:eveilkid/features/enfant/presentation/widgets/duolingo_card.dart';
+import 'package:eveilkid/features/enfant/providers/child_mode_provider.dart';
+import 'package:eveilkid/features/enfant/providers/enfant_providers.dart';
+import 'package:eveilkid/features/tutoriels/enums/tutoriel_status.enum.dart';
 import 'package:eveilkid/features/tutoriels/models/tutoriel.dart';
 import 'package:eveilkid/features/tutoriels/presentation/widgets/tutoriel_card_skeleton.dart';
 import 'package:eveilkid/features/tutoriels/providers/tutoriel_provider.dart';
@@ -18,7 +22,6 @@ class TutorielsEnfantPage extends ConsumerStatefulWidget {
 class _TutorielsEnfantPageState extends ConsumerState<TutorielsEnfantPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  int? _selectedAgeFilter; // null = tous, 2 = 0-2 ans, 5 = 3-5 ans, 8 = 6+ ans
 
   @override
   void dispose() {
@@ -31,6 +34,11 @@ class _TutorielsEnfantPageState extends ConsumerState<TutorielsEnfantPage> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final tutorielsAsync = ref.watch(tutorielsProvider);
+
+    final childMode = ref.watch(childModeProvider);
+    final enfant = childMode.activeChild ??
+        ref.watch(enfantNotifierProvider.select((state) => state.enfantSelectionne));
+    final childAge = enfant?.age ?? 0;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -69,27 +77,14 @@ class _TutorielsEnfantPageState extends ConsumerState<TutorielsEnfantPage> {
                   ),
                   const SizedBox(width: 14),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Tutoriels Vidéo',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w900,
-                            color: theme.colorScheme.onSurface,
-                            letterSpacing: -0.3,
-                          ),
-                        ),
-                        Text(
-                          'Découvre, construis et apprends !',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      'Tutoriels',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        color: theme.colorScheme.onSurface,
+                        letterSpacing: -0.3,
+                      ),
                     ),
                   ),
                   Container(
@@ -111,7 +106,7 @@ class _TutorielsEnfantPageState extends ConsumerState<TutorielsEnfantPage> {
 
             // ── RECHERCHE LUDIQUE ──
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
               child: Container(
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surface,
@@ -155,51 +150,11 @@ class _TutorielsEnfantPageState extends ConsumerState<TutorielsEnfantPage> {
               ),
             ),
 
-            // ── FILTRES D'ÂGE ──
-            SizedBox(
-              height: 48,
-              child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
-                scrollDirection: Axis.horizontal,
-                children: [
-                  KidFilterChip(
-                    label: 'Tous les âges',
-                    icon: Icons.all_inclusive_rounded,
-                    isSelected: _selectedAgeFilter == null,
-                    onTap: () => setState(() => _selectedAgeFilter = null),
-                  ),
-                  const SizedBox(width: 8),
-                  KidFilterChip(
-                    label: '0 - 3 ans',
-                    icon: Icons.child_care_rounded,
-                    isSelected: _selectedAgeFilter == 2,
-                    onTap: () => setState(() => _selectedAgeFilter = 2),
-                  ),
-                  const SizedBox(width: 8),
-                  KidFilterChip(
-                    label: '4 - 6 ans',
-                    icon: Icons.toys_outlined,
-                    isSelected: _selectedAgeFilter == 5,
-                    onTap: () => setState(() => _selectedAgeFilter = 5),
-                  ),
-                  const SizedBox(width: 8),
-                  KidFilterChip(
-                    label: '7 ans et +',
-                    icon: Icons.school_outlined,
-                    isSelected: _selectedAgeFilter == 8,
-                    onTap: () => setState(() => _selectedAgeFilter = 8),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // ── LISTE DES TUTORIELS ──
+            // ── LISTE DES TUTORIELS ADAPTÉS À L'ÂGE ──
             Expanded(
               child: tutorielsAsync.when(
                 data: (tutoriels) {
-                  final filtered = _filterTutoriels(tutoriels);
+                  final filtered = _filterTutoriels(tutoriels, childAge);
 
                   if (filtered.isEmpty) {
                     return _buildEmptyState(theme, isDark);
@@ -216,11 +171,11 @@ class _TutorielsEnfantPageState extends ConsumerState<TutorielsEnfantPage> {
                   );
                 },
                 loading: () => ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
-                  itemCount: 4,
-                  separatorBuilder: (_, _) => const SizedBox(height: 14),
-                  itemBuilder: (_, _) => const KidTutorialCardSkeleton(),
-                ),
+                    padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
+                    itemCount: 4,
+                    separatorBuilder: (_, _) => const SizedBox(height: 14),
+                    itemBuilder: (_, _) => const KidTutorialCardSkeleton(),
+                  ),
                 error: (err, _) => Center(
                   child: Padding(
                     padding: const EdgeInsets.all(20),
@@ -238,24 +193,21 @@ class _TutorielsEnfantPageState extends ConsumerState<TutorielsEnfantPage> {
     );
   }
 
-  List<Tutoriel> _filterTutoriels(List<Tutoriel> list) {
+  List<Tutoriel> _filterTutoriels(List<Tutoriel> list, int childAge) {
     final query = _searchQuery.trim().toLowerCase();
 
     return list.where((tut) {
+      // Seuls les tutoriels publiés sont visibles
+      if (tut.statut != TutorielStatus.publie) return false;
+
+      // L'enfant peut voir les tutoriels inférieurs ou égaux à son âge, mais JAMAIS supérieurs
+      final matchesAge = childAge <= 0 || tut.ageMinimum <= childAge;
+
       final matchesQuery = query.isEmpty ||
           tut.titre.toLowerCase().contains(query) ||
           tut.description.toLowerCase().contains(query);
 
-      bool matchesAge = true;
-      if (_selectedAgeFilter == 2) {
-        matchesAge = tut.ageMinimum <= 3;
-      } else if (_selectedAgeFilter == 5) {
-        matchesAge = tut.ageMinimum <= 6 && tut.ageMaximum >= 4;
-      } else if (_selectedAgeFilter == 8) {
-        matchesAge = tut.ageMaximum >= 7;
-      }
-
-      return matchesQuery && matchesAge;
+      return matchesAge && matchesQuery;
     }).toList();
   }
 
@@ -267,182 +219,161 @@ class _TutorielsEnfantPageState extends ConsumerState<TutorielsEnfantPage> {
     final ageLabel = '${tut.ageMinimum} - ${tut.ageMaximum} ans';
     final targetTutorielId = tut.tutorielId ?? '';
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: theme.dividerColor.withValues(alpha: isDark ? 0.25 : 0.15),
-          width: 1.2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(24),
-        child: InkWell(
-          onTap: () {
-            if (targetTutorielId.isNotEmpty) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => KidThemeScope(
-                    child: TutorielDetailEnfantPage(tutorielId: targetTutorielId),
-                  ),
-                ),
-              );
-            }
-          },
-          borderRadius: BorderRadius.circular(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return DuolingoCard(
+      onTap: () {
+        if (targetTutorielId.isNotEmpty) {
+          openYouTubeStyleVideo(
+            context,
+            KidThemeScope(
+              child: TutorielDetailEnfantPage(tutorielId: targetTutorielId),
+            ),
+          );
+        }
+      },
+      borderRadius: 24,
+      bottomThickness: 4.5,
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Miniature vidéo avec grand bouton play 3D
+          Stack(
+            alignment: Alignment.center,
             children: [
-              // Miniature vidéo avec grand bouton play
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(24),
-                    ),
-                    child: Container(
-                      height: 150,
-                      width: double.infinity,
-                      color: const Color(0xFFFFEDD5),
-                      child: tut.miniatureUrl.isNotEmpty
-                          ? Image.network(
-                              tut.miniatureUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, _, _) =>
-                                  _buildFallbackThumbnail(),
-                            )
-                          : _buildFallbackThumbnail(),
-                    ),
-                  ),
-
-                  // Bouton Play festif
-                  Container(
-                    width: 54,
-                    height: 54,
-                    decoration: BoxDecoration(
-                      color: KidTheme.primaryGreen,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 3),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.3),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.play_arrow_rounded,
-                      color: Colors.white,
-                      size: 36,
-                    ),
-                  ),
-
-                  // Durée
-                  Positioned(
-                    bottom: 10,
-                    right: 12,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.75),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.access_time_rounded,
-                            color: Colors.white,
-                            size: 12,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            tut.dureeFormatted,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(20),
+                ),
+                child: Container(
+                  height: 150,
+                  width: double.infinity,
+                  color: const Color(0xFFFFEDD5),
+                  child: tut.miniatureUrl.isNotEmpty
+                      ? Image.network(
+                          tut.miniatureUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) =>
+                              _buildFallbackThumbnail(),
+                        )
+                      : _buildFallbackThumbnail(),
+                ),
               ),
 
-              // Titre et détails
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFDCFCE7),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            ageLabel,
-                            style: const TextStyle(
-                              color: KidTheme.primaryGreenDark,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      tut.titre,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                        color: theme.colorScheme.onSurface,
-                        letterSpacing: -0.2,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      tut.description,
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        color: theme.colorScheme.onSurfaceVariant,
-                        height: 1.35,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+              // Bouton Play 3D festif
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: KidTheme.primaryGreen,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 3),
+                  boxShadow: [
+                    BoxShadow(
+                      color: KidTheme.primaryGreenDark.withValues(alpha: 0.6),
+                      blurRadius: 0,
+                      offset: const Offset(0, 3.5),
                     ),
                   ],
+                ),
+                child: const Icon(
+                  Icons.play_arrow_rounded,
+                  color: Colors.white,
+                  size: 38,
+                ),
+              ),
+
+              // Durée
+              Positioned(
+                bottom: 10,
+                right: 12,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.75),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.access_time_rounded,
+                        color: Colors.white,
+                        size: 12,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        tut.dureeFormatted,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
-        ),
+
+          // Titre et détails
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDCFCE7),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        ageLabel,
+                        style: const TextStyle(
+                          color: KidTheme.primaryGreenDark,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  tut.titre,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    color: theme.colorScheme.onSurface,
+                    letterSpacing: -0.2,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  tut.description,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: theme.colorScheme.onSurfaceVariant,
+                    height: 1.35,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

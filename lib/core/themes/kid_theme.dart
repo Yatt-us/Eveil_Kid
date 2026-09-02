@@ -240,6 +240,25 @@ class KidTheme {
           side: const BorderSide(color: Colors.transparent),
         ),
       ),
+
+      // ── TYPOGRAPHIE CLAIRE ──
+      textTheme: const TextTheme(
+        displayLarge: TextStyle(fontFamily: AppTextStyles.fontFamily, color: lightTextPrimary, fontWeight: FontWeight.w900),
+        displayMedium: TextStyle(fontFamily: AppTextStyles.fontFamily, color: lightTextPrimary, fontWeight: FontWeight.w900),
+        displaySmall: TextStyle(fontFamily: AppTextStyles.fontFamily, color: lightTextPrimary, fontWeight: FontWeight.w900),
+        headlineLarge: TextStyle(fontFamily: AppTextStyles.fontFamily, color: lightTextPrimary, fontWeight: FontWeight.w900),
+        headlineMedium: TextStyle(fontFamily: AppTextStyles.fontFamily, color: lightTextPrimary, fontWeight: FontWeight.w800),
+        headlineSmall: TextStyle(fontFamily: AppTextStyles.fontFamily, color: lightTextPrimary, fontWeight: FontWeight.w800),
+        titleLarge: TextStyle(fontFamily: AppTextStyles.fontFamily, color: lightTextPrimary, fontWeight: FontWeight.w800),
+        titleMedium: TextStyle(fontFamily: AppTextStyles.fontFamily, color: lightTextPrimary, fontWeight: FontWeight.w800),
+        titleSmall: TextStyle(fontFamily: AppTextStyles.fontFamily, color: lightTextPrimary, fontWeight: FontWeight.w700),
+        bodyLarge: TextStyle(fontFamily: AppTextStyles.fontFamily, color: lightTextPrimary, fontWeight: FontWeight.w600),
+        bodyMedium: TextStyle(fontFamily: AppTextStyles.fontFamily, color: lightTextPrimary, fontWeight: FontWeight.w600),
+        bodySmall: TextStyle(fontFamily: AppTextStyles.fontFamily, color: lightTextSecondary, fontWeight: FontWeight.w500),
+        labelLarge: TextStyle(fontFamily: AppTextStyles.fontFamily, color: lightTextPrimary, fontWeight: FontWeight.w700),
+        labelMedium: TextStyle(fontFamily: AppTextStyles.fontFamily, color: lightTextSecondary, fontWeight: FontWeight.w600),
+        labelSmall: TextStyle(fontFamily: AppTextStyles.fontFamily, color: lightTextSecondary, fontWeight: FontWeight.w600),
+      ),
     );
   }
 
@@ -422,6 +441,25 @@ class KidTheme {
           borderRadius: BorderRadius.circular(999),
           side: const BorderSide(color: Colors.transparent),
         ),
+      ),
+
+      // ── TYPOGRAPHIE SOMBRE ──
+      textTheme: const TextTheme(
+        displayLarge: TextStyle(fontFamily: AppTextStyles.fontFamily, color: darkTextPrimary, fontWeight: FontWeight.w900),
+        displayMedium: TextStyle(fontFamily: AppTextStyles.fontFamily, color: darkTextPrimary, fontWeight: FontWeight.w900),
+        displaySmall: TextStyle(fontFamily: AppTextStyles.fontFamily, color: darkTextPrimary, fontWeight: FontWeight.w900),
+        headlineLarge: TextStyle(fontFamily: AppTextStyles.fontFamily, color: darkTextPrimary, fontWeight: FontWeight.w900),
+        headlineMedium: TextStyle(fontFamily: AppTextStyles.fontFamily, color: darkTextPrimary, fontWeight: FontWeight.w800),
+        headlineSmall: TextStyle(fontFamily: AppTextStyles.fontFamily, color: darkTextPrimary, fontWeight: FontWeight.w800),
+        titleLarge: TextStyle(fontFamily: AppTextStyles.fontFamily, color: darkTextPrimary, fontWeight: FontWeight.w800),
+        titleMedium: TextStyle(fontFamily: AppTextStyles.fontFamily, color: darkTextPrimary, fontWeight: FontWeight.w800),
+        titleSmall: TextStyle(fontFamily: AppTextStyles.fontFamily, color: darkTextPrimary, fontWeight: FontWeight.w700),
+        bodyLarge: TextStyle(fontFamily: AppTextStyles.fontFamily, color: darkTextPrimary, fontWeight: FontWeight.w600),
+        bodyMedium: TextStyle(fontFamily: AppTextStyles.fontFamily, color: darkTextPrimary, fontWeight: FontWeight.w600),
+        bodySmall: TextStyle(fontFamily: AppTextStyles.fontFamily, color: darkTextSecondary, fontWeight: FontWeight.w500),
+        labelLarge: TextStyle(fontFamily: AppTextStyles.fontFamily, color: darkTextPrimary, fontWeight: FontWeight.w700),
+        labelMedium: TextStyle(fontFamily: AppTextStyles.fontFamily, color: darkTextSecondary, fontWeight: FontWeight.w600),
+        labelSmall: TextStyle(fontFamily: AppTextStyles.fontFamily, color: darkTextSecondary, fontWeight: FontWeight.w600),
       ),
     );
   }
