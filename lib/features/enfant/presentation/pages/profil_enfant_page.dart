@@ -1,14 +1,281 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:eveilkid/core/constants/app_avatars.dart';
+import 'package:eveilkid/core/constants/app_colors.dart';
+import 'package:eveilkid/core/constants/AppSpacing.dart';
 import 'package:eveilkid/core/themes/kid_theme.dart';
 import 'package:eveilkid/core/utils/parental_pin_helper.dart';
+import 'package:eveilkid/features/enfant/model/enfant_model.dart';
 import 'package:eveilkid/features/enfant/presentation/pages/liste_souhaits_enfant_page.dart';
 import 'package:eveilkid/features/enfant/presentation/pages/progression_enfant_page.dart';
 import 'package:eveilkid/features/enfant/providers/child_mode_provider.dart';
 import 'package:eveilkid/features/enfant/providers/enfant_providers.dart';
+import 'package:eveilkid/shared/widgets/app_avatar.dart';
+import 'package:eveilkid/shared/widgets/app_dialogs.dart';
 
 class ProfilEnfantPages extends ConsumerWidget {
   const ProfilEnfantPages({super.key});
+
+  static const List<String> _presetAvatars = AppAvatars.childPresets;
+
+  Future<void> _updatePhoto(
+    BuildContext context,
+    WidgetRef ref,
+    EnfantModel enfant,
+    String? newPhotoUrl,
+  ) async {
+    try {
+      final parentId = enfant.utilisateurId;
+      if (parentId.isEmpty) return;
+
+      await ref.read(enfantNotifierProvider.notifier).mettreAJourPhoto(
+            parentId: parentId,
+            enfantId: enfant.enfantId,
+            photoUrl: newPhotoUrl ?? '',
+          );
+      
+      // Mettre à jour également dans le childModeProvider si c'est l'enfant actif
+      final childMode = ref.read(childModeProvider);
+      if (childMode.activeChildId == enfant.enfantId) {
+        await ref.read(childModeProvider.notifier).enterChildMode(
+          childId: enfant.enfantId,
+          child: enfant.copyWith(avatarUrl: newPhotoUrl),
+        );
+      }
+
+      if (context.mounted) {
+        AppDialogs.showSnackBar(
+          context: context,
+          message: newPhotoUrl == null || newPhotoUrl.isEmpty
+              ? 'Photo de profil supprimée.'
+              : 'Photo de profil mise à jour !',
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        AppDialogs.showSnackBar(
+          context: context,
+          message: 'Erreur lors de la mise à jour: $e',
+          isError: true,
+        );
+      }
+    }
+  }
+
+  Future<void> _pickImage(
+    BuildContext pageContext,
+    BuildContext menuContext,
+    WidgetRef ref,
+    EnfantModel enfant,
+    ImageSource source,
+  ) async {
+    Navigator.pop(menuContext);
+
+    try {
+      final picker = ImagePicker();
+      final XFile? pickedFile = await picker.pickImage(
+        source: source,
+        maxWidth: 360,
+        maxHeight: 360,
+        imageQuality: 75,
+      );
+
+      if (pickedFile != null && pageContext.mounted) {
+        final bytes = await pickedFile.readAsBytes();
+        final base64String = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+        await _updatePhoto(pageContext, ref, enfant, base64String);
+      }
+    } catch (e) {
+      if (pageContext.mounted) {
+        AppDialogs.showSnackBar(
+          context: pageContext,
+          message: 'Impossible de charger l\'image: $e',
+          isError: true,
+        );
+      }
+    }
+  }
+
+  void _showAvatarGalleryModal(
+    BuildContext pageContext,
+    BuildContext menuContext,
+    WidgetRef ref,
+    EnfantModel enfant,
+  ) {
+    Navigator.pop(menuContext);
+    final theme = Theme.of(pageContext);
+
+    showModalBottomSheet(
+      context: pageContext,
+      backgroundColor: theme.colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: theme.dividerColor.withValues(alpha: 0.4),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                AppSpacing.verticalMd,
+                Text(
+                  'Choisir un avatar prédéfini',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: theme.textTheme.titleMedium?.color ??
+                        theme.colorScheme.onSurface,
+                  ),
+                ),
+                AppSpacing.verticalMd,
+                SizedBox(
+                  height: 90,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _presetAvatars.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 14),
+                    itemBuilder: (ctx, index) {
+                      final url = _presetAvatars[index];
+                      final isSelected = enfant.avatarUrl == url;
+
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          _updatePhoto(pageContext, ref, enfant, url);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isSelected
+                                  ? theme.colorScheme.primary
+                                  : Colors.transparent,
+                              width: 3,
+                            ),
+                          ),
+                          child: CircleAvatar(
+                            radius: 34,
+                            backgroundImage: NetworkImage(url),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                AppSpacing.verticalMd,
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showPhotoOptionsSheet(
+    BuildContext context,
+    WidgetRef ref,
+    EnfantModel enfant,
+  ) {
+    final theme = Theme.of(context);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: theme.colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: theme.dividerColor.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                AppSpacing.verticalMd,
+                Text(
+                  'Modifier la photo de profil',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: theme.textTheme.titleMedium?.color ??
+                        theme.colorScheme.onSurface,
+                  ),
+                ),
+                AppSpacing.verticalMd,
+                ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                    child: Icon(Icons.camera_alt_rounded, color: theme.colorScheme.primary),
+                  ),
+                  title: const Text('Prendre une photo', style: TextStyle(fontWeight: FontWeight.w600)),
+                  onTap: () => _pickImage(context, ctx, ref, enfant, ImageSource.camera),
+                ),
+                ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: AppColors.secondary.withValues(alpha: 0.1),
+                    child: const Icon(Icons.photo_library_rounded, color: AppColors.secondary),
+                  ),
+                  title: const Text('Choisir depuis la galerie', style: TextStyle(fontWeight: FontWeight.w600)),
+                  onTap: () => _pickImage(context, ctx, ref, enfant, ImageSource.gallery),
+                ),
+                ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.amber.withValues(alpha: 0.15),
+                    child: const Icon(Icons.face_retouching_natural_rounded, color: Colors.amber),
+                  ),
+                  title: const Text('Choisir parmi les avatars prédéfinis', style: TextStyle(fontWeight: FontWeight.w600)),
+                  onTap: () => _showAvatarGalleryModal(context, ctx, ref, enfant),
+                ),
+                if (enfant.avatarUrl != null && enfant.avatarUrl!.isNotEmpty) ...[
+                  const Divider(),
+                  ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: theme.colorScheme.error.withValues(alpha: 0.1),
+                      child: Icon(Icons.delete_outline_rounded, color: theme.colorScheme.error),
+                    ),
+                    title: Text(
+                      'Supprimer la photo actuelle',
+                      style: TextStyle(
+                        color: theme.colorScheme.error,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _updatePhoto(context, ref, enfant, null);
+                    },
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -147,35 +414,58 @@ class ProfilEnfantPages extends ConsumerWidget {
                       ),
                       child: Column(
                         children: [
-                          Container(
-                            width: 90,
-                            height: 90,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.white,
-                              border: Border.all(
-                                color: KidTheme.primaryGreen,
-                                width: 3.5,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.1),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
+                          Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Container(
+                                width: 95,
+                                height: 95,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white,
+                                  border: Border.all(
+                                    color: KidTheme.primaryGreen,
+                                    width: 3.5,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.1),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                            child: ClipOval(
-                              child: enfant.avatarUrl != null &&
-                                      enfant.avatarUrl!.isNotEmpty
-                                  ? Image.network(
-                                      enfant.avatarUrl!,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, _, _) =>
-                                          _defaultAvatar(),
-                                    )
-                                  : _defaultAvatar(),
-                            ),
+                                child: AppAvatar(
+                                  imageUrl: enfant.avatarUrl,
+                                  name: enfant.nom,
+                                  radius: 45,
+                                  onTap: () => _showPhotoOptionsSheet(context, ref, enfant),
+                                ),
+                              ),
+                              Positioned(
+                                right: -2,
+                                bottom: -2,
+                                child: GestureDetector(
+                                  onTap: () => _showPhotoOptionsSheet(context, ref, enfant),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(7),
+                                    decoration: BoxDecoration(
+                                      color: KidTheme.primaryGreen,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: isDark ? const Color(0xFF064E3B) : const Color(0xFFDCFCE7),
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: const Icon(
+                                      Icons.camera_alt_rounded,
+                                      size: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 12),
                           Text(

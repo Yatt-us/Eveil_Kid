@@ -475,15 +475,12 @@ class _DetailEnfantPageState extends ConsumerState<DetailEnfantPage> {
                           ),
                         ],
                       ),
-                      child: ClipOval(
-                        child: enfant.avatarUrl != null && enfant.avatarUrl!.isNotEmpty
-                            ? Image.network(
-                                enfant.avatarUrl!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) =>
-                                    _buildDefaultAvatar(enfant, theme),
-                              )
-                            : _buildDefaultAvatar(enfant, theme),
+                      child: AppAvatar(
+                        imageUrl: enfant.avatarUrl,
+                        name: enfant.nom,
+                        radius: 46,
+                        defaultIcon: isGirl ? Icons.face_3_rounded : Icons.face_rounded,
+                        onTap: () => _showPhotoOptionsSheet(enfant),
                       ),
                     ),
                     Positioned(

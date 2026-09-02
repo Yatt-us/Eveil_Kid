@@ -63,12 +63,13 @@ class ProfilParentPage extends ConsumerWidget {
   }
 
   Future<void> _pickImage(
-    BuildContext context,
+    BuildContext pageContext,
+    BuildContext menuContext,
     WidgetRef ref,
     Utilisateur parent,
     ImageSource source,
   ) async {
-    Navigator.pop(context);
+    Navigator.pop(menuContext);
 
     try {
       final picker = ImagePicker();
@@ -79,17 +80,15 @@ class ProfilParentPage extends ConsumerWidget {
         imageQuality: 75,
       );
 
-      if (pickedFile != null) {
+      if (pickedFile != null && pageContext.mounted) {
         final bytes = await pickedFile.readAsBytes();
         final base64String = 'data:image/jpeg;base64,${base64Encode(bytes)}';
-        if (context.mounted) {
-          await _updatePhoto(context, ref, parent, base64String);
-        }
+        await _updatePhoto(pageContext, ref, parent, base64String);
       }
     } catch (e) {
-      if (context.mounted) {
+      if (pageContext.mounted) {
         AppDialogs.showSnackBar(
-          context: context,
+          context: pageContext,
           message: 'Impossible de charger l\'image: $e',
           isError: true,
         );
@@ -98,15 +97,16 @@ class ProfilParentPage extends ConsumerWidget {
   }
 
   void _showAvatarGalleryModal(
-    BuildContext context,
+    BuildContext pageContext,
+    BuildContext menuContext,
     WidgetRef ref,
     Utilisateur parent,
   ) {
-    Navigator.pop(context);
-    final theme = Theme.of(context);
+    Navigator.pop(menuContext);
+    final theme = Theme.of(pageContext);
 
     showModalBottomSheet(
-      context: context,
+      context: pageContext,
       backgroundColor: theme.colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -147,14 +147,14 @@ class ProfilParentPage extends ConsumerWidget {
                     scrollDirection: Axis.horizontal,
                     itemCount: _presetAvatars.length,
                     separatorBuilder: (_, _) => const SizedBox(width: 14),
-                    itemBuilder: (ctx, index) {
+                    itemBuilder: (context, index) {
                       final url = _presetAvatars[index];
                       final isSelected = parent.photoUrl == url;
 
                       return GestureDetector(
                         onTap: () {
                           Navigator.pop(ctx);
-                          _updatePhoto(context, ref, parent, url);
+                          _updatePhoto(pageContext, ref, parent, url);
                         },
                         child: Container(
                           padding: const EdgeInsets.all(3),
@@ -239,7 +239,7 @@ class ProfilParentPage extends ConsumerWidget {
                     'Prendre une photo',
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
-                  onTap: () => _pickImage(ctx, ref, parent, ImageSource.camera),
+                  onTap: () => _pickImage(context, ctx, ref, parent, ImageSource.camera),
                 ),
                 ListTile(
                   leading: CircleAvatar(
@@ -254,7 +254,7 @@ class ProfilParentPage extends ConsumerWidget {
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                   onTap: () =>
-                      _pickImage(ctx, ref, parent, ImageSource.gallery),
+                      _pickImage(context, ctx, ref, parent, ImageSource.gallery),
                 ),
                 ListTile(
                   leading: CircleAvatar(
@@ -268,7 +268,7 @@ class ProfilParentPage extends ConsumerWidget {
                     'Choisir parmi les avatars prédéfinis',
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
-                  onTap: () => _showAvatarGalleryModal(ctx, ref, parent),
+                  onTap: () => _showAvatarGalleryModal(context, ctx, ref, parent),
                 ),
                 if (parent.photoUrl != null && parent.photoUrl!.isNotEmpty) ...[
                   const Divider(),

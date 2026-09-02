@@ -92,12 +92,15 @@ class ParentNotifier extends AsyncNotifier<Utilisateur> {
   Future<void> ajouterEnfant(EnfantModel enfant) async {
     final userId = ref.read(currentUserIdProvider);
     if (userId.isEmpty) return;
-    if (userId.isEmpty) return;
     final toAdd = enfant.copyWith(utilisateurId: userId);
 
     state = await AsyncValue.guard(() async {
       final repository = ref.read(parentRepositoryProvider);
       await repository.ajouterEnfant(toAdd);
+      
+      // Synchronisation avec le notifier enfant
+      await ref.read(enfantNotifierProvider.notifier).ajouterEnfant(toAdd);
+      
       return await repository.fetchParentProfile(userId);
     });
   }
@@ -105,11 +108,14 @@ class ParentNotifier extends AsyncNotifier<Utilisateur> {
   Future<void> modifierEnfant(EnfantModel enfant) async {
     final userId = ref.read(currentUserIdProvider);
     if (userId.isEmpty) return;
-    if (userId.isEmpty) return;
 
     state = await AsyncValue.guard(() async {
       final repository = ref.read(parentRepositoryProvider);
       await repository.modifierEnfant(enfant);
+      
+      // Synchronisation avec le notifier enfant
+      await ref.read(enfantNotifierProvider.notifier).modifierEnfant(enfant);
+      
       return await repository.fetchParentProfile(userId);
     });
   }
@@ -117,11 +123,17 @@ class ParentNotifier extends AsyncNotifier<Utilisateur> {
   Future<void> supprimerEnfant(String enfantId) async {
     final userId = ref.read(currentUserIdProvider);
     if (userId.isEmpty) return;
-    if (userId.isEmpty) return;
 
     state = await AsyncValue.guard(() async {
       final repository = ref.read(parentRepositoryProvider);
       await repository.supprimerEnfant(enfantId, userId);
+      
+      // Synchronisation avec le notifier enfant
+      await ref.read(enfantNotifierProvider.notifier).supprimerEnfant(
+        parentId: userId,
+        enfantId: enfantId,
+      );
+      
       return await repository.fetchParentProfile(userId);
     });
   }

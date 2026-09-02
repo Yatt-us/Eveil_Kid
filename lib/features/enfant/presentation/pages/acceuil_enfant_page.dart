@@ -12,6 +12,7 @@ import 'package:eveilkid/features/enfant/presentation/pages/progression_enfant_p
 import 'package:eveilkid/features/enfant/presentation/pages/tutoriels_enfant_page.dart';
 import 'package:eveilkid/features/enfant/providers/child_mode_provider.dart';
 import 'package:eveilkid/features/enfant/providers/enfant_providers.dart';
+import 'package:eveilkid/shared/widgets/app_avatar.dart';
 
 class AccueilEnfantPage extends ConsumerStatefulWidget {
   final String? initialEnfantId;
@@ -355,16 +356,11 @@ class _AccueilEnfantPageState extends ConsumerState<AccueilEnfantPage> {
                                   ),
                                 ],
                               ),
-                              child: ClipOval(
-                                child: enfant.avatarUrl != null &&
-                                        enfant.avatarUrl!.isNotEmpty
-                                    ? Image.network(
-                                        enfant.avatarUrl!,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (_, _, _) =>
-                                            _defaultAvatar(theme),
-                                      )
-                                    : _defaultAvatar(theme),
+                              child: AppAvatar(
+                                imageUrl: enfant.avatarUrl,
+                                name: enfant.nom,
+                                radius: 34,
+                                defaultIcon: Icons.face_rounded,
                               ),
                             ),
                           ),

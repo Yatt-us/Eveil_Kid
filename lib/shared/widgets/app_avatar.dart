@@ -44,14 +44,23 @@ class AppAvatar extends StatelessWidget {
     if (trimmed.startsWith('data:image') || trimmed.contains(';base64,')) {
       try {
         final commaIndex = trimmed.indexOf(',');
-        final base64String =
+        final base64Part =
             commaIndex != -1 ? trimmed.substring(commaIndex + 1) : trimmed;
-        // Nettoyage plus rigoureux des caractères non-base64 potentiels
-        final cleanBase64 = base64String.replaceAll(RegExp(r'[^a-zA-Z0-9+/=]'), '');
-        final Uint8List bytes = base64Decode(cleanBase64);
+        
+        // Nettoyage : enlever TOUT ce qui n'est pas base64 (espaces, retours à la ligne, etc.)
+        final cleanBase64 = base64Part.replaceAll(RegExp(r'[^a-zA-Z0-9+/=]'), '');
+        
+        // Vérification et ajout du padding si nécessaire
+        var finalBase64 = cleanBase64;
+        final remainder = finalBase64.length % 4;
+        if (remainder > 0) {
+          finalBase64 += '=' * (4 - remainder);
+        }
+
+        final Uint8List bytes = base64Decode(finalBase64);
         return MemoryImage(bytes);
       } catch (e) {
-        debugPrint('Erreur décodage Base64 (URI) avatar: $e');
+        debugPrint('AppAvatar: Erreur décodage Base64 (URI): $e');
         return null;
       }
     }
@@ -73,17 +82,19 @@ class AppAvatar extends StatelessWidget {
       }
     }
 
-    // 4. Base64 pur sans préfixe (longueur importante et caractères base64 probables)
-    if (trimmed.length > 32) {
+    // 4. Base64 pur sans préfixe (longueur importante)
+    if (trimmed.length > 50 && !trimmed.contains(' ')) {
       try {
-        // On tente de décoder si ça ressemble à du base64
         final cleanBase64 = trimmed.replaceAll(RegExp(r'[^a-zA-Z0-9+/=]'), '');
-        if (cleanBase64.length > 32) {
-           final Uint8List bytes = base64Decode(cleanBase64);
-           return MemoryImage(bytes);
+        var finalBase64 = cleanBase64;
+        final remainder = finalBase64.length % 4;
+        if (remainder > 0) {
+          finalBase64 += '=' * (4 - remainder);
         }
+        final Uint8List bytes = base64Decode(finalBase64);
+        return MemoryImage(bytes);
       } catch (_) {
-        // Pas du base64, on laisse tomber
+        // Pas du base64 valide
       }
     }
 
@@ -94,41 +105,44 @@ class AppAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final imageProvider = _resolveImageProvider(imageUrl);
-    Widget avatarWidget;
-
+    
+    Widget content;
+    
     if (imageProvider != null) {
-      avatarWidget = CircleAvatar(
-        radius: radius,
-        backgroundImage: imageProvider,
-        onBackgroundImageError: (_, _) {
-          // Gestion douce des erreurs de chargement réseau/mémoire
+      content = Image(
+        image: imageProvider,
+        fit: BoxFit.cover,
+        width: radius * 2,
+        height: radius * 2,
+        errorBuilder: (context, error, stackTrace) {
+          debugPrint('AppAvatar: Erreur rendu image: $error');
+          return _buildFallback(theme);
         },
-        backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-      );
-    } else if (_initials.isNotEmpty) {
-      avatarWidget = CircleAvatar(
-        radius: radius,
-        backgroundColor: theme.colorScheme.primary,
-        child: Text(
-          _initials,
-          style: TextStyle(
-            color: theme.colorScheme.onPrimary,
-            fontWeight: FontWeight.bold,
-            fontSize: radius * 0.7,
-          ),
-        ),
+        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+          if (wasSynchronouslyLoaded) return child;
+          return AnimatedOpacity(
+            opacity: frame == null ? 0 : 1,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+            child: child,
+          );
+        },
       );
     } else {
-      avatarWidget = CircleAvatar(
-        radius: radius,
-        backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-        child: Icon(
-          defaultIcon,
-          size: radius * 1.1,
-          color: theme.colorScheme.primary,
-        ),
-      );
+      content = _buildFallback(theme);
     }
+
+    Widget avatarWidget = Container(
+      width: radius * 2,
+      height: radius * 2,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: imageProvider != null 
+            ? theme.colorScheme.primary.withValues(alpha: 0.1)
+            : theme.colorScheme.primary,
+      ),
+      child: ClipOval(child: content),
+    );
 
     if (onTap != null) {
       avatarWidget = InkWell(
@@ -164,5 +178,27 @@ class AppAvatar extends StatelessWidget {
     }
 
     return avatarWidget;
+  }
+
+  Widget _buildFallback(ThemeData theme) {
+    if (_initials.isNotEmpty) {
+      return Center(
+        child: Text(
+          _initials,
+          style: TextStyle(
+            color: theme.colorScheme.onPrimary,
+            fontWeight: FontWeight.bold,
+            fontSize: radius * 0.7,
+          ),
+        ),
+      );
+    }
+    return Center(
+      child: Icon(
+        defaultIcon,
+        size: radius * 1.1,
+        color: theme.colorScheme.primary,
+      ),
+    );
   }
 }
