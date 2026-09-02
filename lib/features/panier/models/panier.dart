@@ -9,7 +9,6 @@ class ArticlePanier {
   final double prixUnitaire;
   final String miniatureUrl;
   final int stockDispo;
-
   final int quantite;
 
   final DateTime dateCreation;
